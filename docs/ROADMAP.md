@@ -3,7 +3,7 @@
 | Fase | Entrega | Estado |
 | --- | --- | --- |
 | 0 | Monorepo, client compartilhado, Tauri, Rust, Python/uv, qualidade e CI | Concluída localmente |
-| 1 | Design system e Launcher sem ferramentas fictícias | Planejada |
+| 1 | Design system e Launcher sem ferramentas fictícias | Concluída localmente |
 | 2 | Document Core e persistência local | Planejada |
 | 3 | Tool SDK, Registry, Runner e Capability Layer | Planejada |
 | 4 | Quick Tools PDF reais | Planejada |

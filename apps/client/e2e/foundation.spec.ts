@@ -1,6 +1,36 @@
 import { expect, test } from "@playwright/test";
 
-test("abre o client compartilhado", async ({ page }) => {
+test("abre o Launcher compartilhado", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "NexoHub" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Documentos complexos/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Comece por uma tarefa" })).toBeVisible();
+});
+
+test("troca de suíte e filtra os cards", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "PDF" }).click();
+
+  await expect(page.getByText("Organizar PDF")).toBeVisible();
+  await expect(page.getByText("Comparar textos")).toHaveCount(0);
+});
+
+test("navega entre suítes pelo teclado", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Início" }).focus();
+  await page.keyboard.press("ArrowRight");
+
+  await expect(page.getByRole("button", { name: "PDF" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByText("Organizar PDF")).toBeVisible();
+});
+
+test("abre e fecha a paleta de comandos", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: /Buscar no NexoHub/i })).toBeVisible();
+  await page.keyboard.press("Control+k");
+
+  await expect(page.getByRole("dialog", { name: "Paleta de comandos" })).toBeVisible();
+  await expect(page.getByPlaceholder("Digite uma suíte ou ferramenta...")).toBeFocused();
+
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Paleta de comandos" })).toHaveCount(0);
 });

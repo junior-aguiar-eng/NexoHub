@@ -5,8 +5,8 @@ documents.
 
 ## Estado
 
-O repositório contém somente a fundação do monorepo. Ferramentas documentais, Launcher e Studio
-ainda não foram implementados.
+O repositório contém a fundação do monorepo e o Launcher responsivo do NexoHub. As ferramentas
+documentais e o Studio permanecem indisponíveis e são identificados explicitamente como futuros.
 
 ## Requisitos
 
@@ -36,5 +36,5 @@ O client web inicia com `pnpm --filter @nexohub/client dev`. O shell desktop ini
 
 ## Arquitetura
 
-As decisões vigentes estão em `docs/ARCHITECTURE.md` e `docs/adr/`. O projeto é distribuído sob
-MPL-2.0.
+As decisões vigentes estão em `docs/ARCHITECTURE.md` e `docs/adr/`; os fundamentos visuais estão em
+`docs/DESIGN-SYSTEM.md`. O projeto é distribuído sob MPL-2.0.

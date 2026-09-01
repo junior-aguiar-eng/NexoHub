@@ -124,6 +124,18 @@ pub struct Overlay {
     pub created_at: i64,
 }
 
+/// Localizador persistente para reencontrar conteúdo em uma representação.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Anchor {
+    pub id: String,
+    pub artifact_id: String,
+    pub kind: String,
+    pub selector: Value,
+    pub quote: Option<String>,
+    pub created_at: i64,
+}
+
 /// Estado persistido de uma operação documental.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]

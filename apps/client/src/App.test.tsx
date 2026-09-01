@@ -24,6 +24,8 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Documentos" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Inspector" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Anchors" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Criar anchor" })).toBeDisabled();
 
     fireEvent.click(screen.getByRole("button", { name: /Voltar ao Launcher/i }));
     expect(screen.getByRole("heading", { name: /Documentos complexos/i })).toBeInTheDocument();

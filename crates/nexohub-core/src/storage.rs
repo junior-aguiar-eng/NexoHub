@@ -2,8 +2,8 @@
 
 use crate::blob_store::BlobStore;
 use crate::domain::{
-    Artifact, ArtifactKind, Document, ImportedDocument, Operation, OperationInput, OperationOutput,
-    OperationStatus, Overlay, Project,
+    Anchor, Artifact, ArtifactKind, Document, ImportedDocument, Operation, OperationInput,
+    OperationOutput, OperationStatus, Overlay, Project,
 };
 use crate::error::{CoreError, CoreResult, ErrorCode};
 use crate::migrations;
@@ -409,6 +409,66 @@ impl ProjectStore {
             .map_err(|_| CoreError::database())
     }
 
+    /// Persiste um localizador sem acoplar a seleção ao viewer.
+    pub fn create_anchor(
+        &mut self,
+        artifact_id: &str,
+        kind: &str,
+        selector: Value,
+        quote: Option<&str>,
+    ) -> CoreResult<Anchor> {
+        self.get_artifact(artifact_id)?;
+        validate_text(kind, "A categoria do anchor é obrigatória.")?;
+        let selector_json = serde_json::to_string(&selector).map_err(|_| {
+            CoreError::new(
+                ErrorCode::InvalidArgument,
+                "O seletor do anchor é inválido.",
+            )
+        })?;
+        let anchor = Anchor {
+            id: Uuid::new_v4().to_string(),
+            artifact_id: artifact_id.to_owned(),
+            kind: kind.trim().to_owned(),
+            selector,
+            quote: quote
+                .map(str::trim)
+                .filter(|value| !value.is_empty())
+                .map(str::to_owned),
+            created_at: current_time_millis()?,
+        };
+        self.connection
+            .execute(
+                "INSERT INTO anchors(id, artifact_id, kind, selector_json, quote, created_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                params![
+                    anchor.id,
+                    anchor.artifact_id,
+                    anchor.kind,
+                    selector_json,
+                    anchor.quote,
+                    anchor.created_at
+                ],
+            )
+            .map_err(|_| CoreError::database())?;
+        Ok(anchor)
+    }
+
+    pub fn list_anchors(&self, artifact_id: &str) -> CoreResult<Vec<Anchor>> {
+        self.get_artifact(artifact_id)?;
+        let mut statement = self
+            .connection
+            .prepare(
+                "SELECT id, artifact_id, kind, selector_json, quote, created_at
+                 FROM anchors WHERE artifact_id = ?1 ORDER BY created_at, rowid",
+            )
+            .map_err(|_| CoreError::database())?;
+        let rows = statement
+            .query_map([artifact_id], map_anchor)
+            .map_err(|_| CoreError::database())?;
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|_| CoreError::database())
+    }
+
     /// Versão aplicada do schema, usada por diagnósticos e testes de migration.
     pub fn schema_version(&self) -> CoreResult<i64> {
         self.connection
@@ -523,6 +583,21 @@ fn map_overlay(row: &Row<'_>) -> rusqlite::Result<Overlay> {
         kind: row.get(2)?,
         data,
         created_at: row.get(4)?,
+    })
+}
+
+fn map_anchor(row: &Row<'_>) -> rusqlite::Result<Anchor> {
+    let selector_json: String = row.get(3)?;
+    let selector = serde_json::from_str(&selector_json).map_err(|error| {
+        rusqlite::Error::FromSqlConversionFailure(3, rusqlite::types::Type::Text, Box::new(error))
+    })?;
+    Ok(Anchor {
+        id: row.get(0)?,
+        artifact_id: row.get(1)?,
+        kind: row.get(2)?,
+        selector,
+        quote: row.get(4)?,
+        created_at: row.get(5)?,
     })
 }
 

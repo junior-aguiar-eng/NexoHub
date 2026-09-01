@@ -1,4 +1,7 @@
 use lopdf::{Document as PdfDocument, Object, dictionary};
+use nexohub_core::anchor_tools::{
+    AnchorSelector, CreateAnchorRequest, ListAnchorsRequest, create_anchor, list_anchors,
+};
 use nexohub_core::commands::CreateProjectRequest;
 use nexohub_core::domain::ArtifactKind;
 use nexohub_core::overlay_tools::{
@@ -78,7 +81,7 @@ fn creates_project_structure_and_initial_migration() {
         store.project().expect("projeto deve existir").name,
         "Projeto de teste"
     );
-    assert_eq!(store.schema_version().expect("migration deve existir"), 1);
+    assert_eq!(store.schema_version().expect("migration deve existir"), 2);
     assert!(project_path.join("project.sqlite3").is_file());
     for directory in ["blobs", "cache", "previews", "exports"] {
         assert!(project_path.join(directory).is_dir());
@@ -89,6 +92,24 @@ fn creates_project_structure_and_initial_migration() {
         Err(error) => error,
     };
     assert_eq!(error.code, ErrorCode::ProjectAlreadyExists);
+}
+
+#[test]
+fn upgrades_schema_one_project_with_anchor_migration() {
+    let temporary = TestDirectory::new("migration-anchor");
+    let project_path = temporary.project_path();
+    let store = ProjectStore::create(&project_path, "Migration").expect("projeto deve ser criado");
+    drop(store);
+    let connection = rusqlite::Connection::open(project_path.join("project.sqlite3"))
+        .expect("banco de teste deve abrir");
+    connection
+        .execute_batch("DROP TABLE anchors; DELETE FROM schema_migrations WHERE version = 2;")
+        .expect("schema deve simular a versão 1");
+    drop(connection);
+
+    let reopened = ProjectStore::open(&project_path).expect("migration 2 deve ser aplicada");
+
+    assert_eq!(reopened.schema_version().expect("schema deve atualizar"), 2);
 }
 
 #[test]
@@ -153,7 +174,7 @@ fn persists_documents_after_reopening_project() {
 
     assert_eq!(document.title, "documento.md");
     assert_eq!(artifacts.len(), 1);
-    assert_eq!(reopened.schema_version().expect("schema deve persistir"), 1);
+    assert_eq!(reopened.schema_version().expect("schema deve persistir"), 2);
 }
 
 #[test]
@@ -442,6 +463,76 @@ fn rejects_pdf_overlay_outside_normalized_page_bounds() {
         payload: json!({}),
     })
     .expect_err("overlay fora da página deve ser rejeitado");
+
+    assert_eq!(error.code, ErrorCode::InvalidArgument);
+}
+
+#[test]
+fn persists_typed_anchor_without_changing_target_artifact() {
+    let temporary = TestDirectory::new("anchor-text");
+    let project_path = temporary.project_path();
+    let source = write_source(&temporary.path, "anchor.md", b"fundamento juridico");
+    let mut store =
+        ProjectStore::create(&project_path, "Anchors").expect("projeto deve ser criado");
+    let imported = store
+        .import_document(&source, None, "text/markdown")
+        .expect("texto deve ser importado");
+    let original = store
+        .read_artifact_bytes(&imported.artifact.id)
+        .expect("artifact deve ser legível");
+    drop(store);
+
+    let anchor = create_anchor(CreateAnchorRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        artifact_id: imported.artifact.id.clone(),
+        selector: AnchorSelector::TextRange { start: 0, end: 10 },
+        quote: Some("fundamento".to_owned()),
+    })
+    .expect("anchor deve ser criado");
+    let anchors = list_anchors(ListAnchorsRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        artifact_id: imported.artifact.id.clone(),
+    })
+    .expect("anchors devem ser listados");
+    let store = ProjectStore::open(&project_path).expect("projeto deve reabrir");
+
+    assert_eq!(anchor.kind, "TEXT_RANGE");
+    assert_eq!(anchor.selector["type"], "TEXT_RANGE");
+    assert_eq!(anchor.quote.as_deref(), Some("fundamento"));
+    assert_eq!(anchors, vec![anchor]);
+    assert_eq!(
+        store
+            .read_artifact_bytes(&imported.artifact.id)
+            .expect("artifact deve permanecer legível"),
+        original
+    );
+}
+
+#[test]
+fn rejects_anchor_selector_incompatible_with_artifact() {
+    let temporary = TestDirectory::new("anchor-incompatible");
+    let project_path = temporary.project_path();
+    let source = write_source(&temporary.path, "anchor.txt", b"texto");
+    let mut store =
+        ProjectStore::create(&project_path, "Anchor inválido").expect("projeto deve ser criado");
+    let imported = store
+        .import_document(&source, None, "text/plain")
+        .expect("texto deve ser importado");
+    drop(store);
+
+    let error = create_anchor(CreateAnchorRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        artifact_id: imported.artifact.id,
+        selector: AnchorSelector::PdfRegion {
+            page_number: 1,
+            x: 0.1,
+            y: 0.1,
+            width: 0.2,
+            height: 0.2,
+        },
+        quote: None,
+    })
+    .expect_err("região PDF não pode apontar para texto");
 
     assert_eq!(error.code, ErrorCode::InvalidArgument);
 }

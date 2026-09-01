@@ -44,6 +44,8 @@ test("abre o Studio e retorna ao Launcher", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Documentos" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Inspector" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Anchors" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Criar anchor" })).toBeDisabled();
 
   await page.getByRole("button", { name: "Voltar ao Launcher" }).click();
   await expect(page.getByRole("heading", { name: /Documentos complexos/i })).toBeVisible();

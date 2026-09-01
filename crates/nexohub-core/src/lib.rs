@@ -1,5 +1,6 @@
 //! Fronteira do núcleo nativo de aplicação do NexoHub.
 
+pub mod anchor_tools;
 mod blob_store;
 pub mod commands;
 pub mod domain;

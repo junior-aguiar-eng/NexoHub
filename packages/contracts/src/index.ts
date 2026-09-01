@@ -1,4 +1,5 @@
 import type {
+  Anchor,
   Artifact,
   ArtifactId,
   Document,
@@ -99,6 +100,30 @@ export interface ListPdfOverlaysRequest {
   readonly artifactId: ArtifactId;
 }
 
+export type AnchorSelector =
+  | { readonly type: "TEXT_RANGE"; readonly start: number; readonly end: number }
+  | {
+      readonly type: "PDF_REGION";
+      readonly pageNumber: number;
+      readonly x: number;
+      readonly y: number;
+      readonly width: number;
+      readonly height: number;
+    }
+  | { readonly type: "OCR_LINE"; readonly pageNumber: number; readonly lineIndex: number };
+
+export interface CreateAnchorRequest {
+  readonly projectPath: string;
+  readonly artifactId: ArtifactId;
+  readonly selector: AnchorSelector;
+  readonly quote?: string;
+}
+
+export interface ListAnchorsRequest {
+  readonly projectPath: string;
+  readonly artifactId: ArtifactId;
+}
+
 export interface DocumentCoreCommands {
   readonly create_project: {
     readonly request: CreateProjectRequest;
@@ -139,6 +164,14 @@ export interface DocumentCoreCommands {
   readonly list_pdf_overlays: {
     readonly request: ListPdfOverlaysRequest;
     readonly response: readonly Overlay[];
+  };
+  readonly create_anchor: {
+    readonly request: CreateAnchorRequest;
+    readonly response: Anchor;
+  };
+  readonly list_anchors: {
+    readonly request: ListAnchorsRequest;
+    readonly response: readonly Anchor[];
   };
 }
 

@@ -899,6 +899,46 @@ button {
   color: var(--color-ink-muted);
   font-size: 0.65rem;
 }
+.anchor-panel {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+}
+.anchor-panel__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-brand);
+}
+.anchor-panel h3 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 0.72rem;
+}
+.anchor-panel > p,
+.anchor-panel small {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: 0.68rem;
+  line-height: 1.55;
+}
+.anchor-panel label {
+  display: grid;
+  width: 100%;
+  gap: var(--space-1);
+  color: var(--color-ink-muted);
+  font-size: 0.65rem;
+}
+.anchor-panel select {
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0 var(--space-2);
+  color: var(--color-ink);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 0.4rem;
+}
 
 .command-backdrop {
   position: fixed;

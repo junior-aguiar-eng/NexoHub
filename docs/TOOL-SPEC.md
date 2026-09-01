@@ -63,3 +63,10 @@ O sidecar aceita uma requisição JSON Lines `ocr` com `mimeType` e `contentBase
 PNG, JPEG, TIFF, WebP e PDF. A resposta contém texto consolidado e linhas com página, confiança e
 retângulo normalizado. Erros de protocolo, entrada e inferência usam `INVALID_REQUEST`,
 `INVALID_INPUT` e `OCR_FAILED`. Nenhum conteúdo é enviado à rede.
+
+## Fase 10 — anchors
+
+`create_anchor` aceita seletor discriminado `TEXT_RANGE`, `PDF_REGION` ou `OCR_LINE` e uma citação
+opcional. Intervalos exigem `start < end`; regiões usam página iniciada em 1 e geometria normalizada;
+linhas OCR usam página e índice base zero. O seletor precisa ser compatível com o MIME type do
+artifact. `list_anchors` recupera os anchors na ordem de criação.

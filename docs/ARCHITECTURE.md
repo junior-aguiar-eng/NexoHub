@@ -90,6 +90,11 @@ caminhos arbitrários. RapidOCR com ONNX Runtime reconhece texto localmente; PDF
 antes da inferência. A entrada é limitada a 64 MiB, PDFs a 500 páginas e cada página a 50
 megapixels. A resposta mantém página, confiança e caixas normalizadas para uso futuro por anchors.
 
+Anchors persistem localizadores independentes do viewer para intervalos textuais, regiões PDF e
+linhas OCR. Cada seletor é validado contra o MIME type do artifact e usa offsets ou coordenadas
+normalizadas. Uma citação textual opcional, limitada a 4 KiB, auxilia a recuperação sem substituir
+o seletor. Anchors não alteram blobs, overlays ou artifacts.
+
 ## Plataformas e runtime
 
 | Superfície | Estado atual | Runtime e gate |

@@ -3,6 +3,7 @@ import { FileText, FolderOpen, Library, PanelLeftClose, PanelRight } from "lucid
 import { Button } from "@/components/ui/button";
 import type { LauncherTool } from "@/features/launcher/model";
 import { translate } from "@/i18n";
+import { AnchorPanel } from "./AnchorPanel";
 import { OcrPanel } from "./OcrPanel";
 import { PdfOverlayPanel } from "./PdfOverlayPanel";
 import { TextEditor } from "./TextEditor";
@@ -95,6 +96,7 @@ export function StudioWorkspace({ onClose, promotedFlow }: StudioWorkspaceProps)
               <p>{translate("studio.flow.empty")}</p>
             )}
           </section>
+          <AnchorPanel />
         </aside>
       </main>
     </div>

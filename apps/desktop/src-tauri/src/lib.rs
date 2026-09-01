@@ -1,9 +1,10 @@
 use nexohub_core::CoreError;
+use nexohub_core::anchor_tools::{CreateAnchorRequest, ListAnchorsRequest};
 use nexohub_core::commands::{
     CreateProjectRequest, GetDocumentRequest, ImportDocumentRequest, ListArtifactsRequest,
     ListDocumentsRequest, OpenProjectRequest,
 };
-use nexohub_core::domain::{Artifact, Document, ImportedDocument, Overlay, Project};
+use nexohub_core::domain::{Anchor, Artifact, Document, ImportedDocument, Overlay, Project};
 use nexohub_core::overlay_tools::{CreatePdfOverlayRequest, ListPdfOverlaysRequest};
 use nexohub_core::pdf_tools::{CompressPdfRequest, PdfToolResult};
 use nexohub_core::text_tools::{CreateTextRevisionRequest, TextToolResult};
@@ -58,6 +59,16 @@ fn list_pdf_overlays(request: ListPdfOverlaysRequest) -> Result<Vec<Overlay>, Co
     nexohub_core::commands::list_pdf_overlays(request)
 }
 
+#[tauri::command]
+fn create_anchor(request: CreateAnchorRequest) -> Result<Anchor, CoreError> {
+    nexohub_core::commands::create_anchor(request)
+}
+
+#[tauri::command]
+fn list_anchors(request: ListAnchorsRequest) -> Result<Vec<Anchor>, CoreError> {
+    nexohub_core::commands::list_anchors(request)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -71,7 +82,9 @@ pub fn run() {
             compress_pdf,
             create_text_revision,
             create_pdf_overlay,
-            list_pdf_overlays
+            list_pdf_overlays,
+            create_anchor,
+            list_anchors
         ])
         .run(tauri::generate_context!())
         .expect("não foi possível executar o shell desktop do NexoHub");

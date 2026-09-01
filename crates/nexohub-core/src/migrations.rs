@@ -3,7 +3,7 @@
 use crate::error::{CoreError, CoreResult, ErrorCode};
 use rusqlite::{Connection, Transaction};
 
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 1;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 2;
 
 struct Migration {
     version: i64,
@@ -11,10 +11,11 @@ struct Migration {
     sql: &'static str,
 }
 
-const MIGRATIONS: &[Migration] = &[Migration {
-    version: 1,
-    name: "document_artifact_graph_inicial",
-    sql: r#"
+const MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        name: "document_artifact_graph_inicial",
+        sql: r#"
         CREATE TABLE projects (
             id TEXT PRIMARY KEY NOT NULL,
             name TEXT NOT NULL CHECK (length(trim(name)) > 0),
@@ -106,7 +107,24 @@ const MIGRATIONS: &[Migration] = &[Migration {
             created_at INTEGER NOT NULL
         );
     "#,
-}];
+    },
+    Migration {
+        version: 2,
+        name: "anchors_persistentes",
+        sql: r#"
+        CREATE TABLE anchors (
+            id TEXT PRIMARY KEY NOT NULL,
+            artifact_id TEXT NOT NULL REFERENCES artifacts(id) ON DELETE RESTRICT,
+            kind TEXT NOT NULL CHECK (kind IN ('TEXT_RANGE', 'PDF_REGION', 'OCR_LINE')),
+            selector_json TEXT NOT NULL CHECK (json_valid(selector_json)),
+            quote TEXT,
+            created_at INTEGER NOT NULL
+        );
+
+        CREATE INDEX anchors_artifact_id_idx ON anchors(artifact_id, created_at);
+    "#,
+    },
+];
 
 pub(crate) fn apply(connection: &mut Connection, applied_at: i64) -> CoreResult<()> {
     connection

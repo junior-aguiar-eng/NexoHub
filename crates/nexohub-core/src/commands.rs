@@ -1,6 +1,7 @@
 //! Contratos estruturados para a porta IPC do desktop.
 
-use crate::domain::Overlay;
+use crate::anchor_tools::{CreateAnchorRequest, ListAnchorsRequest};
+use crate::domain::{Anchor, Overlay};
 use crate::domain::{Artifact, Document, ImportedDocument, Project};
 use crate::error::CoreResult;
 use crate::overlay_tools::{CreatePdfOverlayRequest, ListPdfOverlaysRequest};
@@ -93,4 +94,12 @@ pub fn create_pdf_overlay(request: CreatePdfOverlayRequest) -> CoreResult<Overla
 
 pub fn list_pdf_overlays(request: ListPdfOverlaysRequest) -> CoreResult<Vec<Overlay>> {
     crate::overlay_tools::list_pdf_overlays(request)
+}
+
+pub fn create_anchor(request: CreateAnchorRequest) -> CoreResult<Anchor> {
+    crate::anchor_tools::create_anchor(request)
+}
+
+pub fn list_anchors(request: ListAnchorsRequest) -> CoreResult<Vec<Anchor>> {
+    crate::anchor_tools::list_anchors(request)
 }

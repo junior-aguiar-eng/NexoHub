@@ -12,7 +12,7 @@
 | 7 | Texto e revisões UTF-8 imutáveis | Concluída localmente |
 | 8 | Overlay PDF | Concluída localmente |
 | 9 | OCR | Concluída localmente |
-| 10 | Anchors | Planejada |
+| 10 | Anchors | Concluída localmente |
 | 11 | DOCX | Planejada |
 | 12 | Tradução | Planejada |
 | 13 | Revisão | Planejada |

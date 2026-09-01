@@ -8,6 +8,7 @@ export type AssetId = Brand<string, "AssetId">;
 export type OverlayId = Brand<string, "OverlayId">;
 export type OperationId = Brand<string, "OperationId">;
 export type ExportId = Brand<string, "ExportId">;
+export type AnchorId = Brand<string, "AnchorId">;
 
 export type Timestamp = number;
 export type JsonPrimitive = string | number | boolean | null;
@@ -80,6 +81,17 @@ export interface Overlay {
   readonly createdAt: Timestamp;
 }
 
+export type AnchorKind = "TEXT_RANGE" | "PDF_REGION" | "OCR_LINE";
+
+export interface Anchor {
+  readonly id: AnchorId;
+  readonly artifactId: ArtifactId;
+  readonly kind: AnchorKind;
+  readonly selector: JsonValue;
+  readonly quote?: string;
+  readonly createdAt: Timestamp;
+}
+
 export type OperationStatus = "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELLED";
 
 export interface OperationFailure {
@@ -137,6 +149,7 @@ export const asAssetId = (value: string): AssetId => asIdentifier(value, "asset"
 export const asOverlayId = (value: string): OverlayId => asIdentifier(value, "overlay");
 export const asOperationId = (value: string): OperationId => asIdentifier(value, "operação");
 export const asExportId = (value: string): ExportId => asIdentifier(value, "exportação");
+export const asAnchorId = (value: string): AnchorId => asIdentifier(value, "anchor");
 
 export class DomainError extends Error {
   constructor(

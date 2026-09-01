@@ -13,6 +13,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@nexohub/contracts": "workspace:*",
     "@nexohub/tool-registry": "workspace:*",
     "@nexohub/tool-sdk": "workspace:*",
     "@base-ui/react": "1.7.0",

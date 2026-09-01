@@ -34,3 +34,17 @@ test("abre e fecha a paleta de comandos", async ({ page }) => {
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Paleta de comandos" })).toHaveCount(0);
 });
+
+test("abre o Studio e retorna ao Launcher", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Abrir Studio" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Seu documento, com contexto preservado" }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Documentos" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Inspector" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Voltar ao Launcher" }).click();
+  await expect(page.getByRole("heading", { name: /Documentos complexos/i })).toBeVisible();
+});

@@ -64,6 +64,11 @@ Tauri `compress_pdf`. O executor lê o blob do artifact informado, limita a desc
 durante o parsing, gera um novo PDF e persiste o resultado como artifact derivado ligado à operação.
 O original e o caminho externo de importação não são alterados.
 
+O Studio inicia como uma superfície do mesmo client, composta por árvore documental, abas, canvas e
+Inspector. O client depende de `DocumentCorePort`, tipada pelos contratos compartilhados; adapters
+de plataforma implementam a invocação sem permitir que componentes acessem Tauri, filesystem ou
+SQLite diretamente.
+
 ## Plataformas e runtime
 
 | Superfície | Estado atual | Runtime e gate |

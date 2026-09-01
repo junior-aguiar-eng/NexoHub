@@ -23,6 +23,9 @@ importers:
       '@fontsource-variable/plus-jakarta-sans':
         specifier: 5.2.8
         version: 5.2.8
+      '@nexohub/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@nexohub/tool-registry':
         specifier: workspace:*
         version: link:../../packages/tool-registry

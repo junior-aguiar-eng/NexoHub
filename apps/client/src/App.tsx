@@ -9,6 +9,7 @@ import { OpenStudioCTA } from "@/features/launcher/OpenStudioCTA";
 import { QuickToolGrid } from "@/features/launcher/QuickToolGrid";
 import { RecentProjects } from "@/features/launcher/RecentProjects";
 import { SuiteNavigation } from "@/features/launcher/SuiteNavigation";
+import { StudioWorkspace } from "@/features/studio/StudioWorkspace";
 import { translate } from "@/i18n";
 
 function normalize(value: string) {
@@ -19,6 +20,7 @@ function normalize(value: string) {
 }
 
 export function App() {
+  const [surface, setSurface] = useState<"launcher" | "studio">("launcher");
   const [activeSuite, setActiveSuite] = useState<SuiteId>("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -44,6 +46,10 @@ export function App() {
     });
   }, [activeSuite, searchQuery]);
 
+  if (surface === "studio") {
+    return <StudioWorkspace onClose={() => setSurface("launcher")} />;
+  }
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
@@ -56,7 +62,7 @@ export function App() {
         <GlobalSearch value={searchQuery} onChange={setSearchQuery} />
         <QuickToolGrid tools={filteredTools} />
         <RecentProjects />
-        <OpenStudioCTA />
+        <OpenStudioCTA onOpen={() => setSurface("studio")} />
       </main>
       <footer className="app-footer">
         <span>NexoHub</span>

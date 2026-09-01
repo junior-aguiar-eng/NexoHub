@@ -8,11 +8,25 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: /Documentos complexos/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Comece por uma tarefa" })).toBeInTheDocument();
-    expect(screen.getAllByText("Em breve")).toHaveLength(7);
+    expect(screen.getAllByText("Em breve")).toHaveLength(6);
     expect(screen.getByText("Organizar PDF").closest("article")).toContainElement(
       screen.getAllByTitle("Transformações de PDF chegam na Fase 4.")[0],
     );
-    expect(screen.getByRole("button", { name: /Abrir Studio/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Abrir Studio/i })).toBeEnabled();
+  });
+
+  it("abre o Studio e retorna ao Launcher sem acessar APIs nativas diretamente", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Abrir Studio/i }));
+    expect(
+      screen.getByRole("heading", { name: /Seu documento, com contexto preservado/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Documentos" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Inspector" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Voltar ao Launcher/i }));
+    expect(screen.getByRole("heading", { name: /Documentos complexos/i })).toBeInTheDocument();
   });
 
   it("filtra as ferramentas pela suíte ativa", () => {

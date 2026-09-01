@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "NexoHub",
+  "version": "0.0.0",
+  "identifier": "com.nexohub.community",
+  "build": {
+    "beforeDevCommand": "pnpm --dir ../client dev",
+    "beforeBuildCommand": "pnpm --dir ../client build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../../client/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "NexoHub",
+        "width": 1100,
+        "height": 720,
+        "minWidth": 800,
+        "minHeight": 560
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": { "active": false }
+}

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <title>Ícone do NexoHub</title>
+  <defs>
+    <linearGradient id="background" x1="128" y1="96" x2="896" y2="928" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#163B66" />
+      <stop offset="1" stop-color="#081426" />
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="224" fill="url(#background)" />
+  <path d="M278 746V278h96l276 300V278h96v468h-92L374 442v304h-96Z" fill="#7DD3FC" />
+</svg>

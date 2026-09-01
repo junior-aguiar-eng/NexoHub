@@ -1,0 +1,17 @@
+[package]
+name = "nexohub-desktop"
+version = "0.0.0"
+description = "Shell desktop do NexoHub"
+edition = "2024"
+license = "MPL-2.0"
+
+[lib]
+name = "nexohub_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+nexohub-core = { path = "../../../crates/nexohub-core" }

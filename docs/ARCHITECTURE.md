@@ -25,6 +25,33 @@ O domínio é um Document Artifact Graph: `Project` contém `Document`; document
 `Representation`, `Asset`, `Overlay` e operações ligando inputs a outputs. Blobs persistentes usam
 endereçamento BLAKE3; cache é reconstruível. Undo e redo movem ponteiros entre artifacts existentes.
 
+## Document Core e persistência
+
+`packages/domain` define o grafo tipado compartilhado e suas invariantes; `packages/contracts`
+define requests, responses e códigos de erro estáveis entre runtimes. O `nexohub-core` implementa a
+persistência nativa sem expor SQL ao client.
+
+Cada projeto local usa a estrutura:
+
+```text
+Projeto.nexohub/
+├── project.sqlite3
+├── blobs/<prefixo>/<hash-blake3>
+├── cache/
+├── previews/
+└── exports/
+```
+
+O SQLite mantém migrations versionadas, metadados e arestas do Operation Graph. O blob store grava
+por arquivo temporário no mesmo diretório e publica por renomeação; blobs iguais são deduplicados.
+Originals importados são copiados para o store e não possuem operação de atualização. Toda
+transformação cria outro artifact e registra arestas de entrada e saída.
+
+O shell Tauri expõe somente os comandos estruturados `create_project`, `open_project`,
+`import_document`, `list_documents`, `get_document` e `list_artifacts`. Caminhos, argumentos e
+integridade são validados no core Rust; erros retornam códigos estáveis sem SQL ou conteúdo do
+documento.
+
 O Tool Registry descreve ferramentas, superfícies, entradas, saídas, capacidades e executor. A
 Capability Layer escolhe adapters de navegador, nativos ou Python sem vazar detalhes para a UI.
 

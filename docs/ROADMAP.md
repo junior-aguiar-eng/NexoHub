@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | 0 | Monorepo, client compartilhado, Tauri Windows, Rust, Python/uv, qualidade e CI | Concluída localmente |
 | 1 | Design system e Launcher sem ferramentas fictícias | Concluída localmente |
-| 2 | Document Core e persistência local | Planejada |
+| 2 | Document Core e persistência local | Concluída localmente |
 | 3 | Tool SDK, Registry, Runner e Capability Layer | Planejada |
 | 4 | Quick Tools PDF reais | Planejada |
 | 5 | Studio sobre o Document Core | Planejada |

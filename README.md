@@ -4,8 +4,9 @@ Estação documental open source, local-first, Windows-first e com client web co
 
 ## Estado
 
-O repositório contém a fundação do monorepo e o Launcher responsivo do NexoHub. As ferramentas
-documentais e o Studio permanecem indisponíveis e são identificados explicitamente como futuros.
+O repositório contém a fundação do monorepo, o Launcher responsivo e o Document Core persistente
+do NexoHub. As ferramentas documentais e o Studio permanecem indisponíveis e são identificados
+explicitamente como futuros.
 
 ## Requisitos
 

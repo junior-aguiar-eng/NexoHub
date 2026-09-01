@@ -11,6 +11,11 @@ Este inventário será atualizado a partir dos lockfiles em cada alteração de 
 | Vitest | Testes unitários | MIT |
 | Playwright | Testes E2E | Apache-2.0 |
 | Tauri | Shell desktop | Apache-2.0 ou MIT |
+| rusqlite | Persistência SQLite do Document Core | MIT |
+| SQLite | Banco local compilado no core Rust | Domínio público |
+| BLAKE3 | Endereçamento e integridade de blobs | CC0-1.0 ou Apache-2.0 |
+| serde / serde_json | Contratos e JSON estruturado | Apache-2.0 ou MIT |
+| uuid | Identificadores persistentes | Apache-2.0 ou MIT |
 | Ruff | Lint Python | MIT |
 | pytest | Testes Python | MIT |
 

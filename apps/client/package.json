@@ -13,6 +13,8 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@nexohub/tool-registry": "workspace:*",
+    "@nexohub/tool-sdk": "workspace:*",
     "@base-ui/react": "1.7.0",
     "@fontsource-variable/playfair-display": "5.2.8",
     "@fontsource-variable/plus-jakarta-sans": "5.2.8",

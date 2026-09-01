@@ -1,0 +1,101 @@
+import { describe, expect, it, vi } from "vitest";
+import {
+  StaticCapabilityProvider,
+  type ToolExecutor,
+  type ToolManifest,
+  ToolRegistry,
+  ToolRunner,
+} from "./index";
+
+const manifest: ToolManifest = {
+  id: "pdf-organize",
+  version: "1.0.0",
+  name: "Organizar PDF",
+  category: "pdf",
+  surfaces: ["quick", "studio"],
+  accepts: ["application/pdf"],
+  produces: ["application/pdf"],
+  capabilities: ["documents.read", "documents.write"],
+  executor: "native",
+};
+
+describe("Tool Registry", () => {
+  it("registra manifestos válidos e impede IDs duplicados", () => {
+    const registry = new ToolRegistry();
+    registry.register(manifest);
+    expect(registry.list("quick")).toEqual([manifest]);
+    expect(() => registry.register(manifest)).toThrow("Ferramenta já registrada");
+  });
+
+  it("rejeita manifestos sem versão semântica", () => {
+    const registry = new ToolRegistry();
+    expect(() => registry.register({ ...manifest, version: "1" })).toThrow("Versão inválida");
+  });
+});
+
+describe("Tool Runner", () => {
+  it("valida, resolve capacidade e delega ao executor declarado", async () => {
+    const registry = new ToolRegistry();
+    registry.register(manifest, ({ input }) => {
+      if (typeof input !== "string") throw new Error("Arquivo obrigatório.");
+    });
+    const execute = vi.fn(async () => ({ artifacts: [{ id: "derived" }] }));
+    const executor: ToolExecutor = { kind: "native", execute };
+    const runner = new ToolRunner(
+      registry,
+      new StaticCapabilityProvider({
+        "documents.read": { available: true },
+        "documents.write": { available: true },
+      }),
+      [executor],
+    );
+
+    await expect(runner.run({ toolId: manifest.id, input: "original.pdf" })).resolves.toEqual({
+      artifacts: [{ id: "derived" }],
+    });
+    expect(execute).toHaveBeenCalledOnce();
+  });
+
+  it("bloqueia antes do executor quando falta capacidade", async () => {
+    const registry = new ToolRegistry();
+    registry.register(manifest);
+    const execute = vi.fn(async () => ({ artifacts: [] }));
+    const runner = new ToolRunner(
+      registry,
+      new StaticCapabilityProvider({
+        "documents.read": { available: true },
+        "documents.write": { available: false, reason: "Somente leitura no navegador." },
+      }),
+      [{ kind: "native", execute }],
+    );
+
+    await expect(runner.run({ toolId: manifest.id, input: "original.pdf" })).rejects.toMatchObject({
+      code: "TOOL_UNAVAILABLE",
+    });
+    expect(execute).not.toHaveBeenCalled();
+  });
+
+  it("normaliza entrada inválida e cancelamento em erros estruturados", async () => {
+    const registry = new ToolRegistry();
+    registry.register(manifest, () => {
+      throw new Error("Entrada incompatível.");
+    });
+    const runner = new ToolRunner(
+      registry,
+      new StaticCapabilityProvider({
+        "documents.read": { available: true },
+        "documents.write": { available: true },
+      }),
+      [],
+    );
+
+    await expect(runner.run({ toolId: manifest.id, input: null })).rejects.toMatchObject({
+      code: "INVALID_INPUT",
+    });
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      runner.run({ toolId: manifest.id, input: "original.pdf", signal: controller.signal }),
+    ).rejects.toMatchObject({ code: "CANCELLED" });
+  });
+});

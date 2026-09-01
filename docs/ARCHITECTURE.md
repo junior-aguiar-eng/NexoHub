@@ -54,6 +54,10 @@ documento.
 
 O Tool Registry descreve ferramentas, superfícies, entradas, saídas, capacidades e executor. A
 Capability Layer escolhe adapters de navegador, nativos ou Python sem vazar detalhes para a UI.
+O `@nexohub/tool-registry` é o catálogo canônico consumido pelas superfícies; o
+`@nexohub/tool-sdk` valida manifestos, antecipa indisponibilidade e encaminha execuções canceláveis
+ao adapter declarado. O registro dos manifestos não implica que seus executores já estejam
+implementados.
 
 ## Plataformas e runtime
 

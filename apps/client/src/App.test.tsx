@@ -9,6 +9,9 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: /Documentos complexos/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Comece por uma tarefa" })).toBeInTheDocument();
     expect(screen.getAllByText("Em breve")).toHaveLength(7);
+    expect(screen.getByText("Organizar PDF").closest("article")).toContainElement(
+      screen.getAllByTitle("Transformações de PDF chegam na Fase 4.")[0],
+    );
     expect(screen.getByRole("button", { name: /Abrir Studio/i })).toBeDisabled();
   });
 

@@ -1,5 +1,5 @@
 {
-  "name": "@nexohub/tool-sdk",
+  "name": "@nexohub/tool-registry",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,9 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@nexohub/tool-sdk": "workspace:*"
   },
   "devDependencies": {
     "typescript": "7.0.2",

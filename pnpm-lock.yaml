@@ -23,6 +23,12 @@ importers:
       '@fontsource-variable/plus-jakarta-sans':
         specifier: 5.2.8
         version: 5.2.8
+      '@nexohub/tool-registry':
+        specifier: workspace:*
+        version: link:../../packages/tool-registry
+      '@nexohub/tool-sdk':
+        specifier: workspace:*
+        version: link:../../packages/tool-sdk
       class-variance-authority:
         specifier: 0.7.1
         version: 0.7.1
@@ -110,7 +116,27 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.4.0)(jiti@2.7.0))
 
-  packages/tool-sdk: {}
+  packages/tool-registry:
+    dependencies:
+      '@nexohub/tool-sdk':
+        specifier: workspace:*
+        version: link:../tool-sdk
+    devDependencies:
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.4.0)(jiti@2.7.0))
+
+  packages/tool-sdk:
+    devDependencies:
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.4.0)(jiti@2.7.0))
 
 packages:
 

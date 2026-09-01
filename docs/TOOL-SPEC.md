@@ -1,7 +1,6 @@
 # Especificação de ferramentas
 
-Toda ferramenta será declarada no Tool Registry por manifesto versionado. O contrato mínimo futuro
-deve identificar:
+Toda ferramenta é declarada no Tool Registry por manifesto versionado. O contrato mínimo identifica:
 
 ```typescript
 interface ToolManifest {
@@ -17,9 +16,21 @@ interface ToolManifest {
 }
 ```
 
+O pacote `@nexohub/tool-sdk` fornece os contratos e as implementações comuns de `ToolRegistry`,
+`ToolRunner`, `CapabilityProvider` e erros estruturados. O pacote `@nexohub/tool-registry` mantém o
+catálogo canônico do produto. Launcher, Studio e futuras superfícies devem projetar esse catálogo,
+adicionando apenas metadados de apresentação, como ícones e chaves de internacionalização.
+
+O `ToolRunner` resolve a disponibilidade antes de validar e delegar ao executor `browser`, `native`
+ou `python`. Capacidades ausentes bloqueiam a execução com `TOOL_UNAVAILABLE`; entrada inválida,
+executor ausente, cancelamento e falha de engine também possuem códigos estáveis. Adapters concretos
+fornecem um `CapabilityProvider` sem detecção de sistema operacional nos componentes.
+
 Regras: UI chama Tool Runner, nunca engines; inputs e parâmetros são validados; operações longas
-são canceláveis; sucesso produz novos artifacts e relações input/output; falhas têm códigos
-estruturados; Quick e Studio reutilizam o mesmo executor; indisponibilidade é consultada pela
+são canceláveis por `AbortSignal`; sucesso devolve artifacts derivados para persistência pelo domínio;
+Quick e Studio reutilizam o mesmo manifesto e executor; indisponibilidade é consultada pela
 Capability Layer antes da execução.
 
-Esta fundação não registra ferramentas nem implementa comportamento documental.
+Os manifestos das ferramentas planejadas já estão registrados para permitir descoberta e
+indisponibilidade explícita. Eles não implementam comportamento documental: os executores reais
+começam na Fase 4.

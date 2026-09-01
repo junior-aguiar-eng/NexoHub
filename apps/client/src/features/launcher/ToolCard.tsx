@@ -11,6 +11,9 @@ type ToolCardProps = {
 export function ToolCard({ tool, index }: ToolCardProps) {
   const reduceMotion = useReducedMotion();
   const Icon = tool.icon;
+  const unavailableReason = tool.availability.available
+    ? undefined
+    : tool.availability.reasons.join(" ");
 
   return (
     <motion.article
@@ -23,7 +26,9 @@ export function ToolCard({ tool, index }: ToolCardProps) {
         <span className="tool-card__icon" aria-hidden="true">
           <Icon size={21} />
         </span>
-        <span className="status-badge">{translate("tools.comingSoon")}</span>
+        <span className="status-badge" title={unavailableReason}>
+          {translate("tools.comingSoon")}
+        </span>
       </div>
       <div>
         <h3>{translate(tool.titleKey)}</h3>

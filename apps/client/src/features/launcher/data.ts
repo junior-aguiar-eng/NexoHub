@@ -1,3 +1,5 @@
+import { coreToolRegistry } from "@nexohub/tool-registry";
+import { resolveToolAvailability, StaticCapabilityProvider } from "@nexohub/tool-sdk";
 import {
   BetweenHorizontalStart,
   FileArchive,
@@ -6,6 +8,7 @@ import {
   ListFilter,
   SpellCheck2,
 } from "lucide-react";
+import { translate } from "@/i18n";
 import type { LauncherTool, Suite } from "./model";
 
 export const suites: readonly Suite[] = [
@@ -15,53 +18,63 @@ export const suites: readonly Suite[] = [
   { id: "intelligence", labelKey: "suite.intelligence" },
 ];
 
-export const launcherTools: readonly LauncherTool[] = [
-  {
-    id: "pdf-organize",
+const presentation = {
+  "pdf-organize": {
     suite: "pdf",
     titleKey: "tool.pdfOrganize.title",
     descriptionKey: "tool.pdfOrganize.description",
     icon: BetweenHorizontalStart,
-    status: "coming-soon",
   },
-  {
-    id: "pdf-compress",
+  "pdf-compress": {
     suite: "pdf",
     titleKey: "tool.pdfCompress.title",
     descriptionKey: "tool.pdfCompress.description",
     icon: FileArchive,
-    status: "coming-soon",
   },
-  {
-    id: "pdf-ocr",
+  "pdf-ocr": {
     suite: "pdf",
     titleKey: "tool.pdfOcr.title",
     descriptionKey: "tool.pdfOcr.description",
     icon: FileScan,
-    status: "coming-soon",
   },
-  {
-    id: "text-compare",
+  "text-compare": {
     suite: "text",
     titleKey: "tool.textCompare.title",
     descriptionKey: "tool.textCompare.description",
     icon: GitCompareArrows,
-    status: "coming-soon",
   },
-  {
-    id: "text-review",
+  "text-review": {
     suite: "text",
     titleKey: "tool.textReview.title",
     descriptionKey: "tool.textReview.description",
     icon: SpellCheck2,
-    status: "coming-soon",
   },
-  {
-    id: "intelligence-extract",
+  "intelligence-extract": {
     suite: "intelligence",
     titleKey: "tool.intelligenceExtract.title",
     descriptionKey: "tool.intelligenceExtract.description",
     icon: ListFilter,
-    status: "coming-soon",
   },
-];
+} as const;
+
+const browserCapabilities = new StaticCapabilityProvider({
+  "documents.read": { available: true },
+  "documents.write": { available: true },
+  "pdf.transform": { available: false, reason: translate("tools.unavailable.pdf") },
+  "ocr.execute": { available: false, reason: translate("tools.unavailable.ocr") },
+  "text.compare": { available: false, reason: translate("tools.unavailable.compare") },
+  "text.review": { available: false, reason: translate("tools.unavailable.review") },
+  "intelligence.extract": {
+    available: false,
+    reason: translate("tools.unavailable.extract"),
+  },
+});
+
+export const launcherTools: readonly LauncherTool[] = coreToolRegistry
+  .list("quick")
+  .map((manifest) => ({
+    ...presentation[manifest.id as keyof typeof presentation],
+    id: manifest.id,
+    manifest,
+    availability: resolveToolAvailability(manifest, browserCapabilities),
+  }));

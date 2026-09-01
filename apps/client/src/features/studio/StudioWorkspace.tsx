@@ -3,6 +3,7 @@ import { FileText, FolderOpen, Library, PanelLeftClose, PanelRight } from "lucid
 import { Button } from "@/components/ui/button";
 import type { LauncherTool } from "@/features/launcher/model";
 import { translate } from "@/i18n";
+import { OcrPanel } from "./OcrPanel";
 import { PdfOverlayPanel } from "./PdfOverlayPanel";
 import { TextEditor } from "./TextEditor";
 
@@ -64,6 +65,7 @@ export function StudioWorkspace({ onClose, promotedFlow }: StudioWorkspaceProps)
             </Button>
             {promotedFlow?.tool.manifest.category === "text" && <TextEditor />}
             {promotedFlow?.tool.manifest.category === "pdf" && <PdfOverlayPanel />}
+            {promotedFlow?.tool.id === "pdf-ocr" && <OcrPanel />}
           </div>
         </section>
 

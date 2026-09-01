@@ -17,6 +17,10 @@ Este inventário será atualizado a partir dos lockfiles em cada alteração de 
 | serde / serde_json | Contratos e JSON estruturado | Apache-2.0 ou MIT |
 | uuid | Identificadores persistentes | Apache-2.0 ou MIT |
 | lopdf | Parsing e transformação local de PDF | MIT |
+| RapidOCR | Detecção e reconhecimento óptico local | Apache-2.0 |
+| ONNX Runtime | Inferência local dos modelos OCR | MIT |
+| pypdfium2 / PDFium | Renderização local de páginas PDF | Apache-2.0 ou BSD-3-Clause e licenças transitivas |
+| Pillow | Decodificação de imagens para OCR | HPND |
 | Ruff | Lint Python | MIT |
 | pytest | Testes Python | MIT |
 

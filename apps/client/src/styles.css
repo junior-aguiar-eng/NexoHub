@@ -845,6 +845,60 @@ button {
   color: var(--color-ink-muted);
   font-size: 0.65rem;
 }
+.ocr-panel {
+  display: grid;
+  width: min(34rem, 100%);
+  justify-items: start;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  text-align: left;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.ocr-panel__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.ocr-panel__title > span {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  color: var(--color-brand);
+  background: var(--color-brand-soft);
+  border-radius: var(--radius-sm);
+}
+.ocr-panel .eyebrow {
+  margin: 0 0 0.1rem;
+  font-size: 0.55rem;
+}
+.ocr-panel h2 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.ocr-panel ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  color: var(--color-ink-muted);
+  font-size: 0.7rem;
+  list-style: none;
+}
+.ocr-panel li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ocr-panel > p {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: 0.65rem;
+}
 
 .command-backdrop {
   position: fixed;

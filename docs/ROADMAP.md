@@ -11,7 +11,7 @@
 | 6 | Nexo Layers, NexoFlow e promoção Quick → Studio | Concluída localmente |
 | 7 | Texto e revisões UTF-8 imutáveis | Concluída localmente |
 | 8 | Overlay PDF | Concluída localmente |
-| 9 | OCR | Planejada |
+| 9 | OCR | Concluída localmente |
 | 10 | Anchors | Planejada |
 | 11 | DOCX | Planejada |
 | 12 | Tradução | Planejada |

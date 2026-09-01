@@ -5,7 +5,12 @@ description = "Document engine boundary for NexoHub"
 readme = "README.md"
 requires-python = ">=3.14"
 license = "MPL-2.0"
-dependencies = []
+dependencies = [
+    "onnxruntime==1.29.0",
+    "pillow==12.3.0",
+    "pypdfium2==5.13.0",
+    "rapidocr==3.9.2",
+]
 
 [dependency-groups]
 dev = ["pytest>=8.4.0", "ruff>=0.12.0"]

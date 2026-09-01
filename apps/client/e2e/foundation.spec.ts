@@ -71,3 +71,15 @@ test("edita um rascunho textual sem simular persistência", async ({ page }) => 
   await expect(editor).toHaveValue("Texto jurídico em UTF-8");
   await expect(page.getByRole("button", { name: "Criar revisão" })).toBeDisabled();
 });
+
+test("apresenta o OCR como processamento local condicionado a artifact", async ({ page }) => {
+  await page.goto("/");
+  const card = page.locator("article").filter({ hasText: "Reconhecer texto" });
+  await card.getByRole("button", { name: "Continuar no Studio" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Reconhecimento óptico de caracteres" }),
+  ).toBeVisible();
+  await expect(page.getByText(/Processamento offline/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Executar OCR" })).toBeDisabled();
+});

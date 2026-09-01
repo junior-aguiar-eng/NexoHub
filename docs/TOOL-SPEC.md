@@ -56,3 +56,10 @@ limitada a 16 MiB e a interface não oferece persistência enquanto não houver 
 usa página iniciada em 1 e retângulo normalizado (`x`, `y`, `width`, `height`) contido em `[0, 1]`.
 `list_pdf_overlays` recupera as camadas na ordem de criação. Nenhum dos comandos altera o blob PDF
 ou cria aparência materializada dentro dele.
+
+## Fase 9 — OCR
+
+O sidecar aceita uma requisição JSON Lines `ocr` com `mimeType` e `contentBase64`. São suportados
+PNG, JPEG, TIFF, WebP e PDF. A resposta contém texto consolidado e linhas com página, confiança e
+retângulo normalizado. Erros de protocolo, entrada e inferência usam `INVALID_REQUEST`,
+`INVALID_INPUT` e `OCR_FAILED`. Nenhum conteúdo é enviado à rede.

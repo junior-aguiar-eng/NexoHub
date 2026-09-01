@@ -85,6 +85,11 @@ notas e desenhos usam página iniciada em 1 e geometria normalizada no intervalo
 listar overlays não materializa nem regrava o PDF; uma eventual exportação visual será outra
 operação derivada. O Studio mantém a edição desabilitada enquanto não houver contexto persistível.
 
+O OCR executa no sidecar Python por JSON Lines em stdin/stdout, sem servidor HTTP e sem aceitar
+caminhos arbitrários. RapidOCR com ONNX Runtime reconhece texto localmente; PDFium renderiza PDFs
+antes da inferência. A entrada é limitada a 64 MiB, PDFs a 500 páginas e cada página a 50
+megapixels. A resposta mantém página, confiança e caixas normalizadas para uso futuro por anchors.
+
 ## Plataformas e runtime
 
 | Superfície | Estado atual | Runtime e gate |

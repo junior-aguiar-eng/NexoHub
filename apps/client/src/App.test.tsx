@@ -58,6 +58,20 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Criar revisão" })).toBeDisabled();
   });
 
+  it("expõe o OCR local sem habilitar execução fora de um artifact", () => {
+    render(<App />);
+    const card = screen.getByText("Reconhecer texto").closest("article");
+    if (!card) throw new Error("card OCR não encontrado");
+
+    fireEvent.click(within(card).getByRole("button", { name: "Continuar no Studio" }));
+
+    expect(
+      screen.getByRole("heading", { name: "Reconhecimento óptico de caracteres" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Processamento offline/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Executar OCR" })).toBeDisabled();
+  });
+
   it("filtra as ferramentas pela suíte ativa", () => {
     render(<App />);
 

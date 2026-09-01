@@ -80,6 +80,11 @@ A edição textual usa uma representação UTF-8 local. `create_text_revision` a
 artifact derivado ligado à operação `text-edit`. O editor mantém rascunho local e só habilita a
 persistência quando recebe contexto de projeto e artifact por `DocumentCorePort`.
 
+Overlays PDF são registros independentes vinculados a um artifact `application/pdf`. Destaques,
+notas e desenhos usam página iniciada em 1 e geometria normalizada no intervalo da página. Criar ou
+listar overlays não materializa nem regrava o PDF; uma eventual exportação visual será outra
+operação derivada. O Studio mantém a edição desabilitada enquanto não houver contexto persistível.
+
 ## Plataformas e runtime
 
 | Superfície | Estado atual | Runtime e gate |

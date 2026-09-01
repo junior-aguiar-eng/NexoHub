@@ -57,6 +57,8 @@ test("promove uma Quick Tool para um NexoFlow no Studio", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "NexoFlow" })).toBeVisible();
   await expect(page.getByText("pdf-compress")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Nexo Layers" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overlay PDF" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Adicionar overlay" })).toBeDisabled();
 });
 
 test("edita um rascunho textual sem simular persistência", async ({ page }) => {

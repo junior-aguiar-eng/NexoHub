@@ -5,6 +5,7 @@ import type {
   DocumentId,
   ImportedDocument,
   Operation,
+  Overlay,
   Project,
 } from "@nexohub/domain";
 
@@ -79,6 +80,25 @@ export interface TextToolResult {
   readonly operation: Operation;
 }
 
+export type PdfOverlayKind = "HIGHLIGHT" | "NOTE" | "DRAWING";
+
+export interface CreatePdfOverlayRequest {
+  readonly projectPath: string;
+  readonly artifactId: ArtifactId;
+  readonly kind: PdfOverlayKind;
+  readonly pageNumber: number;
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+  readonly payload: import("@nexohub/domain").JsonValue;
+}
+
+export interface ListPdfOverlaysRequest {
+  readonly projectPath: string;
+  readonly artifactId: ArtifactId;
+}
+
 export interface DocumentCoreCommands {
   readonly create_project: {
     readonly request: CreateProjectRequest;
@@ -111,6 +131,14 @@ export interface DocumentCoreCommands {
   readonly create_text_revision: {
     readonly request: CreateTextRevisionRequest;
     readonly response: TextToolResult;
+  };
+  readonly create_pdf_overlay: {
+    readonly request: CreatePdfOverlayRequest;
+    readonly response: Overlay;
+  };
+  readonly list_pdf_overlays: {
+    readonly request: ListPdfOverlaysRequest;
+    readonly response: readonly Overlay[];
   };
 }
 

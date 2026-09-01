@@ -10,7 +10,7 @@
 | 5 | Studio sobre o Document Core | Em andamento — shell e porta tipada do Document Core |
 | 6 | Nexo Layers, NexoFlow e promoção Quick → Studio | Concluída localmente |
 | 7 | Texto e revisões UTF-8 imutáveis | Concluída localmente |
-| 8 | Overlay PDF | Planejada |
+| 8 | Overlay PDF | Concluída localmente |
 | 9 | OCR | Planejada |
 | 10 | Anchors | Planejada |
 | 11 | DOCX | Planejada |

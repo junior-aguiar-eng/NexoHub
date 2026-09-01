@@ -5,6 +5,7 @@ pub mod commands;
 pub mod domain;
 pub mod error;
 mod migrations;
+pub mod overlay_tools;
 pub mod pdf_tools;
 pub mod storage;
 pub mod text_tools;

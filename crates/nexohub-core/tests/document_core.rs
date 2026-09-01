@@ -1,6 +1,10 @@
 use lopdf::{Document as PdfDocument, Object, dictionary};
 use nexohub_core::commands::CreateProjectRequest;
 use nexohub_core::domain::ArtifactKind;
+use nexohub_core::overlay_tools::{
+    CreatePdfOverlayRequest, ListPdfOverlaysRequest, PdfOverlayKind, create_pdf_overlay,
+    list_pdf_overlays,
+};
 use nexohub_core::pdf_tools::{CompressPdfRequest, compress_pdf};
 use nexohub_core::text_tools::{CreateTextRevisionRequest, create_text_revision};
 use nexohub_core::{ErrorCode, ProjectStore};
@@ -358,6 +362,86 @@ fn rejects_text_revision_for_non_text_artifact() {
         content: "não deve persistir".to_owned(),
     })
     .expect_err("tipo incompatível deve ser rejeitado");
+
+    assert_eq!(error.code, ErrorCode::InvalidArgument);
+}
+
+#[test]
+fn persists_pdf_overlay_without_changing_pdf_blob() {
+    let temporary = TestDirectory::new("pdf-overlay");
+    let project_path = temporary.project_path();
+    let source = write_source(&temporary.path, "annotated.pdf", &synthetic_pdf());
+    let mut store =
+        ProjectStore::create(&project_path, "Overlay PDF").expect("projeto deve ser criado");
+    let imported = store
+        .import_document(&source, None, "application/pdf")
+        .expect("PDF deve ser importado");
+    let original = store
+        .read_artifact_bytes(&imported.artifact.id)
+        .expect("PDF original deve ser legível");
+    drop(store);
+
+    let overlay = create_pdf_overlay(CreatePdfOverlayRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        artifact_id: imported.artifact.id.clone(),
+        kind: PdfOverlayKind::Highlight,
+        page_number: 1,
+        x: 0.1,
+        y: 0.2,
+        width: 0.3,
+        height: 0.1,
+        payload: json!({ "color": "accent" }),
+    })
+    .expect("overlay deve ser criado");
+
+    let overlays = list_pdf_overlays(ListPdfOverlaysRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        artifact_id: imported.artifact.id.clone(),
+    })
+    .expect("overlays devem ser listados");
+    let store = ProjectStore::open(&project_path).expect("projeto deve reabrir");
+    assert_eq!(overlay.kind, "HIGHLIGHT");
+    assert_eq!(overlay.data["pageNumber"], 1);
+    assert_eq!(overlays, vec![overlay]);
+    assert_eq!(
+        store
+            .read_artifact_bytes(&imported.artifact.id)
+            .expect("PDF deve permanecer legível"),
+        original
+    );
+    assert_eq!(
+        store
+            .list_artifacts(&imported.document.id)
+            .expect("artifacts devem ser listados")
+            .len(),
+        1
+    );
+}
+
+#[test]
+fn rejects_pdf_overlay_outside_normalized_page_bounds() {
+    let temporary = TestDirectory::new("pdf-overlay-bounds");
+    let project_path = temporary.project_path();
+    let source = write_source(&temporary.path, "bounds.pdf", &synthetic_pdf());
+    let mut store =
+        ProjectStore::create(&project_path, "Geometria").expect("projeto deve ser criado");
+    let imported = store
+        .import_document(&source, None, "application/pdf")
+        .expect("PDF deve ser importado");
+    drop(store);
+
+    let error = create_pdf_overlay(CreatePdfOverlayRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        artifact_id: imported.artifact.id,
+        kind: PdfOverlayKind::Note,
+        page_number: 1,
+        x: 0.9,
+        y: 0.2,
+        width: 0.2,
+        height: 0.1,
+        payload: json!({}),
+    })
+    .expect_err("overlay fora da página deve ser rejeitado");
 
     assert_eq!(error.code, ErrorCode::InvalidArgument);
 }

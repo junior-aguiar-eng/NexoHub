@@ -3,7 +3,7 @@
 use crate::blob_store::BlobStore;
 use crate::domain::{
     Artifact, ArtifactKind, Document, ImportedDocument, Operation, OperationInput, OperationOutput,
-    OperationStatus, Project,
+    OperationStatus, Overlay, Project,
 };
 use crate::error::{CoreError, CoreResult, ErrorCode};
 use crate::migrations;
@@ -354,6 +354,61 @@ impl ProjectStore {
         self.blobs.read(&artifact.hash)
     }
 
+    /// Persiste metadados visuais sem alterar o artifact ao qual pertencem.
+    pub fn create_overlay(
+        &mut self,
+        artifact_id: &str,
+        kind: &str,
+        data: Value,
+    ) -> CoreResult<Overlay> {
+        self.get_artifact(artifact_id)?;
+        validate_text(kind, "A categoria do overlay é obrigatória.")?;
+        let data_json = serde_json::to_string(&data).map_err(|_| {
+            CoreError::new(
+                ErrorCode::InvalidArgument,
+                "Os dados do overlay são inválidos.",
+            )
+        })?;
+        let overlay = Overlay {
+            id: Uuid::new_v4().to_string(),
+            artifact_id: artifact_id.to_owned(),
+            kind: kind.trim().to_owned(),
+            data,
+            created_at: current_time_millis()?,
+        };
+        self.connection
+            .execute(
+                "INSERT INTO overlays(id, artifact_id, kind, data_json, created_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![
+                    overlay.id,
+                    overlay.artifact_id,
+                    overlay.kind,
+                    data_json,
+                    overlay.created_at
+                ],
+            )
+            .map_err(|_| CoreError::database())?;
+        Ok(overlay)
+    }
+
+    /// Lista overlays na ordem de criação, sem materializá-los no PDF.
+    pub fn list_overlays(&self, artifact_id: &str) -> CoreResult<Vec<Overlay>> {
+        self.get_artifact(artifact_id)?;
+        let mut statement = self
+            .connection
+            .prepare(
+                "SELECT id, artifact_id, kind, data_json, created_at
+                 FROM overlays WHERE artifact_id = ?1 ORDER BY created_at, rowid",
+            )
+            .map_err(|_| CoreError::database())?;
+        let rows = statement
+            .query_map([artifact_id], map_overlay)
+            .map_err(|_| CoreError::database())?;
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|_| CoreError::database())
+    }
+
     /// Versão aplicada do schema, usada por diagnósticos e testes de migration.
     pub fn schema_version(&self) -> CoreResult<i64> {
         self.connection
@@ -454,6 +509,20 @@ fn map_artifact(row: &Row<'_>) -> rusqlite::Result<Artifact> {
         size,
         storage_path: row.get(6)?,
         created_at: row.get(7)?,
+    })
+}
+
+fn map_overlay(row: &Row<'_>) -> rusqlite::Result<Overlay> {
+    let data_json: String = row.get(3)?;
+    let data = serde_json::from_str(&data_json).map_err(|error| {
+        rusqlite::Error::FromSqlConversionFailure(3, rusqlite::types::Type::Text, Box::new(error))
+    })?;
+    Ok(Overlay {
+        id: row.get(0)?,
+        artifact_id: row.get(1)?,
+        kind: row.get(2)?,
+        data,
+        created_at: row.get(4)?,
     })
 }
 

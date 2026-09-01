@@ -1,7 +1,9 @@
 //! Contratos estruturados para a porta IPC do desktop.
 
+use crate::domain::Overlay;
 use crate::domain::{Artifact, Document, ImportedDocument, Project};
 use crate::error::CoreResult;
+use crate::overlay_tools::{CreatePdfOverlayRequest, ListPdfOverlaysRequest};
 use crate::pdf_tools::{CompressPdfRequest, PdfToolResult};
 use crate::storage::ProjectStore;
 use crate::text_tools::{CreateTextRevisionRequest, TextToolResult};
@@ -83,4 +85,12 @@ pub fn compress_pdf(request: CompressPdfRequest) -> CoreResult<PdfToolResult> {
 
 pub fn create_text_revision(request: CreateTextRevisionRequest) -> CoreResult<TextToolResult> {
     crate::text_tools::create_text_revision(request)
+}
+
+pub fn create_pdf_overlay(request: CreatePdfOverlayRequest) -> CoreResult<Overlay> {
+    crate::overlay_tools::create_pdf_overlay(request)
+}
+
+pub fn list_pdf_overlays(request: ListPdfOverlaysRequest) -> CoreResult<Vec<Overlay>> {
+    crate::overlay_tools::list_pdf_overlays(request)
 }

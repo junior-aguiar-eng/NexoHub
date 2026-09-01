@@ -743,6 +743,108 @@ button {
   font-size: 0.62rem;
   border-top: 1px solid var(--color-border);
 }
+.pdf-overlay {
+  width: min(34rem, 100%);
+  margin-top: var(--space-8);
+  padding: var(--space-4);
+  text-align: left;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.pdf-overlay__header,
+.pdf-overlay__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.pdf-overlay__header .eyebrow {
+  margin: 0 0 0.1rem;
+  font-size: 0.55rem;
+}
+.pdf-overlay__header h2 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.pdf-overlay__kinds {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  padding: 0;
+  border: 0;
+}
+.pdf-overlay__kinds button {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: var(--color-ink-muted);
+  background: var(--color-surface-muted);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.pdf-overlay__kinds button[aria-pressed="true"] {
+  color: var(--color-brand-strong);
+  background: var(--color-brand-soft);
+  border-color: var(--color-brand);
+}
+.pdf-overlay__preview {
+  position: relative;
+  width: min(15rem, 70%);
+  aspect-ratio: 0.707;
+  margin: var(--space-4) auto;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 0.65rem,
+      var(--color-border) 0.65rem,
+      var(--color-border) 0.72rem
+    ),
+    var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+.pdf-overlay__preview span {
+  position: absolute;
+  background: rgb(241 200 92 / 55%);
+  border: 1px solid rgb(201 159 98 / 75%);
+}
+.pdf-overlay__preview span[data-kind="NOTE"] {
+  background: var(--color-brand-soft);
+  border-color: var(--color-brand);
+}
+.pdf-overlay__preview span[data-kind="DRAWING"] {
+  background: transparent;
+  border: 2px dashed var(--color-brand);
+}
+.pdf-overlay__footer label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-ink-muted);
+  font-size: 0.7rem;
+}
+.pdf-overlay__footer input {
+  width: 4rem;
+  min-height: 2.3rem;
+  padding: 0 var(--space-2);
+  color: var(--color-ink);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 0.4rem;
+}
+.pdf-overlay__notice {
+  margin: var(--space-3) 0 0;
+  color: var(--color-ink-muted);
+  font-size: 0.65rem;
+}
 
 .command-backdrop {
   position: fixed;

@@ -40,6 +40,8 @@ describe("App", () => {
     expect(screen.getByText("Rascunho")).toBeInTheDocument();
     expect(screen.getByText("pdf-compress")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Nexo Layers" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Overlay PDF" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Adicionar overlay" })).toBeDisabled();
   });
 
   it("abre o editor de texto ao promover uma ferramenta textual", () => {

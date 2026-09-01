@@ -49,3 +49,10 @@ do Document Core.
 de entrada deve ser `text/plain` ou `text/markdown` e pertencer ao documento. Cada salvamento cria
 um artifact derivado e uma operação `text-edit`; o blob original nunca é regravado. A revisão é
 limitada a 16 MiB e a interface não oferece persistência enquanto não houver contexto documental.
+
+## Fase 8 — overlay PDF
+
+`create_pdf_overlay` persiste destaques, notas ou desenhos associados a um artifact PDF. A posição
+usa página iniciada em 1 e retângulo normalizado (`x`, `y`, `width`, `height`) contido em `[0, 1]`.
+`list_pdf_overlays` recupera as camadas na ordem de criação. Nenhum dos comandos altera o blob PDF
+ou cria aparência materializada dentro dele.

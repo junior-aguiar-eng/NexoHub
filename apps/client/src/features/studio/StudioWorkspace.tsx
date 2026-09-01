@@ -3,6 +3,7 @@ import { FileText, FolderOpen, Library, PanelLeftClose, PanelRight } from "lucid
 import { Button } from "@/components/ui/button";
 import type { LauncherTool } from "@/features/launcher/model";
 import { translate } from "@/i18n";
+import { PdfOverlayPanel } from "./PdfOverlayPanel";
 import { TextEditor } from "./TextEditor";
 
 type StudioWorkspaceProps = {
@@ -62,6 +63,7 @@ export function StudioWorkspace({ onClose, promotedFlow }: StudioWorkspaceProps)
               <span className="status-badge">{translate("tools.comingSoon")}</span>
             </Button>
             {promotedFlow?.tool.manifest.category === "text" && <TextEditor />}
+            {promotedFlow?.tool.manifest.category === "pdf" && <PdfOverlayPanel />}
           </div>
         </section>
 

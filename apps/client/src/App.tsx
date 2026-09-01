@@ -1,10 +1,11 @@
+import { type NexoFlowSnapshot, promoteQuickTool } from "@nexohub/domain";
 import { useEffect, useMemo, useState } from "react";
 import { CommandPalette } from "@/features/launcher/CommandPalette";
 import { launcherTools } from "@/features/launcher/data";
 import { GlobalSearch } from "@/features/launcher/GlobalSearch";
 import { Header } from "@/features/launcher/Header";
 import { Hero } from "@/features/launcher/Hero";
-import type { SuiteId } from "@/features/launcher/model";
+import type { LauncherTool, SuiteId } from "@/features/launcher/model";
 import { OpenStudioCTA } from "@/features/launcher/OpenStudioCTA";
 import { QuickToolGrid } from "@/features/launcher/QuickToolGrid";
 import { RecentProjects } from "@/features/launcher/RecentProjects";
@@ -21,6 +22,10 @@ function normalize(value: string) {
 
 export function App() {
   const [surface, setSurface] = useState<"launcher" | "studio">("launcher");
+  const [promotedFlow, setPromotedFlow] = useState<{
+    tool: LauncherTool;
+    flow: NexoFlowSnapshot;
+  }>();
   const [activeSuite, setActiveSuite] = useState<SuiteId>("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -47,7 +52,15 @@ export function App() {
   }, [activeSuite, searchQuery]);
 
   if (surface === "studio") {
-    return <StudioWorkspace onClose={() => setSurface("launcher")} />;
+    return (
+      <StudioWorkspace
+        promotedFlow={promotedFlow}
+        onClose={() => {
+          setSurface("launcher");
+          setPromotedFlow(undefined);
+        }}
+      />
+    );
   }
 
   return (
@@ -60,7 +73,13 @@ export function App() {
       <main id="main-content" className="launcher-content">
         <Hero />
         <GlobalSearch value={searchQuery} onChange={setSearchQuery} />
-        <QuickToolGrid tools={filteredTools} />
+        <QuickToolGrid
+          tools={filteredTools}
+          onPromote={(tool) => {
+            setPromotedFlow({ tool, flow: promoteQuickTool(tool.id).snapshot });
+            setSurface("studio");
+          }}
+        />
         <RecentProjects />
         <OpenStudioCTA onOpen={() => setSurface("studio")} />
       </main>

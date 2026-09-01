@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@nexohub/contracts": "workspace:*",
+    "@nexohub/domain": "workspace:*",
     "@nexohub/tool-registry": "workspace:*",
     "@nexohub/tool-sdk": "workspace:*",
     "@base-ui/react": "1.7.0",

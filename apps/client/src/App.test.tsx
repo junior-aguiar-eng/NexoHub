@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { App } from "./App";
 
@@ -27,6 +27,19 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Voltar ao Launcher/i }));
     expect(screen.getByRole("heading", { name: /Documentos complexos/i })).toBeInTheDocument();
+  });
+
+  it("promove uma Quick Tool para um rascunho NexoFlow no Studio", () => {
+    render(<App />);
+    const card = screen.getByText("Comprimir PDF").closest("article");
+    if (!card) throw new Error("card da ferramenta não encontrado");
+
+    fireEvent.click(within(card).getByRole("button", { name: "Continuar no Studio" }));
+
+    expect(screen.getByRole("heading", { name: "NexoFlow" })).toBeInTheDocument();
+    expect(screen.getByText("Rascunho")).toBeInTheDocument();
+    expect(screen.getByText("pdf-compress")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Nexo Layers" })).toBeInTheDocument();
   });
 
   it("filtra as ferramentas pela suíte ativa", () => {

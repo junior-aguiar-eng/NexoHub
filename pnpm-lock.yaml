@@ -26,6 +26,9 @@ importers:
       '@nexohub/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@nexohub/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@nexohub/tool-registry':
         specifier: workspace:*
         version: link:../../packages/tool-registry

@@ -1,12 +1,18 @@
+import type { NexoFlowSnapshot } from "@nexohub/domain";
 import { FileText, FolderOpen, Library, PanelLeftClose, PanelRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { LauncherTool } from "@/features/launcher/model";
 import { translate } from "@/i18n";
 
 type StudioWorkspaceProps = {
   onClose: () => void;
+  promotedFlow?: {
+    tool: LauncherTool;
+    flow: NexoFlowSnapshot;
+  };
 };
 
-export function StudioWorkspace({ onClose }: StudioWorkspaceProps) {
+export function StudioWorkspace({ onClose, promotedFlow }: StudioWorkspaceProps) {
   return (
     <div className="studio-shell">
       <header className="studio-header">
@@ -62,7 +68,27 @@ export function StudioWorkspace({ onClose }: StudioWorkspaceProps) {
             <PanelRight size={17} aria-hidden="true" />
             <h2 id="studio-inspector-title">{translate("studio.inspector.title")}</h2>
           </div>
-          <p>{translate("studio.inspector.empty")}</p>
+          <section className="studio-inspector__section" aria-labelledby="studio-layers-title">
+            <h3 id="studio-layers-title">{translate("studio.layers.title")}</h3>
+            <p>{translate("studio.layers.empty")}</p>
+          </section>
+          <section className="studio-inspector__section" aria-labelledby="studio-flow-title">
+            <h3 id="studio-flow-title">{translate("studio.flow.title")}</h3>
+            {promotedFlow ? (
+              <div className="studio-flow-card">
+                <span className="status-badge">{translate("studio.flow.draft")}</span>
+                <strong>{translate(promotedFlow.tool.titleKey)}</strong>
+                <p>{translate("studio.flow.promoted")}</p>
+                <ol>
+                  {promotedFlow.flow.steps.map((step) => (
+                    <li key={step.id}>{step.toolId}</li>
+                  ))}
+                </ol>
+              </div>
+            ) : (
+              <p>{translate("studio.flow.empty")}</p>
+            )}
+          </section>
         </aside>
       </main>
     </div>

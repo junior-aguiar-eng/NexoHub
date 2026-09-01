@@ -436,6 +436,9 @@ button {
   bottom: var(--space-5);
   z-index: 1;
   color: var(--color-ink-muted);
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
 }
 .empty-search {
   padding: var(--space-8);
@@ -595,6 +598,45 @@ button {
   color: var(--color-ink-muted);
   font-size: 0.76rem;
   line-height: 1.6;
+}
+.studio-inspector__section {
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.studio-inspector__section:last-child {
+  border-bottom: 0;
+}
+.studio-inspector__section h3 {
+  margin: 0 0 var(--space-2);
+  font-size: 0.72rem;
+}
+.studio-inspector__section > p,
+.studio-flow-card p {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+.studio-flow-card {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+}
+.studio-flow-card strong {
+  font-size: 0.78rem;
+}
+.studio-flow-card ol {
+  width: 100%;
+  margin: var(--space-1) 0 0;
+  padding: var(--space-2) var(--space-3) var(--space-2) 1.75rem;
+  color: var(--color-ink-muted);
+  font-family: ui-monospace, monospace;
+  font-size: 0.68rem;
+  background: var(--color-surface-raised);
+  border-radius: 0.45rem;
 }
 .studio-canvas {
   display: grid;

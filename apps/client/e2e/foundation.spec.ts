@@ -48,3 +48,13 @@ test("abre o Studio e retorna ao Launcher", async ({ page }) => {
   await page.getByRole("button", { name: "Voltar ao Launcher" }).click();
   await expect(page.getByRole("heading", { name: /Documentos complexos/i })).toBeVisible();
 });
+
+test("promove uma Quick Tool para um NexoFlow no Studio", async ({ page }) => {
+  await page.goto("/");
+  const card = page.locator("article").filter({ hasText: "Comprimir PDF" });
+  await card.getByRole("button", { name: "Continuar no Studio" }).click();
+
+  await expect(page.getByRole("heading", { name: "NexoFlow" })).toBeVisible();
+  await expect(page.getByText("pdf-compress")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nexo Layers" })).toBeVisible();
+});

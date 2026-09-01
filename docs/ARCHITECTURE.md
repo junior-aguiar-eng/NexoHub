@@ -69,6 +69,12 @@ Inspector. O client depende de `DocumentCorePort`, tipada pelos contratos compar
 de plataforma implementam a invocação sem permitir que componentes acessem Tauri, filesystem ou
 SQLite diretamente.
 
+Nexo Layers projeta originals, artifacts derivados e overlays como camadas independentes, com
+visibilidade controlada sem mutação das entidades de origem. NexoFlow representa sequências
+imutáveis de ferramentas, valida dependências entre etapas e mantém estados explícitos. Uma Quick
+Tool pode ser promovida a rascunho `QUICK` no Studio; essa transição transfere o identificador da
+ferramenta e o contexto operacional, mas não simula nem dispara execução.
+
 ## Plataformas e runtime
 
 | Superfície | Estado atual | Runtime e gate |

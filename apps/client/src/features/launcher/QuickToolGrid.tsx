@@ -4,9 +4,10 @@ import { ToolCard } from "./ToolCard";
 
 type QuickToolGridProps = {
   tools: readonly LauncherTool[];
+  onPromote: (tool: LauncherTool) => void;
 };
 
-export function QuickToolGrid({ tools }: QuickToolGridProps) {
+export function QuickToolGrid({ tools, onPromote }: QuickToolGridProps) {
   return (
     <section className="section-block" aria-labelledby="quick-tools-title">
       <div className="section-heading">
@@ -19,7 +20,7 @@ export function QuickToolGrid({ tools }: QuickToolGridProps) {
       {tools.length > 0 ? (
         <div className="tool-grid">
           {tools.map((tool, index) => (
-            <ToolCard key={tool.id} tool={tool} index={index} />
+            <ToolCard key={tool.id} tool={tool} index={index} onPromote={onPromote} />
           ))}
         </div>
       ) : (

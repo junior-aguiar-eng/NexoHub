@@ -1,14 +1,16 @@
 import { ArrowUpRight } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
+import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import type { LauncherTool } from "./model";
 
 type ToolCardProps = {
   tool: LauncherTool;
   index: number;
+  onPromote: (tool: LauncherTool) => void;
 };
 
-export function ToolCard({ tool, index }: ToolCardProps) {
+export function ToolCard({ tool, index, onPromote }: ToolCardProps) {
   const reduceMotion = useReducedMotion();
   const Icon = tool.icon;
   const unavailableReason = tool.availability.available
@@ -34,9 +36,10 @@ export function ToolCard({ tool, index }: ToolCardProps) {
         <h3>{translate(tool.titleKey)}</h3>
         <p>{translate(tool.descriptionKey)}</p>
       </div>
-      <span className="tool-card__future" aria-hidden="true">
+      <Button variant="ghost" className="tool-card__future" onClick={() => onPromote(tool)}>
+        <span className="sr-only">{translate("tools.openStudio")}</span>
         <ArrowUpRight size={18} />
-      </span>
+      </Button>
     </motion.article>
   );
 }

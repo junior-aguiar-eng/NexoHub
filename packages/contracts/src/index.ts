@@ -1,4 +1,12 @@
-import type { Artifact, Document, DocumentId, ImportedDocument, Project } from "@nexohub/domain";
+import type {
+  Artifact,
+  ArtifactId,
+  Document,
+  DocumentId,
+  ImportedDocument,
+  Operation,
+  Project,
+} from "@nexohub/domain";
 
 export type IpcErrorCode =
   | "INVALID_ARGUMENT"
@@ -9,7 +17,8 @@ export type IpcErrorCode =
   | "STORAGE_IO"
   | "DATABASE"
   | "INTEGRITY_VIOLATION"
-  | "MIGRATION_FAILED";
+  | "MIGRATION_FAILED"
+  | "PDF_PROCESSING";
 
 export interface IpcError {
   readonly code: IpcErrorCode;
@@ -46,6 +55,18 @@ export interface ListArtifactsRequest {
   readonly documentId: DocumentId;
 }
 
+export interface CompressPdfRequest {
+  readonly projectPath: string;
+  readonly documentId: DocumentId;
+  readonly artifactId: ArtifactId;
+  readonly compressionLevel: number;
+}
+
+export interface PdfToolResult {
+  readonly artifact: Artifact;
+  readonly operation: Operation;
+}
+
 export interface DocumentCoreCommands {
   readonly create_project: {
     readonly request: CreateProjectRequest;
@@ -70,6 +91,10 @@ export interface DocumentCoreCommands {
   readonly list_artifacts: {
     readonly request: ListArtifactsRequest;
     readonly response: readonly Artifact[];
+  };
+  readonly compress_pdf: {
+    readonly request: CompressPdfRequest;
+    readonly response: PdfToolResult;
   };
 }
 

@@ -1,5 +1,7 @@
+use lopdf::{Document as PdfDocument, Object, dictionary};
 use nexohub_core::commands::CreateProjectRequest;
 use nexohub_core::domain::ArtifactKind;
+use nexohub_core::pdf_tools::{CompressPdfRequest, compress_pdf};
 use nexohub_core::{ErrorCode, ProjectStore};
 use serde_json::json;
 use std::fs;
@@ -33,6 +35,30 @@ fn write_source(root: &Path, name: &str, bytes: &[u8]) -> PathBuf {
     let path = root.join(name);
     fs::write(&path, bytes).expect("fixture sintética deve ser escrita");
     path
+}
+
+fn synthetic_pdf() -> Vec<u8> {
+    let mut pdf = PdfDocument::with_version("1.5");
+    let pages_id = pdf.new_object_id();
+    let page_id = pdf.add_object(dictionary! {
+        "Type" => "Page",
+        "Parent" => pages_id,
+        "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+    });
+    pdf.objects.insert(
+        pages_id,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages",
+            "Kids" => vec![page_id.into()],
+            "Count" => 1,
+        }),
+    );
+    let catalog_id = pdf.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages_id });
+    pdf.trailer.set("Root", catalog_id);
+    let mut bytes = Vec::new();
+    pdf.save_to(&mut bytes)
+        .expect("fixture PDF deve ser criada");
+    bytes
 }
 
 #[test]
@@ -185,8 +211,88 @@ fn serializes_ipc_contracts_with_stable_names() {
     let request_json = serde_json::to_value(request).expect("request deve ser serializável");
     let error_json = serde_json::to_value(ErrorCode::ProjectNotFound)
         .expect("código de erro deve ser serializável");
+    let pdf_error_json =
+        serde_json::to_value(ErrorCode::PdfProcessing).expect("código PDF deve ser serializável");
 
     assert_eq!(request_json["projectPath"], "C:/Projetos/Exemplo.nexohub");
     assert_eq!(request_json["name"], "Exemplo");
     assert_eq!(error_json, "PROJECT_NOT_FOUND");
+    assert_eq!(pdf_error_json, "PDF_PROCESSING");
+}
+
+#[test]
+fn compresses_pdf_as_derived_artifact_without_changing_original() {
+    let temporary = TestDirectory::new("pdf-compress");
+    let project_path = temporary.project_path();
+    let source = write_source(&temporary.path, "original.pdf", &synthetic_pdf());
+    let mut store =
+        ProjectStore::create(&project_path, "Compressão PDF").expect("projeto deve ser criado");
+    let imported = store
+        .import_document(&source, None, "application/pdf")
+        .expect("PDF deve ser importado");
+    let original_bytes = store
+        .read_artifact_bytes(&imported.artifact.id)
+        .expect("original deve ser legível");
+    drop(store);
+
+    let result = compress_pdf(CompressPdfRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: imported.document.id.clone(),
+        artifact_id: imported.artifact.id.clone(),
+        compression_level: 9,
+    })
+    .expect("compressão deve gerar artifact derivado");
+
+    let store = ProjectStore::open(&project_path).expect("projeto deve reabrir");
+    assert_eq!(result.artifact.kind, ArtifactKind::Derived);
+    assert_eq!(result.operation.tool_id, "pdf-compress");
+    assert_eq!(
+        result.operation.parameters,
+        json!({ "compressionLevel": 9 })
+    );
+    assert_eq!(
+        store
+            .read_artifact_bytes(&imported.artifact.id)
+            .expect("original deve permanecer legível"),
+        original_bytes
+    );
+    assert!(
+        PdfDocument::load_mem(
+            &store
+                .read_artifact_bytes(&result.artifact.id)
+                .expect("derivado deve ser legível")
+        )
+        .is_ok()
+    );
+}
+
+#[test]
+fn rejects_invalid_pdf_without_creating_derived_artifact() {
+    let temporary = TestDirectory::new("invalid-pdf");
+    let project_path = temporary.project_path();
+    let source = write_source(&temporary.path, "invalid.pdf", b"not a pdf");
+    let mut store =
+        ProjectStore::create(&project_path, "PDF inválido").expect("projeto deve ser criado");
+    let imported = store
+        .import_document(&source, None, "application/pdf")
+        .expect("fixture deve ser importada");
+    drop(store);
+
+    let error = compress_pdf(CompressPdfRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: imported.document.id.clone(),
+        artifact_id: imported.artifact.id,
+        compression_level: 6,
+    })
+    .expect_err("PDF inválido deve falhar de forma estruturada");
+
+    assert_eq!(error.code, ErrorCode::PdfProcessing);
+    assert_eq!(
+        ProjectStore::open(&project_path)
+            .expect("projeto deve reabrir")
+            .list_artifacts(&imported.document.id)
+            .expect("artifacts devem ser listados")
+            .len(),
+        1
+    );
 }

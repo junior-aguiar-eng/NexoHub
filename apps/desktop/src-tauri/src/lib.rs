@@ -4,6 +4,7 @@ use nexohub_core::commands::{
     ListDocumentsRequest, OpenProjectRequest,
 };
 use nexohub_core::domain::{Artifact, Document, ImportedDocument, Project};
+use nexohub_core::pdf_tools::{CompressPdfRequest, PdfToolResult};
 
 #[tauri::command]
 fn create_project(request: CreateProjectRequest) -> Result<Project, CoreError> {
@@ -35,6 +36,11 @@ fn list_artifacts(request: ListArtifactsRequest) -> Result<Vec<Artifact>, CoreEr
     nexohub_core::commands::list_artifacts(request)
 }
 
+#[tauri::command]
+fn compress_pdf(request: CompressPdfRequest) -> Result<PdfToolResult, CoreError> {
+    nexohub_core::commands::compress_pdf(request)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -44,7 +50,8 @@ pub fn run() {
             import_document,
             list_documents,
             get_document,
-            list_artifacts
+            list_artifacts,
+            compress_pdf
         ])
         .run(tauri::generate_context!())
         .expect("não foi possível executar o shell desktop do NexoHub");

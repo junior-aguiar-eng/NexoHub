@@ -59,6 +59,11 @@ O `@nexohub/tool-registry` é o catálogo canônico consumido pelas superfícies
 ao adapter declarado. O registro dos manifestos não implica que seus executores já estejam
 implementados.
 
+O primeiro executor da Fase 4 é `pdf-compress`, implementado no core Rust e exposto pelo comando
+Tauri `compress_pdf`. O executor lê o blob do artifact informado, limita a descompressão de streams
+durante o parsing, gera um novo PDF e persiste o resultado como artifact derivado ligado à operação.
+O original e o caminho externo de importação não são alterados.
+
 ## Plataformas e runtime
 
 | Superfície | Estado atual | Runtime e gate |

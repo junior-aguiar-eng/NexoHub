@@ -16,6 +16,7 @@ Este inventário será atualizado a partir dos lockfiles em cada alteração de 
 | BLAKE3 | Endereçamento e integridade de blobs | CC0-1.0 ou Apache-2.0 |
 | serde / serde_json | Contratos e JSON estruturado | Apache-2.0 ou MIT |
 | uuid | Identificadores persistentes | Apache-2.0 ou MIT |
+| lopdf | Parsing e transformação local de PDF | MIT |
 | Ruff | Lint Python | MIT |
 | pytest | Testes Python | MIT |
 

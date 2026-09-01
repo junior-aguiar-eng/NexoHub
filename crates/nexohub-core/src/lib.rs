@@ -5,6 +5,7 @@ pub mod commands;
 pub mod domain;
 pub mod error;
 mod migrations;
+pub mod pdf_tools;
 pub mod storage;
 
 pub use error::{CoreError, CoreResult, ErrorCode};

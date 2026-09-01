@@ -365,7 +365,7 @@ impl ProjectStore {
             .map_err(|_| CoreError::database())
     }
 
-    fn get_artifact(&self, artifact_id: &str) -> CoreResult<Artifact> {
+    pub(crate) fn get_artifact(&self, artifact_id: &str) -> CoreResult<Artifact> {
         validate_identifier(artifact_id)?;
         self.connection
             .query_row(

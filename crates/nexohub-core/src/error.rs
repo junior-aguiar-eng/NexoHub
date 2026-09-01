@@ -16,6 +16,7 @@ pub enum ErrorCode {
     Database,
     IntegrityViolation,
     MigrationFailed,
+    PdfProcessing,
 }
 
 /// Erro seguro para IPC, sem consultas SQL nem conteúdo documental.
@@ -51,6 +52,10 @@ impl CoreError {
 
     pub(crate) fn integrity(message: impl Into<String>) -> Self {
         Self::new(ErrorCode::IntegrityViolation, message)
+    }
+
+    pub(crate) fn pdf(message: impl Into<String>) -> Self {
+        Self::new(ErrorCode::PdfProcessing, message)
     }
 }
 

@@ -5,4 +5,4 @@ members = ["apps/desktop/src-tauri", "crates/nexohub-core"]
 [workspace.package]
 edition = "2024"
 license = "MPL-2.0"
-rust-version = "1.85"
+rust-version = "1.88"

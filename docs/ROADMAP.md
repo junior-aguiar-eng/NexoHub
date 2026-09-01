@@ -6,7 +6,7 @@
 | 1 | Design system e Launcher sem ferramentas fictícias | Concluída localmente |
 | 2 | Document Core e persistência local | Concluída localmente |
 | 3 | Tool SDK, Registry, Runner e Capability Layer | Concluída localmente |
-| 4 | Quick Tools PDF reais | Planejada |
+| 4 | Quick Tools PDF reais | Em andamento — compressão nativa integrada ao Document Core |
 | 5 | Studio sobre o Document Core | Planejada |
 | 6 | Nexo Layers, NexoFlow e promoção Quick → Studio | Planejada |
 | 7–14 | Texto, overlay PDF, OCR, anchors, DOCX, tradução, revisão e receitas | Planejada |

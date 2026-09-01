@@ -2,6 +2,7 @@
 
 use crate::domain::{Artifact, Document, ImportedDocument, Project};
 use crate::error::CoreResult;
+use crate::pdf_tools::{CompressPdfRequest, PdfToolResult};
 use crate::storage::ProjectStore;
 use serde::{Deserialize, Serialize};
 
@@ -73,4 +74,8 @@ pub fn get_document(request: GetDocumentRequest) -> CoreResult<Document> {
 
 pub fn list_artifacts(request: ListArtifactsRequest) -> CoreResult<Vec<Artifact>> {
     ProjectStore::open(request.project_path)?.list_artifacts(&request.document_id)
+}
+
+pub fn compress_pdf(request: CompressPdfRequest) -> CoreResult<PdfToolResult> {
+    crate::pdf_tools::compress_pdf(request)
 }

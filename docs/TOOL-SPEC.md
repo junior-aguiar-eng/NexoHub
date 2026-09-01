@@ -34,3 +34,11 @@ Capability Layer antes da execução.
 Os manifestos das ferramentas planejadas já estão registrados para permitir descoberta e
 indisponibilidade explícita. Eles não implementam comportamento documental: os executores reais
 começam na Fase 4.
+
+## Fase 4 — executores PDF
+
+`pdf-compress` é o primeiro executor real. Recebe `projectPath`, `documentId`, `artifactId` e
+`compressionLevel` entre 1 e 9. A entrada deve ser um artifact `application/pdf` pertencente ao
+documento. O resultado contém o artifact derivado e a operação `pdf-compress` persistida no grafo.
+PDF inválido retorna `PDF_PROCESSING`; caminhos, IDs e tipos incompatíveis usam os códigos estáveis
+do Document Core.

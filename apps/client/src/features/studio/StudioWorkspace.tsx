@@ -7,6 +7,7 @@ import { AnchorPanel } from "./AnchorPanel";
 import { OcrPanel } from "./OcrPanel";
 import { PdfOverlayPanel } from "./PdfOverlayPanel";
 import { TextEditor } from "./TextEditor";
+import { TranslationPanel } from "./TranslationPanel";
 
 type StudioWorkspaceProps = {
   onClose: () => void;
@@ -64,7 +65,9 @@ export function StudioWorkspace({ onClose, promotedFlow }: StudioWorkspaceProps)
               {translate("studio.canvas.openProject")}
               <span className="status-badge">{translate("tools.comingSoon")}</span>
             </Button>
-            {promotedFlow?.tool.manifest.category === "text" && <TextEditor />}
+            {promotedFlow?.tool.manifest.category === "text" &&
+              promotedFlow.tool.id !== "text-translate" && <TextEditor />}
+            {promotedFlow?.tool.id === "text-translate" && <TranslationPanel />}
             {promotedFlow?.tool.manifest.category === "pdf" && <PdfOverlayPanel />}
             {promotedFlow?.tool.id === "pdf-ocr" && <OcrPanel />}
           </div>

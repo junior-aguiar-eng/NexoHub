@@ -8,7 +8,7 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: /Documentos complexos/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Comece por uma tarefa" })).toBeInTheDocument();
-    expect(screen.getAllByText("Em breve")).toHaveLength(6);
+    expect(screen.getAllByText("Em breve")).toHaveLength(7);
     expect(screen.getByText("Organizar PDF").closest("article")).toContainElement(
       screen.getAllByTitle("Transformações de PDF chegam na Fase 4.")[0],
     );
@@ -72,6 +72,18 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/Processamento offline/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Executar OCR" })).toBeDisabled();
+  });
+
+  it("expõe tradução local sem simular modelo instalado", () => {
+    render(<App />);
+    const card = screen.getByText("Traduzir texto").closest("article");
+    if (!card) throw new Error("card de tradução não encontrado");
+
+    fireEvent.click(within(card).getByRole("button", { name: "Continuar no Studio" }));
+
+    expect(screen.getByRole("heading", { name: "Tradução documental" })).toBeInTheDocument();
+    expect(screen.getByText(/Instale um modelo compatível/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Traduzir como novo artifact" })).toBeDisabled();
   });
 
   it("filtra as ferramentas pela suíte ativa", () => {

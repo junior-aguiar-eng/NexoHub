@@ -5,6 +5,7 @@ import {
   FileArchive,
   FileScan,
   GitCompareArrows,
+  Languages,
   ListFilter,
   SpellCheck2,
 } from "lucide-react";
@@ -49,6 +50,12 @@ const presentation = {
     descriptionKey: "tool.textReview.description",
     icon: SpellCheck2,
   },
+  "text-translate": {
+    suite: "text",
+    titleKey: "tool.textTranslate.title",
+    descriptionKey: "tool.textTranslate.description",
+    icon: Languages,
+  },
   "intelligence-extract": {
     suite: "intelligence",
     titleKey: "tool.intelligenceExtract.title",
@@ -64,6 +71,10 @@ const browserCapabilities = new StaticCapabilityProvider({
   "ocr.execute": { available: false, reason: translate("tools.unavailable.ocr") },
   "text.compare": { available: false, reason: translate("tools.unavailable.compare") },
   "text.review": { available: false, reason: translate("tools.unavailable.review") },
+  "translation.execute": {
+    available: false,
+    reason: translate("tools.unavailable.translation"),
+  },
   "intelligence.extract": {
     available: false,
     reason: translate("tools.unavailable.extract"),

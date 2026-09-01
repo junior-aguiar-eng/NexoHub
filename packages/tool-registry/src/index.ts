@@ -59,6 +59,17 @@ export const coreToolManifests = [
     executor: "browser",
   },
   {
+    id: "text-translate",
+    version: "1.0.0",
+    name: "Traduzir texto",
+    category: "text",
+    surfaces: ["quick", "studio"],
+    accepts: ["text/plain", "text/markdown"],
+    produces: ["text/plain"],
+    capabilities: ["documents.read", "documents.write", "translation.execute"],
+    executor: "python",
+  },
+  {
     id: "intelligence-extract",
     version: "1.0.0",
     name: "Extrair informações",

@@ -23,6 +23,8 @@ Este inventário será atualizado a partir dos lockfiles em cada alteração de 
 | Pillow | Decodificação de imagens para OCR | HPND |
 | python-docx-ng | Leitura e criação local de documentos DOCX | MIT |
 | lxml | Parsing XML transitivo do suporte DOCX | BSD-3-Clause |
+| CTranslate2 | Inferência local de modelos de tradução | MIT |
+| SentencePiece | Tokenização local dos modelos de tradução | Apache-2.0 |
 | Ruff | Lint Python | MIT |
 | pytest | Testes Python | MIT |
 

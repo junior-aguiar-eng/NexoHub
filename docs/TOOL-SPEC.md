@@ -77,3 +77,17 @@ O sidecar aceita `docx.inspect` com `contentBase64` e devolve parágrafos com es
 `docx.create` recebe título opcional, parágrafos com estilos permitidos e tabelas retangulares; o
 resultado contém um novo DOCX em Base64, MIME type e tamanho. Nenhum método recebe caminhos ou
 reescreve o original. Entradas inválidas retornam `INVALID_INPUT`; falhas internas, `DOCX_FAILED`.
+
+## Fase 12 — tradução
+
+`translate` recebe `text`, `sourceLanguage`, `targetLanguage` e `modelId`. Idiomas usam códigos BCP
+47 simples; origem e destino precisam ser distintos. O sidecar segmenta até 1.000.000 de caracteres,
+protege placeholders e executa somente um modelo CTranslate2 instalado na raiz configurada. O
+resultado contém texto, par linguístico, modelo e quantidade de segmentos. Modelo ausente,
+incompatível ou que viole placeholders retorna `TRANSLATION_UNAVAILABLE`; não existe fallback de
+rede. A saída é conteúdo para novo artifact, nunca atualização do original.
+
+O manifesto de instalação do modelo declara `sourceLanguages`, `targetLanguages`, `license`,
+`artifact`, `sha256` e `tokenizer`. Os tipos aceitos são `t5-shared`, para MADLAD com token de destino
+e EOS, e `sentencepiece-pair`, para OPUS-MT TC Big. O hash do artifact é verificado antes de carregar
+o modelo. Pesos, tokenizers e licenças permanecem externos ao Git.

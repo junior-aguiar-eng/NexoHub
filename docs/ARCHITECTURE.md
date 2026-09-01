@@ -101,6 +101,19 @@ materializa um novo documento a partir de conteúdo validado. O original importa
 novamente. Antes do parsing, o engine rejeita caminhos internos inseguros, links simbólicos,
 criptografia e arquivos que excedam os limites de tamanho, itens ou compressão.
 
+A tradução documental usa CTranslate2 em CPU com modelos instalados explicitamente em uma raiz
+configurada pelo runtime. A UI nunca escolhe caminhos: solicita um `modelId`, e o sidecar valida que
+o diretório resolvido permaneça dentro da raiz permitida, contenha modelo válido, tokenizers e
+licença declarada. O pipeline segmenta entradas limitadas, protege placeholders e preserva quebras
+de linha. Ausência ou incompatibilidade de modelo é indisponibilidade explícita, não tradução
+simulada nem fallback de rede. O texto traduzido deve ser persistido como artifact derivado.
+
+O perfil avançado recomendado é MADLAD-400-3B-MT convertido para CTranslate2 e quantizado em INT8;
+o perfil leve usa um modelo OPUS-MT TC Big compatível com o par linguístico. Nenhum peso integra o
+Git ou o bundle-base. Cada instalação registra manifesto, licença e SHA-256 do artifact principal.
+MADLAD usa SentencePiece compartilhado no padrão T5, com prefixo do idioma de destino e EOS; OPUS-MT
+mantém tokenizers SentencePiece separados e eventual prefixo de destino declarado pelo modelo.
+
 ## Plataformas e runtime
 
 | Superfície | Estado atual | Runtime e gate |

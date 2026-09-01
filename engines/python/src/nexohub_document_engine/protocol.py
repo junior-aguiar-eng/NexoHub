@@ -10,6 +10,7 @@ from typing import Any, TextIO
 
 from .docx import DOCX_MIME_TYPE, DocxInputError, create_docx, inspect_docx
 from .ocr import OcrInputError, recognize_document
+from .translation import TranslationInputError, TranslationUnavailableError, translate_text
 
 
 def handle_request(request: object) -> dict[str, Any]:
@@ -21,6 +22,24 @@ def handle_request(request: object) -> dict[str, Any]:
         return _error(request_id, "INVALID_REQUEST", "Método ou parâmetros inválidos.")
 
     params = request["params"]
+    if method == "translate":
+        try:
+            result = translate_text(
+                params.get("text"),
+                params.get("sourceLanguage"),
+                params.get("targetLanguage"),
+                params.get("modelId"),
+            )
+        except TranslationInputError as error:
+            return _error(request_id, "INVALID_INPUT", str(error))
+        except TranslationUnavailableError as error:
+            return _error(request_id, "TRANSLATION_UNAVAILABLE", str(error))
+        except Exception:
+            return _error(
+                request_id, "TRANSLATION_FAILED", "O engine local não conseguiu traduzir o texto."
+            )
+        return {"id": request_id, "result": result.to_dict()}
+
     if method == "docx.create":
         try:
             content = create_docx(params)

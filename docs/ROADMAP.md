@@ -14,7 +14,7 @@
 | 9 | OCR | Concluída localmente |
 | 10 | Anchors | Concluída localmente |
 | 11 | DOCX | Concluída localmente |
-| 12 | Tradução | Planejada |
+| 12 | Tradução | Concluída localmente |
 | 13 | Revisão | Planejada |
 | 14 | Receitas | Planejada |
 | 15 | Hardening orientado a falhas e métricas | Planejada |

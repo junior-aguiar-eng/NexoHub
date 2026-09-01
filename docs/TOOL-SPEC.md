@@ -70,3 +70,10 @@ retângulo normalizado. Erros de protocolo, entrada e inferência usam `INVALID_
 opcional. Intervalos exigem `start < end`; regiões usam página iniciada em 1 e geometria normalizada;
 linhas OCR usam página e índice base zero. O seletor precisa ser compatível com o MIME type do
 artifact. `list_anchors` recupera os anchors na ordem de criação.
+
+## Fase 11 — DOCX
+
+O sidecar aceita `docx.inspect` com `contentBase64` e devolve parágrafos com estilo, tabelas e título.
+`docx.create` recebe título opcional, parágrafos com estilos permitidos e tabelas retangulares; o
+resultado contém um novo DOCX em Base64, MIME type e tamanho. Nenhum método recebe caminhos ou
+reescreve o original. Entradas inválidas retornam `INVALID_INPUT`; falhas internas, `DOCX_FAILED`.

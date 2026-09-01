@@ -21,6 +21,8 @@ Este inventário será atualizado a partir dos lockfiles em cada alteração de 
 | ONNX Runtime | Inferência local dos modelos OCR | MIT |
 | pypdfium2 / PDFium | Renderização local de páginas PDF | Apache-2.0 ou BSD-3-Clause e licenças transitivas |
 | Pillow | Decodificação de imagens para OCR | HPND |
+| python-docx-ng | Leitura e criação local de documentos DOCX | MIT |
+| lxml | Parsing XML transitivo do suporte DOCX | BSD-3-Clause |
 | Ruff | Lint Python | MIT |
 | pytest | Testes Python | MIT |
 

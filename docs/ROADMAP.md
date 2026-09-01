@@ -13,7 +13,7 @@
 | 8 | Overlay PDF | Concluída localmente |
 | 9 | OCR | Concluída localmente |
 | 10 | Anchors | Concluída localmente |
-| 11 | DOCX | Planejada |
+| 11 | DOCX | Concluída localmente |
 | 12 | Tradução | Planejada |
 | 13 | Revisão | Planejada |
 | 14 | Receitas | Planejada |

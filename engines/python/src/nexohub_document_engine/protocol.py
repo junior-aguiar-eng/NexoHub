@@ -8,6 +8,7 @@ import json
 import sys
 from typing import Any, TextIO
 
+from .docx import DOCX_MIME_TYPE, DocxInputError, create_docx, inspect_docx
 from .ocr import OcrInputError, recognize_document
 
 
@@ -15,10 +16,43 @@ def handle_request(request: object) -> dict[str, Any]:
     if not isinstance(request, dict):
         return _error(None, "INVALID_REQUEST", "A requisição deve ser um objeto JSON.")
     request_id = request.get("id")
-    if request.get("method") != "ocr" or not isinstance(request.get("params"), dict):
+    method = request.get("method")
+    if not isinstance(method, str) or not isinstance(request.get("params"), dict):
         return _error(request_id, "INVALID_REQUEST", "Método ou parâmetros inválidos.")
 
     params = request["params"]
+    if method == "docx.create":
+        try:
+            content = create_docx(params)
+        except DocxInputError as error:
+            return _error(request_id, "INVALID_INPUT", str(error))
+        except Exception:
+            return _error(request_id, "DOCX_FAILED", "O engine local não conseguiu criar o DOCX.")
+        return {
+            "id": request_id,
+            "result": {
+                "contentBase64": base64.b64encode(content).decode("ascii"),
+                "mimeType": DOCX_MIME_TYPE,
+                "sizeBytes": len(content),
+            },
+        }
+
+    if method == "docx.inspect":
+        encoded = params.get("contentBase64")
+        if not isinstance(encoded, str):
+            return _error(request_id, "INVALID_REQUEST", "contentBase64 é obrigatório.")
+        try:
+            content = base64.b64decode(encoded, validate=True)
+            result = inspect_docx(content)
+        except (binascii.Error, DocxInputError) as error:
+            return _error(request_id, "INVALID_INPUT", str(error))
+        except Exception:
+            return _error(request_id, "DOCX_FAILED", "O engine local não conseguiu ler o DOCX.")
+        return {"id": request_id, "result": result.to_dict()}
+
+    if method != "ocr":
+        return _error(request_id, "INVALID_REQUEST", "Método não suportado.")
+
     mime_type = params.get("mimeType")
     encoded = params.get("contentBase64")
     if not isinstance(mime_type, str) or not isinstance(encoded, str):

@@ -95,6 +95,12 @@ linhas OCR. Cada seletor é validado contra o MIME type do artifact e usa offset
 normalizadas. Uma citação textual opcional, limitada a 4 KiB, auxilia a recuperação sem substituir
 o seletor. Anchors não alteram blobs, overlays ou artifacts.
 
+O suporte DOCX fica isolado no sidecar Python e opera exclusivamente sobre bytes recebidos pelo
+protocolo estruturado. `docx.inspect` extrai parágrafos, estilos, tabelas e título; `docx.create`
+materializa um novo documento a partir de conteúdo validado. O original importado nunca é salvo
+novamente. Antes do parsing, o engine rejeita caminhos internos inseguros, links simbólicos,
+criptografia e arquivos que excedam os limites de tamanho, itens ou compressão.
+
 ## Plataformas e runtime
 
 | Superfície | Estado atual | Runtime e gate |

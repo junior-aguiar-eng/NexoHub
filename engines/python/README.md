@@ -7,6 +7,10 @@ O método `ocr` aceita conteúdo em Base64 de PNG, JPEG, TIFF, WebP ou PDF. PDFs
 localmente e limitados a 500 páginas; cada página é limitada a 50 megapixels e a entrada completa a
 64 MiB. A resposta contém texto, confiança e caixas normalizadas por página.
 
+Os métodos `docx.inspect` e `docx.create` leem conteúdo estruturado e produzem um novo DOCX em
+Base64. O sidecar não recebe caminhos nem salva sobre o original. Arquivos importados passam por
+limites de tamanho, quantidade de itens, expansão e taxa de compressão antes do parsing.
+
 Execução de desenvolvimento:
 
 ```powershell

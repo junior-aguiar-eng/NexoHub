@@ -17,6 +17,8 @@ pub enum ErrorCode {
     IntegrityViolation,
     MigrationFailed,
     PdfProcessing,
+    ReviewUnavailable,
+    ReviewProcessing,
 }
 
 /// Erro seguro para IPC, sem consultas SQL nem conteúdo documental.
@@ -56,6 +58,14 @@ impl CoreError {
 
     pub(crate) fn pdf(message: impl Into<String>) -> Self {
         Self::new(ErrorCode::PdfProcessing, message)
+    }
+
+    pub(crate) fn review_unavailable(message: impl Into<String>) -> Self {
+        Self::new(ErrorCode::ReviewUnavailable, message)
+    }
+
+    pub(crate) fn review(message: impl Into<String>) -> Self {
+        Self::new(ErrorCode::ReviewProcessing, message)
     }
 }
 

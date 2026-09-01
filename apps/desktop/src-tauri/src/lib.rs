@@ -5,6 +5,7 @@ use nexohub_core::commands::{
     ListDocumentsRequest, OpenProjectRequest,
 };
 use nexohub_core::domain::{Anchor, Artifact, Document, ImportedDocument, Overlay, Project};
+use nexohub_core::language_tool::{ReviewTextRequest, ReviewTextResult};
 use nexohub_core::overlay_tools::{CreatePdfOverlayRequest, ListPdfOverlaysRequest};
 use nexohub_core::pdf_tools::{CompressPdfRequest, PdfToolResult};
 use nexohub_core::text_tools::{CreateTextRevisionRequest, TextToolResult};
@@ -50,6 +51,11 @@ fn create_text_revision(request: CreateTextRevisionRequest) -> Result<TextToolRe
 }
 
 #[tauri::command]
+fn review_text(request: ReviewTextRequest) -> Result<ReviewTextResult, CoreError> {
+    nexohub_core::language_tool::review_text(request)
+}
+
+#[tauri::command]
 fn create_pdf_overlay(request: CreatePdfOverlayRequest) -> Result<Overlay, CoreError> {
     nexohub_core::commands::create_pdf_overlay(request)
 }
@@ -81,6 +87,7 @@ pub fn run() {
             list_artifacts,
             compress_pdf,
             create_text_revision,
+            review_text,
             create_pdf_overlay,
             list_pdf_overlays,
             create_anchor,

@@ -114,6 +114,16 @@ Git ou o bundle-base. Cada instalação registra manifesto, licença e SHA-256 d
 MADLAD usa SentencePiece compartilhado no padrão T5, com prefixo do idioma de destino e EOS; OPUS-MT
 mantém tokenizers SentencePiece separados e eventual prefixo de destino declarado pelo modelo.
 
+A revisão textual usa obrigatoriamente o LanguageTool Community pt-BR como sidecar Java local. O
+core nativo inicia somente o JRE e o JAR fixados, confere SHA-256 dos executáveis e exige os avisos de
+licença. O snapshot e o Temurin JRE são instalados separadamente e não integram o Git. Não há chamada
+à API pública do LanguageTool nem fallback silencioso para outro revisor.
+
+O ciclo de edição conserva os offsets UTF-16 devolvidos pelo engine, invalida achados quando o texto
+muda e aplica sugestões do fim para o início, rejeitando sobreposição ou trecho obsoleto. Ao salvar,
+`create_text_revision` cria um artifact derivado e seu identificador passa a ser a origem do próximo
+ciclo. O original importado permanece inalterado.
+
 ## Plataformas e runtime
 
 | Superfície | Estado atual | Runtime e gate |

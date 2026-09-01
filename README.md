@@ -14,6 +14,7 @@ explicitamente como futuros.
 - Windows com WebView2 e requisitos nativos do Tauri 2 para o aplicativo desktop;
 - Rust 1.88 ou superior para o shell desktop;
 - Python 3.14 gerenciado por uv.
+- LanguageTool Community pt-BR e Temurin JRE 21 instalados separadamente para revisão textual.
 
 ## Desenvolvimento
 
@@ -30,6 +31,14 @@ cargo test --workspace
 uv sync --project engines/python
 uv run --project engines/python ruff check .
 uv run --project engines/python pytest
+```
+
+O runtime obrigatório de revisão não integra o Git. Instale o snapshot e o Java fixados pelo
+manifesto e configure a raiz resultante:
+
+```powershell
+.\scripts\install-languagetool.ps1 -InstallRoot "C:\NexoHub\LanguageTool"
+$env:NEXOHUB_LANGUAGETOOL_DIR = "C:\NexoHub\LanguageTool"
 ```
 
 O client web inicia com `pnpm --filter @nexohub/client dev`. O shell desktop inicia com

@@ -15,7 +15,7 @@
 | 10 | Anchors | Concluída localmente |
 | 11 | DOCX | Concluída localmente |
 | 12 | Tradução | Concluída localmente |
-| 13 | Revisão | Planejada |
+| 13 | Revisão | Em andamento — LanguageTool pt-BR e persistência integrados |
 | 14 | Receitas | Planejada |
 | 15 | Hardening orientado a falhas e métricas | Planejada |
 | 16 | Release engineering Windows e publicação web auditável | Planejada |

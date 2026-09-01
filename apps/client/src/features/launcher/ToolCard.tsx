@@ -29,7 +29,7 @@ export function ToolCard({ tool, index, onPromote }: ToolCardProps) {
           <Icon size={21} />
         </span>
         <span className="status-badge" title={unavailableReason}>
-          {translate("tools.comingSoon")}
+          {translate(tool.availability.available ? "tools.available" : "tools.comingSoon")}
         </span>
       </div>
       <div>

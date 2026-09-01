@@ -3,21 +3,34 @@ import { FileText, FolderOpen, Library, PanelLeftClose, PanelRight } from "lucid
 import { Button } from "@/components/ui/button";
 import type { LauncherTool } from "@/features/launcher/model";
 import { translate } from "@/i18n";
+import type { DocumentCorePort } from "@/platform/document-core";
 import { AnchorPanel } from "./AnchorPanel";
 import { OcrPanel } from "./OcrPanel";
 import { PdfOverlayPanel } from "./PdfOverlayPanel";
+import { ReviewPanel } from "./ReviewPanel";
 import { TextEditor } from "./TextEditor";
 import { TranslationPanel } from "./TranslationPanel";
 
 type StudioWorkspaceProps = {
   onClose: () => void;
+  documentCore?: DocumentCorePort;
+  textRevisionContext?: {
+    readonly projectPath: string;
+    readonly documentId: import("@nexohub/domain").DocumentId;
+    readonly artifactId: import("@nexohub/domain").ArtifactId;
+  };
   promotedFlow?: {
     tool: LauncherTool;
     flow: NexoFlowSnapshot;
   };
 };
 
-export function StudioWorkspace({ onClose, promotedFlow }: StudioWorkspaceProps) {
+export function StudioWorkspace({
+  onClose,
+  promotedFlow,
+  documentCore,
+  textRevisionContext,
+}: StudioWorkspaceProps) {
   return (
     <div className="studio-shell">
       <header className="studio-header">
@@ -66,8 +79,11 @@ export function StudioWorkspace({ onClose, promotedFlow }: StudioWorkspaceProps)
               <span className="status-badge">{translate("tools.comingSoon")}</span>
             </Button>
             {promotedFlow?.tool.manifest.category === "text" &&
-              promotedFlow.tool.id !== "text-translate" && <TextEditor />}
+              !["text-translate", "text-review"].includes(promotedFlow.tool.id) && <TextEditor />}
             {promotedFlow?.tool.id === "text-translate" && <TranslationPanel />}
+            {promotedFlow?.tool.id === "text-review" && (
+              <ReviewPanel documentCore={documentCore} revisionContext={textRevisionContext} />
+            )}
             {promotedFlow?.tool.manifest.category === "pdf" && <PdfOverlayPanel />}
             {promotedFlow?.tool.id === "pdf-ocr" && <OcrPanel />}
           </div>

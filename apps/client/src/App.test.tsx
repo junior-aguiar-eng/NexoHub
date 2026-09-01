@@ -48,7 +48,7 @@ describe("App", () => {
 
   it("abre o editor de texto ao promover uma ferramenta textual", () => {
     render(<App />);
-    const card = screen.getByText("Revisar texto").closest("article");
+    const card = screen.getByText("Comparar textos").closest("article");
     if (!card) throw new Error("card textual não encontrado");
 
     fireEvent.click(within(card).getByRole("button", { name: "Continuar no Studio" }));
@@ -57,6 +57,17 @@ describe("App", () => {
 
     expect(editor).toHaveValue("Texto");
     expect(screen.getByText("5 caracteres")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Criar revisão" })).toBeDisabled();
+  });
+
+  it("exige o sidecar comunitário para iniciar a revisão", () => {
+    render(<App />);
+    const card = screen.getByText("Revisar texto").closest("article");
+    if (!card) throw new Error("card de revisão não encontrado");
+    fireEvent.click(within(card).getByRole("button", { name: "Continuar no Studio" }));
+
+    expect(screen.getByText(/LanguageTool Community pt-BR é obrigatório/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Analisar texto" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Criar revisão" })).toBeDisabled();
   });
 

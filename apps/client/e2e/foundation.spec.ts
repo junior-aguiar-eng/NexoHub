@@ -65,12 +65,22 @@ test("promove uma Quick Tool para um NexoFlow no Studio", async ({ page }) => {
 
 test("edita um rascunho textual sem simular persistência", async ({ page }) => {
   await page.goto("/");
-  const card = page.locator("article").filter({ hasText: "Revisar texto" });
+  const card = page.locator("article").filter({ hasText: "Comparar textos" });
   await card.getByRole("button", { name: "Continuar no Studio" }).click();
 
   const editor = page.getByRole("textbox", { name: "Conteúdo textual" });
   await editor.fill("Texto jurídico em UTF-8");
   await expect(editor).toHaveValue("Texto jurídico em UTF-8");
+  await expect(page.getByRole("button", { name: "Criar revisão" })).toBeDisabled();
+});
+
+test("exige o LanguageTool Community para revisar texto", async ({ page }) => {
+  await page.goto("/");
+  const card = page.locator("article").filter({ hasText: "Revisar texto" });
+  await card.getByRole("button", { name: "Continuar no Studio" }).click();
+
+  await expect(page.getByText(/LanguageTool Community pt-BR é obrigatório/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Analisar texto" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Criar revisão" })).toBeDisabled();
 });
 

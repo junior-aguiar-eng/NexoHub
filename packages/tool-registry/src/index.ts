@@ -56,7 +56,7 @@ export const coreToolManifests = [
     accepts: ["text/plain"],
     produces: ["text/plain"],
     capabilities: ["documents.read", "documents.write", "text.review"],
-    executor: "browser",
+    executor: "native",
   },
   {
     id: "text-translate",

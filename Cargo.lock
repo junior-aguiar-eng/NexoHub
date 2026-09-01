@@ -2010,10 +2010,12 @@ name = "nexohub-core"
 version = "0.0.0"
 dependencies = [
  "blake3",
+ "dunce",
  "lopdf",
  "rusqlite",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
  "uuid",
 ]
 

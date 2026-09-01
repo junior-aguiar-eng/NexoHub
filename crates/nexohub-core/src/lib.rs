@@ -5,6 +5,7 @@ mod blob_store;
 pub mod commands;
 pub mod domain;
 pub mod error;
+pub mod language_tool;
 mod migrations;
 pub mod overlay_tools;
 pub mod pdf_tools;

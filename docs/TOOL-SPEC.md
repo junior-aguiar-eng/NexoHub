@@ -91,3 +91,15 @@ O manifesto de instalação do modelo declara `sourceLanguages`, `targetLanguage
 `artifact`, `sha256` e `tokenizer`. Os tipos aceitos são `t5-shared`, para MADLAD com token de destino
 e EOS, e `sentencepiece-pair`, para OPUS-MT TC Big. O hash do artifact é verificado antes de carregar
 o modelo. Pesos, tokenizers e licenças permanecem externos ao Git.
+
+## Fase 13 — revisão
+
+`review_text` recebe texto de até 4 MiB e executa o LanguageTool Community exclusivamente em `pt-BR`
+pelo runtime Java local. A resposta contém versão, regra, tipo, mensagem, offsets UTF-16 e sugestões.
+Ausência, hash divergente ou licença incompleta retorna `REVIEW_UNAVAILABLE`; falha de execução ou
+resposta inválida retorna `REVIEW_PROCESSING`.
+
+Aplicar achados modifica somente o rascunho e invalida o relatório anterior. `create_text_revision`
+persiste o resultado como artifact derivado; revisões posteriores usam o artifact recém-criado como
+entrada. O snapshot `6.9-SNAPSHOT-20260901` e o Temurin JRE `21.0.12.1+1-LTS` são externos ao Git e
+fixados em `runtime/languagetool-community.json` por URL, tamanho, SHA-256 e licença.

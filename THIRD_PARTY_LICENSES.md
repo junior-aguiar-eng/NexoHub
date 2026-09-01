@@ -25,6 +25,10 @@ Este inventário será atualizado a partir dos lockfiles em cada alteração de 
 | lxml | Parsing XML transitivo do suporte DOCX | BSD-3-Clause |
 | CTranslate2 | Inferência local de modelos de tradução | MIT |
 | SentencePiece | Tokenização local dos modelos de tradução | Apache-2.0 |
+| LanguageTool Community | Revisão ortográfica, gramatical e de estilo pt-BR | LGPL-2.1-or-later e licenças dos recursos distribuídos |
+| Eclipse Temurin JRE 21 | Runtime Java isolado do LanguageTool | GPL-2.0-only com Classpath Exception 2.0 e avisos do bundle |
+| sha2 | Verificação SHA-256 dos componentes do sidecar | Apache-2.0 ou MIT |
+| dunce | Normalização segura de caminhos canônicos no Windows | CC0-1.0 ou MIT |
 | Ruff | Lint Python | MIT |
 | pytest | Testes Python | MIT |
 

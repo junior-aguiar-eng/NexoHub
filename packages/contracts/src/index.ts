@@ -20,7 +20,9 @@ export type IpcErrorCode =
   | "DATABASE"
   | "INTEGRITY_VIOLATION"
   | "MIGRATION_FAILED"
-  | "PDF_PROCESSING";
+  | "PDF_PROCESSING"
+  | "REVIEW_UNAVAILABLE"
+  | "REVIEW_PROCESSING";
 
 export interface IpcError {
   readonly code: IpcErrorCode;
@@ -79,6 +81,30 @@ export interface CreateTextRevisionRequest {
 export interface TextToolResult {
   readonly artifact: Artifact;
   readonly operation: Operation;
+}
+
+export interface ReviewTextRequest {
+  readonly text: string;
+}
+
+export interface LanguageToolMatch {
+  readonly message: string;
+  readonly shortMessage: string;
+  readonly offset: number;
+  readonly length: number;
+  readonly replacements: readonly { readonly value: string }[];
+  readonly rule: {
+    readonly id: string;
+    readonly description: string;
+    readonly issueType: string;
+  };
+}
+
+export interface ReviewTextResult {
+  readonly language: "pt-BR";
+  readonly engine: "languagetool-community";
+  readonly version: string;
+  readonly matches: readonly LanguageToolMatch[];
 }
 
 export type PdfOverlayKind = "HIGHLIGHT" | "NOTE" | "DRAWING";
@@ -156,6 +182,10 @@ export interface DocumentCoreCommands {
   readonly create_text_revision: {
     readonly request: CreateTextRevisionRequest;
     readonly response: TextToolResult;
+  };
+  readonly review_text: {
+    readonly request: ReviewTextRequest;
+    readonly response: ReviewTextResult;
   };
   readonly create_pdf_overlay: {
     readonly request: CreatePdfOverlayRequest;

@@ -136,6 +136,10 @@ importers:
         version: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.4.0)(jiti@2.7.0))
 
   packages/tool-sdk:
+    dependencies:
+      '@nexohub/domain':
+        specifier: workspace:*
+        version: link:../domain
     devDependencies:
       typescript:
         specifier: 7.0.2

@@ -124,6 +124,12 @@ muda e aplica sugestões do fim para o início, rejeitando sobreposição ou tre
 `create_text_revision` cria um artifact derivado e seu identificador passa a ser a origem do próximo
 ciclo. O original importado permanece inalterado.
 
+Receitas NexoFlow são snapshots declarativos de grafos acíclicos visuais. O `RecipeRunner` realiza um
+preflight completo pelo Tool Registry e pela Capability Layer e delega cada etapa ao `ToolRunner`.
+As dependências determinam a ordem topológica; ciclos são rejeitados e não há linguagem de script.
+O progresso preserva artifacts intermediários para
+inspeção, e cada executor mantém o registro normal da etapa no Operation Graph.
+
 ## Plataformas e runtime
 
 | Superfície | Estado atual | Runtime e gate |

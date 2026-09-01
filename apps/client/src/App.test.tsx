@@ -40,7 +40,7 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: "NexoFlow" })).toBeInTheDocument();
     expect(screen.getByText("Rascunho")).toBeInTheDocument();
-    expect(screen.getByText("pdf-compress")).toBeInTheDocument();
+    expect(screen.getAllByText("pdf-compress").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Nexo Layers" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Overlay PDF" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Adicionar overlay" })).toBeDisabled();

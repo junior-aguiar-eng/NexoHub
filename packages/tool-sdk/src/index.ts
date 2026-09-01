@@ -134,12 +134,21 @@ export class ToolRunner {
 
   availability(toolId: string): ToolAvailability {
     const manifest = this.registry.get(toolId);
-    return manifest
-      ? resolveToolAvailability(manifest, this.capabilities)
+    if (!manifest) {
+      return {
+        available: false,
+        missingCapabilities: [],
+        reasons: [`Ferramenta não registrada: ${toolId}`],
+      };
+    }
+    const availability = resolveToolAvailability(manifest, this.capabilities);
+    if (!availability.available) return availability;
+    return this.#executors.has(manifest.executor)
+      ? { available: true }
       : {
           available: false,
           missingCapabilities: [],
-          reasons: [`Ferramenta não registrada: ${toolId}`],
+          reasons: [`Executor não configurado: ${manifest.executor}`],
         };
   }
 
@@ -179,6 +188,8 @@ export class ToolRunner {
     }
   }
 }
+
+export * from "./RecipeRunner";
 
 function validateManifest(manifest: ToolManifest): void {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(manifest.id))

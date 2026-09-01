@@ -16,7 +16,7 @@
 | 11 | DOCX | Concluída localmente |
 | 12 | Tradução | Concluída localmente |
 | 13 | Revisão | Em andamento — LanguageTool pt-BR e persistência integrados |
-| 14 | Receitas | Planejada |
+| 14 | Receitas | Em andamento — DAG visual, presets e runner topológico integrados |
 | 15 | Hardening orientado a falhas e métricas | Planejada |
 | 16 | Release engineering Windows e publicação web auditável | Planejada |
 

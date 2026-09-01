@@ -103,3 +103,14 @@ Aplicar achados modifica somente o rascunho e invalida o relatório anterior. `c
 persiste o resultado como artifact derivado; revisões posteriores usam o artifact recém-criado como
 entrada. O snapshot `6.9-SNAPSHOT-20260901` e o Temurin JRE `21.0.12.1+1-LTS` são externos ao Git e
 fixados em `runtime/languagetool-community.json` por URL, tamanho, SHA-256 e licença.
+
+## Fase 14 — receitas NexoFlow
+
+Uma Recipe salva um grafo acíclico de ferramentas, dependências, posições e parâmetros. A execução faz preflight
+de todas as etapas no Tool Registry e na Capability Layer, incluindo a presença do executor, antes
+de iniciar. Os artifacts produzidos por uma etapa alimentam seus nós dependentes e permanecem inspecionáveis
+no snapshot de progresso.
+
+Falha intermediária interrompe a sequência sem descartar resultados anteriores. Cancelamento usa o
+`AbortSignal` encaminhado ao `ToolRunner`. Cada ferramenta continua persistindo sua própria operação
+e seus artifacts no Operation Graph; a receita não cria um caminho alternativo de execução.

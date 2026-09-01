@@ -2,6 +2,7 @@ import type { NexoFlowSnapshot } from "@nexohub/domain";
 import { FileText, FolderOpen, Library, PanelLeftClose, PanelRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { LauncherTool } from "@/features/launcher/model";
+import { browserRecipeStorage, RecipePanel } from "@/features/recipes";
 import { translate } from "@/i18n";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { AnchorPanel } from "./AnchorPanel";
@@ -114,6 +115,10 @@ export function StudioWorkspace({
             ) : (
               <p>{translate("studio.flow.empty")}</p>
             )}
+            <RecipePanel
+              flow={promotedFlow?.flow}
+              onSave={(recipe) => browserRecipeStorage.save(recipe)}
+            />
           </section>
           <AnchorPanel />
         </aside>

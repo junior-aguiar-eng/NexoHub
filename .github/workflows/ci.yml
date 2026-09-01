@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  frontend:
+  web:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,9 +23,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
       - run: pnpm test
-      - run: pnpm --filter @nexohub/client build
+      - run: pnpm --filter @nexohub/client install:e2e
+      - run: pnpm test:e2e
+      - run: pnpm build:web
 
-  rust:
+  desktop-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,17 +38,18 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.88.0
         with:
           components: rustfmt, clippy
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @nexohub/client build
+      - run: pnpm build:windows
       - run: cargo fmt --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
+      - run: pnpm check:windows-dependencies
 
-  python:
-    runs-on: ubuntu-latest
+  motor-python-windows:
+    runs-on: windows-latest
     defaults:
       run:
         working-directory: engines/python

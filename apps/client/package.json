@@ -6,9 +6,10 @@
   "scripts": {
     "build": "tsc -b && vite build",
     "dev": "vite",
+    "install:e2e": "playwright install --with-deps chromium",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:e2e": "playwright test",
+    "test:e2e": "pnpm build && node ./e2e/executar.mjs",
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {

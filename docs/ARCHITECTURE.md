@@ -9,12 +9,12 @@ React UI (Launcher / Studio)
 Application Core — Document Domain — Tool Registry
         |
 Platform / Capability Ports
-        |----------------------|
-Browser adapters         Tauri IPC
-                              |
-                    Rust native core
-                 SQLite / blobs / jobs
-                    sidecars permitidos
+        |-----------------------------|
+Browser adapters         Tauri IPC — Windows
+                                  |
+                         Rust native core
+                      SQLite / blobs / jobs
+                         sidecars permitidos
 ```
 
 Componentes React não inferem capacidades pelo sistema operacional e não acessam filesystem,
@@ -27,6 +27,30 @@ endereçamento BLAKE3; cache é reconstruível. Undo e redo movem ponteiros entr
 
 O Tool Registry descreve ferramentas, superfícies, entradas, saídas, capacidades e executor. A
 Capability Layer escolhe adapters de navegador, nativos ou Python sem vazar detalhes para a UI.
+
+## Plataformas e runtime
+
+| Superfície | Estado atual | Runtime e gate |
+| --- | --- | --- |
+| Windows desktop | Produtiva | Tauri 2, Wry, WebView2 e Rust; build e testes em Windows MSVC |
+| Web | Suportada | Client React compartilhado; build e E2E em navegador |
+| Linux desktop | Congelada por prazo indeterminado | Sem roadmap, build, teste, release ou suporte |
+| Android e iOS | Congeladas por prazo indeterminado | Sem roadmap, desenvolvimento ou validação |
+| Demais sistemas nativos | Congelados por prazo indeterminado | Fora do roadmap e sem compromisso de avaliação ou implementação |
+
+O Windows é o único alvo desktop produtivo. O Tauri permanece como shell nativo e usa a cadeia
+WebView2 no Windows; o client React é o mesmo entregue na web. A UI continua consultando Capability
+Ports e não contém ramificações por sistema operacional.
+
+No Linux, a resolução condicional atual do Tauri/Wry ainda usa GTK3 e WebKitGTK, incluindo
+`glib 0.18.5`. Essa cadeia não integra o grafo compilado para `x86_64-pc-windows-msvc`, não bloqueia
+o desenvolvimento Windows e não cria obrigação de migração. GTK4 é apenas uma dependência técnica
+eventual caso o mantenedor decida, expressamente, avaliar suporte Linux.
+
+O congelamento preserva `mobile_entry_point`, assets e dependências condicionais apenas como
+possibilidade técnica. Isso não constitui intenção de retomada, suporte, compatibilidade verificada,
+planejamento ou autorização para implementar funcionalidades específicas dessas plataformas. Uma
+eventual retomada somente ocorrerá se e quando decidida pelo mantenedor.
 
 ## Idioma e internacionalização
 

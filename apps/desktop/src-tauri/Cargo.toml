@@ -4,6 +4,7 @@ version = "0.0.0"
 description = "Shell desktop do NexoHub"
 edition = "2024"
 license = "MPL-2.0"
+rust-version = "1.88"
 
 [lib]
 name = "nexohub_desktop_lib"

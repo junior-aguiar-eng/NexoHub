@@ -4,6 +4,7 @@ use crate::domain::{Artifact, Document, ImportedDocument, Project};
 use crate::error::CoreResult;
 use crate::pdf_tools::{CompressPdfRequest, PdfToolResult};
 use crate::storage::ProjectStore;
+use crate::text_tools::{CreateTextRevisionRequest, TextToolResult};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -78,4 +79,8 @@ pub fn list_artifacts(request: ListArtifactsRequest) -> CoreResult<Vec<Artifact>
 
 pub fn compress_pdf(request: CompressPdfRequest) -> CoreResult<PdfToolResult> {
     crate::pdf_tools::compress_pdf(request)
+}
+
+pub fn create_text_revision(request: CreateTextRevisionRequest) -> CoreResult<TextToolResult> {
+    crate::text_tools::create_text_revision(request)
 }

@@ -688,6 +688,61 @@ button {
   color: var(--color-ink-muted);
   line-height: 1.7;
 }
+.text-editor {
+  width: min(44rem, 100%);
+  margin-top: var(--space-8);
+  overflow: hidden;
+  text-align: left;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.text-editor__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.text-editor__toolbar .eyebrow {
+  margin: 0 0 0.1rem;
+  font-size: 0.55rem;
+}
+.text-editor__toolbar h2 {
+  margin: 0;
+  font-size: 0.88rem;
+}
+.text-editor label {
+  display: block;
+}
+.text-editor textarea {
+  display: block;
+  width: 100%;
+  min-height: 13rem;
+  padding: var(--space-4);
+  resize: vertical;
+  color: var(--color-ink);
+  font:
+    0.85rem / 1.7 ui-monospace,
+    monospace;
+  background: var(--color-surface-raised);
+  border: 0;
+  outline: 0;
+}
+.text-editor textarea:focus {
+  box-shadow: inset 0 0 0 2px var(--color-focus);
+}
+.text-editor footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  color: var(--color-ink-muted);
+  font-size: 0.62rem;
+  border-top: 1px solid var(--color-border);
+}
 
 .command-backdrop {
   position: fixed;

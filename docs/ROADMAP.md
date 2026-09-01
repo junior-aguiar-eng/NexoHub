@@ -9,7 +9,14 @@
 | 4 | Quick Tools PDF reais | Em andamento — compressão nativa integrada ao Document Core |
 | 5 | Studio sobre o Document Core | Em andamento — shell e porta tipada do Document Core |
 | 6 | Nexo Layers, NexoFlow e promoção Quick → Studio | Concluída localmente |
-| 7–14 | Texto, overlay PDF, OCR, anchors, DOCX, tradução, revisão e receitas | Planejada |
+| 7 | Texto e revisões UTF-8 imutáveis | Concluída localmente |
+| 8 | Overlay PDF | Planejada |
+| 9 | OCR | Planejada |
+| 10 | Anchors | Planejada |
+| 11 | DOCX | Planejada |
+| 12 | Tradução | Planejada |
+| 13 | Revisão | Planejada |
+| 14 | Receitas | Planejada |
 | 15 | Hardening orientado a falhas e métricas | Planejada |
 | 16 | Release engineering Windows e publicação web auditável | Planejada |
 

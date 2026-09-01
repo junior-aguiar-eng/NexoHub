@@ -42,6 +42,20 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Nexo Layers" })).toBeInTheDocument();
   });
 
+  it("abre o editor de texto ao promover uma ferramenta textual", () => {
+    render(<App />);
+    const card = screen.getByText("Revisar texto").closest("article");
+    if (!card) throw new Error("card textual não encontrado");
+
+    fireEvent.click(within(card).getByRole("button", { name: "Continuar no Studio" }));
+    const editor = screen.getByRole("textbox", { name: "Conteúdo textual" });
+    fireEvent.change(editor, { target: { value: "Texto" } });
+
+    expect(editor).toHaveValue("Texto");
+    expect(screen.getByText("5 caracteres")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Criar revisão" })).toBeDisabled();
+  });
+
   it("filtra as ferramentas pela suíte ativa", () => {
     render(<App />);
 

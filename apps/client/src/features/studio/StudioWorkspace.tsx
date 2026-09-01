@@ -3,6 +3,7 @@ import { FileText, FolderOpen, Library, PanelLeftClose, PanelRight } from "lucid
 import { Button } from "@/components/ui/button";
 import type { LauncherTool } from "@/features/launcher/model";
 import { translate } from "@/i18n";
+import { TextEditor } from "./TextEditor";
 
 type StudioWorkspaceProps = {
   onClose: () => void;
@@ -60,6 +61,7 @@ export function StudioWorkspace({ onClose, promotedFlow }: StudioWorkspaceProps)
               {translate("studio.canvas.openProject")}
               <span className="status-badge">{translate("tools.comingSoon")}</span>
             </Button>
+            {promotedFlow?.tool.manifest.category === "text" && <TextEditor />}
           </div>
         </section>
 

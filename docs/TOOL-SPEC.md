@@ -42,3 +42,10 @@ começam na Fase 4.
 documento. O resultado contém o artifact derivado e a operação `pdf-compress` persistida no grafo.
 PDF inválido retorna `PDF_PROCESSING`; caminhos, IDs e tipos incompatíveis usam os códigos estáveis
 do Document Core.
+
+## Fase 7 — texto
+
+`create_text_revision` recebe `projectPath`, `documentId`, `artifactId` e conteúdo UTF-8. O artifact
+de entrada deve ser `text/plain` ou `text/markdown` e pertencer ao documento. Cada salvamento cria
+um artifact derivado e uma operação `text-edit`; o blob original nunca é regravado. A revisão é
+limitada a 16 MiB e a interface não oferece persistência enquanto não houver contexto documental.

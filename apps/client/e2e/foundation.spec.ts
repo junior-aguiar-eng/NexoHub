@@ -58,3 +58,14 @@ test("promove uma Quick Tool para um NexoFlow no Studio", async ({ page }) => {
   await expect(page.getByText("pdf-compress")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Nexo Layers" })).toBeVisible();
 });
+
+test("edita um rascunho textual sem simular persistência", async ({ page }) => {
+  await page.goto("/");
+  const card = page.locator("article").filter({ hasText: "Revisar texto" });
+  await card.getByRole("button", { name: "Continuar no Studio" }).click();
+
+  const editor = page.getByRole("textbox", { name: "Conteúdo textual" });
+  await editor.fill("Texto jurídico em UTF-8");
+  await expect(editor).toHaveValue("Texto jurídico em UTF-8");
+  await expect(page.getByRole("button", { name: "Criar revisão" })).toBeDisabled();
+});

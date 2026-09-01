@@ -75,6 +75,11 @@ imutáveis de ferramentas, valida dependências entre etapas e mantém estados e
 Tool pode ser promovida a rascunho `QUICK` no Studio; essa transição transfere o identificador da
 ferramenta e o contexto operacional, mas não simula nem dispara execução.
 
+A edição textual usa uma representação UTF-8 local. `create_text_revision` aceita somente artifacts
+`text/plain` ou `text/markdown`, limita cada revisão a 16 MiB e persiste o conteúdo como novo
+artifact derivado ligado à operação `text-edit`. O editor mantém rascunho local e só habilita a
+persistência quando recebe contexto de projeto e artifact por `DocumentCorePort`.
+
 ## Plataformas e runtime
 
 | Superfície | Estado atual | Runtime e gate |

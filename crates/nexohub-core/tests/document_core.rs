@@ -2,6 +2,7 @@ use lopdf::{Document as PdfDocument, Object, dictionary};
 use nexohub_core::commands::CreateProjectRequest;
 use nexohub_core::domain::ArtifactKind;
 use nexohub_core::pdf_tools::{CompressPdfRequest, compress_pdf};
+use nexohub_core::text_tools::{CreateTextRevisionRequest, create_text_revision};
 use nexohub_core::{ErrorCode, ProjectStore};
 use serde_json::json;
 use std::fs;
@@ -295,4 +296,68 @@ fn rejects_invalid_pdf_without_creating_derived_artifact() {
             .len(),
         1
     );
+}
+
+#[test]
+fn creates_utf8_text_revision_and_preserves_source_artifact() {
+    let temporary = TestDirectory::new("text-revision");
+    let project_path = temporary.project_path();
+    let original = "Versão original";
+    let source = write_source(&temporary.path, "nota.md", original.as_bytes());
+    let mut store = ProjectStore::create(&project_path, "Texto").expect("projeto deve ser criado");
+    let imported = store
+        .import_document(&source, None, "text/markdown")
+        .expect("texto deve ser importado");
+    drop(store);
+
+    let result = create_text_revision(CreateTextRevisionRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: imported.document.id.clone(),
+        artifact_id: imported.artifact.id.clone(),
+        content: "Nova revisão com acentuação jurídica: órgão".to_owned(),
+    })
+    .expect("revisão deve ser criada");
+
+    let store = ProjectStore::open(&project_path).expect("projeto deve reabrir");
+    assert_eq!(result.artifact.kind, ArtifactKind::Derived);
+    assert_eq!(result.artifact.mime_type, "text/markdown");
+    assert_eq!(result.operation.tool_id, "text-edit");
+    assert_eq!(
+        store
+            .read_artifact_bytes(&imported.artifact.id)
+            .expect("original deve permanecer legível"),
+        original.as_bytes()
+    );
+    assert_eq!(
+        String::from_utf8(
+            store
+                .read_artifact_bytes(&result.artifact.id)
+                .expect("revisão deve ser legível")
+        )
+        .expect("revisão deve permanecer UTF-8"),
+        "Nova revisão com acentuação jurídica: órgão"
+    );
+}
+
+#[test]
+fn rejects_text_revision_for_non_text_artifact() {
+    let temporary = TestDirectory::new("text-invalid-mime");
+    let project_path = temporary.project_path();
+    let source = write_source(&temporary.path, "arquivo.bin", b"binario");
+    let mut store =
+        ProjectStore::create(&project_path, "Binário").expect("projeto deve ser criado");
+    let imported = store
+        .import_document(&source, None, "application/octet-stream")
+        .expect("arquivo deve ser importado");
+    drop(store);
+
+    let error = create_text_revision(CreateTextRevisionRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: imported.document.id,
+        artifact_id: imported.artifact.id,
+        content: "não deve persistir".to_owned(),
+    })
+    .expect_err("tipo incompatível deve ser rejeitado");
+
+    assert_eq!(error.code, ErrorCode::InvalidArgument);
 }

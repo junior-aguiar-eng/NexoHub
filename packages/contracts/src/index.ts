@@ -67,6 +67,18 @@ export interface PdfToolResult {
   readonly operation: Operation;
 }
 
+export interface CreateTextRevisionRequest {
+  readonly projectPath: string;
+  readonly documentId: DocumentId;
+  readonly artifactId: ArtifactId;
+  readonly content: string;
+}
+
+export interface TextToolResult {
+  readonly artifact: Artifact;
+  readonly operation: Operation;
+}
+
 export interface DocumentCoreCommands {
   readonly create_project: {
     readonly request: CreateProjectRequest;
@@ -95,6 +107,10 @@ export interface DocumentCoreCommands {
   readonly compress_pdf: {
     readonly request: CompressPdfRequest;
     readonly response: PdfToolResult;
+  };
+  readonly create_text_revision: {
+    readonly request: CreateTextRevisionRequest;
+    readonly response: TextToolResult;
   };
 }
 

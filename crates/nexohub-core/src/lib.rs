@@ -7,6 +7,7 @@ pub mod error;
 mod migrations;
 pub mod pdf_tools;
 pub mod storage;
+pub mod text_tools;
 
 pub use error::{CoreError, CoreResult, ErrorCode};
 pub use storage::ProjectStore;

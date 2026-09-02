@@ -26,8 +26,9 @@ e `webkit2gtk 2.0.2` exigem `glib ^0.18`. A correção sem fork ou vendorizaçã
 oficial do Wry para GTK4, acompanhada em
 [tauri-apps/wry#1474](https://github.com/tauri-apps/wry/issues/1474). A exceção deve ser revista se e
 quando o mantenedor decidir expressamente avaliar suporte Linux, ou quando a cadeia oficial do
-Tauri mudar. O alerta permanecerá aberto, sem supressão, enquanto a dependência constar no lockfile.
+Tauri mudar. Em 2 de setembro de 2026, o alerta foi dispensado como risco tolerado; essa classificação
+não declara a dependência corrigida nem amplia a matriz de plataformas suportadas.
 
-Última revisão: 1º de setembro de 2026.
+Última revisão: 2 de setembro de 2026.
 Próxima revisão obrigatória: até 1º de outubro de 2026, ou antes de qualquer reativação de suporte
 Linux/Unix, o que ocorrer primeiro.

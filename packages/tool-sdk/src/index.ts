@@ -215,6 +215,7 @@ export class ToolRunner {
         error instanceof Error ? error.message : "Entrada inválida.",
       );
     }
+    if (request.signal?.aborted) throw new ToolRunError("CANCELLED", "Execução cancelada.");
     const executor = this.#executors.get(manifest.executor);
     if (!executor) throw new ToolRunError("EXECUTOR_NOT_FOUND", "Executor não configurado.");
     try {

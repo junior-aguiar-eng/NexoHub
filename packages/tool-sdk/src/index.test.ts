@@ -123,6 +123,26 @@ describe("Tool Runner", () => {
     await expect(running).rejects.toMatchObject({ code: "CANCELLED" });
   });
 
+  it("não inicia o executor quando a validação cancela a requisição", async () => {
+    const controller = new AbortController();
+    const registry = new ToolRegistry();
+    registry.register(manifest, () => controller.abort());
+    const execute = vi.fn(async () => ({ artifacts: [{ id: "derivado-tardio" }] }));
+    const runner = new ToolRunner(
+      registry,
+      new StaticCapabilityProvider({
+        "documents.read": { available: true },
+        "documents.write": { available: true },
+      }),
+      [{ kind: "native", execute }],
+    );
+
+    await expect(
+      runner.run({ toolId: manifest.id, input: "original.pdf", signal: controller.signal }),
+    ).rejects.toMatchObject({ code: "CANCELLED" });
+    expect(execute).not.toHaveBeenCalled();
+  });
+
   it("aplica timeout mesmo quando o executor não responde ao abort signal", async () => {
     vi.useFakeTimers();
     try {

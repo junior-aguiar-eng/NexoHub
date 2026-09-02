@@ -17,8 +17,12 @@ export class BrowserRecipeStorage implements RecipeStoragePort {
   async list(): Promise<readonly RecipeSnapshot[]> {
     const serialized = globalThis.localStorage.getItem(STORAGE_KEY);
     if (!serialized) return [];
-    const parsed: unknown = JSON.parse(serialized);
-    return Array.isArray(parsed) ? (parsed as RecipeSnapshot[]) : [];
+    try {
+      const parsed: unknown = JSON.parse(serialized);
+      return Array.isArray(parsed) ? (parsed as RecipeSnapshot[]) : [];
+    } catch {
+      return [];
+    }
   }
 }
 

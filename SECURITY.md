@@ -13,14 +13,21 @@ O alvo desktop produtivo atual é Windows `x86_64-pc-windows-msvc`. Nesse alvo, 
 WebView2 e o grafo não contém `glib`. As dependências transitivas diretamente atualizáveis permanecem
 fixadas no lockfile em versões corrigidas: `time >= 0.3.47` e `serde_with >= 3.21.0`.
 
-O `Cargo.lock` também resolve `glib 0.18.5` na cadeia GTK3/WebKitGTK usada pelo Tauri/Wry no
-Linux. A mesma família condicional pode ser resolvida por outros alvos Unix fora da matriz
-produtiva, como FreeBSD; ela não integra o grafo Windows. Essa versão é afetada por
-[GHSA-wrw7-89jp-8q8g](https://github.com/advisories/GHSA-wrw7-89jp-8q8g), mas não é compilada nem
-executada no alvo Windows atual. Linux está congelado e sem release suportada. A correção sem fork
-ou vendorização depende da migração oficial do Wry para GTK4, acompanhada em
+O alerta Dependabot nº 1 identifica `glib 0.18.5` na cadeia condicional
+`tauri -> tauri-runtime-wry -> wry -> webkit2gtk/gtk -> glib`, usada no Linux e em outros alvos
+Unix da família BSD. Essa versão é afetada por
+[GHSA-wrw7-89jp-8q8g](https://github.com/advisories/GHSA-wrw7-89jp-8q8g), com correção em
+`glib 0.20.0`, mas não é compilada nem executada no alvo Windows atual. O grafo Windows usa
+WebView2 e não contém `glib`, e o código do NexoHub não referencia diretamente a API vulnerável
+`glib::VariantStrIter`.
+
+Linux está congelado e sem release suportada. A atualização isolada não é compatível: `gtk 0.18.2`
+e `webkit2gtk 2.0.2` exigem `glib ^0.18`. A correção sem fork ou vendorização depende da migração
+oficial do Wry para GTK4, acompanhada em
 [tauri-apps/wry#1474](https://github.com/tauri-apps/wry/issues/1474). A exceção deve ser revista se e
 quando o mantenedor decidir expressamente avaliar suporte Linux, ou quando a cadeia oficial do
-Tauri mudar.
+Tauri mudar. O alerta permanecerá aberto, sem supressão, enquanto a dependência constar no lockfile.
 
 Última revisão: 1º de setembro de 2026.
+Próxima revisão obrigatória: até 1º de outubro de 2026, ou antes de qualquer reativação de suporte
+Linux/Unix, o que ocorrer primeiro.

@@ -1,14 +1,17 @@
 //! Fronteira do núcleo nativo de aplicação do NexoHub.
 
 pub mod anchor_tools;
+mod atomic_file;
 mod blob_store;
 pub mod commands;
 pub mod domain;
 pub mod error;
+pub mod hardening;
 pub mod language_tool;
 mod migrations;
 pub mod overlay_tools;
 pub mod pdf_tools;
+mod sidecar;
 pub mod storage;
 pub mod text_tools;
 

@@ -6,19 +6,36 @@ from dataclasses import asdict, dataclass
 from io import BytesIO
 from pathlib import PurePosixPath
 from typing import Any
+from xml.etree.ElementTree import ParseError, iterparse
 from zipfile import BadZipFile, ZipFile
 
 from docx import Document
 
+from .limits import env_limit
+
 DOCX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-MAX_INPUT_BYTES = 64 * 1024 * 1024
-MAX_MEMBERS = 2_000
-MAX_UNCOMPRESSED_BYTES = 256 * 1024 * 1024
-MAX_COMPRESSION_RATIO = 200
-MAX_PARAGRAPHS = 10_000
-MAX_TABLES = 500
-MAX_CELLS = 50_000
-MAX_TEXT_LENGTH = 1_000_000
+MAX_INPUT_BYTES = env_limit(
+    "NEXOHUB_DOCX_MAX_INPUT_BYTES", 64 * 1024 * 1024, minimum=1024, maximum=256 * 1024 * 1024
+)
+MAX_MEMBERS = env_limit("NEXOHUB_DOCX_MAX_MEMBERS", 2_000, minimum=10, maximum=20_000)
+MAX_UNCOMPRESSED_BYTES = env_limit(
+    "NEXOHUB_DOCX_MAX_UNCOMPRESSED_BYTES",
+    256 * 1024 * 1024,
+    minimum=1024,
+    maximum=1024 * 1024 * 1024,
+)
+MAX_COMPRESSION_RATIO = env_limit(
+    "NEXOHUB_DOCX_MAX_COMPRESSION_RATIO", 200, minimum=2, maximum=1_000
+)
+MAX_PARAGRAPHS = env_limit("NEXOHUB_DOCX_MAX_PARAGRAPHS", 10_000, minimum=1, maximum=100_000)
+MAX_TABLES = env_limit("NEXOHUB_DOCX_MAX_TABLES", 500, minimum=1, maximum=10_000)
+MAX_CELLS = env_limit("NEXOHUB_DOCX_MAX_CELLS", 50_000, minimum=1, maximum=1_000_000)
+MAX_TEXT_LENGTH = env_limit(
+    "NEXOHUB_DOCX_MAX_FIELD_CHARACTERS", 1_000_000, minimum=1_000, maximum=8_000_000
+)
+MAX_TOTAL_TEXT_LENGTH = env_limit(
+    "NEXOHUB_DOCX_MAX_TOTAL_CHARACTERS", 16_000_000, minimum=10_000, maximum=64_000_000
+)
 ALLOWED_STYLES = {
     "Normal",
     "Title",
@@ -57,6 +74,7 @@ class DocxInspection:
 
 def inspect_docx(content: bytes) -> DocxInspection:
     _validate_archive(content)
+    _validate_document_structure(content)
     try:
         document = Document(BytesIO(content))
     except (BadZipFile, KeyError, ValueError) as error:
@@ -89,10 +107,13 @@ def create_docx(params: dict[str, Any]) -> bytes:
     document = Document()
     if title:
         document.core_properties.title = title
+    total_text_length = len(title or "")
     for index, item in enumerate(raw_paragraphs):
         if not isinstance(item, dict):
             raise DocxInputError(f"paragraphs[{index}] deve ser um objeto.")
         text = _required_text(item.get("text"), f"paragraphs[{index}].text")
+        total_text_length += len(text)
+        _ensure_total_text_length(total_text_length)
         style = item.get("style", "Normal")
         if style not in ALLOWED_STYLES:
             raise DocxInputError(f"Estilo não permitido em paragraphs[{index}].")
@@ -121,6 +142,8 @@ def create_docx(params: dict[str, Any]) -> bytes:
                     for cell_index, value in enumerate(raw_row)
                 ]
             )
+            total_text_length += sum(len(value) for value in normalized_rows[-1])
+            _ensure_total_text_length(total_text_length)
             cell_count += len(raw_row)
             if cell_count > MAX_CELLS:
                 raise DocxInputError("As tabelas excedem o limite de 50.000 células.")
@@ -168,6 +191,44 @@ def _validate_archive(content: bytes) -> None:
                 raise DocxInputError("O conteúdo não possui a estrutura mínima de um DOCX.")
     except BadZipFile as error:
         raise DocxInputError("O conteúdo não é um arquivo ZIP válido.") from error
+
+
+def _validate_document_structure(content: bytes) -> None:
+    paragraphs = 0
+    tables = 0
+    cells = 0
+    total_text_length = 0
+    try:
+        with ZipFile(BytesIO(content)) as archive, archive.open("word/document.xml") as xml:
+            for _, element in iterparse(xml, events=("end",)):
+                local_name = element.tag.rsplit("}", 1)[-1]
+                if local_name == "p":
+                    paragraphs += 1
+                    if paragraphs > MAX_PARAGRAPHS:
+                        raise DocxInputError(
+                            f"O DOCX excede o limite de {MAX_PARAGRAPHS} parágrafos."
+                        )
+                elif local_name == "tbl":
+                    tables += 1
+                    if tables > MAX_TABLES:
+                        raise DocxInputError(f"O DOCX excede o limite de {MAX_TABLES} tabelas.")
+                elif local_name == "tc":
+                    cells += 1
+                    if cells > MAX_CELLS:
+                        raise DocxInputError(f"O DOCX excede o limite de {MAX_CELLS} células.")
+                elif local_name == "t" and element.text:
+                    total_text_length += len(element.text)
+                    _ensure_total_text_length(total_text_length)
+                element.clear()
+    except (BadZipFile, KeyError, ParseError) as error:
+        raise DocxInputError("O XML principal do DOCX é inválido.") from error
+
+
+def _ensure_total_text_length(length: int) -> None:
+    if length > MAX_TOTAL_TEXT_LENGTH:
+        raise DocxInputError(
+            f"O conteúdo textual excede o limite de {MAX_TOTAL_TEXT_LENGTH} caracteres."
+        )
 
 
 def _required_text(value: object, field: str) -> str:

@@ -1,1 +1,1 @@
-{"default":{"identifier":"default","description":"Permissões mínimas da janela principal do NexoHub.","local":true,"windows":["main"],"permissions":["core:default"]}}
+{"default":{"identifier":"default","description":"A janela principal usa somente comandos documentais próprios, sem APIs core genéricas.","local":true,"windows":["main"],"permissions":[]}}

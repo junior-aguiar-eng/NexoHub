@@ -18,11 +18,14 @@ export type IpcErrorCode =
   | "ARTIFACT_NOT_FOUND"
   | "STORAGE_IO"
   | "DATABASE"
+  | "PROJECT_CORRUPTED"
   | "INTEGRITY_VIOLATION"
   | "MIGRATION_FAILED"
+  | "RESOURCE_LIMIT"
   | "PDF_PROCESSING"
   | "REVIEW_UNAVAILABLE"
-  | "REVIEW_PROCESSING";
+  | "REVIEW_PROCESSING"
+  | "SIDECAR_TIMEOUT";
 
 export interface IpcError {
   readonly code: IpcErrorCode;

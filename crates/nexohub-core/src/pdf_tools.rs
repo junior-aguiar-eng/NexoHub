@@ -48,11 +48,46 @@ pub fn compress_pdf(request: CompressPdfRequest) -> CoreResult<PdfToolResult> {
             "A ferramenta aceita somente artifacts PDF.",
         ));
     }
+    let limits = store.limits().clone();
+    if input.size > limits.max_pdf_input_bytes {
+        return Err(CoreError::new(
+            ErrorCode::ResourceLimit,
+            format!(
+                "O PDF excede o limite de {} MiB para esta operação.",
+                limits.max_pdf_input_bytes / (1024 * 1024)
+            ),
+        ));
+    }
 
     let source = store.read_artifact_bytes(&request.artifact_id)?;
     let options = LoadOptions::with_max_decompressed_size(MAX_DECOMPRESSED_STREAM_SIZE);
     let mut document = Document::load_mem_with_options(&source, options)
         .map_err(|_| CoreError::pdf("Não foi possível interpretar o PDF de entrada."))?;
+    if document.is_encrypted() {
+        return Err(CoreError::new(
+            ErrorCode::InvalidArgument,
+            "PDF protegido por senha não é suportado pela compressão.",
+        ));
+    }
+    let page_count = document.get_pages().len();
+    if page_count == 0 || page_count > limits.max_pdf_pages {
+        return Err(CoreError::new(
+            ErrorCode::ResourceLimit,
+            format!(
+                "O PDF deve conter entre 1 e {} páginas.",
+                limits.max_pdf_pages
+            ),
+        ));
+    }
+    if document.objects.len() > limits.max_pdf_objects {
+        return Err(CoreError::new(
+            ErrorCode::ResourceLimit,
+            format!(
+                "O PDF excede o limite de {} objetos internos.",
+                limits.max_pdf_objects
+            ),
+        ));
+    }
     document.compress();
 
     let save_options = SaveOptions::builder()

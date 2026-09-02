@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Permissões mínimas da janela principal do NexoHub.",
+  "description": "A janela principal usa somente comandos documentais próprios, sem APIs core genéricas.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": []
 }

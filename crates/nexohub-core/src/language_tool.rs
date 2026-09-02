@@ -1,16 +1,18 @@
 //! Adapter do sidecar LanguageTool Community pt-BR com runtime Java fixado.
 
 use crate::error::{CoreError, CoreResult, ErrorCode};
+use crate::hardening::HardeningLimits;
+use crate::sidecar::{SensitiveTempDir, SidecarRunError, run_command};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::env;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use uuid::Uuid;
 
 const MAX_REVIEW_BYTES: usize = 4 * 1024 * 1024;
+const MAX_REVIEW_MATCHES: usize = 100_000;
 const MANIFEST: &str = include_str!("../../../runtime/languagetool-community.json");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -111,6 +113,7 @@ pub fn review_text(request: ReviewTextRequest) -> CoreResult<ReviewTextResult> {
     let root = env::var_os("NEXOHUB_LANGUAGETOOL_DIR")
         .map(PathBuf::from)
         .ok_or_else(|| CoreError::review_unavailable("LanguageTool Community não instalado."))?;
+    let limits = HardeningLimits::from_env()?;
     let manifest: InstallationManifest = serde_json::from_str(MANIFEST)
         .map_err(|_| CoreError::review_unavailable("Manifesto do LanguageTool inválido."))?;
     let java = verified_component(
@@ -128,8 +131,11 @@ pub fn review_text(request: ReviewTextRequest) -> CoreResult<ReviewTextResult> {
         required_file(&root, required)?;
     }
 
-    let input = env::temp_dir().join(format!("nexohub-review-{}.txt", Uuid::new_v4()));
-    fs::write(&input, request.text.as_bytes()).map_err(|_| CoreError::io())?;
+    let workspace = SensitiveTempDir::create().map_err(|_| CoreError::io())?;
+    let input = workspace
+        .write_private("input.txt", request.text.as_bytes())
+        .map_err(|_| CoreError::io())?;
+    let output_path = workspace.path("output.json");
     let mut command = Command::new(java);
     command
         .current_dir(jar.parent().ok_or_else(CoreError::io)?)
@@ -149,15 +155,27 @@ pub fn review_text(request: ReviewTextRequest) -> CoreResult<ReviewTextResult> {
         use std::os::windows::process::CommandExt;
         command.creation_flags(0x0800_0000);
     }
-    let output = command.output().map_err(|_| {
-        CoreError::review_unavailable("Não foi possível iniciar o runtime Java do LanguageTool.")
-    });
-    let _ = fs::remove_file(&input);
-    let output = output?;
-    if !output.status.success() {
-        return Err(CoreError::review("O LanguageTool não concluiu a revisão."));
-    }
-    parse_response(&output.stdout, &manifest)
+    let output = run_command(
+        &mut command,
+        &output_path,
+        limits.sidecar_timeout,
+        limits.max_sidecar_output_bytes,
+    )
+    .map_err(|error| match error {
+        SidecarRunError::Timeout => CoreError::new(
+            ErrorCode::SidecarTimeout,
+            "O LanguageTool excedeu o tempo limite e foi encerrado.",
+        ),
+        SidecarRunError::OutputLimit => CoreError::new(
+            ErrorCode::ResourceLimit,
+            "A resposta do LanguageTool excedeu o limite configurado.",
+        ),
+        SidecarRunError::Exit => CoreError::review("O LanguageTool não concluiu a revisão."),
+        SidecarRunError::Io => CoreError::review_unavailable(
+            "Não foi possível iniciar ou supervisionar o runtime Java do LanguageTool.",
+        ),
+    })?;
+    parse_response(&output, &manifest)
 }
 
 fn parse_response(bytes: &[u8], manifest: &InstallationManifest) -> CoreResult<ReviewTextResult> {
@@ -166,6 +184,12 @@ fn parse_response(bytes: &[u8], manifest: &InstallationManifest) -> CoreResult<R
     if raw.software.premium || raw.language.code != manifest.language {
         return Err(CoreError::review(
             "O sidecar retornou engine ou idioma inesperado.",
+        ));
+    }
+    if raw.matches.len() > MAX_REVIEW_MATCHES {
+        return Err(CoreError::new(
+            ErrorCode::ResourceLimit,
+            "A revisão excedeu o limite de 100.000 ocorrências.",
         ));
     }
     Ok(ReviewTextResult {

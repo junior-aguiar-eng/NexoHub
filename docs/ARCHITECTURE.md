@@ -47,10 +47,12 @@ por arquivo temporário no mesmo diretório e publica por renomeação; blobs ig
 Originals importados são copiados para o store e não possuem operação de atualização. Toda
 transformação cria outro artifact e registra arestas de entrada e saída.
 
-O shell Tauri expõe somente os comandos estruturados `create_project`, `open_project`,
-`import_document`, `list_documents`, `get_document` e `list_artifacts`. Caminhos, argumentos e
+O shell Tauri expõe somente comandos estruturados próprios: projeto, importação, consulta de
+documentos e artifacts, compressão PDF, revisão textual, revisão linguística, overlays e anchors.
+Não há permissão genérica Tauri de filesystem, shell ou `core:*`. Caminhos, argumentos, limites e
 integridade são validados no core Rust; erros retornam códigos estáveis sem SQL ou conteúdo do
-documento.
+documento. A ativação futura do adapter Tauri na UI depende de um broker de caminhos concedidos por
+diálogo nativo, conforme a auditoria de hardening.
 
 O Tool Registry descreve ferramentas, superfícies, entradas, saídas, capacidades e executor. A
 Capability Layer escolhe adapters de navegador, nativos ou Python sem vazar detalhes para a UI.

@@ -77,6 +77,71 @@ def test_protocol_rejects_invalid_base64() -> None:
     assert response["error"]["code"] == "INVALID_INPUT"
 
 
+def test_protocol_rejects_decoded_content_above_limit(monkeypatch) -> None:
+    monkeypatch.setattr("nexohub_document_engine.protocol.OCR_MAX_INPUT_BYTES", 1)
+
+    response = handle_request(
+        {
+            "id": "job-large",
+            "method": "ocr",
+            "params": {
+                "mimeType": "image/png",
+                "contentBase64": base64.b64encode(b"xx").decode("ascii"),
+            },
+        }
+    )
+
+    assert response["error"]["code"] == "INVALID_INPUT"
+
+
+def test_protocol_bounds_each_json_line(monkeypatch) -> None:
+    monkeypatch.setattr("nexohub_document_engine.protocol.MAX_REQUEST_LINE_CHARACTERS", 16)
+    output_stream = StringIO()
+
+    serve(StringIO("x" * 32 + "\n"), output_stream)
+
+    response = json.loads(output_stream.getvalue())
+    assert response["error"]["code"] == "REQUEST_TOO_LARGE"
+
+
+def test_ocr_rejects_image_dimensions_before_inference(monkeypatch) -> None:
+    monkeypatch.setattr("nexohub_document_engine.ocr.MAX_PIXELS_PER_PAGE", 100)
+
+    try:
+        recognize_document(image_bytes(), "image/png", engine=lambda _: None)
+    except OcrInputError as error:
+        assert "limite configurado" in str(error)
+    else:
+        raise AssertionError("imagem superdimensionada deveria ser rejeitada")
+
+
+def test_ocr_streams_and_closes_each_page(monkeypatch) -> None:
+    class FakeImage:
+        size = (10, 10)
+
+        def __init__(self) -> None:
+            self.closed = False
+
+        def close(self) -> None:
+            self.closed = True
+
+    first = FakeImage()
+    second = FakeImage()
+
+    def pages(_content: bytes, _mime_type: str):
+        yield first
+        assert first.closed
+        yield second
+
+    monkeypatch.setattr("nexohub_document_engine.ocr._render_pages", pages)
+    empty = SimpleNamespace(boxes=[], txts=[], scores=[])
+
+    result = recognize_document(b"pdf", "application/pdf", engine=lambda _: empty)
+
+    assert result.pages == 2
+    assert first.closed and second.closed
+
+
 def test_real_engine_recognizes_synthetic_local_image() -> None:
     image = Image.new("RGB", (500, 120), "white")
     ImageDraw.Draw(image).text((20, 35), "NEXOHUB OCR 123", fill="black", font_size=36)

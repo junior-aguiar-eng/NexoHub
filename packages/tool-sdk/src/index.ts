@@ -32,6 +32,7 @@ export type ToolRunErrorCode =
   | "EXECUTOR_NOT_FOUND"
   | "INVALID_INPUT"
   | "EXECUTION_FAILED"
+  | "TIMEOUT"
   | "CANCELLED";
 
 export class ToolRunError extends Error {
@@ -123,13 +124,24 @@ export function resolveToolAvailability(
 
 export class ToolRunner {
   readonly #executors: ReadonlyMap<ToolExecutorKind, ToolExecutor>;
+  readonly #metrics?: import("./metrics").ToolMetricsSink;
+  readonly #defaultTimeoutMs?: number;
+  readonly #now: () => number;
 
   constructor(
     readonly registry: ToolRegistry,
     readonly capabilities: CapabilityProvider,
     executors: readonly ToolExecutor[],
+    options: {
+      readonly metrics?: import("./metrics").ToolMetricsSink;
+      readonly defaultTimeoutMs?: number;
+      readonly now?: () => number;
+    } = {},
   ) {
     this.#executors = new Map(executors.map((executor) => [executor.kind, executor]));
+    this.#metrics = options.metrics;
+    this.#defaultTimeoutMs = options.defaultTimeoutMs;
+    this.#now = options.now ?? Date.now;
   }
 
   availability(toolId: string): ToolAvailability {
@@ -153,7 +165,38 @@ export class ToolRunner {
   }
 
   async run(request: ToolRunRequest): Promise<ToolRunResult> {
+    const startedAt = this.#now();
     const manifest = this.registry.get(request.toolId);
+    try {
+      const result = await this.#execute(request, manifest);
+      this.#recordMetric(request.toolId, manifest?.executor ?? "unknown", startedAt, {
+        outcome: "SUCCEEDED",
+        artifactCount: result.artifacts.length,
+      });
+      return result;
+    } catch (error) {
+      const normalized =
+        error instanceof ToolRunError
+          ? error
+          : new ToolRunError("EXECUTION_FAILED", "Falha ao executar a ferramenta.");
+      this.#recordMetric(request.toolId, manifest?.executor ?? "unknown", startedAt, {
+        outcome:
+          normalized.code === "CANCELLED"
+            ? "CANCELLED"
+            : normalized.code === "TIMEOUT"
+              ? "TIMED_OUT"
+              : "FAILED",
+        artifactCount: 0,
+        errorCode: normalized.code,
+      });
+      throw normalized;
+    }
+  }
+
+  async #execute(
+    request: ToolRunRequest,
+    manifest: ToolManifest | undefined,
+  ): Promise<ToolRunResult> {
     if (!manifest) throw new ToolRunError("TOOL_NOT_FOUND", "Ferramenta não registrada.");
     if (request.signal?.aborted) throw new ToolRunError("CANCELLED", "Execução cancelada.");
     const availability = resolveToolAvailability(manifest, this.capabilities);
@@ -175,7 +218,7 @@ export class ToolRunner {
     const executor = this.#executors.get(manifest.executor);
     if (!executor) throw new ToolRunError("EXECUTOR_NOT_FOUND", "Executor não configurado.");
     try {
-      return await executor.execute(request, manifest);
+      return await executeWithTimeout(executor, request, manifest, this.#defaultTimeoutMs);
     } catch (error) {
       if (
         request.signal?.aborted ||
@@ -187,9 +230,70 @@ export class ToolRunner {
       throw new ToolRunError("EXECUTION_FAILED", "Falha ao executar a ferramenta.");
     }
   }
+
+  #recordMetric(
+    toolId: string,
+    executor: ToolExecutorKind | "unknown",
+    startedAt: number,
+    result: Pick<import("./metrics").ToolRunMetric, "outcome" | "artifactCount" | "errorCode">,
+  ): void {
+    try {
+      this.#metrics?.record({
+        toolId,
+        executor,
+        durationMs: Math.max(0, this.#now() - startedAt),
+        recordedAt: this.#now(),
+        ...result,
+      });
+    } catch {
+      // Métricas são diagnósticas e nunca alteram o resultado documental.
+    }
+  }
 }
 
+export * from "./metrics";
 export * from "./RecipeRunner";
+
+async function executeWithTimeout(
+  executor: ToolExecutor,
+  request: ToolRunRequest,
+  manifest: ToolManifest,
+  timeoutMs: number | undefined,
+): Promise<ToolRunResult> {
+  const controller = new AbortController();
+  const relayCancellation = () => controller.abort();
+  request.signal?.addEventListener("abort", relayCancellation, { once: true });
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  let rejectCancellation: (() => void) | undefined;
+  try {
+    const competing: Promise<ToolRunResult>[] = [
+      executor.execute({ ...request, signal: controller.signal }, manifest),
+    ];
+    if (timeoutMs !== undefined && timeoutMs > 0) {
+      competing.push(
+        new Promise<never>((_, reject) => {
+          timeout = setTimeout(() => {
+            reject(new ToolRunError("TIMEOUT", "A ferramenta excedeu o tempo limite de execução."));
+            controller.abort();
+          }, timeoutMs);
+        }),
+      );
+    }
+    if (request.signal) {
+      competing.push(
+        new Promise<never>((_, reject) => {
+          rejectCancellation = () => reject(new ToolRunError("CANCELLED", "Execução cancelada."));
+          request.signal?.addEventListener("abort", rejectCancellation, { once: true });
+        }),
+      );
+    }
+    return await Promise.race(competing);
+  } finally {
+    if (timeout !== undefined) clearTimeout(timeout);
+    request.signal?.removeEventListener("abort", relayCancellation);
+    if (rejectCancellation) request.signal?.removeEventListener("abort", rejectCancellation);
+  }
+}
 
 function validateManifest(manifest: ToolManifest): void {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(manifest.id))

@@ -14,11 +14,14 @@ pub enum ErrorCode {
     ArtifactNotFound,
     StorageIo,
     Database,
+    ProjectCorrupted,
     IntegrityViolation,
     MigrationFailed,
+    ResourceLimit,
     PdfProcessing,
     ReviewUnavailable,
     ReviewProcessing,
+    SidecarTimeout,
 }
 
 /// Erro seguro para IPC, sem consultas SQL nem conteúdo documental.
@@ -49,6 +52,13 @@ impl CoreError {
         Self::new(
             ErrorCode::Database,
             "Não foi possível persistir os dados do projeto.",
+        )
+    }
+
+    pub(crate) fn corrupted_project() -> Self {
+        Self::new(
+            ErrorCode::ProjectCorrupted,
+            "O projeto está corrompido ou inconsistente. Restaure uma cópia válida.",
         )
     }
 

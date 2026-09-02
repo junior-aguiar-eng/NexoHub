@@ -98,4 +98,53 @@ describe("Tool Runner", () => {
       runner.run({ toolId: manifest.id, input: "original.pdf", signal: controller.signal }),
     ).rejects.toMatchObject({ code: "CANCELLED" });
   });
+
+  it("interrompe a espera quando uma execução ativa é cancelada", async () => {
+    const registry = new ToolRegistry();
+    registry.register(manifest);
+    const execute = vi.fn(() => new Promise<never>(() => undefined));
+    const runner = new ToolRunner(
+      registry,
+      new StaticCapabilityProvider({
+        "documents.read": { available: true },
+        "documents.write": { available: true },
+      }),
+      [{ kind: "native", execute }],
+    );
+    const controller = new AbortController();
+    const running = runner.run({
+      toolId: manifest.id,
+      input: "original.pdf",
+      signal: controller.signal,
+    });
+
+    controller.abort();
+
+    await expect(running).rejects.toMatchObject({ code: "CANCELLED" });
+  });
+
+  it("aplica timeout mesmo quando o executor não responde ao abort signal", async () => {
+    vi.useFakeTimers();
+    try {
+      const registry = new ToolRegistry();
+      registry.register(manifest);
+      const runner = new ToolRunner(
+        registry,
+        new StaticCapabilityProvider({
+          "documents.read": { available: true },
+          "documents.write": { available: true },
+        }),
+        [{ kind: "native", execute: () => new Promise<never>(() => undefined) }],
+        { defaultTimeoutMs: 100 },
+      );
+      const running = runner.run({ toolId: manifest.id, input: "original.pdf" });
+      const expectation = expect(running).rejects.toMatchObject({ code: "TIMEOUT" });
+
+      await vi.advanceTimersByTimeAsync(100);
+
+      await expectation;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

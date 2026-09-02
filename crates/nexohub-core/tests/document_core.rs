@@ -4,6 +4,7 @@ use nexohub_core::anchor_tools::{
 };
 use nexohub_core::commands::CreateProjectRequest;
 use nexohub_core::domain::ArtifactKind;
+use nexohub_core::hardening::HardeningLimits;
 use nexohub_core::overlay_tools::{
     CreatePdfOverlayRequest, ListPdfOverlaysRequest, PdfOverlayKind, create_pdf_overlay,
     list_pdf_overlays,
@@ -22,9 +23,9 @@ struct TestDirectory {
 
 impl TestDirectory {
     fn new(label: &str) -> Self {
-        Self {
-            path: std::env::temp_dir().join(format!("nexohub-{label}-{}", Uuid::new_v4())),
-        }
+        let path = std::env::temp_dir().join(format!("nexohub-{label}-{}", Uuid::new_v4()));
+        fs::create_dir(&path).expect("diretório de teste deve ser criado");
+        Self { path }
     }
 
     fn project_path(&self) -> PathBuf {
@@ -46,19 +47,27 @@ fn write_source(root: &Path, name: &str, bytes: &[u8]) -> PathBuf {
 }
 
 fn synthetic_pdf() -> Vec<u8> {
+    synthetic_pdf_with_pages(1)
+}
+
+fn synthetic_pdf_with_pages(page_count: usize) -> Vec<u8> {
     let mut pdf = PdfDocument::with_version("1.5");
     let pages_id = pdf.new_object_id();
-    let page_id = pdf.add_object(dictionary! {
-        "Type" => "Page",
-        "Parent" => pages_id,
-        "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
-    });
+    let page_ids = (0..page_count)
+        .map(|_| {
+            pdf.add_object(dictionary! {
+                "Type" => "Page",
+                "Parent" => pages_id,
+                "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+            })
+        })
+        .collect::<Vec<_>>();
     pdf.objects.insert(
         pages_id,
         Object::Dictionary(dictionary! {
             "Type" => "Pages",
-            "Kids" => vec![page_id.into()],
-            "Count" => 1,
+            "Kids" => page_ids.into_iter().map(Into::into).collect::<Vec<Object>>(),
+            "Count" => page_count as i64,
         }),
     );
     let catalog_id = pdf.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages_id });
@@ -67,6 +76,91 @@ fn synthetic_pdf() -> Vec<u8> {
     pdf.save_to(&mut bytes)
         .expect("fixture PDF deve ser criada");
     bytes
+}
+
+#[test]
+fn rejects_relative_and_parent_traversal_project_paths() {
+    let relative = match ProjectStore::create("Projeto.nexohub", "Inválido") {
+        Ok(_) => panic!("caminho relativo deve ser rejeitado"),
+        Err(error) => error,
+    };
+    assert_eq!(relative.code, ErrorCode::InvalidArgument);
+
+    let temporary = TestDirectory::new("traversal");
+    fs::create_dir_all(&temporary.path).expect("diretório deve existir");
+    let traversal = temporary
+        .path
+        .join("segmento")
+        .join("..")
+        .join("Projeto.nexohub");
+    let error = match ProjectStore::create(traversal, "Inválido") {
+        Ok(_) => panic!("segmento pai deve ser rejeitado"),
+        Err(error) => error,
+    };
+    assert_eq!(error.code, ErrorCode::InvalidArgument);
+}
+
+#[test]
+fn rebuilds_cache_without_deleting_persistent_blobs() {
+    let temporary = TestDirectory::new("cache-rebuild");
+    let project_path = temporary.project_path();
+    let source = write_source(&temporary.path, "original.txt", b"original persistente");
+    let artifact_id = {
+        let mut store = ProjectStore::create(&project_path, "Cache").expect("projeto");
+        store
+            .import_document(&source, None, "text/plain")
+            .expect("importação")
+            .artifact
+            .id
+    };
+
+    fs::remove_dir_all(project_path.join("cache")).expect("cache deve ser removível");
+    let store = ProjectStore::open(&project_path).expect("cache deve ser reconstruído");
+
+    assert!(project_path.join("cache").is_dir());
+    assert_eq!(
+        store
+            .read_artifact_bytes(&artifact_id)
+            .expect("blob deve sobreviver"),
+        b"original persistente"
+    );
+}
+
+#[test]
+fn reports_corrupted_project_database() {
+    let temporary = TestDirectory::new("corrupted-db");
+    let project_path = temporary.project_path();
+    drop(ProjectStore::create(&project_path, "Corrompido").expect("projeto"));
+    fs::write(
+        project_path.join("project.sqlite3"),
+        b"not a sqlite database",
+    )
+    .expect("fixture corrompida");
+
+    let error = match ProjectStore::open(&project_path) {
+        Ok(_) => panic!("corrupção deve ser estruturada"),
+        Err(error) => error,
+    };
+    assert_eq!(error.code, ErrorCode::ProjectCorrupted);
+}
+
+#[test]
+fn enforces_configured_project_artifact_budget() {
+    let temporary = TestDirectory::new("project-budget");
+    let project_path = temporary.project_path();
+    let source = write_source(&temporary.path, "large.bin", &[7_u8; 32]);
+    let limits = HardeningLimits {
+        max_project_artifact_bytes: 16,
+        ..HardeningLimits::default()
+    };
+    let mut store = ProjectStore::create_with_limits(&project_path, "Limite", limits)
+        .expect("projeto deve ser criado");
+
+    let error = store
+        .import_document(&source, None, "application/octet-stream")
+        .expect_err("quota deve impedir escrita");
+    assert_eq!(error.code, ErrorCode::ResourceLimit);
+    assert!(store.list_documents().expect("listagem").is_empty());
 }
 
 #[test]
@@ -318,6 +412,40 @@ fn rejects_invalid_pdf_without_creating_derived_artifact() {
             .expect("projeto deve reabrir")
             .list_artifacts(&imported.document.id)
             .expect("artifacts devem ser listados")
+            .len(),
+        1
+    );
+}
+
+#[test]
+fn rejects_pdf_above_configured_page_limit_without_derived_artifact() {
+    let temporary = TestDirectory::new("huge-page-count");
+    let project_path = temporary.project_path();
+    let source = write_source(
+        &temporary.path,
+        "many-pages.pdf",
+        &synthetic_pdf_with_pages(1_001),
+    );
+    let mut store = ProjectStore::create(&project_path, "Muitas páginas").expect("projeto");
+    let imported = store
+        .import_document(&source, None, "application/pdf")
+        .expect("original deve ser importado");
+    drop(store);
+
+    let error = compress_pdf(CompressPdfRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: imported.document.id.clone(),
+        artifact_id: imported.artifact.id,
+        compression_level: 6,
+    })
+    .expect_err("PDF acima de mil páginas deve ser rejeitado");
+
+    assert_eq!(error.code, ErrorCode::ResourceLimit);
+    assert_eq!(
+        ProjectStore::open(&project_path)
+            .expect("projeto deve reabrir")
+            .list_artifacts(&imported.document.id)
+            .expect("artifacts")
             .len(),
         1
     );

@@ -71,3 +71,11 @@ def test_protocol_creates_and_inspects_docx() -> None:
 def test_create_rejects_unknown_style() -> None:
     with pytest.raises(DocxInputError, match="Estilo não permitido"):
         create_docx({"paragraphs": [{"text": "Texto", "style": "External Style"}]})
+
+
+def test_inspection_rejects_excessive_structural_count(monkeypatch) -> None:
+    content = create_docx({"paragraphs": [{"text": "Primeiro"}, {"text": "Segundo"}]})
+    monkeypatch.setattr("nexohub_document_engine.docx.MAX_PARAGRAPHS", 1)
+
+    with pytest.raises(DocxInputError, match="limite de 1 parágrafos"):
+        inspect_docx(content)

@@ -59,7 +59,34 @@ export function RecipePanel({ flow, onSave, onRun }: Props) {
         setExecution((current) => (current ? { ...current, progress: next } : current)),
       );
     } catch {
-      // O callback do runner já publica o estado estruturado de falha ou cancelamento.
+      setExecution((current) => {
+        if (
+          !current ||
+          current.controller !== controller ||
+          (current.progress.status !== "PENDING" && current.progress.status !== "RUNNING")
+        ) {
+          return current;
+        }
+
+        const status = controller.signal.aborted ? "CANCELLED" : "FAILED";
+        const currentStepIndex =
+          current.progress.currentStepIndex ??
+          current.progress.steps.findIndex(
+            (step) => step.status === "PENDING" || step.status === "RUNNING",
+          );
+
+        return {
+          ...current,
+          progress: {
+            ...current.progress,
+            status,
+            currentStepIndex: currentStepIndex >= 0 ? currentStepIndex : undefined,
+            steps: current.progress.steps.map((step, index) =>
+              index === currentStepIndex ? { ...step, status } : step,
+            ),
+          },
+        };
+      });
     }
   }
 

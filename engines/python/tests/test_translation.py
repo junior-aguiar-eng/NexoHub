@@ -6,6 +6,7 @@ import pytest
 
 from nexohub_document_engine.protocol import handle_request
 from nexohub_document_engine.translation import (
+    CTranslate2Backend,
     SentencePieceCodec,
     TranslationInputError,
     TranslationUnavailableError,
@@ -31,6 +32,31 @@ class FakeSentencePiece:
 
     def decode(self, tokens: list[str]) -> str:
         return " ".join(tokens)
+
+
+class FakeTranslationResult:
+    def __init__(self, tokens: list[str]) -> None:
+        self.hypotheses = [tokens]
+
+
+class EchoTranslator:
+    def translate_batch(
+        self, source: list[list[str]], **options: object
+    ) -> list[FakeTranslationResult]:
+        max_input_length = options.get("max_input_length", 1024)
+        results = []
+        for tokens in source:
+            visible = tokens if max_input_length == 0 else tokens[: int(max_input_length)]
+            results.append(FakeTranslationResult([*visible, "</s>"]))
+        return results
+
+
+class LimitedTranslator:
+    def translate_batch(
+        self, source: list[list[str]], **options: object
+    ) -> list[FakeTranslationResult]:
+        max_decoding_length = int(options.get("max_decoding_length", 256))
+        return [FakeTranslationResult(["token"] * max_decoding_length) for _ in source]
 
 
 def test_translates_segments_and_preserves_placeholders() -> None:
@@ -111,6 +137,38 @@ def test_opus_codec_uses_separate_tokenizers_without_eos() -> None:
     )
 
     assert codec.encode("Legal text") == [">>por<<", "Legal", "text"]
+
+
+def test_backend_preserves_inputs_longer_than_default_token_limit() -> None:
+    tokenizer = FakeSentencePiece()
+    backend = CTranslate2Backend(
+        EchoTranslator(),  # type: ignore[arg-type]
+        SentencePieceCodec(
+            tokenizer,  # type: ignore[arg-type]
+            tokenizer,  # type: ignore[arg-type]
+            target_prefix="",
+            append_eos=False,
+        ),
+    )
+    text = " ".join(f"termo-{index}" for index in range(1_100))
+
+    assert backend.translate([text]) == [text]
+
+
+def test_backend_rejects_translation_without_end_token() -> None:
+    tokenizer = FakeSentencePiece()
+    backend = CTranslate2Backend(
+        LimitedTranslator(),  # type: ignore[arg-type]
+        SentencePieceCodec(
+            tokenizer,  # type: ignore[arg-type]
+            tokenizer,  # type: ignore[arg-type]
+            target_prefix="",
+            append_eos=False,
+        ),
+    )
+
+    with pytest.raises(TranslationUnavailableError, match="limite de geração"):
+        backend.translate(["Texto longo"])
 
 
 def test_accepts_only_selected_model_profiles() -> None:

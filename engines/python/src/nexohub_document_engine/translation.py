@@ -16,6 +16,8 @@ import sentencepiece as spm
 MAX_TEXT_LENGTH = 1_000_000
 MAX_SEGMENT_LENGTH = 4_000
 MAX_SEGMENTS = 10_000
+MAX_DECODING_TOKENS = 1_024
+MODEL_END_TOKEN = "</s>"
 LANGUAGE_PATTERN = re.compile(r"^[a-z]{2,3}(?:-[A-Z]{2})?$")
 MODEL_ID_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$")
 PLACEHOLDER_PATTERN = re.compile(
@@ -164,13 +166,26 @@ class CTranslate2Backend:
         tokenized = [self._codec.encode(text) for text in texts]
         try:
             results = self._translator.translate_batch(
-                tokenized, beam_size=4, max_decoding_length=1024
+                tokenized,
+                beam_size=4,
+                end_token=MODEL_END_TOKEN,
+                return_end_token=True,
+                max_input_length=0,
+                max_decoding_length=MAX_DECODING_TOKENS,
             )
         except RuntimeError as error:
             raise TranslationUnavailableError(
                 "O modelo local falhou durante a inferência."
             ) from error
-        return [self._codec.decode(result.hypotheses[0]) for result in results]
+        translated: list[str] = []
+        for result in results:
+            hypothesis = result.hypotheses[0]
+            if not hypothesis or hypothesis[-1] != MODEL_END_TOKEN:
+                raise TranslationUnavailableError(
+                    "A tradução atingiu o limite de geração antes de concluir o segmento."
+                )
+            translated.append(self._codec.decode(hypothesis))
+        return translated
 
 
 class SentencePieceCodec:

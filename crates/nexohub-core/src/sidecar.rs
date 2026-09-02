@@ -75,13 +75,17 @@ pub(crate) fn run_command(
             terminate(&mut child);
             return Err(SidecarRunError::OutputLimit);
         }
-        match child.try_wait().map_err(|_| SidecarRunError::Io)? {
-            Some(status) => break status,
-            None if started.elapsed() >= timeout => {
+        match child.try_wait() {
+            Err(_) => {
+                terminate(&mut child);
+                return Err(SidecarRunError::Io);
+            }
+            Ok(Some(status)) => break status,
+            Ok(None) if started.elapsed() >= timeout => {
                 terminate(&mut child);
                 return Err(SidecarRunError::Timeout);
             }
-            None => thread::sleep(POLL_INTERVAL),
+            Ok(None) => thread::sleep(POLL_INTERVAL),
         }
     };
     if !status.success() {

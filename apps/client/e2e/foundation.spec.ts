@@ -58,7 +58,10 @@ test("promove uma Quick Tool para um NexoFlow no Studio", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: "NexoFlow" })).toBeVisible();
   await expect(
-    page.getByRole("region", { name: "NexoFlow" }).getByText("pdf-compress", { exact: true }),
+    page
+      .getByRole("region", { name: "NexoFlow" })
+      .getByRole("listitem")
+      .filter({ hasText: /^pdf-compress$/ }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Nexo Layers" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Overlay PDF" })).toBeVisible();

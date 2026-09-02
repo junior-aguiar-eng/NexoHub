@@ -18,3 +18,5 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+apps/desktop/src-tauri/resources/runtime/*
+!apps/desktop/src-tauri/resources/runtime/README.md

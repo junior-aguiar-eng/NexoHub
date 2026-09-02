@@ -37,7 +37,7 @@ if (!somenteWindows) {
 }
 
 if (process.platform === "win32") {
-  await executarPnpm(["--filter", "@nexohub/desktop", "build"]);
+  await executarPnpm(["--filter", "@nexohub/desktop", somenteWindows ? "bundle" : "build"]);
 } else {
   console.log("Build desktop ignorado: o alvo produtivo atual é Windows.");
 }

@@ -1,0 +1,33 @@
+name: Propor evolução
+description: Proponha uma capacidade documental, sem presumir sua inclusão.
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema documental
+      description: Descreva a necessidade, não apenas uma interface ou card.
+    validations:
+      required: true
+  - type: textarea
+    id: graph
+    attributes:
+      label: Integração ao Document Graph
+      description: Informe Artifact de entrada, Artifact produzido e uso em Quick, Studio ou ambos.
+    validations:
+      required: true
+  - type: textarea
+    id: local
+    attributes:
+      label: Execução local e rede
+      description: Explique se pode rodar localmente e por que precisaria de rede.
+    validations:
+      required: true
+  - type: textarea
+    id: value
+    attributes:
+      label: Valor estrutural
+      description: Explique como melhora o NexoHub além de aumentar o número de cards.
+    validations:
+      required: true

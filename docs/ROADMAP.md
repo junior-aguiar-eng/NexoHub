@@ -18,7 +18,7 @@
 | 13 | Revisão | Em andamento — LanguageTool pt-BR e persistência integrados |
 | 14 | Receitas | Em andamento — DAG visual, presets e runner topológico integrados |
 | 15 | Hardening orientado a falhas e métricas | Concluída localmente — limites, recuperação e perfil documentados |
-| 16 | Release engineering Windows e publicação web auditável | Planejada |
+| 16 | Release engineering Windows e publicação web auditável | Em andamento — pipelines e manifests preparados; RC bloqueada pelos gates e pela validação instalada |
 
 Cada fase exige seus próprios gates. Commit, publicação e release são decisões separadas.
 

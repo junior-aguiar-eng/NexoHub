@@ -10,10 +10,12 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::OnceLock;
 
 const MAX_REVIEW_BYTES: usize = 4 * 1024 * 1024;
 const MAX_REVIEW_MATCHES: usize = 100_000;
 const MANIFEST: &str = include_str!("../../../runtime/languagetool-community.json");
+static INSTALLATION_ROOT: OnceLock<PathBuf> = OnceLock::new();
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -71,7 +73,7 @@ struct InstallationManifest {
 #[serde(rename_all = "camelCase")]
 struct SnapshotManifest {
     jar: String,
-    jar_sha256: String,
+    component_checksum: String,
     license_file: String,
     third_party_licenses: String,
 }
@@ -80,7 +82,7 @@ struct SnapshotManifest {
 #[serde(rename_all = "camelCase")]
 struct JavaManifest {
     executable: String,
-    executable_sha256: String,
+    component_checksum: String,
     license_file: String,
     assembly_exception: String,
 }
@@ -110,8 +112,7 @@ pub fn review_text(request: ReviewTextRequest) -> CoreResult<ReviewTextResult> {
             "O texto deve conter entre 1 byte e 4 MiB.",
         ));
     }
-    let root = env::var_os("NEXOHUB_LANGUAGETOOL_DIR")
-        .map(PathBuf::from)
+    let root = installation_root()
         .ok_or_else(|| CoreError::review_unavailable("LanguageTool Community não instalado."))?;
     let limits = HardeningLimits::from_env()?;
     let manifest: InstallationManifest = serde_json::from_str(MANIFEST)
@@ -119,9 +120,13 @@ pub fn review_text(request: ReviewTextRequest) -> CoreResult<ReviewTextResult> {
     let java = verified_component(
         &root,
         &manifest.java.executable,
-        &manifest.java.executable_sha256,
+        checksum_value(&manifest.java.component_checksum)?,
     )?;
-    let jar = verified_component(&root, &manifest.snapshot.jar, &manifest.snapshot.jar_sha256)?;
+    let jar = verified_component(
+        &root,
+        &manifest.snapshot.jar,
+        checksum_value(&manifest.snapshot.component_checksum)?,
+    )?;
     for required in [
         &manifest.snapshot.license_file,
         &manifest.snapshot.third_party_licenses,
@@ -176,6 +181,22 @@ pub fn review_text(request: ReviewTextRequest) -> CoreResult<ReviewTextResult> {
         ),
     })?;
     parse_response(&output, &manifest)
+}
+
+pub fn configure_installation_root(root: PathBuf) {
+    let _ = INSTALLATION_ROOT.set(root);
+}
+
+fn installation_root() -> Option<PathBuf> {
+    env::var_os("NEXOHUB_LANGUAGETOOL_DIR")
+        .map(PathBuf::from)
+        .or_else(|| INSTALLATION_ROOT.get().cloned())
+}
+
+fn checksum_value(checksum: &str) -> CoreResult<&str> {
+    checksum.strip_prefix("sha256:").ok_or_else(|| {
+        CoreError::review_unavailable("Algoritmo de checksum do LanguageTool inválido.")
+    })
 }
 
 fn parse_response(bytes: &[u8], manifest: &InstallationManifest) -> CoreResult<ReviewTextResult> {

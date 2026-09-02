@@ -1,0 +1,38 @@
+name: Relatar defeito
+description: Registre um comportamento reproduzível do NexoHub.
+title: "bug: "
+labels: [bug]
+body:
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Superfície
+      options: [Windows desktop, Cliente web, Engine Python, Sidecar, Documentação]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versão ou commit
+      placeholder: v0.1.0-alpha.1 ou SHA
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Passos para reproduzir
+      description: Use dados sintéticos e remova conteúdo sensível.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Resultado esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Resultado observado e logs sanitizados
+    validations:
+      required: true

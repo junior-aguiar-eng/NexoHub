@@ -256,7 +256,7 @@ wheels = [
 
 [[package]]
 name = "nexohub-document-engine"
-version = "0.0.0"
+version = "0.1.0a1"
 source = { editable = "." }
 dependencies = [
     { name = "ctranslate2" },

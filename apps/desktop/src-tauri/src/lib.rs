@@ -9,6 +9,7 @@ use nexohub_core::language_tool::{ReviewTextRequest, ReviewTextResult};
 use nexohub_core::overlay_tools::{CreatePdfOverlayRequest, ListPdfOverlaysRequest};
 use nexohub_core::pdf_tools::{CompressPdfRequest, PdfToolResult};
 use nexohub_core::text_tools::{CreateTextRevisionRequest, TextToolResult};
+use tauri::{Manager, path::BaseDirectory};
 
 #[tauri::command]
 fn create_project(request: CreateProjectRequest) -> Result<Project, CoreError> {
@@ -78,6 +79,13 @@ fn list_anchors(request: ListAnchorsRequest) -> Result<Vec<Anchor>, CoreError> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .setup(|app| {
+            let root = app
+                .path()
+                .resolve("runtime/languagetool", BaseDirectory::Resource)?;
+            nexohub_core::language_tool::configure_installation_root(root);
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             create_project,
             open_project,

@@ -1,0 +1,38 @@
+name: Propor Tool ou engine
+description: Avalie contrato documental, execução e licença antes da integração.
+title: "feat(tool): "
+labels: [tool-proposal]
+body:
+  - type: input
+    id: tool
+    attributes:
+      label: Tool ou engine
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Contrato de Artifacts
+      description: Liste entradas, saídas, imutabilidade e integração ao Artifact Graph.
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Superfície
+      options: [Quick Tool, Studio, Quick e Studio]
+    validations:
+      required: true
+  - type: textarea
+    id: execution
+    attributes:
+      label: Execução e recursos
+      description: Informe sidecar, cancelamento, limites, necessidade de rede e alternativa local.
+    validations:
+      required: true
+  - type: input
+    id: license
+    attributes:
+      label: Licença e fonte oficial
+    validations:
+      required: true

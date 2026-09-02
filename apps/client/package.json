@@ -1,6 +1,6 @@
 {
   "name": "@nexohub/client",
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,8 +8,10 @@
     "dev": "vite",
     "install:e2e": "playwright install --with-deps chromium",
     "preview": "vite preview",
+    "screenshots": "pnpm build && node ./e2e/capturar-readme.mjs",
     "test": "vitest run",
     "test:e2e": "pnpm build && node ./e2e/executar.mjs",
+    "test:e2e:ci": "node ./e2e/executar.mjs",
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {

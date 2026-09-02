@@ -1,0 +1,51 @@
+name: Segurança e licenças
+
+on:
+  workflow_call:
+  push:
+    branches: [main]
+    paths: ["**/package.json", "pnpm-lock.yaml", "**/Cargo.toml", "Cargo.lock", "deny.toml", "engines/python/**", "runtime/**", "scripts/audit-licenses.mjs"]
+  pull_request:
+    paths: ["**/package.json", "pnpm-lock.yaml", "**/Cargo.toml", "Cargo.lock", "deny.toml", "engines/python/**", "runtime/**", "scripts/audit-licenses.mjs"]
+  schedule:
+    - cron: "23 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependencies-and-licenses:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.19.0
+          cache: pnpm
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
+        with:
+          version: 0.12.5
+          enable-cache: true
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --locked --project engines/python
+      - run: pnpm audit --audit-level=high
+      - run: uv audit --locked --project engines/python
+      - run: pnpm licenses:check
+
+  cargo-deny:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25
+        with:
+          command: check advisories licenses sources

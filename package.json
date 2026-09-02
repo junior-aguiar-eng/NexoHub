@@ -1,6 +1,6 @@
 {
   "name": "nexohub",
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.1",
   "private": true,
   "description": "Estação documental open source e local-first.",
   "license": "MPL-2.0",
@@ -12,9 +12,13 @@
     "check": "biome check . && pnpm typecheck",
     "check:windows-dependencies": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verificar-dependencias-windows.ps1",
     "check:write": "biome check --write .",
+    "licenses:generate": "node scripts/audit-licenses.mjs",
+    "licenses:check": "node scripts/audit-licenses.mjs --check",
+    "release:verify": "node scripts/verificar-release.mjs",
     "typecheck": "pnpm --recursive --if-present typecheck",
     "test": "pnpm --recursive --if-present test",
-    "test:e2e": "pnpm --filter @nexohub/client test:e2e"
+    "test:e2e": "pnpm --filter @nexohub/client test:e2e",
+    "test:e2e:ci": "pnpm --filter @nexohub/client test:e2e:ci"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.11"

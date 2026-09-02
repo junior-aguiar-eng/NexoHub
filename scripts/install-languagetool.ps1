@@ -21,12 +21,12 @@ New-Item -ItemType Directory -Path $stage, $downloads, $expanded | Out-Null
 try {
     $snapshotArchive = Join-Path $downloads ([System.IO.Path]::GetFileName($manifest.snapshot.archive))
     $javaArchive = Join-Path $downloads ([System.IO.Path]::GetFileName($manifest.java.archive))
-    Invoke-WebRequest -Uri $manifest.snapshot.url -OutFile $snapshotArchive -UseBasicParsing
-    Invoke-WebRequest -Uri $manifest.java.url -OutFile $javaArchive -UseBasicParsing
+    Invoke-WebRequest -Uri $manifest.snapshot.source -OutFile $snapshotArchive -UseBasicParsing
+    Invoke-WebRequest -Uri $manifest.java.source -OutFile $javaArchive -UseBasicParsing
 
     foreach ($item in @(
-        @{ Path = $snapshotArchive; Sha256 = $manifest.snapshot.sha256; Size = $manifest.snapshot.size },
-        @{ Path = $javaArchive; Sha256 = $manifest.java.sha256; Size = $manifest.java.size }
+        @{ Path = $snapshotArchive; Sha256 = $manifest.snapshot.checksum.Replace("sha256:", ""); Size = $manifest.snapshot.size },
+        @{ Path = $javaArchive; Sha256 = $manifest.java.checksum.Replace("sha256:", ""); Size = $manifest.java.size }
     )) {
         $actualHash = (Get-FileHash -LiteralPath $item.Path -Algorithm SHA256).Hash.ToLowerInvariant()
         $actualSize = (Get-Item -LiteralPath $item.Path).Length
@@ -47,15 +47,12 @@ try {
     $snapshotSource = $snapshotSources[0]
     $javaSource = $javaSources[0]
 
-    New-Item -ItemType Directory -Path (Join-Path $stage "archives") | Out-Null
     Move-Item -LiteralPath $snapshotSource.FullName -Destination (Join-Path $stage "languagetool")
     Move-Item -LiteralPath $javaSource.FullName -Destination (Join-Path $stage "java")
-    Copy-Item -LiteralPath $snapshotArchive -Destination (Join-Path $stage $manifest.snapshot.archive)
-    Copy-Item -LiteralPath $javaArchive -Destination (Join-Path $stage $manifest.java.archive)
 
     foreach ($component in @(
-        @{ Path = $manifest.snapshot.jar; Sha256 = $manifest.snapshot.jarSha256 },
-        @{ Path = $manifest.java.executable; Sha256 = $manifest.java.executableSha256 }
+        @{ Path = $manifest.snapshot.jar; Sha256 = $manifest.snapshot.componentChecksum.Replace("sha256:", "") },
+        @{ Path = $manifest.java.executable; Sha256 = $manifest.java.componentChecksum.Replace("sha256:", "") }
     )) {
         $componentPath = Join-Path $stage $component.Path
         $actualHash = (Get-FileHash -LiteralPath $componentPath -Algorithm SHA256).Hash.ToLowerInvariant()

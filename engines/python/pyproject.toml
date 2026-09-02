@@ -1,6 +1,6 @@
 [project]
 name = "nexohub-document-engine"
-version = "0.0.0"
+version = "0.1.0a1"
 description = "Document engine boundary for NexoHub"
 readme = "README.md"
 requires-python = ">=3.14"

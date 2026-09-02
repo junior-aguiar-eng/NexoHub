@@ -2007,7 +2007,7 @@ checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 
 [[package]]
 name = "nexohub-core"
-version = "0.0.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "blake3",
  "dunce",
@@ -2021,7 +2021,7 @@ dependencies = [
 
 [[package]]
 name = "nexohub-desktop"
-version = "0.0.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "nexohub-core",
  "tauri",

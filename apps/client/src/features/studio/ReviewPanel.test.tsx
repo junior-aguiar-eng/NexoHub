@@ -1,10 +1,39 @@
 import { asArtifactId, asDocumentId } from "@nexohub/domain";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { ReviewPanel } from "./ReviewPanel";
 
 describe("ReviewPanel", () => {
+  it("descarta achados de uma análise invalidada por edição", async () => {
+    let resolveReview: ((result: ReturnType<typeof reviewResult>) => void) | undefined;
+    const invoke = vi.fn(
+      () =>
+        new Promise<ReturnType<typeof reviewResult>>((resolve) => {
+          resolveReview = resolve;
+        }),
+    );
+    render(
+      <ReviewPanel
+        initialContent="texto antigo"
+        documentCore={{ invoke } as unknown as DocumentCorePort}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Analisar texto" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Texto para revisão" }), {
+      target: { value: "texto novo" },
+    });
+    await act(async () => {
+      resolveReview?.(
+        reviewResult([match("OLD_RESULT", 0, 5, "texto", "duplication", "Achado antigo.")]),
+      );
+    });
+
+    expect(screen.getByText("0 achados")).toBeInTheDocument();
+    expect(screen.queryByText("Achado antigo.")).not.toBeInTheDocument();
+  });
+
   it("limpa achados obsoletos e permite novo ciclo após aplicação", async () => {
     const invoke = vi
       .fn()
@@ -84,6 +113,15 @@ describe("ReviewPanel", () => {
     });
   });
 });
+
+function reviewResult(matches: ReturnType<typeof match>[] = []) {
+  return {
+    language: "pt-BR",
+    engine: "languagetool-community",
+    version: "6.9-SNAPSHOT",
+    matches,
+  };
+}
 
 function match(
   id: string,

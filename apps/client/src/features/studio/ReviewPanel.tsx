@@ -1,6 +1,6 @@
 import { applyReviewFindings, type ReviewFinding } from "@nexohub/domain";
 import { CheckCheck, SearchCheck } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import type { DocumentCorePort } from "@/platform/document-core";
@@ -24,10 +24,14 @@ export function ReviewPanel({
   const [savedContent, setSavedContent] = useState(initialContent);
   const [artifactId, setArtifactId] = useState(revisionContext?.artifactId);
   const [findings, setFindings] = useState<readonly ReviewFinding[]>([]);
+  const analysisGeneration = useRef(0);
 
   async function analyze() {
     if (!documentCore) return;
-    const result = await documentCore.invoke("review_text", { text: content });
+    const generation = ++analysisGeneration.current;
+    const analyzedContent = content;
+    const result = await documentCore.invoke("review_text", { text: analyzedContent });
+    if (generation !== analysisGeneration.current) return;
     setFindings(
       result.matches.map((match) => ({
         id: `${match.rule.id}:${match.offset}:${match.offset + match.length}`,
@@ -35,9 +39,10 @@ export function ReviewPanel({
         severity: match.rule.issueType === "duplication" ? "warning" : "suggestion",
         start: match.offset,
         end: match.offset + match.length,
-        original: content.slice(match.offset, match.offset + match.length),
+        original: analyzedContent.slice(match.offset, match.offset + match.length),
         replacement:
-          match.replacements[0]?.value ?? content.slice(match.offset, match.offset + match.length),
+          match.replacements[0]?.value ??
+          analyzedContent.slice(match.offset, match.offset + match.length),
         message: match.message,
       })),
     );
@@ -77,6 +82,7 @@ export function ReviewPanel({
         <textarea
           value={content}
           onChange={(event) => {
+            analysisGeneration.current += 1;
             setContent(event.currentTarget.value);
             setFindings([]);
           }}

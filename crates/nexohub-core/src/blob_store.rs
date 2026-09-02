@@ -3,7 +3,7 @@
 use crate::atomic_file::{AtomicWriteOutcome, write_atomic};
 use crate::error::{CoreError, CoreResult, ErrorCode};
 use std::fs::{self, File};
-use std::io::{BufReader, Read, Write};
+use std::io::{BufReader, Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
@@ -42,8 +42,16 @@ impl BlobStore {
             ));
         }
 
-        ensure_size(source_metadata.len(), self.max_blob_bytes)?;
-        let (hash, size) = hash_file(source, self.max_blob_bytes)?;
+        let mut source_file = File::open(source).map_err(|_| CoreError::io())?;
+        let opened_metadata = source_file.metadata().map_err(|_| CoreError::io())?;
+        if !opened_metadata.is_file() {
+            return Err(CoreError::new(
+                ErrorCode::InvalidArgument,
+                "A origem deve ser um arquivo regular, não um link ou reparse point.",
+            ));
+        }
+        ensure_size(opened_metadata.len(), self.max_blob_bytes)?;
+        let (hash, size) = hash_file(&mut source_file, self.max_blob_bytes)?;
         let final_path = self.path_for_hash(&hash)?;
         let relative_path = relative_path(&hash);
 
@@ -60,7 +68,7 @@ impl BlobStore {
         let pending_marker =
             create_pending_marker(final_path.parent().ok_or_else(CoreError::io)?, &hash)?;
         match write_atomic(&final_path, |output| {
-            copy_and_verify(source, output, &hash, size, self.max_blob_bytes)
+            copy_and_verify(&mut source_file, output, &hash, size, self.max_blob_bytes)
         }) {
             Ok(AtomicWriteOutcome::Published) => {}
             Ok(AtomicWriteOutcome::DestinationExists) => {
@@ -163,8 +171,8 @@ impl BlobStore {
     }
 }
 
-fn hash_file(path: &Path, max_bytes: u64) -> CoreResult<(String, u64)> {
-    let file = File::open(path).map_err(|_| CoreError::io())?;
+fn hash_file(file: &mut File, max_bytes: u64) -> CoreResult<(String, u64)> {
+    file.seek(SeekFrom::Start(0)).map_err(|_| CoreError::io())?;
     let mut reader = BufReader::new(file);
     let mut hasher = blake3::Hasher::new();
     let mut buffer = [0_u8; 64 * 1024];
@@ -182,13 +190,13 @@ fn hash_file(path: &Path, max_bytes: u64) -> CoreResult<(String, u64)> {
 }
 
 fn copy_and_verify(
-    source: &Path,
+    input: &mut File,
     output: &mut File,
     expected_hash: &str,
     expected_size: u64,
     max_bytes: u64,
 ) -> std::io::Result<()> {
-    let mut input = File::open(source)?;
+    input.seek(SeekFrom::Start(0))?;
     let mut hasher = blake3::Hasher::new();
     let mut buffer = [0_u8; 64 * 1024];
     let mut size = 0_u64;
@@ -258,4 +266,36 @@ fn is_link_or_reparse(metadata: &fs::Metadata) -> bool {
     }
     #[cfg(not(windows))]
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn copies_from_the_same_file_handle_used_for_hashing() {
+        let directory = std::env::temp_dir().join(format!("nexohub-blob-test-{}", Uuid::new_v4()));
+        fs::create_dir(&directory).expect("diretório temporário");
+        let source_path = directory.join("source.txt");
+        let original_path = directory.join("original.txt");
+        let output_path = directory.join("output.txt");
+        fs::write(&source_path, b"conteudo original").expect("origem");
+        let mut source = File::open(&source_path).expect("descritor da origem");
+        let (hash, size) = hash_file(&mut source, 1024).expect("hash");
+
+        fs::rename(&source_path, &original_path).expect("substituição da origem");
+        fs::write(&source_path, b"conteudo substituto").expect("nova origem");
+        let mut output = File::create(&output_path).expect("saída");
+
+        copy_and_verify(&mut source, &mut output, &hash, size, 1024)
+            .expect("a cópia deve usar o descritor original");
+        drop(output);
+        assert_eq!(
+            fs::read(&output_path).expect("conteúdo"),
+            b"conteudo original"
+        );
+
+        drop(source);
+        fs::remove_dir_all(directory).expect("limpeza");
+    }
 }

@@ -27,7 +27,7 @@ parágrafos, 500 tabelas, 50.000 células e 16 milhões de caracteres.
 | Superfície | Controle vigente |
 | --- | --- |
 | Tauri | A janela `main` não recebe permissões `core:*`, filesystem ou shell. Permanecem apenas comandos próprios registrados no host. |
-| Caminhos | Raiz de projeto absoluta e terminada em `.nexohub`; `.`/`..`, symlink e reparse point são rejeitados. Caminhos internos de blob derivam exclusivamente de hash BLAKE3. |
+| Caminhos | O renderer usa grants e sessões opacos conforme ADR-014. O host revalida identidade canônica, escopo, expiração, uso único, symlink e reparse point antes de fornecer ao core raiz absoluta terminada em `.nexohub`; caminhos internos de blob derivam exclusivamente de hash BLAKE3. |
 | Sidecar | Executável/JAR com SHA-256 e argumentos fixos; diretório temporário privado; stderr descartado; timeout, limite de stdout, `kill` e `wait`. |
 | Temporários | Nomes imprevisíveis, criação exclusiva e remoção por RAII. Somente workspaces com prefixo próprio e idade superior a sete dias entram na recuperação. |
 | Escrita | Blobs e saídas usam staging no mesmo diretório, `sync_all` e publicação por rename. Marcadores pendentes permitem remover blob órfão após crash sem tocar em blob referenciado. |
@@ -40,10 +40,13 @@ parágrafos, 500 tabelas, 50.000 células e 16 milhões de caracteres.
 | Senhas | Não há coleta, persistência nem log de senhas. PDF/DOCX criptografado é rejeitado; não se solicita senha. |
 | Rede e logs | Operações documentais e sidecars não usam rede. O core não registra conteúdo, caminhos, argumentos ou stderr de documentos. |
 
-Os comandos Tauri ainda recebem caminhos absolutos tipados. A UI produtiva ainda não conecta o
-`DocumentCorePort` ao adapter Tauri; antes dessa ativação, a seleção deve ganhar um broker de grants
-emitidos pelo diálogo nativo. Isso impede que conteúdo comprometido do renderer transforme os
-comandos próprios em leitura arbitrária do perfil do usuário.
+Os comandos Tauri atuais ainda recebem caminhos absolutos tipados e a UI produtiva ainda não
+conecta o `DocumentCorePort` ao adapter Tauri. O ADR-014 bloqueia essa ativação até que o host emita
+grants de caminho opacos, escopados, de uso único e com cinco minutos de validade. Criar ou abrir
+projeto deve trocar o grant por uma sessão nativa opaca; comandos seguintes não aceitam
+`projectPath` do renderer. Projetos recentes persistem apenas identidade confiável e são
+revalidados antes de nova sessão. Grant ausente, expirado, revogado, consumido, incompatível ou com
+alvo alterado falha com código IPC estruturado sem expor caminho.
 
 ## Recuperação e testes de falha
 

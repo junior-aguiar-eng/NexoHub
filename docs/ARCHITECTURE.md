@@ -51,8 +51,14 @@ O shell Tauri expõe somente comandos estruturados próprios: projeto, importaç
 documentos e artifacts, compressão PDF, revisão textual, revisão linguística, overlays e anchors.
 Não há permissão genérica Tauri de filesystem, shell ou `core:*`. Caminhos, argumentos, limites e
 integridade são validados no core Rust; erros retornam códigos estáveis sem SQL ou conteúdo do
-documento. A ativação futura do adapter Tauri na UI depende de um broker de caminhos concedidos por
-diálogo nativo, conforme a auditoria de hardening.
+documento.
+
+No desktop, caminhos escolhidos pelo usuário atravessam o broker definido no ADR-014. O renderer
+recebe grants opacos, efêmeros, escopados e de uso único, nunca o caminho usado como autorização.
+Criar ou abrir um projeto produz uma sessão nativa opaca; comandos posteriores usam essa sessão em
+vez de `projectPath`. Projetos recentes persistem identidade confiável no host, não grants, e são
+revalidados antes de emitir uma nova sessão. O core Rust continua recebendo caminhos canônicos
+somente depois da resolução nativa e repete suas próprias validações.
 
 O Tool Registry descreve ferramentas, superfícies, entradas, saídas, capacidades e executor. A
 Capability Layer escolhe adapters de navegador, nativos ou Python sem vazar detalhes para a UI.

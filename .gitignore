@@ -10,6 +10,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .uv-cache/
+.worktrees/
 *.pyc
 *.pyo
 *.tsbuildinfo

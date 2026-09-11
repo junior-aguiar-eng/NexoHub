@@ -21,6 +21,14 @@ jobs:
       - name: Checkout do código-fonte
         uses: actions/checkout@v4
 
+      - name: Configurar UV e ambiente Python
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sincronizar dependências Python do sidecar
+        run: uv sync --locked --project engines/python
+
       - name: Configurar toolchain Rust
         run: |
           rustup toolchain install stable --profile minimal
@@ -48,6 +56,11 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+
+      - name: Configurar UV e ambiente Python
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
 
       - name: Configurar toolchain Rust
         run: |

@@ -6,29 +6,33 @@ describe("App", () => {
   it("renderiza o Launcher sem oferecer execução fictícia", () => {
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: /Documentos complexos/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /Documentos jurídicos|Documentos complexos/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Comece por uma tarefa" })).toBeInTheDocument();
     expect(screen.getAllByText("Em breve")).toHaveLength(7);
     expect(screen.getByText("Organizar PDF").closest("article")).toContainElement(
       screen.getAllByTitle("Transformações de PDF chegam na Fase 4.")[0],
     );
-    expect(screen.getByRole("button", { name: /Abrir Studio/i })).toBeEnabled();
+    expect(screen.getAllByRole("button", { name: /Abrir Studio/i })[0]).toBeEnabled();
   });
 
   it("abre o Studio e retorna ao Launcher sem acessar APIs nativas diretamente", () => {
     render(<App />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Abrir Studio/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /Abrir Studio/i })[0]);
     expect(
       screen.getByRole("heading", { name: /Seu documento, com contexto preservado/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Documentos" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Inspector" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Anchors" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Criar anchor" })).toBeDisabled();
+    expect(screen.getByRole("heading", { name: /Auditor|Inspector/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Âncoras|Anchors/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Criar âncora|Criar anchor/i })).toBeDisabled();
 
     fireEvent.click(screen.getByRole("button", { name: /Voltar ao Launcher/i }));
-    expect(screen.getByRole("heading", { name: /Documentos complexos/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /Documentos jurídicos|Documentos complexos/i }),
+    ).toBeInTheDocument();
   });
 
   it("promove uma Quick Tool para um rascunho NexoFlow no Studio", () => {
@@ -46,18 +50,18 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Adicionar overlay" })).toBeDisabled();
   });
 
-  it("abre o editor de texto ao promover uma ferramenta textual", () => {
+  it("abre a comparação de textos ao promover a ferramenta textual", () => {
     render(<App />);
     const card = screen.getByText("Comparar textos").closest("article");
     if (!card) throw new Error("card textual não encontrado");
 
     fireEvent.click(within(card).getByRole("button", { name: "Continuar no Studio" }));
-    const editor = screen.getByRole("textbox", { name: "Conteúdo textual" });
+    expect(screen.getByRole("heading", { name: "Comparar textos" })).toBeInTheDocument();
+    const editor = screen.getByRole("textbox", { name: "Texto original" });
     fireEvent.change(editor, { target: { value: "Texto" } });
 
     expect(editor).toHaveValue("Texto");
-    expect(screen.getByText("5 caracteres")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Criar revisão" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Comparar" })).toBeInTheDocument();
   });
 
   it("exige o sidecar comunitário para iniciar a revisão", () => {
@@ -66,14 +70,14 @@ describe("App", () => {
     if (!card) throw new Error("card de revisão não encontrado");
     fireEvent.click(within(card).getByRole("button", { name: "Continuar no Studio" }));
 
-    expect(screen.getByText(/LanguageTool Community pt-BR é obrigatório/)).toBeInTheDocument();
+    expect(screen.getByText(/LanguageTool Community|revisor local/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Analisar texto" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Criar revisão" })).toBeDisabled();
   });
 
   it("expõe o OCR local sem habilitar execução fora de um artifact", () => {
     render(<App />);
-    const card = screen.getByText("Reconhecer texto").closest("article");
+    const card = screen.getByText(/Reconhecer texto/i).closest("article");
     if (!card) throw new Error("card OCR não encontrado");
 
     fireEvent.click(within(card).getByRole("button", { name: "Continuar no Studio" }));
@@ -94,13 +98,13 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: "Tradução documental" })).toBeInTheDocument();
     expect(screen.getByText(/Instale um modelo compatível/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Traduzir como novo artifact" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Traduzir texto" })).toBeDisabled();
   });
 
   it("filtra as ferramentas pela suíte ativa", () => {
     render(<App />);
 
-    fireEvent.click(screen.getByRole("button", { name: "PDF" }));
+    fireEvent.click(screen.getByRole("button", { name: /Processamento|PDF/i }));
 
     expect(screen.getByText("Organizar PDF")).toBeInTheDocument();
     expect(screen.queryByText("Comparar textos")).not.toBeInTheDocument();

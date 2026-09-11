@@ -13,6 +13,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @floating-ui/utils | 0.2.12 | MIT |
 | JavaScript | @fontsource-variable/playfair-display | 5.2.8 | OFL-1.1 |
 | JavaScript | @fontsource-variable/plus-jakarta-sans | 5.2.8 | OFL-1.1 |
+| JavaScript | @playwright/test | 1.63.0 | Apache-2.0 |
 | JavaScript | @types/react | 19.2.18 | MIT |
 | JavaScript | class-variance-authority | 0.7.1 | Apache-2.0 |
 | JavaScript | clsx | 2.1.1 | MIT |
@@ -22,6 +23,8 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | motion-dom | 12.43.0 | MIT |
 | JavaScript | motion-utils | 12.39.0 | MIT |
 | JavaScript | motion | 12.23.24 | MIT |
+| JavaScript | playwright-core | 1.63.0 | Apache-2.0 |
+| JavaScript | playwright | 1.63.0 | Apache-2.0 |
 | JavaScript | react-dom | 19.2.8 | MIT |
 | JavaScript | react | 19.2.8 | MIT |
 | JavaScript | reselect | 5.3.0 | MIT |
@@ -331,9 +334,14 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | regex-syntax | 0.8.11 | MIT OR Apache-2.0 |
 | Rust | regex | 1.13.1 | MIT OR Apache-2.0 |
 | Rust | reqwest | 0.13.4 | MIT OR Apache-2.0 |
+| Rust | rfd | 0.16.0 | MIT |
+| Rust | ring | 0.17.14 | Apache-2.0 AND ISC |
 | Rust | rusqlite | 0.40.2 | MIT |
 | Rust | rustc_version | 0.4.1 | MIT OR Apache-2.0 |
 | Rust | rustc-hash | 2.1.3 | Apache-2.0 OR MIT |
+| Rust | rustls-pki-types | 1.15.1 | MIT OR Apache-2.0 |
+| Rust | rustls-webpki | 0.103.15 | ISC |
+| Rust | rustls | 0.23.44 | Apache-2.0 OR ISC OR MIT |
 | Rust | rustversion | 1.0.23 | MIT OR Apache-2.0 |
 | Rust | same-file | 1.0.6 | Unlicense/MIT |
 | Rust | schemars_derive | 0.8.22 | MIT |
@@ -373,6 +381,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | string_cache | 0.9.0 | MIT OR Apache-2.0 |
 | Rust | stringprep | 0.1.5 | MIT/Apache-2.0 |
 | Rust | strsim | 0.11.1 | MIT |
+| Rust | subtle | 2.6.1 | BSD-3-Clause |
 | Rust | swift-rs | 1.0.8 | MIT OR Apache-2.0 |
 | Rust | syn | 1.0.109 | MIT OR Apache-2.0 |
 | Rust | syn | 2.0.119 | MIT OR Apache-2.0 |
@@ -386,6 +395,9 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | tauri-build | 2.6.3 | Apache-2.0 OR MIT |
 | Rust | tauri-codegen | 2.6.3 | Apache-2.0 OR MIT |
 | Rust | tauri-macros | 2.6.3 | Apache-2.0 OR MIT |
+| Rust | tauri-plugin-dialog | 2.7.3 | Apache-2.0 OR MIT |
+| Rust | tauri-plugin-fs | 2.5.2 | Apache-2.0 OR MIT |
+| Rust | tauri-plugin | 2.6.3 | Apache-2.0 OR MIT |
 | Rust | tauri-runtime-wry | 2.11.4 | Apache-2.0 OR MIT |
 | Rust | tauri-runtime | 2.11.3 | Apache-2.0 OR MIT |
 | Rust | tauri-utils | 2.9.3 | Apache-2.0 OR MIT |
@@ -435,6 +447,8 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | unicode-normalization | 0.1.25 | MIT OR Apache-2.0 |
 | Rust | unicode-properties | 0.1.4 | MIT/Apache-2.0 |
 | Rust | unicode-segmentation | 1.13.3 | MIT OR Apache-2.0 |
+| Rust | untrusted | 0.9.0 | ISC |
+| Rust | ureq | 2.12.1 | MIT OR Apache-2.0 |
 | Rust | url | 2.5.8 | MIT OR Apache-2.0 |
 | Rust | urlpattern | 0.3.0 | MIT |
 | Rust | utf8_iter | 1.0.4 | Apache-2.0 OR MIT |
@@ -458,6 +472,8 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | web-sys | 0.3.104 | MIT OR Apache-2.0 |
 | Rust | webkit2gtk-sys | 2.0.2 | MIT |
 | Rust | webkit2gtk | 2.0.2 | MIT |
+| Rust | webpki-roots | 0.26.11 | CDLA-Permissive-2.0 |
+| Rust | webpki-roots | 1.0.9 | CDLA-Permissive-2.0 |
 | Rust | webview2-com-macros | 0.8.1 | MIT |
 | Rust | webview2-com-sys | 0.38.2 | MIT |
 | Rust | webview2-com | 0.38.2 | MIT |
@@ -469,19 +485,27 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | window-vibrancy | 0.6.0 | Apache-2.0 OR MIT |
 | Rust | windows_aarch64_gnullvm | 0.42.2 | MIT OR Apache-2.0 |
 | Rust | windows_aarch64_gnullvm | 0.52.6 | MIT OR Apache-2.0 |
+| Rust | windows_aarch64_gnullvm | 0.53.1 | MIT OR Apache-2.0 |
 | Rust | windows_aarch64_msvc | 0.42.2 | MIT OR Apache-2.0 |
 | Rust | windows_aarch64_msvc | 0.52.6 | MIT OR Apache-2.0 |
+| Rust | windows_aarch64_msvc | 0.53.1 | MIT OR Apache-2.0 |
 | Rust | windows_i686_gnu | 0.42.2 | MIT OR Apache-2.0 |
 | Rust | windows_i686_gnu | 0.52.6 | MIT OR Apache-2.0 |
+| Rust | windows_i686_gnu | 0.53.1 | MIT OR Apache-2.0 |
 | Rust | windows_i686_gnullvm | 0.52.6 | MIT OR Apache-2.0 |
+| Rust | windows_i686_gnullvm | 0.53.1 | MIT OR Apache-2.0 |
 | Rust | windows_i686_msvc | 0.42.2 | MIT OR Apache-2.0 |
 | Rust | windows_i686_msvc | 0.52.6 | MIT OR Apache-2.0 |
+| Rust | windows_i686_msvc | 0.53.1 | MIT OR Apache-2.0 |
 | Rust | windows_x86_64_gnu | 0.42.2 | MIT OR Apache-2.0 |
 | Rust | windows_x86_64_gnu | 0.52.6 | MIT OR Apache-2.0 |
+| Rust | windows_x86_64_gnu | 0.53.1 | MIT OR Apache-2.0 |
 | Rust | windows_x86_64_gnullvm | 0.42.2 | MIT OR Apache-2.0 |
 | Rust | windows_x86_64_gnullvm | 0.52.6 | MIT OR Apache-2.0 |
+| Rust | windows_x86_64_gnullvm | 0.53.1 | MIT OR Apache-2.0 |
 | Rust | windows_x86_64_msvc | 0.42.2 | MIT OR Apache-2.0 |
 | Rust | windows_x86_64_msvc | 0.52.6 | MIT OR Apache-2.0 |
+| Rust | windows_x86_64_msvc | 0.53.1 | MIT OR Apache-2.0 |
 | Rust | windows-collections | 0.2.0 | MIT OR Apache-2.0 |
 | Rust | windows-core | 0.61.2 | MIT OR Apache-2.0 |
 | Rust | windows-future | 0.2.1 | MIT OR Apache-2.0 |
@@ -493,10 +517,13 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | windows-result | 0.3.4 | MIT OR Apache-2.0 |
 | Rust | windows-strings | 0.4.2 | MIT OR Apache-2.0 |
 | Rust | windows-sys | 0.45.0 | MIT OR Apache-2.0 |
+| Rust | windows-sys | 0.52.0 | MIT OR Apache-2.0 |
 | Rust | windows-sys | 0.59.0 | MIT OR Apache-2.0 |
+| Rust | windows-sys | 0.60.2 | MIT OR Apache-2.0 |
 | Rust | windows-sys | 0.61.2 | MIT OR Apache-2.0 |
 | Rust | windows-targets | 0.42.2 | MIT OR Apache-2.0 |
 | Rust | windows-targets | 0.52.6 | MIT OR Apache-2.0 |
+| Rust | windows-targets | 0.53.5 | MIT OR Apache-2.0 |
 | Rust | windows-threading | 0.1.0 | MIT OR Apache-2.0 |
 | Rust | windows-version | 0.1.7 | MIT OR Apache-2.0 |
 | Rust | windows | 0.61.3 | MIT OR Apache-2.0 |
@@ -513,6 +540,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | yoke | 0.8.3 | Unicode-3.0 |
 | Rust | zerofrom-derive | 0.1.7 | Unicode-3.0 |
 | Rust | zerofrom | 0.1.8 | Unicode-3.0 |
+| Rust | zeroize | 1.9.0 | Apache-2.0 OR MIT |
 | Rust | zerotrie | 0.2.5 | Unicode-3.0 |
 | Rust | zerovec-derive | 0.11.6 | Unicode-3.0 |
 | Rust | zerovec | 0.11.8 | Unicode-3.0 |

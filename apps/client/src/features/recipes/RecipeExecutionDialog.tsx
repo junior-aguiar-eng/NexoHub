@@ -2,6 +2,7 @@ import type { RecipeRunProgress, RecipeSnapshot } from "@nexohub/domain";
 import { Check, Circle, LoaderCircle, OctagonX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
+import { getFriendlyToolName } from "./tool-names";
 
 type Props = {
   readonly open: boolean;
@@ -9,9 +10,17 @@ type Props = {
   readonly progress: RecipeRunProgress;
   readonly onCancel: () => void;
   readonly onClose: () => void;
+  readonly onOpenArtifact?: (artifactId: string) => void;
 };
 
-export function RecipeExecutionDialog({ open, recipe, progress, onCancel, onClose }: Props) {
+export function RecipeExecutionDialog({
+  open,
+  recipe,
+  progress,
+  onCancel,
+  onClose,
+  onOpenArtifact,
+}: Props) {
   if (!open) return null;
   const running = progress.status === "PENDING" || progress.status === "RUNNING";
   return (
@@ -43,11 +52,29 @@ export function RecipeExecutionDialog({ open, recipe, progress, onCancel, onClos
                 {step.status === "PENDING" && <Circle />}
               </span>
               <div>
-                <strong>
-                  {index + 1}. {step.toolId}
+                <strong title={step.toolId}>
+                  {index + 1}. {getFriendlyToolName(step.toolId)}
                 </strong>
                 <small>{translate(statusKeys[step.status])}</small>
-                {step.artifactIds.length > 0 && <code>{step.artifactIds.join(", ")}</code>}
+                {step.artifactIds.length > 0 && (
+                  <div className="recipe-artifacts-list">
+                    {step.artifactIds.map((artifactId) =>
+                      onOpenArtifact ? (
+                        <button
+                          key={artifactId}
+                          type="button"
+                          className="recipe-artifact-button"
+                          onClick={() => onOpenArtifact(artifactId)}
+                          title={translate("recipes.openArtifact")}
+                        >
+                          <code>{artifactId}</code>
+                        </button>
+                      ) : (
+                        <code key={artifactId}>{artifactId}</code>
+                      ),
+                    )}
+                  </div>
+                )}
               </div>
             </li>
           ))}

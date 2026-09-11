@@ -35,6 +35,7 @@ export function SuiteNavigation({ activeSuite, onSelect }: SuiteNavigationProps)
           className="suite-nav__item"
           data-active={activeSuite === suite.id}
           aria-current={activeSuite === suite.id ? "page" : undefined}
+          aria-label={suite.ariaLabel ?? translate(suite.labelKey)}
           onClick={() => onSelect(suite.id)}
           onKeyDown={(event) => {
             if (["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) {

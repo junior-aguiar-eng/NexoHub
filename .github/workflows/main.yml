@@ -1,0 +1,75 @@
+name: Pipeline Main
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: main-pipeline-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  testes:
+    name: Testes da CLI
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout do código-fonte
+        uses: actions/checkout@v4
+
+      - name: Configurar toolchain Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Executar testes da CLI diretamente do código-fonte
+        run: cargo test --workspace --locked
+
+  build:
+    name: Build e Empacotamento
+    needs: [testes]
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout do código-fonte
+        uses: actions/checkout@v4
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Configurar toolchain Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Instalar dependências de build
+        run: pnpm install --frozen-lockfile
+
+      - name: Compilar binários da CLI e do Core (Release)
+        run: cargo build --workspace --release --locked
+
+      - name: Empacotar artefatos de distribuição
+        run: pnpm build
+
+      - name: Salvar artefatos empacotados
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexohub-pacote-fase
+          path: |
+            apps/client/dist/**
+            target/release/*.exe
+            target/release/*.dll
+            target/release/*.pdb
+          if-no-files-found: warn

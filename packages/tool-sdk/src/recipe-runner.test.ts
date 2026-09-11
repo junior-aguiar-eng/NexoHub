@@ -23,7 +23,7 @@ const recipe: RecipeSnapshot = {
 
 function createRunner(execute: ToolExecutor["execute"]): RecipeRunner {
   const registry = new ToolRegistry();
-  for (const id of ["pdf-ocr", "pdf-compress", "pdf-publish"]) {
+  for (const id of ["pdf-ocr", "pdf-compress", "pdf-publish", "pdf-organize"]) {
     registry.register({
       id,
       version: "1.0.0",
@@ -145,6 +145,84 @@ describe("Recipe Runner", () => {
 
     await expect(runner.run({ recipe: unavailable, input: "original" })).rejects.toMatchObject({
       code: "TOOL_UNAVAILABLE",
+    });
+    expect(execute).not.toHaveBeenCalled();
+  });
+
+  it("executa grafo ramificado e combina entradas das dependências", async () => {
+    const branchRecipe: RecipeSnapshot = {
+      id: "branching-recipe",
+      name: "Grafo ramificado",
+      parameters: [],
+      steps: [
+        { id: "root", toolId: "pdf-ocr", parameters: {}, dependsOn: [] },
+        { id: "branch-a", toolId: "pdf-compress", parameters: {}, dependsOn: ["root"] },
+        { id: "branch-b", toolId: "pdf-organize", parameters: {}, dependsOn: ["root"] },
+        { id: "merge", toolId: "pdf-publish", parameters: {}, dependsOn: ["branch-a", "branch-b"] },
+      ],
+    };
+    const execute = vi.fn(async (request) => ({ artifacts: [`${request.toolId}-out`] }));
+    const result = await createRunner(execute).run({
+      recipe: branchRecipe,
+      input: "doc-orig",
+    });
+
+    expect(result.status).toBe("SUCCEEDED");
+    expect(execute).toHaveBeenCalledTimes(4);
+    const mergeCall = execute.mock.calls.find(([req]) => req.toolId === "pdf-publish");
+    expect(mergeCall?.[0].input).toEqual(["pdf-compress-out", "pdf-organize-out"]);
+  });
+
+  it("rejeita receita com dependências cíclicas", async () => {
+    const cyclicRecipe: RecipeSnapshot = {
+      id: "cyclic",
+      name: "Ciclo",
+      parameters: [],
+      steps: [
+        { id: "step-a", toolId: "pdf-ocr", parameters: {}, dependsOn: ["step-b"] },
+        { id: "step-b", toolId: "pdf-compress", parameters: {}, dependsOn: ["step-a"] },
+      ],
+    };
+    const execute = vi.fn();
+    const runner = createRunner(execute);
+
+    await expect(runner.run({ recipe: cyclicRecipe, input: "orig" })).rejects.toMatchObject({
+      code: "INVALID_INPUT",
+    });
+    expect(execute).not.toHaveBeenCalled();
+  });
+
+  it("permite repetição da receita gerando novos artifacts a cada execução", async () => {
+    let runCount = 0;
+    const execute = vi.fn(async (request) => {
+      runCount++;
+      return { artifacts: [`${request.toolId}-artifact-run-${runCount}`] };
+    });
+    const runner = createRunner(execute);
+    const run1 = await runner.run({ recipe, input: "original" });
+    const run2 = await runner.run({ recipe, input: "original" });
+
+    expect(run1.status).toBe("SUCCEEDED");
+    expect(run2.status).toBe("SUCCEEDED");
+    expect(run1.steps[0].artifactIds[0]).not.toEqual(run2.steps[0].artifactIds[0]);
+  });
+
+  it("interrompe imediatamente se o sinal de cancelamento já estiver ativo", async () => {
+    const execute = vi.fn();
+    const controller = new AbortController();
+    controller.abort();
+
+    const runner = createRunner(execute);
+    await expect(
+      runner.run({
+        recipe,
+        input: "original",
+        signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({
+      run: {
+        status: "CANCELLED",
+      },
     });
     expect(execute).not.toHaveBeenCalled();
   });

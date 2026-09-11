@@ -3,7 +3,7 @@
 use crate::atomic_file::{AtomicWriteOutcome, write_atomic};
 use crate::error::{CoreError, CoreResult, ErrorCode};
 use std::fs::{self, File};
-use std::io::{BufReader, Read, Seek, SeekFrom, Write};
+use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
@@ -51,11 +51,58 @@ impl BlobStore {
             ));
         }
         ensure_size(opened_metadata.len(), self.max_blob_bytes)?;
-        let (hash, size) = hash_file(&mut source_file, self.max_blob_bytes)?;
+
+        // Diretório de staging temporário no mesmo volume/árvore de blobs
+        let staging_dir = self.root.join(".staging");
+        fs::create_dir_all(&staging_dir).map_err(|_| CoreError::io())?;
+        let staging_path = staging_dir.join(format!(".stage.{}.tmp", Uuid::new_v4()));
+
+        struct StagingCleanup(PathBuf, bool);
+        impl Drop for StagingCleanup {
+            fn drop(&mut self) {
+                if !self.1 {
+                    let _ = fs::remove_file(&self.0);
+                }
+            }
+        }
+        let mut cleanup_guard = StagingCleanup(staging_path.clone(), false);
+
+        let mut staging_file = File::options()
+            .write(true)
+            .create_new(true)
+            .open(&staging_path)
+            .map_err(|_| CoreError::io())?;
+
+        // Passada única: ler source_file em chunks, gravando no staging e alimentando o hasher simultaneamente
+        let mut reader = BufReader::new(&mut source_file);
+        let mut hasher = blake3::Hasher::new();
+        let mut buffer = [0_u8; 64 * 1024];
+        let mut total_size = 0_u64;
+
+        loop {
+            let read = reader.read(&mut buffer).map_err(|_| CoreError::io())?;
+            if read == 0 {
+                break;
+            }
+            total_size += read as u64;
+            ensure_size(total_size, self.max_blob_bytes)?;
+            hasher.update(&buffer[..read]);
+            staging_file
+                .write_all(&buffer[..read])
+                .map_err(|_| CoreError::io())?;
+        }
+
+        staging_file.sync_all().map_err(|_| CoreError::io())?;
+        drop(staging_file);
+
+        let hash = hasher.finalize().to_hex().to_string();
+        let size = total_size;
         let final_path = self.path_for_hash(&hash)?;
         let relative_path = relative_path(&hash);
 
         if final_path.exists() {
+            let _ = fs::remove_file(&staging_path);
+            cleanup_guard.1 = true;
             self.verify(&hash)?;
             return Ok(StoredBlob {
                 hash,
@@ -65,13 +112,17 @@ impl BlobStore {
             });
         }
 
-        let pending_marker =
-            create_pending_marker(final_path.parent().ok_or_else(CoreError::io)?, &hash)?;
-        match write_atomic(&final_path, |output| {
-            copy_and_verify(&mut source_file, output, &hash, size, self.max_blob_bytes)
-        }) {
-            Ok(AtomicWriteOutcome::Published) => {}
-            Ok(AtomicWriteOutcome::DestinationExists) => {
+        let parent = final_path.parent().ok_or_else(CoreError::io)?;
+        fs::create_dir_all(parent).map_err(|_| CoreError::io())?;
+        let pending_marker = create_pending_marker(parent, &hash)?;
+
+        match fs::rename(&staging_path, &final_path) {
+            Ok(()) => {
+                cleanup_guard.1 = true;
+            }
+            Err(_) if final_path.exists() => {
+                let _ = fs::remove_file(&staging_path);
+                cleanup_guard.1 = true;
                 self.verify(&hash)?;
             }
             Err(_) => {
@@ -149,6 +200,12 @@ impl BlobStore {
         self.read(hash).map(|_| ())
     }
 
+    pub(crate) fn raw_hash_if_present(&self, expected_hash: &str) -> Option<String> {
+        let path = self.path_for_hash(expected_hash).ok()?;
+        let bytes = fs::read(path).ok()?;
+        Some(blake3::hash(&bytes).to_hex().to_string())
+    }
+
     fn path_for_hash(&self, hash: &str) -> CoreResult<PathBuf> {
         if hash.len() != 64 || !hash.bytes().all(|byte| byte.is_ascii_hexdigit()) {
             return Err(CoreError::new(
@@ -169,54 +226,6 @@ impl BlobStore {
         }
         Ok(prefix.join(hash))
     }
-}
-
-fn hash_file(file: &mut File, max_bytes: u64) -> CoreResult<(String, u64)> {
-    file.seek(SeekFrom::Start(0)).map_err(|_| CoreError::io())?;
-    let mut reader = BufReader::new(file);
-    let mut hasher = blake3::Hasher::new();
-    let mut buffer = [0_u8; 64 * 1024];
-    let mut size = 0_u64;
-    loop {
-        let read = reader.read(&mut buffer).map_err(|_| CoreError::io())?;
-        if read == 0 {
-            break;
-        }
-        hasher.update(&buffer[..read]);
-        size += read as u64;
-        ensure_size(size, max_bytes)?;
-    }
-    Ok((hasher.finalize().to_hex().to_string(), size))
-}
-
-fn copy_and_verify(
-    input: &mut File,
-    output: &mut File,
-    expected_hash: &str,
-    expected_size: u64,
-    max_bytes: u64,
-) -> std::io::Result<()> {
-    input.seek(SeekFrom::Start(0))?;
-    let mut hasher = blake3::Hasher::new();
-    let mut buffer = [0_u8; 64 * 1024];
-    let mut size = 0_u64;
-    loop {
-        let read = input.read(&mut buffer)?;
-        if read == 0 {
-            break;
-        }
-        size += read as u64;
-        if size > max_bytes {
-            return Err(std::io::Error::other("arquivo excede o limite configurado"));
-        }
-        hasher.update(&buffer[..read]);
-        output.write_all(&buffer[..read])?;
-    }
-    let actual_hash = hasher.finalize().to_hex().to_string();
-    if size != expected_size || actual_hash != expected_hash {
-        return Err(std::io::Error::other("arquivo mudou durante a importação"));
-    }
-    Ok(())
 }
 
 fn relative_path(hash: &str) -> String {
@@ -271,6 +280,55 @@ fn is_link_or_reparse(metadata: &fs::Metadata) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::{Seek, SeekFrom};
+
+    fn hash_file(file: &mut File, max_bytes: u64) -> CoreResult<(String, u64)> {
+        file.seek(SeekFrom::Start(0)).map_err(|_| CoreError::io())?;
+        let mut reader = BufReader::new(file);
+        let mut hasher = blake3::Hasher::new();
+        let mut buffer = [0_u8; 64 * 1024];
+        let mut size = 0_u64;
+        loop {
+            let read = reader.read(&mut buffer).map_err(|_| CoreError::io())?;
+            if read == 0 {
+                break;
+            }
+            hasher.update(&buffer[..read]);
+            size += read as u64;
+            ensure_size(size, max_bytes)?;
+        }
+        Ok((hasher.finalize().to_hex().to_string(), size))
+    }
+
+    fn copy_and_verify(
+        input: &mut File,
+        output: &mut File,
+        expected_hash: &str,
+        expected_size: u64,
+        max_bytes: u64,
+    ) -> std::io::Result<()> {
+        input.seek(SeekFrom::Start(0))?;
+        let mut hasher = blake3::Hasher::new();
+        let mut buffer = [0_u8; 64 * 1024];
+        let mut size = 0_u64;
+        loop {
+            let read = input.read(&mut buffer)?;
+            if read == 0 {
+                break;
+            }
+            size += read as u64;
+            if size > max_bytes {
+                return Err(std::io::Error::other("arquivo excede o limite configurado"));
+            }
+            hasher.update(&buffer[..read]);
+            output.write_all(&buffer[..read])?;
+        }
+        let actual_hash = hasher.finalize().to_hex().to_string();
+        if size != expected_size || actual_hash != expected_hash {
+            return Err(std::io::Error::other("arquivo mudou durante a importação"));
+        }
+        Ok(())
+    }
 
     #[test]
     fn copies_from_the_same_file_handle_used_for_hashing() {
@@ -296,6 +354,45 @@ mod tests {
         );
 
         drop(source);
+        fs::remove_dir_all(directory).expect("limpeza");
+    }
+
+    #[test]
+    fn put_file_single_pass_stream_and_deduplication() {
+        let directory =
+            std::env::temp_dir().join(format!("nexohub-blob-stream-test-{}", Uuid::new_v4()));
+        fs::create_dir_all(&directory).expect("diretório de teste");
+        let project_root = directory.join("project");
+        let store = BlobStore::new(&project_root, 10 * 1024 * 1024);
+
+        let test_payload = b"conteudo de teste para passada unica de blob streaming";
+        let source_path = directory.join("documento.pdf");
+        fs::write(&source_path, test_payload).expect("escrever arquivo de teste");
+
+        // 1ª inserção: arquivo novo
+        let stored1 = store.put_file(&source_path).expect("put_file deve suceder");
+        assert_eq!(stored1.size, test_payload.len() as u64);
+        assert!(stored1.pending_marker.is_some());
+        store.commit(&stored1);
+
+        let read_bytes = store.read(&stored1.hash).expect("deve ler o blob gravado");
+        assert_eq!(read_bytes, test_payload);
+
+        // 2ª inserção do mesmo arquivo: deduplicação imediata sem criar novo pending marker
+        let stored2 = store
+            .put_file(&source_path)
+            .expect("put_file deduplicado deve suceder");
+        assert_eq!(stored2.hash, stored1.hash);
+        assert_eq!(stored2.size, stored1.size);
+        assert!(stored2.pending_marker.is_none());
+
+        // Confere se staging temporário está limpo
+        let staging_dir = store.root.join(".staging");
+        if staging_dir.exists() {
+            let entries: Vec<_> = fs::read_dir(&staging_dir).expect("ler staging").collect();
+            assert!(entries.is_empty(), "diretório de staging deve estar vazio");
+        }
+
         fs::remove_dir_all(directory).expect("limpeza");
     }
 }

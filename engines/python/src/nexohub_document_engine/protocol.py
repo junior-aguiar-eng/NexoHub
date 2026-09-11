@@ -10,10 +10,17 @@ from typing import Any, TextIO
 
 from .docx import DOCX_MIME_TYPE, DocxInputError, create_docx, inspect_docx
 from .docx import MAX_INPUT_BYTES as DOCX_MAX_INPUT_BYTES
+from .extraction import MAX_INPUT_BYTES as EXTRACT_MAX_INPUT_BYTES
+from .extraction import ExtractionInputError, extract_information
 from .limits import env_limit
 from .ocr import MAX_INPUT_BYTES as OCR_MAX_INPUT_BYTES
 from .ocr import OcrInputError, recognize_document
-from .translation import TranslationInputError, TranslationUnavailableError, translate_text
+from .translation import (
+    TranslationInputError,
+    TranslationUnavailableError,
+    list_installed_models,
+    translate_text,
+)
 
 MAX_REQUEST_LINE_CHARACTERS = env_limit(
     "NEXOHUB_SIDECAR_MAX_REQUEST_CHARACTERS",
@@ -38,6 +45,10 @@ def handle_request(request: object) -> dict[str, Any]:
         return _error(request_id, "INVALID_REQUEST", "Método ou parâmetros inválidos.")
 
     params = request["params"]
+    if method == "translate.list_models":
+        models = list_installed_models()
+        return {"id": request_id, "result": {"models": models}}
+
     if method == "translate":
         try:
             result = translate_text(
@@ -83,6 +94,34 @@ def handle_request(request: object) -> dict[str, Any]:
             return _error(request_id, "INVALID_INPUT", str(error))
         except Exception:
             return _error(request_id, "DOCX_FAILED", "O engine local não conseguiu ler o DOCX.")
+        return {"id": request_id, "result": result.to_dict()}
+
+    if method == "extract":
+        text = params.get("text")
+        encoded = params.get("contentBase64")
+        mime_type = params.get("mimeType")
+        mode = params.get("mode", "all")
+        content_bytes = None
+        if isinstance(encoded, str):
+            try:
+                content_bytes = _decode_base64_bounded(encoded, EXTRACT_MAX_INPUT_BYTES)
+            except binascii.Error as error:
+                return _error(request_id, "INVALID_INPUT", str(error))
+        try:
+            result = extract_information(
+                text=text if isinstance(text, str) else None,
+                content_bytes=content_bytes,
+                mime_type=mime_type if isinstance(mime_type, str) else None,
+                mode=mode if isinstance(mode, str) else "all",
+            )
+        except ExtractionInputError as error:
+            return _error(request_id, "INVALID_INPUT", str(error))
+        except Exception:
+            return _error(
+                request_id,
+                "EXTRACTION_FAILED",
+                "O engine local não conseguiu extrair as informações.",
+            )
         return {"id": request_id, "result": result.to_dict()}
 
     if method != "ocr":

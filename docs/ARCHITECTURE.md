@@ -48,11 +48,12 @@ Originals importados são copiados para o store e não possuem operação de atu
 transformação cria outro artifact e registra arestas de entrada e saída.
 
 O shell Tauri expõe somente comandos estruturados próprios: projeto, importação, consulta de
-documentos e artifacts, compressão PDF, revisão textual, revisão linguística, overlays e anchors.
+documentos e artifacts, compressão PDF, revisão textual, revisão linguística, overlays, anchors e extração.
 Não há permissão genérica Tauri de filesystem, shell ou `core:*`. Caminhos, argumentos, limites e
 integridade são validados no core Rust; erros retornam códigos estáveis sem SQL ou conteúdo do
-documento. A ativação futura do adapter Tauri na UI depende de um broker de caminhos concedidos por
-diálogo nativo, conforme a auditoria de hardening.
+documento. Todo acesso a caminhos passa pelo broker de concessões nativas (`grant_broker`), conforme
+especificado no ADR-014, garantindo que o renderer só acesse caminhos expressamente autorizados
+por diálogo do usuário.
 
 O Tool Registry descreve ferramentas, superfícies, entradas, saídas, capacidades e executor. A
 Capability Layer escolhe adapters de navegador, nativos ou Python sem vazar detalhes para a UI.

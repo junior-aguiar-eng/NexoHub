@@ -1,43 +1,78 @@
-import { Command, Settings2 } from "lucide-react";
+import { Plus, Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
+import type { SuiteId } from "./model";
+import { SuiteNavigation } from "./SuiteNavigation";
 
 type HeaderProps = {
+  activeSuite: SuiteId;
+  onSelectSuite: (suite: SuiteId) => void;
   onOpenCommandPalette: () => void;
+  onOpenStudio: () => void;
+  onOpenCapabilities?: () => void;
+  searchQuery?: string;
 };
 
-export function Header({ onOpenCommandPalette }: HeaderProps) {
+export function Header({
+  activeSuite,
+  onSelectSuite,
+  onOpenCommandPalette,
+  onOpenStudio,
+  onOpenCapabilities,
+  searchQuery,
+}: HeaderProps) {
   return (
     <header className="app-header">
-      <a className="brand" href="#main-content" aria-label="NexoHub">
-        <span className="brand__mark" aria-hidden="true">
-          N
-        </span>
-        <span className="brand__copy">
-          <strong>NexoHub</strong>
-          <small>{translate("brand.tagline")}</small>
-        </span>
-      </a>
+      <div className="header-left">
+        <a className="brand" href="#main-content" aria-label="NexoHub">
+          <span className="brand__mark" aria-hidden="true">
+            N
+          </span>
+          <span className="brand__copy">
+            <strong>NexoJuri</strong>
+            <small>{translate("brand.localStation")}</small>
+          </span>
+        </a>
+      </div>
+
+      <div className="header-nav-center">
+        <SuiteNavigation activeSuite={activeSuite} onSelect={onSelectSuite} />
+      </div>
 
       <div className="header-actions">
-        <Button
-          variant="secondary"
-          className="command-trigger"
+        <button
+          type="button"
+          className="header-command-input"
           onClick={onOpenCommandPalette}
-          aria-haspopup="dialog"
+          aria-label={translate("header.search")}
         >
-          <Command size={17} aria-hidden="true" />
-          <span>{translate("header.search")}</span>
-          <kbd>{translate("header.searchShortcut")}</kbd>
+          <Search size={15} aria-hidden="true" className="header-command-input__icon" />
+          <span className="header-command-input__placeholder">
+            {searchQuery || translate("header.commandPlaceholder")}
+          </span>
+          <kbd className="header-command-input__kbd">{translate("header.searchShortcut")}</kbd>
+        </button>
+
+        {onOpenCapabilities && (
+          <Button
+            variant="secondary"
+            className="header-capabilities-btn"
+            onClick={onOpenCapabilities}
+            title="Personalizar e gerenciar superpoderes documentais"
+          >
+            <Sparkles size={15} aria-hidden="true" style={{ color: "#d97706" }} />
+            <span>{translate("capabilities.headerButton")}</span>
+          </Button>
+        )}
+
+        <Button variant="primary" className="header-studio-primary-btn" onClick={onOpenStudio}>
+          <Plus size={16} aria-hidden="true" />
+          <span>{translate("studio.action")}</span>
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          disabled
-          aria-label={`${translate("header.settings")} — ${translate("tools.comingSoon")}`}
-        >
-          <Settings2 size={19} aria-hidden="true" />
-        </Button>
+
+        <div className="header-user-avatar" title="Perfil / Workspace Local">
+          <span>AB</span>
+        </div>
       </div>
     </header>
   );

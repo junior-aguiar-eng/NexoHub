@@ -112,6 +112,87 @@ describe("ReviewPanel", () => {
       content: "texto revisado",
     });
   });
+
+  it("permite aplicar substituição individual de um achado mantendo a sincronia dos demais", async () => {
+    const invoke = vi.fn().mockResolvedValueOnce({
+      language: "pt-BR",
+      engine: "languagetool-community",
+      version: "6.9-SNAPSHOT",
+      matches: [
+        match("WORD_REPEAT", 0, 11, "texto", "duplication", "Palavra repetida."),
+        match("SPACE_BEFORE", 18, 2, ".", "typographical", "Espaço antes da pontuação."),
+      ],
+    });
+    render(
+      <ReviewPanel
+        initialContent="texto texto errado ."
+        documentCore={{ invoke } as unknown as DocumentCorePort}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Analisar texto" }));
+    expect(await screen.findByText("2 achados")).toBeInTheDocument();
+
+    const applyButtons = screen.getAllByRole("button", { name: "Substituir" });
+    expect(applyButtons).toHaveLength(2);
+
+    // Aplica apenas a primeira sugestão
+    const firstButton = applyButtons[0];
+    if (firstButton) {
+      fireEvent.click(firstButton);
+    }
+
+    expect(screen.getByRole("textbox", { name: "Texto para revisão" })).toHaveValue(
+      "texto errado .",
+    );
+    expect(screen.getByText("1 achados")).toBeInTheDocument();
+    expect(screen.getByText("Espaço antes da pontuação.")).toBeInTheDocument();
+  });
+
+  it("ativa regras locais embutidas como salvaguarda se o serviço de revisão do backend rejeitar", async () => {
+    const invoke = vi.fn().mockRejectedValueOnce(new Error("Sidecar indisponível"));
+    render(
+      <ReviewPanel
+        initialContent="Este é um um teste ."
+        documentCore={{ invoke } as unknown as DocumentCorePort}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Analisar texto" }));
+
+    // Fallback de regras do domínio roda localmente sem quebrar o componente
+    expect(await screen.findByText("2 achados")).toBeInTheDocument();
+    expect(screen.getByText("Palavra repetida em sequência.")).toBeInTheDocument();
+    expect(screen.getByText("Espaço indevido antes da pontuação.")).toBeInTheDocument();
+  });
+
+  it("chama onSuccess após salvar a revisão com sucesso", async () => {
+    const invoke = vi
+      .fn()
+      .mockResolvedValueOnce({ artifact: { id: asArtifactId("derived-ok") }, operation: {} });
+    const onSuccess = vi.fn();
+
+    render(
+      <ReviewPanel
+        initialContent="Conteúdo original"
+        documentCore={{ invoke } as unknown as DocumentCorePort}
+        revisionContext={{
+          projectPath: "C:/projeto.nexohub",
+          documentId: asDocumentId("document-1"),
+          artifactId: asArtifactId("original-1"),
+        }}
+        onSuccess={onSuccess}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Texto para revisão" }), {
+      target: { value: "Conteúdo com alteração" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Criar revisão" }));
+
+    await vi.waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText("Revisão criada e adicionada às camadas.")).toBeInTheDocument();
+  });
 });
 
 function reviewResult(matches: ReturnType<typeof match>[] = []) {

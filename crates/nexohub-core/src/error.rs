@@ -22,6 +22,9 @@ pub enum ErrorCode {
     ReviewUnavailable,
     ReviewProcessing,
     SidecarTimeout,
+    PermissionDenied,
+    CapabilityNotFound,
+    CapabilityInstallationFailed,
 }
 
 /// Erro seguro para IPC, sem consultas SQL nem conteúdo documental.

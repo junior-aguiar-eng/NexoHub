@@ -42,4 +42,23 @@ describe("RecipeExecutionDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cancelar execução" }));
     expect(onCancel).toHaveBeenCalledOnce();
   });
+
+  it("permite inspecionar e abrir artifact produzido no Studio", () => {
+    const onOpenArtifact = vi.fn();
+    render(
+      <RecipeExecutionDialog
+        open
+        recipe={recipe}
+        progress={progress}
+        onCancel={vi.fn()}
+        onClose={vi.fn()}
+        onOpenArtifact={onOpenArtifact}
+      />,
+    );
+
+    const artifactButton = screen.getByRole("button", { name: "artifact-1" });
+    expect(artifactButton).toBeInTheDocument();
+    fireEvent.click(artifactButton);
+    expect(onOpenArtifact).toHaveBeenCalledWith("artifact-1");
+  });
 });

@@ -40,10 +40,11 @@ parágrafos, 500 tabelas, 50.000 células e 16 milhões de caracteres.
 | Senhas | Não há coleta, persistência nem log de senhas. PDF/DOCX criptografado é rejeitado; não se solicita senha. |
 | Rede e logs | Operações documentais e sidecars não usam rede. O core não registra conteúdo, caminhos, argumentos ou stderr de documentos. |
 
-Os comandos Tauri ainda recebem caminhos absolutos tipados. A UI produtiva ainda não conecta o
-`DocumentCorePort` ao adapter Tauri; antes dessa ativação, a seleção deve ganhar um broker de grants
-emitidos pelo diálogo nativo. Isso impede que conteúdo comprometido do renderer transforme os
-comandos próprios em leitura arbitrária do perfil do usuário.
+Os comandos Tauri validam os caminhos através do broker de grants (`grant_broker`), conforme
+estabelecido no ADR-014. Qualquer caminho fornecido pelo renderer deve ter sido previamente
+autorizado por diálogo nativo (`pick_project_folder`, `pick_document_file`) ou pertencer a um
+projeto concedido. Tentativas de acessar caminhos não autorizados ou diretórios críticos do sistema
+operacional são bloqueadas imediatamente com `PermissionDenied`.
 
 ## Recuperação e testes de falha
 

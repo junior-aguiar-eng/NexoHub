@@ -163,7 +163,11 @@ class CTranslate2Backend:
             ) from error
 
     def translate(self, texts: list[str]) -> list[str]:
-        tokenized = [self._codec.encode(text) for text in texts]
+        non_empty_indices = [i for i, t in enumerate(texts) if t.strip()]
+        if not non_empty_indices:
+            return texts
+
+        tokenized = [self._codec.encode(texts[i]) for i in non_empty_indices]
         try:
             results = self._translator.translate_batch(
                 tokenized,
@@ -177,15 +181,23 @@ class CTranslate2Backend:
             raise TranslationUnavailableError(
                 "O modelo local falhou durante a inferência."
             ) from error
-        translated: list[str] = []
+
+        translated_parts: list[str] = []
         for result in results:
             hypothesis = result.hypotheses[0]
             if not hypothesis or hypothesis[-1] != MODEL_END_TOKEN:
                 raise TranslationUnavailableError(
                     "A tradução atingiu o limite de geração antes de concluir o segmento."
                 )
-            translated.append(self._codec.decode(hypothesis))
-        return translated
+            translated_parts.append(self._codec.decode(hypothesis))
+
+        output = list(texts)
+        for idx, trans in zip(non_empty_indices, translated_parts):
+            orig = texts[idx]
+            suffix = "\r\n" if orig.endswith("\r\n") else ("\n" if orig.endswith("\n") else "")
+            output[idx] = trans.strip() + suffix
+
+        return output
 
 
 class SentencePieceCodec:
@@ -297,6 +309,7 @@ def _load_codec(model_path: Path, value: object, target_language: str) -> Senten
                 append_eos=True,
             )
         if tokenizer_type == "sentencepiece-pair":
+            append_eos = bool(value.get("appendEos", False))
             return SentencePieceCodec(
                 spm.SentencePieceProcessor(
                     model_file=str(_manifest_file(model_path, value.get("sourceModel")))
@@ -305,7 +318,7 @@ def _load_codec(model_path: Path, value: object, target_language: str) -> Senten
                     model_file=str(_manifest_file(model_path, value.get("targetModel")))
                 ),
                 target_prefix=target_prefix,
-                append_eos=False,
+                append_eos=append_eos,
             )
     except (OSError, RuntimeError) as error:
         raise TranslationUnavailableError("Não foi possível carregar o tokenizer local.") from error
@@ -366,3 +379,51 @@ def _restore_placeholders(text: str, placeholders: tuple[str, ...]) -> str:
     if seen != set(range(len(placeholders))):
         raise TranslationUnavailableError("O modelo removeu placeholders protegidos.")
     return restored
+
+
+def list_installed_models(models_root: Path | None = None) -> list[dict[str, Any]]:
+    """Lista modelos de tradução instalados na raiz configurada com manifesto válido."""
+    try:
+        root = models_root or _configured_models_root()
+    except TranslationUnavailableError:
+        return []
+
+    if not root.is_dir():
+        return []
+
+    models: list[dict[str, Any]] = []
+    for item in sorted(root.iterdir()):
+        if not item.is_dir():
+            continue
+        manifest_path = item / "nexohub-model.json"
+        if not manifest_path.is_file():
+            continue
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if not isinstance(manifest, dict):
+                continue
+            _validate_model_profile(manifest)
+            license_name = manifest.get("license")
+            if not isinstance(license_name, str) or not license_name.strip():
+                continue
+
+            source_langs = manifest.get("sourceLanguages", [])
+            target_langs = manifest.get("targetLanguages", [])
+            family = manifest.get("family", "")
+            has_ctranslate = ctranslate2.contains_model(str(item))
+
+            models.append(
+                {
+                    "modelId": item.name,
+                    "name": manifest.get("name", item.name),
+                    "family": family,
+                    "sourceLanguages": source_langs if isinstance(source_langs, list) else [],
+                    "targetLanguages": target_langs if isinstance(target_langs, list) else [],
+                    "license": license_name,
+                    "isReady": has_ctranslate,
+                }
+            )
+        except Exception:
+            continue
+    return models
+

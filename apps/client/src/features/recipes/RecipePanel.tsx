@@ -4,8 +4,18 @@ import {
   type RecipeSnapshot,
   saveFlowAsRecipe,
 } from "@nexohub/domain";
-import { BookmarkPlus } from "lucide-react";
-import { useState } from "react";
+import {
+  BookmarkPlus,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  ShieldCheck,
+  Sparkles,
+  Workflow,
+  Zap,
+} from "lucide-react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import { recipePresets } from "./presets";
@@ -20,10 +30,28 @@ type Props = {
     cancellationToken: AbortSignal,
     onProgress: (progress: RecipeRunProgress) => void,
   ) => Promise<void>;
+  readonly onOpenArtifact?: (artifactId: string) => void;
 };
 
-export function RecipePanel({ flow, onSave, onRun }: Props) {
+const presetDetails: Record<string, { icon: typeof Sparkles; summary: string }> = {
+  "digitalizacao-limpa": {
+    icon: Sparkles,
+    summary: "OCR + Organização + Compressão",
+  },
+  "higienizacao-rapida": {
+    icon: Zap,
+    summary: "Alinhamento e compressão balanceada",
+  },
+  "extracao-editorial": {
+    icon: BookOpen,
+    summary: "OCR inteligente, extração e revisão",
+  },
+};
+
+export function RecipePanel({ flow, onSave, onRun, onOpenArtifact }: Props) {
   const [savedName, setSavedName] = useState<string>();
+  const [selectedRecipe, setSelectedRecipe] = useState<RecipeSnapshot>(recipePresets[0]);
+  const graphScrollRef = useRef<HTMLDivElement | null>(null);
   const [execution, setExecution] = useState<{
     recipe: RecipeSnapshot;
     progress: RecipeRunProgress;
@@ -38,6 +66,7 @@ export function RecipePanel({ flow, onSave, onRun }: Props) {
     }).snapshot;
     await onSave(recipe);
     setSavedName(recipe.name);
+    setSelectedRecipe(recipe);
   }
 
   async function run(recipe: RecipeSnapshot) {
@@ -92,25 +121,132 @@ export function RecipePanel({ flow, onSave, onRun }: Props) {
 
   return (
     <div className="recipe-panel">
-      <Button variant="ghost" disabled={!flow || !onSave} onClick={save}>
-        <BookmarkPlus size={16} />
-        {translate("recipes.save")}
-      </Button>
+      <header className="recipe-panel__header">
+        <div className="recipe-panel__title-group">
+          <div className="recipe-panel__badge">
+            <Workflow size={14} />
+            <span>NexoFlow Studio</span>
+          </div>
+          <h2>Pipeline Visual &amp; Receitas Automatizadas</h2>
+          <p>
+            Encadeie ferramentas documentais em um grafo acíclico sem mutação do original. Selecione
+            uma receita pré-configurada ou personalize as dependências de cada etapa.
+          </p>
+        </div>
+        <div className="recipe-panel__header-actions">
+          <Button
+            variant="secondary"
+            disabled={!flow || !onSave}
+            onClick={save}
+            title={!flow ? "Promova um fluxo no Launcher para salvar" : undefined}
+          >
+            <BookmarkPlus size={16} />
+            {translate("recipes.save")}
+          </Button>
+        </div>
+      </header>
+
       {savedName && (
-        <small>
-          {translate("recipes.saved")}: {savedName}
-        </small>
+        <div className="recipe-panel__saved-banner">
+          <ShieldCheck size={16} />
+          <span>
+            {translate("recipes.saved")}: <strong>{savedName}</strong>
+          </span>
+        </div>
       )}
-      <ul className="recipe-presets" aria-label={translate("recipes.presets")}>
-        {recipePresets.map((preset) => (
-          <li key={preset.id}>
-            <Button variant="ghost" disabled={!onRun} onClick={() => run(preset)}>
-              {preset.name}
+
+      <section className="recipe-panel__presets-section">
+        <span className="recipe-panel__section-label">{translate("recipes.presets")}</span>
+        <ul className="recipe-presets" aria-label={translate("recipes.presets")}>
+          {recipePresets.map((preset) => {
+            const isSelected = selectedRecipe.id === preset.id;
+            const details = presetDetails[preset.id] ?? {
+              icon: Sparkles,
+              summary: "Pipeline de automação sequencial",
+            };
+            const PresetIcon = details.icon;
+
+            return (
+              <li
+                key={preset.id}
+                className={`recipe-preset-card ${isSelected ? "recipe-preset-card--selected" : ""}`}
+              >
+                <div className="recipe-preset-card__header">
+                  <div className="recipe-preset-card__icon-badge">
+                    <PresetIcon size={16} />
+                  </div>
+                  <span className="recipe-preset-card__count">{preset.steps.length} etapas</span>
+                </div>
+                <Button
+                  variant={isSelected ? "primary" : "secondary"}
+                  onClick={() => {
+                    setSelectedRecipe(preset);
+                    if (onRun) {
+                      run(preset);
+                    }
+                  }}
+                >
+                  {preset.name}
+                </Button>
+                <span className="recipe-preset-card__desc">{details.summary}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <section className="recipe-panel__canvas-section">
+        <div className="recipe-panel__canvas-header">
+          <div className="recipe-panel__canvas-title-box">
+            <span className="recipe-panel__canvas-title">Grafo de Execução da Receita</span>
+            <span className="recipe-panel__canvas-hint">
+              Conectores automáticos • Arraste ou configure dependências
+            </span>
+          </div>
+          <div className="recipe-panel__scroll-controls">
+            <Button
+              variant="secondary"
+              size="compact"
+              onClick={() => graphScrollRef.current?.scrollBy({ left: -260, behavior: "smooth" })}
+              title="Rolar para a esquerda"
+              aria-label="Rolar para a esquerda"
+              className="recipe-panel__scroll-btn"
+            >
+              <ChevronLeft size={14} />
             </Button>
-          </li>
-        ))}
-      </ul>
-      <RecipeGraphEditor recipe={recipePresets[0]} />
+            <Button
+              variant="secondary"
+              size="compact"
+              onClick={() => graphScrollRef.current?.scrollBy({ left: 260, behavior: "smooth" })}
+              title="Rolar para a direita"
+              aria-label="Rolar para a direita"
+              className="recipe-panel__scroll-btn"
+            >
+              <ChevronRight size={14} />
+            </Button>
+          </div>
+        </div>
+        <div ref={graphScrollRef} className="recipe-panel__graph-scroll-container">
+          <RecipeGraphEditor
+            recipe={selectedRecipe}
+            onChange={(updated) => setSelectedRecipe(updated)}
+          />
+        </div>
+      </section>
+
+      <footer className="recipe-actions">
+        <div className="recipe-actions__hint">
+          <ShieldCheck size={15} style={{ color: "var(--color-primary)" }} />
+          <span>
+            Original protegido com hash BLAKE3 • Cada etapa produz um novo artifact derivado
+          </span>
+        </div>
+        <Button variant="primary" disabled={!onRun} onClick={() => run(selectedRecipe)}>
+          <Play size={15} style={{ marginRight: "0.25rem" }} />
+          {translate("recipes.runSelected")}
+        </Button>
+      </footer>
+
       {execution && (
         <RecipeExecutionDialog
           open
@@ -118,6 +254,7 @@ export function RecipePanel({ flow, onSave, onRun }: Props) {
           progress={execution.progress}
           onCancel={() => execution.controller.abort()}
           onClose={() => setExecution(undefined)}
+          onOpenArtifact={onOpenArtifact}
         />
       )}
     </div>

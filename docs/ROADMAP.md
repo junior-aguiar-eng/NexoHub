@@ -15,8 +15,8 @@
 | 10 | Anchors | Concluída localmente |
 | 11 | DOCX | Concluída localmente |
 | 12 | Tradução | Concluída localmente |
-| 13 | Revisão | Em andamento — LanguageTool pt-BR e persistência integrados |
-| 14 | Receitas | Em andamento — DAG visual, presets e runner topológico integrados |
+| 13 | Revisão | Concluída localmente |
+| 14 | Receitas | Concluída localmente — DAG visual, presets, runner topológico e executores do Studio integrados |
 | 15 | Hardening orientado a falhas e métricas | Concluída localmente — limites, recuperação e perfil documentados |
 | 16 | Release engineering Windows e publicação web auditável | Em andamento — pipelines e manifests preparados; RC bloqueada pelos gates e pela validação instalada |
 

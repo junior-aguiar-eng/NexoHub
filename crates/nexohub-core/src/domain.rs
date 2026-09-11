@@ -216,3 +216,44 @@ pub struct ImportedDocument {
     pub document: Document,
     pub artifact: Artifact,
 }
+
+/// Detalhes de um artifact com corrupção de integridade criptográfica.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CorruptedArtifactItem {
+    pub artifact_id: String,
+    pub expected_hash: String,
+    pub actual_hash: String,
+}
+
+/// Relatório de auditoria de integridade de todos os blobs de um projeto.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IntegrityAuditReport {
+    pub total_artifacts: usize,
+    pub valid_artifacts: usize,
+    pub corrupted_artifacts: Vec<CorruptedArtifactItem>,
+    pub missing_blobs: Vec<String>,
+    pub is_healthy: bool,
+}
+
+/// Aresta de transformação no grafo acíclico dirigido (DAG) de um documento.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentLineageEdge {
+    pub operation_id: String,
+    pub tool_id: String,
+    pub input_artifact_id: String,
+    pub output_artifact_id: String,
+    pub parameters: Value,
+    pub created_at: i64,
+}
+
+/// Visão completa do grafo de artefatos e linhagem de operações de um documento.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentLineage {
+    pub document_id: String,
+    pub artifacts: Vec<Artifact>,
+    pub edges: Vec<DocumentLineageEdge>,
+}

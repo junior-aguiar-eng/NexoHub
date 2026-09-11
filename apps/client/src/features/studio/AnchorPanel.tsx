@@ -17,6 +17,7 @@ export type AnchorDraft =
 
 type AnchorPanelProps = {
   onCreate?: (draft: AnchorDraft) => Promise<void> | void;
+  hideHeader?: boolean;
 };
 
 const drafts: Record<AnchorDraft["type"], AnchorDraft> = {
@@ -32,15 +33,17 @@ const drafts: Record<AnchorDraft["type"], AnchorDraft> = {
   OCR_LINE: { type: "OCR_LINE", pageNumber: 1, lineIndex: 0 },
 };
 
-export function AnchorPanel({ onCreate }: AnchorPanelProps) {
+export function AnchorPanel({ onCreate, hideHeader = false }: AnchorPanelProps) {
   const [type, setType] = useState<AnchorDraft["type"]>("TEXT_RANGE");
 
   return (
     <section className="anchor-panel" aria-labelledby="anchors-title">
-      <div className="anchor-panel__title">
-        <Crosshair size={17} aria-hidden="true" />
-        <h3 id="anchors-title">{translate("anchors.title")}</h3>
-      </div>
+      {!hideHeader && (
+        <div className="anchor-panel__title">
+          <Crosshair size={17} aria-hidden="true" />
+          <h3 id="anchors-title">{translate("anchors.title")}</h3>
+        </div>
+      )}
       <p>{translate("anchors.description")}</p>
       <label>
         {translate("anchors.type")}

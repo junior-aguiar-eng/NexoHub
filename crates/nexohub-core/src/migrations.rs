@@ -3,7 +3,7 @@
 use crate::error::{CoreError, CoreResult, ErrorCode};
 use rusqlite::{Connection, Transaction};
 
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 2;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 3;
 
 struct Migration {
     version: i64,
@@ -122,6 +122,18 @@ const MIGRATIONS: &[Migration] = &[
         );
 
         CREATE INDEX anchors_artifact_id_idx ON anchors(artifact_id, created_at);
+    "#,
+    },
+    Migration {
+        version: 3,
+        name: "indices_performance_document_graph",
+        sql: r#"
+        CREATE INDEX IF NOT EXISTS representations_artifact_id_idx ON representations(artifact_id, created_at);
+        CREATE INDEX IF NOT EXISTS assets_artifact_id_idx ON assets(artifact_id, created_at);
+        CREATE INDEX IF NOT EXISTS overlays_artifact_id_idx ON overlays(artifact_id, created_at);
+        CREATE INDEX IF NOT EXISTS operations_created_at_idx ON operations(created_at);
+        CREATE INDEX IF NOT EXISTS operation_inputs_artifact_id_idx ON operation_inputs(artifact_id);
+        CREATE INDEX IF NOT EXISTS operation_outputs_artifact_id_idx ON operation_outputs(artifact_id);
     "#,
     },
 ];

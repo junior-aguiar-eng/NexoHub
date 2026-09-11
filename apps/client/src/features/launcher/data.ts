@@ -13,10 +13,12 @@ import { translate } from "@/i18n";
 import type { LauncherTool, Suite } from "./model";
 
 export const suites: readonly Suite[] = [
-  { id: "overview", labelKey: "suite.overview" },
-  { id: "pdf", labelKey: "suite.pdf" },
-  { id: "text", labelKey: "suite.text" },
-  { id: "intelligence", labelKey: "suite.intelligence" },
+  { id: "overview", labelKey: "suite.all", ariaLabel: "Todas" },
+  { id: "processing", labelKey: "suite.processing", ariaLabel: "Processamento" },
+  { id: "review", labelKey: "suite.review", ariaLabel: "Revisão" },
+  { id: "compliance", labelKey: "suite.compliance", ariaLabel: "Compliance" },
+  { id: "extraction", labelKey: "suite.extraction", ariaLabel: "Extração" },
+  { id: "flow", labelKey: "suite.flow", ariaLabel: "NexoFlow" },
 ];
 
 const presentation = {
@@ -57,35 +59,74 @@ const presentation = {
     icon: Languages,
   },
   "intelligence-extract": {
-    suite: "intelligence",
+    suite: "text",
     titleKey: "tool.intelligenceExtract.title",
     descriptionKey: "tool.intelligenceExtract.description",
     icon: ListFilter,
   },
 } as const;
 
-const browserCapabilities = new StaticCapabilityProvider({
-  "documents.read": { available: true },
-  "documents.write": { available: true },
-  "pdf.transform": { available: false, reason: translate("tools.unavailable.pdf") },
-  "ocr.execute": { available: false, reason: translate("tools.unavailable.ocr") },
-  "text.compare": { available: false, reason: translate("tools.unavailable.compare") },
-  "text.review": { available: false, reason: translate("tools.unavailable.review") },
-  "translation.execute": {
-    available: false,
-    reason: translate("tools.unavailable.translation"),
-  },
-  "intelligence.extract": {
-    available: false,
-    reason: translate("tools.unavailable.extract"),
-  },
-});
+import type { CapabilityItem } from "@nexohub/contracts";
+import type { CapabilityProvider } from "@nexohub/tool-sdk";
+import { BrowserDocumentCorePort } from "@/platform/browser-document-core";
+import type { DocumentCorePort } from "@/platform/document-core";
 
-export const launcherTools: readonly LauncherTool[] = coreToolRegistry
-  .list("quick")
-  .map((manifest) => ({
+export function createDynamicCapabilitiesProvider(
+  capabilities?: readonly CapabilityItem[],
+  documentCore?: DocumentCorePort,
+): CapabilityProvider {
+  const isTranslationInstalled = Boolean(
+    capabilities?.some((c) => c.id === "translation.neural" && c.status === "installed"),
+  );
+  const isOcrInstalled = Boolean(
+    capabilities?.some((c) => c.id === "ocr.vision" && c.status === "installed"),
+  );
+  const isReviewInstalled = Boolean(
+    capabilities?.some((c) => c.id === "text.deep_review" && c.status === "installed"),
+  );
+  const isCompressInstalled = Boolean(
+    capabilities?.some((c) => c.id === "pdf.super_compress" && c.status === "installed"),
+  );
+
+  const isNativeDocumentCore = Boolean(
+    documentCore && !(documentCore instanceof BrowserDocumentCorePort),
+  );
+
+  return new StaticCapabilityProvider({
+    "documents.read": { available: true },
+    "documents.write": { available: true },
+    "pdf.transform":
+      isNativeDocumentCore || isCompressInstalled
+        ? { available: true }
+        : { available: false, reason: translate("tools.unavailable.pdf") },
+    "ocr.execute": isOcrInstalled
+      ? { available: true }
+      : { available: false, reason: translate("tools.unavailable.ocr") },
+    "text.compare": { available: false, reason: translate("tools.unavailable.compare") },
+    "text.review": isReviewInstalled
+      ? { available: true }
+      : { available: false, reason: translate("tools.unavailable.review") },
+    "translation.execute": isTranslationInstalled
+      ? { available: true }
+      : { available: false, reason: translate("tools.unavailable.translation") },
+    "intelligence.extract": {
+      available: false,
+      reason: translate("tools.unavailable.extract"),
+    },
+  });
+}
+
+export function resolveLauncherTools(
+  capabilities?: readonly CapabilityItem[],
+  documentCore?: DocumentCorePort,
+): readonly LauncherTool[] {
+  const provider = createDynamicCapabilitiesProvider(capabilities, documentCore);
+  return coreToolRegistry.list("quick").map((manifest) => ({
     ...presentation[manifest.id as keyof typeof presentation],
     id: manifest.id,
     manifest,
-    availability: resolveToolAvailability(manifest, browserCapabilities),
+    availability: resolveToolAvailability(manifest, provider),
   }));
+}
+
+export const launcherTools: readonly LauncherTool[] = resolveLauncherTools();

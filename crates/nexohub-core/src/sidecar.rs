@@ -62,6 +62,22 @@ pub(crate) fn run_command(
     timeout: Duration,
     max_output_bytes: u64,
 ) -> Result<Vec<u8>, SidecarRunError> {
+    run_command_with_stdin(command, None, output_path, timeout, max_output_bytes)
+}
+
+pub(crate) fn run_command_with_stdin(
+    command: &mut Command,
+    input_path: Option<&Path>,
+    output_path: &Path,
+    timeout: Duration,
+    max_output_bytes: u64,
+) -> Result<Vec<u8>, SidecarRunError> {
+    if let Some(in_path) = input_path {
+        let input_file = File::open(in_path).map_err(|_| SidecarRunError::Io)?;
+        command.stdin(Stdio::from(input_file));
+    } else {
+        command.stdin(Stdio::null());
+    }
     let output = File::options()
         .write(true)
         .create_new(true)

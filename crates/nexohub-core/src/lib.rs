@@ -3,14 +3,17 @@
 pub mod anchor_tools;
 mod atomic_file;
 mod blob_store;
+pub mod capabilities;
 pub mod commands;
 pub mod domain;
 pub mod error;
+pub mod grant_broker;
 pub mod hardening;
 pub mod language_tool;
 mod migrations;
 pub mod overlay_tools;
 pub mod pdf_tools;
+pub mod python_engine;
 mod sidecar;
 pub mod storage;
 pub mod text_tools;

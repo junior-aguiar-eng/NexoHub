@@ -25,7 +25,10 @@ export type IpcErrorCode =
   | "PDF_PROCESSING"
   | "REVIEW_UNAVAILABLE"
   | "REVIEW_PROCESSING"
-  | "SIDECAR_TIMEOUT";
+  | "SIDECAR_TIMEOUT"
+  | "PERMISSION_DENIED"
+  | "CAPABILITY_NOT_FOUND"
+  | "CAPABILITY_INSTALLATION_FAILED";
 
 export interface IpcError {
   readonly code: IpcErrorCode;
@@ -72,6 +75,14 @@ export interface CompressPdfRequest {
 export interface PdfToolResult {
   readonly artifact: Artifact;
   readonly operation: Operation;
+}
+
+export interface OrganizePdfRequest {
+  readonly projectPath: string;
+  readonly documentId: DocumentId;
+  readonly artifactId: ArtifactId;
+  readonly pageOrder: readonly number[];
+  readonly rotationDegrees?: number;
 }
 
 export interface CreateTextRevisionRequest {
@@ -153,7 +164,304 @@ export interface ListAnchorsRequest {
   readonly artifactId: ArtifactId;
 }
 
+export interface PickProjectFolderRequest {
+  readonly defaultPath?: string;
+}
+
+export interface PickProjectFolderResult {
+  readonly path: string;
+  readonly name: string;
+}
+
+export interface PickDocumentFileRequest {
+  readonly defaultPath?: string;
+  readonly mimeTypes?: readonly string[];
+}
+
+export interface PickDocumentFileResult {
+  readonly path: string;
+  readonly name: string;
+  readonly mimeType: string;
+}
+
+export interface ExecuteOcrRequest {
+  readonly projectPath: string;
+  readonly documentId: DocumentId;
+  readonly artifactId: ArtifactId;
+}
+
+export interface OcrLineResult {
+  readonly pageNumber: number;
+  readonly text: string;
+  readonly confidence: number;
+  readonly bounds: readonly [number, number, number, number];
+}
+
+export interface OcrToolResult {
+  readonly text: string;
+  readonly pages: number;
+  readonly lines: readonly OcrLineResult[];
+  readonly engine: string;
+  readonly artifact: Artifact;
+  readonly operation: Operation;
+}
+
+export interface InspectDocxRequest {
+  readonly projectPath: string;
+  readonly documentId: DocumentId;
+  readonly artifactId: ArtifactId;
+}
+
+export interface DocxParagraphResult {
+  readonly text: string;
+  readonly style: string;
+}
+
+export interface DocxInspectionResult {
+  readonly paragraphs: readonly DocxParagraphResult[];
+  readonly tables: readonly (readonly (readonly string[])[])[];
+  readonly title: string | null;
+}
+
+export interface CreateDocxRequest {
+  readonly projectPath: string;
+  readonly documentId?: DocumentId;
+  readonly name: string;
+  readonly title?: string;
+  readonly paragraphs?: readonly { readonly text: string; readonly style?: string }[];
+  readonly tables?: readonly (readonly (readonly string[])[])[];
+}
+
+export interface CreateDocxResult {
+  readonly artifact: Artifact;
+  readonly operation?: Operation;
+}
+
+export interface TranslationModelInfo {
+  readonly modelId: string;
+  readonly name: string;
+  readonly family: string;
+  readonly sourceLanguages: readonly string[];
+  readonly targetLanguages: readonly string[];
+  readonly license: string;
+  readonly isReady: boolean;
+}
+
+export interface ListTranslationModelsRequest {
+  readonly projectPath?: string;
+}
+
+export interface ListTranslationModelsResult {
+  readonly models: readonly TranslationModelInfo[];
+}
+
+export interface TranslateTextRequest {
+  readonly text: string;
+  readonly sourceLanguage?: string;
+  readonly targetLanguage: string;
+  readonly modelId?: string;
+  readonly projectPath?: string;
+  readonly documentId?: DocumentId;
+  readonly artifactId?: ArtifactId;
+}
+
+export interface TranslateTextResult {
+  readonly text: string;
+  readonly sourceLanguage: string;
+  readonly targetLanguage: string;
+  readonly modelId: string;
+  readonly segments: number;
+  readonly artifact?: Artifact;
+  readonly operation?: Operation;
+}
+
+export interface ExtractedEntity {
+  readonly category: string;
+  readonly value: string;
+  readonly normalizedValue: string;
+  readonly confidence: number;
+  readonly count: number;
+}
+
+export interface ExtractedTable {
+  readonly title?: string;
+  readonly headers: readonly string[];
+  readonly rows: readonly (readonly string[])[];
+}
+
+export interface ExtractedSection {
+  readonly title: string;
+  readonly level: number;
+  readonly lineNumber: number;
+}
+
+export interface ExtractionMetrics {
+  readonly charCount: number;
+  readonly wordCount: number;
+  readonly lineCount: number;
+  readonly pageCount: number;
+  readonly language: string;
+}
+
+export interface ExtractInformationRequest {
+  readonly projectPath?: string;
+  readonly documentId?: DocumentId;
+  readonly artifactId?: ArtifactId;
+  readonly text?: string;
+  readonly mode?: "all" | "entities" | "key_values" | "tables" | "sections" | string;
+}
+
+export interface ExtractInformationResult {
+  readonly text: string;
+  readonly markdown?: string;
+  readonly mode: string;
+  readonly metrics: ExtractionMetrics;
+  readonly entities: readonly ExtractedEntity[];
+  readonly keyValues: Readonly<Record<string, string>>;
+  readonly tables: readonly ExtractedTable[];
+  readonly sections: readonly ExtractedSection[];
+  readonly artifact?: Artifact;
+  readonly operation?: Operation;
+}
+
+export interface CorruptedArtifactItem {
+  readonly artifactId: ArtifactId;
+  readonly expectedHash: string;
+  readonly actualHash: string;
+}
+
+export interface IntegrityAuditReport {
+  readonly totalArtifacts: number;
+  readonly validArtifacts: number;
+  readonly corruptedArtifacts: readonly CorruptedArtifactItem[];
+  readonly missingBlobs: readonly ArtifactId[];
+  readonly isHealthy: boolean;
+}
+
+export interface AuditProjectRequest {
+  readonly projectPath: string;
+}
+
+export interface DocumentLineageEdge {
+  readonly operationId: string;
+  readonly toolId: string;
+  readonly inputArtifactId: ArtifactId;
+  readonly outputArtifactId: ArtifactId;
+  readonly parameters: import("@nexohub/domain").JsonValue;
+  readonly createdAt: number;
+}
+
+export interface DocumentLineage {
+  readonly documentId: DocumentId;
+  readonly artifacts: readonly Artifact[];
+  readonly edges: readonly DocumentLineageEdge[];
+}
+
+export interface GetDocumentLineageRequest {
+  readonly projectPath: string;
+  readonly documentId: DocumentId;
+}
+
+export type CapabilityId =
+  | "translation.neural"
+  | "ocr.vision"
+  | "text.deep_review"
+  | "pdf.super_compress";
+
+export type CapabilityStatus = "not_installed" | "downloading" | "installed" | "error";
+
+export interface CapabilityItem {
+  readonly id: CapabilityId;
+  readonly title: string;
+  readonly summary: string;
+  readonly benefit: string;
+  readonly category: "translation" | "vision" | "review" | "compression";
+  readonly diskSizeBytes: number;
+  readonly status: CapabilityStatus;
+  readonly progressPercent?: number;
+  readonly isOptional: boolean;
+}
+
+export interface CapabilityProgressEvent {
+  readonly capabilityId: CapabilityId;
+  readonly status: "downloading" | "verifying" | "extracting" | "ready" | "failed";
+  readonly bytesDownloaded: number;
+  readonly totalBytes: number;
+  readonly progressPercent: number;
+  readonly errorMessage?: string;
+}
+
+export interface ListCapabilitiesRequest {
+  readonly category?: string;
+}
+export interface ListCapabilitiesResult {
+  readonly capabilities: readonly CapabilityItem[];
+}
+
+export interface InstallCapabilityRequest {
+  readonly capabilityId: CapabilityId;
+}
+export interface InstallCapabilityResult {
+  readonly success: boolean;
+  readonly message?: string;
+}
+
+export interface CancelCapabilityDownloadRequest {
+  readonly capabilityId: CapabilityId;
+}
+export interface CancelCapabilityDownloadResult {
+  readonly success: boolean;
+}
+
+export interface UninstallCapabilityRequest {
+  readonly capabilityId: CapabilityId;
+}
+export interface UninstallCapabilityResult {
+  readonly success: boolean;
+  readonly freedBytes: number;
+}
+
 export interface DocumentCoreCommands {
+  readonly audit_project: {
+    readonly request: AuditProjectRequest;
+    readonly response: IntegrityAuditReport;
+  };
+  readonly get_document_lineage: {
+    readonly request: GetDocumentLineageRequest;
+    readonly response: DocumentLineage;
+  };
+  readonly execute_ocr: {
+    readonly request: ExecuteOcrRequest;
+    readonly response: OcrToolResult;
+  };
+  readonly inspect_docx: {
+    readonly request: InspectDocxRequest;
+    readonly response: DocxInspectionResult;
+  };
+  readonly create_docx: {
+    readonly request: CreateDocxRequest;
+    readonly response: CreateDocxResult;
+  };
+  readonly translate_text: {
+    readonly request: TranslateTextRequest;
+    readonly response: TranslateTextResult;
+  };
+  readonly list_translation_models: {
+    readonly request: ListTranslationModelsRequest;
+    readonly response: ListTranslationModelsResult;
+  };
+  readonly extract_information: {
+    readonly request: ExtractInformationRequest;
+    readonly response: ExtractInformationResult;
+  };
+  readonly pick_project_folder: {
+    readonly request: PickProjectFolderRequest;
+    readonly response: PickProjectFolderResult | null;
+  };
+  readonly pick_document_file: {
+    readonly request: PickDocumentFileRequest;
+    readonly response: PickDocumentFileResult | null;
+  };
   readonly create_project: {
     readonly request: CreateProjectRequest;
     readonly response: Project;
@@ -182,6 +490,10 @@ export interface DocumentCoreCommands {
     readonly request: CompressPdfRequest;
     readonly response: PdfToolResult;
   };
+  readonly organize_pdf: {
+    readonly request: OrganizePdfRequest;
+    readonly response: PdfToolResult;
+  };
   readonly create_text_revision: {
     readonly request: CreateTextRevisionRequest;
     readonly response: TextToolResult;
@@ -205,6 +517,22 @@ export interface DocumentCoreCommands {
   readonly list_anchors: {
     readonly request: ListAnchorsRequest;
     readonly response: readonly Anchor[];
+  };
+  readonly list_capabilities: {
+    readonly request: ListCapabilitiesRequest;
+    readonly response: ListCapabilitiesResult;
+  };
+  readonly install_capability: {
+    readonly request: InstallCapabilityRequest;
+    readonly response: InstallCapabilityResult;
+  };
+  readonly cancel_capability_download: {
+    readonly request: CancelCapabilityDownloadRequest;
+    readonly response: CancelCapabilityDownloadResult;
+  };
+  readonly uninstall_capability: {
+    readonly request: UninstallCapabilityRequest;
+    readonly response: UninstallCapabilityResult;
   };
 }
 

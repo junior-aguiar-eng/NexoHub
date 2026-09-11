@@ -3,7 +3,9 @@ export type ReviewRule =
   | "DUPLICATE_WORD"
   | "SPACE_BEFORE_PUNCTUATION"
   | "REPEATED_WHITESPACE"
-  | "TRAILING_WHITESPACE";
+  | "TRAILING_WHITESPACE"
+  | "PARONYM_CONTEXT"
+  | "STYLE_SUGGESTION";
 
 export type ReviewFinding = {
   readonly id: string;
@@ -17,6 +19,15 @@ export type ReviewFinding = {
 };
 
 const MAX_REVIEW_LENGTH = 1_000_000;
+
+function matchCase(source: string, target: string): string {
+  if (!source || !target) return target;
+  if (source === source.toUpperCase()) return target.toUpperCase();
+  if (source[0] === source[0]?.toUpperCase()) {
+    return target.charAt(0).toUpperCase() + target.slice(1);
+  }
+  return target;
+}
 
 type RuleDefinition = {
   rule: ReviewRule;
@@ -33,6 +44,75 @@ const rules: readonly RuleDefinition[] = [
     pattern: /\b([\p{L}\p{N}][\p{L}\p{N}'’-]*)[ \t]+\1\b/giu,
     replacement: (match) => match[1] ?? "",
     message: "Palavra repetida em sequência.",
+  },
+  {
+    rule: "PARONYM_CONTEXT",
+    severity: "warning",
+    pattern: /\bvultuos(os?|as?)\b/giu,
+    replacement: (match) => matchCase(match[0], `vultos${match[1]?.toLowerCase() ?? ""}`),
+    message:
+      "Atenção ao parônimo: 'vultoso' significa volumoso, de grande vulto ou expressivo; 'vultuoso' refere-se ao rosto congestionado ou inchado por enfermidade.",
+  },
+  {
+    rule: "PARONYM_CONTEXT",
+    severity: "warning",
+    pattern: /\bmandato(\s+de\s+(?:prisão|busca|apreensão|soltura|condução|penhora))\b/giu,
+    replacement: (match) =>
+      `${matchCase(match[0]?.split(/\s+/)[0] ?? "mandato", "mandado")}${match[1]}`,
+    message:
+      "Ordem judicial é 'mandado'. 'Mandato' refere-se à representação política ou procuração.",
+  },
+  {
+    rule: "PARONYM_CONTEXT",
+    severity: "warning",
+    pattern: /\bmandado(\s+(?:eletivo|presidencial|parlamentar|tampão))\b/giu,
+    replacement: (match) =>
+      `${matchCase(match[0]?.split(/\s+/)[0] ?? "mandado", "mandato")}${match[1]}`,
+    message: "Exercício de cargo ou delegação de poderes é 'mandato'. 'Mandado' é ordem judicial.",
+  },
+  {
+    rule: "PARONYM_CONTEXT",
+    severity: "warning",
+    pattern: /\bintervido\b/giu,
+    replacement: (match) => matchCase(match[0], "intervindo"),
+    message: "O particípio do verbo intervir (derivado de vir) é 'intervindo'.",
+  },
+  {
+    rule: "PARONYM_CONTEXT",
+    severity: "warning",
+    pattern: /\bhaja\s+vistos?\b/giu,
+    replacement: (match) => matchCase(match[0], "haja vista"),
+    message: "A locução 'haja vista' permanece invariável na norma culta.",
+  },
+  {
+    rule: "PARONYM_CONTEXT",
+    severity: "suggestion",
+    pattern: /\bao\s+ponto\s+de\b/giu,
+    replacement: (match) => matchCase(match[0], "a ponto de"),
+    message: "Na norma culta, a locução consecutiva recomendada é 'a ponto de'.",
+  },
+  {
+    rule: "PARONYM_CONTEXT",
+    severity: "warning",
+    pattern: /\bsob\s+judice\b/giu,
+    replacement: (match) => matchCase(match[0], "sub judice"),
+    message: "A grafia jurídica correta da locução latina é 'sub judice'.",
+  },
+  {
+    rule: "STYLE_SUGGESTION",
+    severity: "suggestion",
+    pattern:
+      /\b(situação|situações|cenário|cenários|caso|casos|hipótese|hipóteses|momento|momentos|contexto|contextos|fase|fases)\s+onde\b/giu,
+    replacement: (match) => `${match[1]} em que`,
+    message:
+      "O pronome 'onde' deve referir-se a lugares físicos concretos. Para noções abstratas ou circunstâncias, prefira 'em que' ou 'no qual/na qual'.",
+  },
+  {
+    rule: "STYLE_SUGGESTION",
+    severity: "warning",
+    pattern: /\b(cuj(?:o|a|os|as))\s+(?:o|a|os|as)\b/giu,
+    replacement: (match) => match[1] ?? "",
+    message: "Não se utiliza artigo definido após o pronome relativo cujo/cuja.",
   },
   {
     rule: "SPACE_BEFORE_PUNCTUATION",
@@ -82,6 +162,28 @@ export function reviewText(text: string): readonly ReviewFinding[] {
       });
     }
   }
+  return accepted.sort((left, right) => left.start - right.start || left.end - right.end);
+}
+
+export function mergeReviewFindings(
+  primary: readonly ReviewFinding[],
+  secondary: readonly ReviewFinding[],
+): readonly ReviewFinding[] {
+  const sortedPrimary = [...primary].sort(
+    (left, right) => left.start - right.start || left.end - right.end,
+  );
+  const accepted: ReviewFinding[] = [];
+
+  for (const finding of sortedPrimary) {
+    if (accepted.some((f) => finding.start < f.end && finding.end > f.start)) continue;
+    accepted.push(finding);
+  }
+
+  for (const candidate of secondary) {
+    if (accepted.some((f) => candidate.start < f.end && candidate.end > f.start)) continue;
+    accepted.push(candidate);
+  }
+
   return accepted.sort((left, right) => left.start - right.start || left.end - right.end);
 }
 

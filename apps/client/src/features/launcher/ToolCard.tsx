@@ -32,14 +32,16 @@ export function ToolCard({ tool, index, onPromote }: ToolCardProps) {
           {translate(tool.availability.available ? "tools.available" : "tools.comingSoon")}
         </span>
       </div>
-      <div>
+      <div className="tool-card__content">
         <h3>{translate(tool.titleKey)}</h3>
         <p>{translate(tool.descriptionKey)}</p>
       </div>
-      <Button variant="ghost" className="tool-card__future" onClick={() => onPromote(tool)}>
-        <span className="sr-only">{translate("tools.openStudio")}</span>
-        <ArrowUpRight size={18} />
-      </Button>
+      <div className="tool-card__footer">
+        <Button variant="ghost" className="tool-card__action-btn" onClick={() => onPromote(tool)}>
+          <span className="tool-card__action-label">{translate("tools.openStudio")}</span>
+          <ArrowUpRight size={16} aria-hidden="true" />
+        </Button>
+      </div>
     </motion.article>
   );
 }

@@ -182,3 +182,55 @@ def test_accepts_only_selected_model_profiles() -> None:
         _validate_model_profile(
             {"formatVersion": 1, "family": "madlad-400-3b-mt", "quantization": "float32"}
         )
+
+
+def test_list_installed_models_with_valid_and_invalid_models() -> None:
+    import json
+    import os
+    import tempfile
+
+    from nexohub_document_engine.protocol import handle_request
+    from nexohub_document_engine.translation import list_installed_models
+
+    with tempfile.TemporaryDirectory() as temp_dir_str:
+        temp_dir = Path(temp_dir_str)
+        # Pasta vazia
+        assert list_installed_models(temp_dir) == []
+
+        # Cria modelo válido sintético
+        model_dir = temp_dir / "opus-pt-en"
+        model_dir.mkdir()
+        manifest = {
+            "formatVersion": 1,
+            "name": "OPUS Português para Inglês",
+            "family": "opus-mt-tc-big",
+            "quantization": "float32",
+            "sourceLanguages": ["pt-BR", "pt"],
+            "targetLanguages": ["en"],
+            "license": "CC-BY-4.0",
+        }
+        (model_dir / "nexohub-model.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        models = list_installed_models(temp_dir)
+        assert len(models) == 1
+        assert models[0]["modelId"] == "opus-pt-en"
+        assert models[0]["name"] == "OPUS Português para Inglês"
+        assert models[0]["sourceLanguages"] == ["pt-BR", "pt"]
+        assert models[0]["targetLanguages"] == ["en"]
+        assert models[0]["license"] == "CC-BY-4.0"
+
+        # Testa via dispatch de protocolo
+        os.environ["NEXOHUB_TRANSLATION_MODELS_DIR"] = str(temp_dir)
+        try:
+            response = handle_request({
+                "id": "req-1",
+                "method": "translate.list_models",
+                "params": {},
+            })
+            assert "result" in response
+            assert len(response["result"]["models"]) == 1
+            assert response["result"]["models"][0]["modelId"] == "opus-pt-en"
+        finally:
+            os.environ.pop("NEXOHUB_TRANSLATION_MODELS_DIR", None)
+
+

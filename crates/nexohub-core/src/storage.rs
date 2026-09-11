@@ -2,7 +2,8 @@
 
 use crate::blob_store::BlobStore;
 use crate::domain::{
-    Anchor, Artifact, ArtifactKind, Document, ImportedDocument, Operation, OperationInput,
+    Anchor, Artifact, ArtifactKind, CorruptedArtifactItem, Document, DocumentLineage,
+    DocumentLineageEdge, ImportedDocument, IntegrityAuditReport, Operation, OperationInput,
     OperationOutput, OperationStatus, Overlay, Project,
 };
 use crate::error::{CoreError, CoreResult, ErrorCode};
@@ -10,8 +11,10 @@ use crate::hardening::HardeningLimits;
 use crate::migrations;
 use rusqlite::{Connection, OptionalExtension, Row, params};
 use serde_json::Value;
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
@@ -19,6 +22,8 @@ const DATABASE_FILE: &str = "project.sqlite3";
 const PROJECT_EXTENSION: &str = "nexohub";
 const MAX_METADATA_BYTES: usize = 16 * 1024;
 const MAX_JSON_BYTES: usize = 1024 * 1024;
+pub const DEFAULT_PAGE_LIMIT: usize = 1_000;
+pub const MAX_PAGE_LIMIT: usize = 10_000;
 const MAX_LIST_ITEMS: usize = 10_000;
 const STALE_STAGING_AGE: Duration = Duration::from_secs(7 * 24 * 60 * 60);
 const PENDING_RECOVERY_GRACE: Duration = Duration::from_secs(60 * 60);
@@ -29,6 +34,8 @@ pub struct ProjectStore {
     connection: Connection,
     blobs: BlobStore,
     limits: HardeningLimits,
+    artifact_cache: Mutex<HashMap<String, Artifact>>,
+    document_cache: Mutex<HashMap<String, Document>>,
 }
 
 impl ProjectStore {
@@ -115,6 +122,8 @@ impl ProjectStore {
             connection,
             blobs: BlobStore::new(&root, limits.max_import_bytes),
             limits,
+            artifact_cache: Mutex::new(HashMap::new()),
+            document_cache: Mutex::new(HashMap::new()),
         };
         store.validate_project_state()?;
         store.recover_pending_blobs(PENDING_RECOVERY_GRACE)?;
@@ -285,31 +294,51 @@ impl ProjectStore {
         transaction.commit().map_err(|_| CoreError::database())?;
         self.blobs.commit(&stored);
 
+        if let Ok(mut cache) = self.document_cache.lock() {
+            cache.insert(document.id.clone(), document.clone());
+        }
+        if let Ok(mut cache) = self.artifact_cache.lock() {
+            cache.insert(artifact.id.clone(), artifact.clone());
+        }
+
         Ok(ImportedDocument { document, artifact })
     }
 
-    /// Lista documentos na ordem de criação.
+    /// Lista documentos na ordem de criação (padrão até DEFAULT_PAGE_LIMIT).
     pub fn list_documents(&self) -> CoreResult<Vec<Document>> {
+        self.list_documents_paged(0, DEFAULT_PAGE_LIMIT)
+    }
+
+    /// Lista documentos com paginação uniforme e segura.
+    pub fn list_documents_paged(&self, offset: usize, limit: usize) -> CoreResult<Vec<Document>> {
+        let limit = validate_pagination(limit)?;
         let mut statement = self
             .connection
             .prepare(
                 "SELECT id, project_id, title, created_at, updated_at
-                 FROM documents ORDER BY created_at, rowid LIMIT 10001",
+                 FROM documents ORDER BY created_at, rowid LIMIT ?1 OFFSET ?2",
             )
             .map_err(|_| CoreError::database())?;
         let rows = statement
-            .query_map([], map_document)
+            .query_map(params![limit as i64, offset as i64], map_document)
             .map_err(|_| CoreError::database())?;
-        enforce_list_limit(
-            rows.collect::<Result<Vec<_>, _>>()
-                .map_err(|_| CoreError::database())?,
-        )
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|_| CoreError::database())
     }
 
-    /// Obtém um documento do projeto.
+    /// Obtém um documento do projeto com aceleração por cache em memória.
     pub fn get_document(&self, document_id: &str) -> CoreResult<Document> {
         validate_identifier(document_id)?;
-        self.connection
+        if let Some(doc) = self
+            .document_cache
+            .lock()
+            .ok()
+            .and_then(|guard| guard.get(document_id).cloned())
+        {
+            return Ok(doc);
+        }
+        let doc: Document = self
+            .connection
             .query_row(
                 "SELECT id, project_id, title, created_at, updated_at
                  FROM documents WHERE id = ?1",
@@ -323,26 +352,161 @@ impl ProjectStore {
                     ErrorCode::DocumentNotFound,
                     "O documento solicitado não foi encontrado.",
                 )
-            })
+            })?;
+        if let Ok(mut guard) = self.document_cache.lock() {
+            guard.insert(document_id.to_owned(), doc.clone());
+        }
+        Ok(doc)
     }
 
-    /// Lista todos os artifacts de um documento sem alterar o histórico.
+    /// Lista todos os artifacts de um documento sem alterar o histórico (padrão até DEFAULT_PAGE_LIMIT).
     pub fn list_artifacts(&self, document_id: &str) -> CoreResult<Vec<Artifact>> {
+        self.list_artifacts_paged(document_id, 0, DEFAULT_PAGE_LIMIT)
+    }
+
+    /// Lista artifacts de um documento com paginação uniforme e segura.
+    pub fn list_artifacts_paged(
+        &self,
+        document_id: &str,
+        offset: usize,
+        limit: usize,
+    ) -> CoreResult<Vec<Artifact>> {
         self.get_document(document_id)?;
+        let limit = validate_pagination(limit)?;
         let mut statement = self
             .connection
             .prepare(
                 "SELECT id, document_id, kind, mime_type, hash, size, storage_path, created_at
-                 FROM artifacts WHERE document_id = ?1 ORDER BY created_at, rowid LIMIT 10001",
+                 FROM artifacts WHERE document_id = ?1 ORDER BY created_at, rowid LIMIT ?2 OFFSET ?3",
             )
             .map_err(|_| CoreError::database())?;
         let rows = statement
-            .query_map([document_id], map_artifact)
+            .query_map(
+                params![document_id, limit as i64, offset as i64],
+                map_artifact,
+            )
             .map_err(|_| CoreError::database())?;
-        enforce_list_limit(
-            rows.collect::<Result<Vec<_>, _>>()
-                .map_err(|_| CoreError::database())?,
-        )
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|_| CoreError::database())
+    }
+
+    /// Realiza auditoria criptográfica completa de todos os blobs do projeto contra o banco SQLite.
+    pub fn audit_project_integrity(&self) -> CoreResult<IntegrityAuditReport> {
+        let mut statement = self
+            .connection
+            .prepare("SELECT id, hash, size FROM artifacts")
+            .map_err(|_| CoreError::database())?;
+        let rows = statement
+            .query_map([], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, i64>(2)? as u64,
+                ))
+            })
+            .map_err(|_| CoreError::database())?;
+
+        let mut total_artifacts = 0;
+        let mut valid_artifacts = 0;
+        let mut corrupted_artifacts = Vec::new();
+        let mut missing_blobs = Vec::new();
+
+        for row in rows {
+            let (artifact_id, expected_hash, expected_size) =
+                row.map_err(|_| CoreError::database())?;
+            total_artifacts += 1;
+            match self.blobs.read(&expected_hash) {
+                Ok(bytes) => {
+                    if bytes.len() as u64 != expected_size {
+                        corrupted_artifacts.push(CorruptedArtifactItem {
+                            artifact_id,
+                            expected_hash: expected_hash.clone(),
+                            actual_hash: format!("tamanho divergente: {}", bytes.len()),
+                        });
+                    } else {
+                        valid_artifacts += 1;
+                    }
+                }
+                Err(err) => {
+                    if err.code == ErrorCode::IntegrityViolation {
+                        let actual_hash = self
+                            .blobs
+                            .raw_hash_if_present(&expected_hash)
+                            .unwrap_or_else(|| "indisponível".to_string());
+                        corrupted_artifacts.push(CorruptedArtifactItem {
+                            artifact_id,
+                            expected_hash,
+                            actual_hash,
+                        });
+                    } else {
+                        missing_blobs.push(artifact_id);
+                    }
+                }
+            }
+        }
+
+        let is_healthy = corrupted_artifacts.is_empty() && missing_blobs.is_empty();
+
+        Ok(IntegrityAuditReport {
+            total_artifacts,
+            valid_artifacts,
+            corrupted_artifacts,
+            missing_blobs,
+            is_healthy,
+        })
+    }
+
+    /// Obtém o grafo acíclico dirigido (DAG) e a linhagem de operações de um documento.
+    pub fn get_document_lineage(&self, document_id: &str) -> CoreResult<DocumentLineage> {
+        let artifacts = self.list_artifacts(document_id)?;
+        if artifacts.is_empty() {
+            return Ok(DocumentLineage {
+                document_id: document_id.to_owned(),
+                artifacts: Vec::new(),
+                edges: Vec::new(),
+            });
+        }
+
+        let mut statement = self
+            .connection
+            .prepare(
+                "SELECT o.id, o.tool_id, oi.artifact_id, oo.artifact_id, o.parameters_json, o.created_at
+                 FROM operations o
+                 JOIN operation_inputs oi ON oi.operation_id = o.id
+                 JOIN operation_outputs oo ON oo.operation_id = o.id
+                 JOIN artifacts a ON a.id = oo.artifact_id
+                 WHERE a.document_id = ?1
+                 ORDER BY o.created_at ASC
+                 LIMIT 10001",
+            )
+            .map_err(|_| CoreError::database())?;
+
+        let rows = statement
+            .query_map([document_id], |row| {
+                let params_str: String = row.get(4)?;
+                let parameters: Value = serde_json::from_str(&params_str).unwrap_or(Value::Null);
+                Ok(DocumentLineageEdge {
+                    operation_id: row.get(0)?,
+                    tool_id: row.get(1)?,
+                    input_artifact_id: row.get(2)?,
+                    output_artifact_id: row.get(3)?,
+                    parameters,
+                    created_at: row.get(5)?,
+                })
+            })
+            .map_err(|_| CoreError::database())?;
+
+        let mut edges = Vec::new();
+        for row in rows {
+            edges.push(row.map_err(|_| CoreError::database())?);
+        }
+        let edges = enforce_list_limit(edges)?;
+
+        Ok(DocumentLineage {
+            document_id: document_id.to_owned(),
+            artifacts,
+            edges,
+        })
     }
 
     /// Produz um novo artifact e registra sua operação, sem reescrever inputs.
@@ -448,6 +612,13 @@ impl ProjectStore {
         transaction.commit().map_err(|_| CoreError::database())?;
         self.blobs.commit(&stored);
 
+        if let Ok(mut cache) = self.artifact_cache.lock() {
+            cache.insert(artifact.id.clone(), artifact.clone());
+        }
+        if let Ok(mut cache) = self.document_cache.lock() {
+            cache.remove(document_id);
+        }
+
         Ok((artifact, operation))
     }
 
@@ -496,23 +667,35 @@ impl ProjectStore {
         Ok(overlay)
     }
 
-    /// Lista overlays na ordem de criação, sem materializá-los no PDF.
+    /// Lista overlays na ordem de criação (padrão até DEFAULT_PAGE_LIMIT).
     pub fn list_overlays(&self, artifact_id: &str) -> CoreResult<Vec<Overlay>> {
+        self.list_overlays_paged(artifact_id, 0, DEFAULT_PAGE_LIMIT)
+    }
+
+    /// Lista overlays com paginação uniforme e segura.
+    pub fn list_overlays_paged(
+        &self,
+        artifact_id: &str,
+        offset: usize,
+        limit: usize,
+    ) -> CoreResult<Vec<Overlay>> {
         self.get_artifact(artifact_id)?;
+        let limit = validate_pagination(limit)?;
         let mut statement = self
             .connection
             .prepare(
                 "SELECT id, artifact_id, kind, data_json, created_at
-                  FROM overlays WHERE artifact_id = ?1 ORDER BY created_at, rowid LIMIT 10001",
+                  FROM overlays WHERE artifact_id = ?1 ORDER BY created_at, rowid LIMIT ?2 OFFSET ?3",
             )
             .map_err(|_| CoreError::database())?;
         let rows = statement
-            .query_map([artifact_id], map_overlay)
+            .query_map(
+                params![artifact_id, limit as i64, offset as i64],
+                map_overlay,
+            )
             .map_err(|_| CoreError::database())?;
-        enforce_list_limit(
-            rows.collect::<Result<Vec<_>, _>>()
-                .map_err(|_| CoreError::database())?,
-        )
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|_| CoreError::database())
     }
 
     /// Persiste um localizador sem acoplar a seleção ao viewer.
@@ -560,22 +743,35 @@ impl ProjectStore {
         Ok(anchor)
     }
 
+    /// Lista anchors na ordem de criação (padrão até DEFAULT_PAGE_LIMIT).
     pub fn list_anchors(&self, artifact_id: &str) -> CoreResult<Vec<Anchor>> {
+        self.list_anchors_paged(artifact_id, 0, DEFAULT_PAGE_LIMIT)
+    }
+
+    /// Lista anchors com paginação uniforme e segura.
+    pub fn list_anchors_paged(
+        &self,
+        artifact_id: &str,
+        offset: usize,
+        limit: usize,
+    ) -> CoreResult<Vec<Anchor>> {
         self.get_artifact(artifact_id)?;
+        let limit = validate_pagination(limit)?;
         let mut statement = self
             .connection
             .prepare(
                 "SELECT id, artifact_id, kind, selector_json, quote, created_at
-                  FROM anchors WHERE artifact_id = ?1 ORDER BY created_at, rowid LIMIT 10001",
+                  FROM anchors WHERE artifact_id = ?1 ORDER BY created_at, rowid LIMIT ?2 OFFSET ?3",
             )
             .map_err(|_| CoreError::database())?;
         let rows = statement
-            .query_map([artifact_id], map_anchor)
+            .query_map(
+                params![artifact_id, limit as i64, offset as i64],
+                map_anchor,
+            )
             .map_err(|_| CoreError::database())?;
-        enforce_list_limit(
-            rows.collect::<Result<Vec<_>, _>>()
-                .map_err(|_| CoreError::database())?,
-        )
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|_| CoreError::database())
     }
 
     /// Versão aplicada do schema, usada por diagnósticos e testes de migration.
@@ -589,9 +785,19 @@ impl ProjectStore {
             .map_err(|_| CoreError::database())
     }
 
-    pub(crate) fn get_artifact(&self, artifact_id: &str) -> CoreResult<Artifact> {
+    /// Obtém um artifact por identificador com aceleração por cache em memória.
+    pub fn get_artifact(&self, artifact_id: &str) -> CoreResult<Artifact> {
         validate_identifier(artifact_id)?;
-        self.connection
+        if let Some(artifact) = self
+            .artifact_cache
+            .lock()
+            .ok()
+            .and_then(|guard| guard.get(artifact_id).cloned())
+        {
+            return Ok(artifact);
+        }
+        let artifact: Artifact = self
+            .connection
             .query_row(
                 "SELECT id, document_id, kind, mime_type, hash, size, storage_path, created_at
                  FROM artifacts WHERE id = ?1",
@@ -605,7 +811,11 @@ impl ProjectStore {
                     ErrorCode::ArtifactNotFound,
                     "O artifact solicitado não foi encontrado.",
                 )
-            })
+            })?;
+        if let Ok(mut guard) = self.artifact_cache.lock() {
+            guard.insert(artifact_id.to_owned(), artifact.clone());
+        }
+        Ok(artifact)
     }
 
     fn ensure_project_capacity(&self, incoming_bytes: u64) -> CoreResult<()> {
@@ -773,6 +983,25 @@ fn validate_json_size(value: &str) -> CoreResult<()> {
         ));
     }
     Ok(())
+}
+
+fn validate_pagination(limit: usize) -> CoreResult<usize> {
+    if limit == 0 {
+        return Err(CoreError::new(
+            ErrorCode::InvalidArgument,
+            "O limite de paginação deve ser maior que zero.",
+        ));
+    }
+    if limit > MAX_PAGE_LIMIT {
+        return Err(CoreError::new(
+            ErrorCode::ResourceLimit,
+            format!(
+                "O limite por página excede o máximo de {} itens.",
+                MAX_PAGE_LIMIT
+            ),
+        ));
+    }
+    Ok(limit)
 }
 
 fn enforce_list_limit<T>(items: Vec<T>) -> CoreResult<Vec<T>> {

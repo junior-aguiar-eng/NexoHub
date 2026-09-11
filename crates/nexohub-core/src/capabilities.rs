@@ -258,7 +258,7 @@ pub fn download_file_with_sha256(
         };
         use sha2::Digest;
         hasher.update(&buffer[..bytes_read]);
-        if let Err(_) = std::io::Write::write_all(&mut file, &buffer[..bytes_read]) {
+        if std::io::Write::write_all(&mut file, &buffer[..bytes_read]).is_err() {
             let _ = std::fs::remove_file(&temp_dest);
             return Err(CoreError::io());
         }

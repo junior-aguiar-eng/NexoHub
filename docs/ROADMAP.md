@@ -2,23 +2,23 @@
 
 | Fase | Entrega | Estado |
 | --- | --- | --- |
-| 0 | Monorepo, client compartilhado, Tauri Windows, Rust, Python/uv, qualidade e CI | Concluída localmente |
-| 1 | Design system e Launcher sem ferramentas fictícias | Concluída localmente |
-| 2 | Document Core e persistência local | Concluída localmente |
-| 3 | Tool SDK, Registry, Runner e Capability Layer | Concluída localmente |
+| 0 | Monorepo, client compartilhado, Tauri Windows, Rust, Python/uv, qualidade e CI | Concluída |
+| 1 | Design system e Launcher sem ferramentas fictícias | Concluída |
+| 2 | Document Core e persistência local | Concluída |
+| 3 | Tool SDK, Registry, Runner e Capability Layer | Concluída |
 | 4 | Quick Tools PDF reais | Em andamento — compressão nativa integrada ao Document Core |
 | 5 | Studio sobre o Document Core | Em andamento — shell e porta tipada do Document Core |
-| 6 | Nexo Layers, NexoFlow e promoção Quick → Studio | Concluída localmente |
-| 7 | Texto e revisões UTF-8 imutáveis | Concluída localmente |
-| 8 | Overlay PDF | Concluída localmente |
-| 9 | OCR | Concluída localmente |
-| 10 | Anchors | Concluída localmente |
-| 11 | DOCX | Concluída localmente |
-| 12 | Tradução | Concluída localmente |
-| 13 | Revisão | Concluída localmente |
-| 14 | Receitas | Concluída localmente — DAG visual, presets, runner topológico e executores do Studio integrados |
-| 15 | Hardening orientado a falhas e métricas | Concluída localmente — limites, recuperação e perfil documentados |
-| 16 | Release engineering Windows e publicação web auditável | Em andamento — pipelines e manifests preparados; RC bloqueada pelos gates e pela validação instalada |
+| 6 | Nexo Layers, NexoFlow e promoção Quick → Studio | Concluída |
+| 7 | Texto e revisões UTF-8 imutáveis | Concluída |
+| 8 | Overlay PDF | Concluída |
+| 9 | OCR | Concluída |
+| 10 | Anchors | Concluída |
+| 11 | DOCX | Concluída |
+| 12 | Tradução | Concluída |
+| 13 | Revisão | Concluída |
+| 14 | Receitas | Concluída — DAG visual, presets, runner topológico e executores do Studio integrados |
+| 15 | Hardening orientado a falhas e métricas | Concluída — limites, recuperação e perfil documentados |
+| 16 | Release engineering Windows e publicação auditável | Em andamento — pipelines de CI, segurança e empacotamento Windows (`app-x64.exe`) operacionais no GitHub Actions; certificação de instalação limpa em andamento |
 
 Cada fase exige seus próprios gates. Commit, publicação e release são decisões separadas.
 

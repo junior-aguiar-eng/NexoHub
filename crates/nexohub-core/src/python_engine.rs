@@ -145,6 +145,35 @@ pub struct DocxParagraphInput {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ExtractPdfImagesRequest {
+    pub project_path: String,
+    pub document_id: String,
+    pub artifact_id: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExtractedImageItem {
+    pub page_number: usize,
+    pub image_index: usize,
+    pub width: u32,
+    pub height: u32,
+    pub format: String,
+    pub size_bytes: usize,
+    pub content_base64: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExtractPdfImagesResult {
+    pub total_images: usize,
+    pub images: Vec<ExtractedImageItem>,
+    pub artifact: Artifact,
+    pub operation: Operation,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateDocxRequest {
     pub project_path: String,
     pub document_id: Option<String>,
@@ -454,6 +483,96 @@ pub fn execute_ocr(request: ExecuteOcrRequest) -> CoreResult<OcrToolResult> {
         pages,
         lines,
         engine,
+        artifact: derived_artifact,
+        operation,
+    })
+}
+
+pub fn execute_extract_pdf_images(
+    request: ExtractPdfImagesRequest,
+) -> CoreResult<ExtractPdfImagesResult> {
+    let mut store = ProjectStore::open(&request.project_path)?;
+    let input_artifact = store.get_artifact(&request.artifact_id)?;
+    if input_artifact.document_id != request.document_id {
+        return Err(CoreError::new(
+            ErrorCode::InvalidArgument,
+            "Artifact não pertence ao documento especificado.",
+        ));
+    }
+    if input_artifact.mime_type != "application/pdf" {
+        return Err(CoreError::new(
+            ErrorCode::InvalidArgument,
+            "Extração de imagens requer um artifact PDF.",
+        ));
+    }
+
+    let source_bytes = store.read_artifact_bytes(&request.artifact_id)?;
+    let content_b64 = base64_encode(&source_bytes);
+
+    let result_json = invoke_sidecar(
+        "pdf.extract_images",
+        json!({
+            "contentBase64": content_b64,
+        }),
+    )?;
+
+    let total_images = result_json
+        .get("totalImages")
+        .and_then(|t| t.as_u64())
+        .unwrap_or(0) as usize;
+
+    let zip_b64 = result_json
+        .get("zipContentBase64")
+        .and_then(|z| z.as_str())
+        .unwrap_or_default();
+    let zip_bytes = base64_decode(zip_b64).unwrap_or_default();
+
+    let mut images = Vec::new();
+    if let Some(raw_images) = result_json.get("images").and_then(|i| i.as_array()) {
+        for img in raw_images {
+            let page_number = img.get("pageNumber").and_then(|p| p.as_u64()).unwrap_or(1) as usize;
+            let image_index = img.get("imageIndex").and_then(|p| p.as_u64()).unwrap_or(1) as usize;
+            let width = img.get("width").and_then(|w| w.as_u64()).unwrap_or(0) as u32;
+            let height = img.get("height").and_then(|h| h.as_u64()).unwrap_or(0) as u32;
+            let format = img
+                .get("format")
+                .and_then(|f| f.as_str())
+                .unwrap_or("PNG")
+                .to_string();
+            let size_bytes = img.get("sizeBytes").and_then(|s| s.as_u64()).unwrap_or(0) as usize;
+            let content_base64 = img
+                .get("contentBase64")
+                .and_then(|c| c.as_str())
+                .unwrap_or_default()
+                .to_string();
+
+            images.push(ExtractedImageItem {
+                page_number,
+                image_index,
+                width,
+                height,
+                format,
+                size_bytes,
+                content_base64,
+            });
+        }
+    }
+
+    let (derived_artifact, operation) = store.create_derived_artifact(
+        &request.document_id,
+        &request.artifact_id,
+        "application/zip",
+        &zip_bytes,
+        "pdf-extract-images",
+        json!({
+            "totalImages": total_images,
+            "imageCount": images.len(),
+        }),
+    )?;
+
+    Ok(ExtractPdfImagesResult {
+        total_images,
+        images,
         artifact: derived_artifact,
         operation,
     })

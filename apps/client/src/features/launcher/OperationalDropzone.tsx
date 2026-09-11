@@ -31,7 +31,6 @@ export function OperationalDropzone({ onOpenStudio, onFileImport }: OperationalD
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
       onFileImport?.(file);
-      onOpenStudio();
     }
   }
 
@@ -39,7 +38,6 @@ export function OperationalDropzone({ onOpenStudio, onFileImport }: OperationalD
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       onFileImport?.(file);
-      onOpenStudio();
     }
   }
 
@@ -58,7 +56,7 @@ export function OperationalDropzone({ onOpenStudio, onFileImport }: OperationalD
           className="visually-hidden"
           accept=".pdf,.docx,.txt,.md,.json,image/*"
           onChange={handleFileSelect}
-          aria-label="Selecionar arquivo para dossiê"
+          aria-label="Selecionar arquivo para processamento"
         />
         <div className="operational-dropzone__icon-circle" aria-hidden="true">
           <UploadCloud size={28} className="operational-dropzone__icon" />

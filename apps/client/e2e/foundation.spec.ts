@@ -10,7 +10,7 @@ test("abre o Launcher compartilhado", async ({ page }) => {
 
 test("troca de suíte e filtra os cards", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Processamento" }).click();
+  await page.getByRole("button", { name: "Processamento", exact: true }).click();
 
   await expect(page.getByText("Organizar PDF")).toBeVisible();
   await expect(page.getByText("Comparar textos")).toHaveCount(0);
@@ -18,10 +18,10 @@ test("troca de suíte e filtra os cards", async ({ page }) => {
 
 test("navega entre suítes pelo teclado", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Todas" }).focus();
+  await page.getByRole("button", { name: "Todas", exact: true }).focus();
   await page.keyboard.press("ArrowRight");
 
-  await expect(page.getByRole("button", { name: "Processamento" })).toHaveAttribute(
+  await expect(page.getByRole("button", { name: "Processamento", exact: true })).toHaveAttribute(
     "aria-current",
     "page",
   );
@@ -71,8 +71,10 @@ test("promove uma Quick Tool para um NexoFlow no Studio", async ({ page }) => {
       .filter({ hasText: /^pdf-compress$/ }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Nexo Layers" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Overlay PDF" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Adicionar overlay" })).toBeDisabled();
+  await expect(page.getByRole("heading", { name: "Otimização e Compressão de PDF" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Comprimir e Registrar Nova Versão" }),
+  ).toBeVisible();
 });
 
 test("edita um rascunho textual sem simular persistência", async ({ page }) => {
@@ -123,4 +125,50 @@ test("gerencia ciclo de vida dos superpoderes documentais no modal", async ({ pa
   // Fecha o modal
   await page.getByRole("button", { name: "Fechar" }).last().click();
   await expect(page.getByRole("heading", { name: "Superpoderes Documentais" })).toHaveCount(0);
+});
+
+test("navega por múltiplas páginas e miniaturas no Studio", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Abrir Studio" }).first().click();
+
+  await expect(page.locator(".document-canvas__doc-title")).toBeVisible();
+  await expect(page.getByText("IV. CONCLUSÃO")).toBeVisible();
+
+  // Abre trilho de miniaturas
+  const thumbBtn = page.getByRole("button", { name: "Miniaturas" });
+  await expect(thumbBtn).toBeVisible();
+  await thumbBtn.click();
+
+  await expect(page.getByLabel("Lista de páginas do documento")).toBeVisible();
+  const pag1Btn = page.getByRole("button", { name: "Pág. 1", exact: true });
+  await expect(pag1Btn).toBeVisible();
+
+  // Clica na miniatura Pág. 1
+  await pag1Btn.click();
+  await expect(page.getByText("I. IDENTIFICAÇÃO E QUALIFICAÇÃO")).toBeVisible();
+
+  // Usa o input direto de página para ir à página 8
+  const pageInput = page.getByTitle("Digite a página e tecle Enter");
+  await pageInput.fill("8");
+  await pageInput.press("Enter");
+  await expect(page.getByText("IV. CONCLUSÃO")).toBeVisible();
+});
+
+test("inspeciona a cadeia de custódia e histórico SQLite no Studio", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Abrir Studio" }).first().click();
+
+  // Abre modal de histórico SQLite a partir do Auditor
+  const historyBtn = page.getByRole("button", { name: "Ver histórico" });
+  await expect(historyBtn).toBeVisible();
+  await historyBtn.click();
+
+  await expect(page.getByRole("heading", { name: "Histórico & Linhagem SQLite" })).toBeVisible();
+  await expect(page.getByText(/Cadeia de custódia auditável/i)).toBeVisible();
+  await expect(page.getByText("Imutável (BLAKE3)")).toBeVisible();
+  await expect(page.getByText("Grafo Genealógico de Artefatos")).toBeVisible();
+
+  // Fecha o modal
+  await page.getByRole("button", { name: "Concluído" }).click();
+  await expect(page.getByRole("heading", { name: "Histórico & Linhagem SQLite" })).toHaveCount(0);
 });

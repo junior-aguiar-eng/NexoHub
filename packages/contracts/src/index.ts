@@ -85,6 +85,34 @@ export interface OrganizePdfRequest {
   readonly rotationDegrees?: number;
 }
 
+export interface ExtractPdfImagesRequest {
+  readonly projectPath: string;
+  readonly documentId: DocumentId;
+  readonly artifactId: ArtifactId;
+  readonly pageNumbers?: readonly number[];
+  readonly minWidth?: number;
+  readonly minHeight?: number;
+}
+
+export interface ExtractedImageItem {
+  readonly pageNumber: number;
+  readonly imageIndex: number;
+  readonly width: number;
+  readonly height: number;
+  readonly format: string;
+  readonly dataBase64: string;
+  readonly byteSize: number;
+}
+
+export interface ExtractPdfImagesResult {
+  readonly totalImages: number;
+  readonly pagesScanned: number;
+  readonly images: readonly ExtractedImageItem[];
+  readonly zipBase64: string;
+  readonly artifact: Artifact;
+  readonly operation: Operation;
+}
+
 export interface CreateTextRevisionRequest {
   readonly projectPath: string;
   readonly documentId: DocumentId;
@@ -493,6 +521,10 @@ export interface DocumentCoreCommands {
   readonly organize_pdf: {
     readonly request: OrganizePdfRequest;
     readonly response: PdfToolResult;
+  };
+  readonly extract_pdf_images: {
+    readonly request: ExtractPdfImagesRequest;
+    readonly response: ExtractPdfImagesResult;
   };
   readonly create_text_revision: {
     readonly request: CreateTextRevisionRequest;

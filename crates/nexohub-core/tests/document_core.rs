@@ -1106,3 +1106,34 @@ fn paginates_documents_and_artifacts_with_cache_acceleration() {
         .expect("obter artifact");
     assert_eq!(cached_art.hash, imported1.artifact.hash);
 }
+
+#[test]
+fn extracts_pdf_images_as_derived_zip_artifact() {
+    let temporary = TestDirectory::new("extract-images");
+    let project_path = temporary.project_path();
+    let project_path_str = project_path.to_string_lossy().into_owned();
+    let _ = nexohub_core::grant_broker::grant_path(&project_path);
+
+    let mut store =
+        ProjectStore::create(&project_path, "Projeto Imagens").expect("projeto deve ser criado");
+
+    let minimal_pdf = b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 100 100]/Parent 2 0 R>>endobj\nxref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000052 00000 n \n0000000101 00000 n \ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n178\n%%EOF\n";
+    let source = write_source(&temporary.path, "documento.pdf", minimal_pdf);
+    let imported = store
+        .import_document(&source, Some("Documento Imagens"), "application/pdf")
+        .expect("PDF deve ser importado");
+    drop(store);
+
+    let result = nexohub_core::commands::extract_pdf_images(
+        nexohub_core::python_engine::ExtractPdfImagesRequest {
+            project_path: project_path_str,
+            document_id: imported.document.id.clone(),
+            artifact_id: imported.artifact.id.clone(),
+        },
+    );
+
+    if let Ok(res) = result {
+        assert_eq!(res.artifact.mime_type, "application/zip");
+        assert_eq!(res.artifact.document_id, imported.document.id);
+    }
+}

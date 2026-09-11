@@ -10,7 +10,9 @@ import { Hero } from "@/features/launcher/Hero";
 import type { LauncherTool, SuiteId } from "@/features/launcher/model";
 import { OperationalDropzone } from "@/features/launcher/OperationalDropzone";
 import { QuickToolGrid } from "@/features/launcher/QuickToolGrid";
+import { QuickToolRunnerModal } from "@/features/launcher/QuickToolRunnerModal";
 import { RecentProjects } from "@/features/launcher/RecentProjects";
+import { useRecentOperations } from "@/features/launcher/useRecentOperations";
 import { StudioWorkspace } from "@/features/studio/StudioWorkspace";
 import { translate } from "@/i18n";
 import { BrowserDocumentCorePort } from "@/platform/browser-document-core";
@@ -27,10 +29,14 @@ export function App() {
   const [surface, setSurface] = useState<"launcher" | "studio">("launcher");
   const documentCore = useMemo(() => createDocumentCorePort(), []);
   const { capabilities, refresh: refreshCapabilities } = useCapabilities(documentCore);
+  const { operations, addOperation, clearOperations } = useRecentOperations();
 
   const dynamicTools = useMemo(() => {
     return resolveLauncherTools(capabilities, documentCore);
   }, [capabilities, documentCore]);
+
+  const [activeQuickTool, setActiveQuickTool] = useState<LauncherTool | null>(null);
+  const [quickToolFile, setQuickToolFile] = useState<File | null>(null);
 
   const [promotedFlow, setPromotedFlow] = useState<{
     tool: LauncherTool;
@@ -89,6 +95,25 @@ export function App() {
       setSurface("studio");
       return;
     }
+    // Se o arquivo for PDF, abre automaticamente o Quick Tool de compressão/organização para agilizar
+    if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
+      const compressTool = dynamicTools.find((t) => t.id === "pdf-compress") || dynamicTools[0];
+      if (compressTool?.availability.available) {
+        setQuickToolFile(file);
+        setActiveQuickTool(compressTool);
+        return;
+      }
+    }
+    // Se for texto/docx, abre ferramenta de revisão
+    if (file.name.endsWith(".txt") || file.name.endsWith(".docx") || file.name.endsWith(".md")) {
+      const reviewTool = dynamicTools.find((t) => t.id === "text-review");
+      if (reviewTool?.availability.available) {
+        setQuickToolFile(file);
+        setActiveQuickTool(reviewTool);
+        return;
+      }
+    }
+
     try {
       const project = await documentCore.invoke("pick_project_folder", {});
       if (!project) {
@@ -146,11 +171,19 @@ export function App() {
                 setPromotedFlow({ tool, flow: promoteQuickTool(tool.id).snapshot });
                 setSurface("studio");
               }}
+              onRunTool={(tool) => {
+                setQuickToolFile(null);
+                setActiveQuickTool(tool);
+              }}
               onOpenStudio={() => setSurface("studio")}
             />
           </div>
         </div>
-        <RecentProjects onOpenStudio={() => setSurface("studio")} />
+        <RecentProjects
+          operations={operations}
+          onOpenStudio={() => setSurface("studio")}
+          onClearOperations={clearOperations}
+        />
       </main>
 
       <footer className="app-footer">
@@ -201,6 +234,26 @@ export function App() {
           refreshCapabilities();
         }}
         documentCore={documentCore}
+      />
+
+      <QuickToolRunnerModal
+        tool={activeQuickTool}
+        open={Boolean(activeQuickTool)}
+        initialFile={quickToolFile}
+        onClose={() => {
+          setActiveQuickTool(null);
+          setQuickToolFile(null);
+        }}
+        documentCore={documentCore}
+        onPromoteToStudio={(tool) => {
+          setActiveQuickTool(null);
+          setQuickToolFile(null);
+          setPromotedFlow({ tool, flow: promoteQuickTool(tool.id).snapshot });
+          setSurface("studio");
+        }}
+        onOperationComplete={(op) => {
+          addOperation(op);
+        }}
       />
     </div>
   );

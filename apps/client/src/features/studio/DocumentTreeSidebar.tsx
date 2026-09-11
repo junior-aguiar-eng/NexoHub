@@ -31,6 +31,11 @@ type DocumentTreeSidebarProps = {
   isOpen: boolean;
   onToggleOpen: () => void;
   isLoading?: boolean;
+  onSearchClick?: () => void;
+  onStrategyClick?: () => void;
+  onMonitoringClick?: () => void;
+  onProductionClick?: () => void;
+  onReportsClick?: () => void;
 };
 
 // Exemplos de documentos representativos exibidos quando nenhum documento real foi importado ainda
@@ -53,6 +58,11 @@ export function DocumentTreeSidebar({
   isOpen,
   onToggleOpen,
   isLoading = false,
+  onSearchClick,
+  onStrategyClick,
+  onMonitoringClick,
+  onProductionClick,
+  onReportsClick,
 }: DocumentTreeSidebarProps) {
   const [dossierExpanded, setDossierExpanded] = useState(true);
   const [selectedSampleId, setSelectedSampleId] = useState("sample-4");
@@ -182,26 +192,51 @@ export function DocumentTreeSidebar({
 
             {/* Bottom Quick Tools / Workspace Sections */}
             <div className="studio-sidebar__shortcuts">
-              <div className="studio-sidebar__shortcut-item">
+              <button
+                type="button"
+                className="studio-sidebar__shortcut-item"
+                onClick={onSearchClick}
+                title="Focar na busca do acervo"
+              >
                 <Search size={14} />
                 <span>Pesquisas</span>
-              </div>
-              <div className="studio-sidebar__shortcut-item">
+              </button>
+              <button
+                type="button"
+                className="studio-sidebar__shortcut-item"
+                onClick={onStrategyClick}
+                title="Abrir Matriz de Fatos e Estratégia"
+              >
                 <SlidersHorizontal size={14} />
                 <span>Estratégia</span>
-              </div>
-              <div className="studio-sidebar__shortcut-item">
+              </button>
+              <button
+                type="button"
+                className="studio-sidebar__shortcut-item"
+                onClick={onMonitoringClick}
+                title="Abrir Histórico & Linhagem SQLite"
+              >
                 <History size={14} />
                 <span>Monitoramento</span>
-              </div>
-              <div className="studio-sidebar__shortcut-item">
+              </button>
+              <button
+                type="button"
+                className="studio-sidebar__shortcut-item"
+                onClick={onProductionClick}
+                title="Abrir NexoFlow & Receitas"
+              >
                 <Layers size={14} />
                 <span>Produção</span>
-              </div>
-              <div className="studio-sidebar__shortcut-item">
+              </button>
+              <button
+                type="button"
+                className="studio-sidebar__shortcut-item"
+                onClick={onReportsClick}
+                title="Emitir auditoria de integridade do dossiê"
+              >
                 <FileCheck2 size={14} />
                 <span>Relatórios</span>
-              </div>
+              </button>
             </div>
 
             {/* Open Local Project Folder Button */}

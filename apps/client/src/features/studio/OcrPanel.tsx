@@ -75,6 +75,23 @@ export function OcrPanel({
           {translate("ocr.local")}
         </li>
       </ul>
+      {typeof window !== "undefined" && !window.__TAURI_INTERNALS__ && (
+        <div
+          style={{
+            margin: "0.5rem 0 0.8rem 0",
+            padding: "0.5rem 0.75rem",
+            background: "var(--color-brand-soft, rgba(13, 79, 63, 0.1))",
+            border: "1px solid var(--color-border, #cbd5e1)",
+            borderRadius: "6px",
+            fontSize: "0.75rem",
+            color: "var(--color-ink-muted, #667771)",
+            lineHeight: 1.4,
+          }}
+        >
+          💡 <strong>Ambiente Web:</strong> Para OCR de alta precisão com Tesseract e PyMuPDF
+          locais, execute o aplicativo no modo Desktop.
+        </div>
+      )}
       <Button variant="secondary" disabled={!canRun || isLoading} onClick={handleExecute}>
         {isLoading ? (
           <Loader2 size={15} className="animate-spin" style={{ marginRight: "0.4rem" }} />

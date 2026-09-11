@@ -6,10 +6,11 @@ import { ToolCard } from "./ToolCard";
 type QuickToolGridProps = {
   tools: readonly LauncherTool[];
   onPromote: (tool: LauncherTool) => void;
+  onRunTool?: (tool: LauncherTool) => void;
   onOpenStudio?: () => void;
 };
 
-export function QuickToolGrid({ tools, onPromote, onOpenStudio }: QuickToolGridProps) {
+export function QuickToolGrid({ tools, onPromote, onRunTool, onOpenStudio }: QuickToolGridProps) {
   return (
     <section className="section-block quick-tools-section" aria-labelledby="quick-tools-title">
       <div className="section-heading quick-tools-heading">
@@ -26,7 +27,13 @@ export function QuickToolGrid({ tools, onPromote, onOpenStudio }: QuickToolGridP
           data-density={tools.length <= 3 ? "spacious" : "compact"}
         >
           {tools.map((tool, index) => (
-            <ToolCard key={tool.id} tool={tool} index={index} onPromote={onPromote} />
+            <ToolCard
+              key={tool.id}
+              tool={tool}
+              index={index}
+              onPromote={onPromote}
+              onRunTool={onRunTool}
+            />
           ))}
           {tools.length >= 7 && <JusticeFlowCard onOpenStudio={onOpenStudio} />}
         </div>

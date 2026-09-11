@@ -11,7 +11,7 @@ isolado não substitui validação do produto instalado.
 | Visualização, manipulação e overlay PDF | Parcial; não há certificação completa do produto instalado |
 | OCR e PDF → Markdown | Parcial; engine Python/Tesseract operacional, integração produtiva completa em validação |
 | Rich Text, Markdown e DOCX básico | Parcial |
-| Extração de imagens | Sem evidência de conclusão |
+| Extração de imagens | Implementado; engine Python, core Rust, Tauri IPC, Tool Registry e UI com download ZIP e galeria de miniaturas |
 | Tradução e revisão integradas | Parcial; sidecars e integração instalada pendentes |
 | Operações canceláveis e crash recovery | Cobertura no core; validação de produto pendente |
 | Testes automatizados | Aprovados e 100% verdes no GitHub Actions (CI, Pipeline Main e testes da CLI) |

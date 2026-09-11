@@ -15,6 +15,8 @@ import type {
   ExecuteOcrRequest,
   ExtractInformationRequest,
   ExtractInformationResult,
+  ExtractPdfImagesRequest,
+  ExtractPdfImagesResult,
   ImportDocumentRequest,
   IntegrityAuditReport,
   LanguageToolMatch,
@@ -55,7 +57,32 @@ import {
   getStoredCapabilities,
   saveStoredCapabilities,
 } from "@/features/capabilities/useCapabilities";
+import { createZipArchive, extractJpegsFromPdfAsync } from "./browser-pdf-utils";
 import type { DocumentCorePort } from "./document-core";
+
+async function computeSha256Hex(data: ArrayBuffer | Uint8Array | string): Promise<string> {
+  if (typeof crypto !== "undefined" && crypto.subtle) {
+    try {
+      let buffer: ArrayBuffer;
+      if (typeof data === "string") {
+        buffer = new TextEncoder().encode(data).buffer;
+      } else if (data instanceof Uint8Array) {
+        buffer = data.buffer.slice(
+          data.byteOffset,
+          data.byteOffset + data.byteLength,
+        ) as ArrayBuffer;
+      } else {
+        buffer = data;
+      }
+      const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    } catch {
+      // Fallback
+    }
+  }
+  return `sha256-${Date.now()}`;
+}
 
 interface StoredProjectData {
   project: Project & { path: string };
@@ -70,10 +97,43 @@ interface StoredProjectData {
 export class BrowserDocumentCorePort implements DocumentCorePort {
   private projectData: Map<string, StoredProjectData> = new Map();
   private pendingFiles: Map<string, File> = new Map();
+  private artifactBlobs: Map<string, Blob> = new Map();
+  private createdBlobUrls: Map<string, string> = new Map();
   private activeProjectPath: string | null = null;
 
   constructor() {
     this.ensureDefaultProject();
+  }
+
+  getArtifactBlob(artifactId: string): Blob | null {
+    return this.artifactBlobs.get(artifactId) || null;
+  }
+
+  getArtifactBlobUrl(artifactId: string): string | null {
+    const blob = this.artifactBlobs.get(artifactId);
+    if (!blob) return null;
+    const existing = this.createdBlobUrls.get(artifactId);
+    if (existing) {
+      return existing;
+    }
+    const url = URL.createObjectURL(blob);
+    this.createdBlobUrls.set(artifactId, url);
+    return url;
+  }
+
+  revokeArtifactBlobUrl(artifactId: string): void {
+    const existing = this.createdBlobUrls.get(artifactId);
+    if (existing) {
+      URL.revokeObjectURL(existing);
+      this.createdBlobUrls.delete(artifactId);
+    }
+  }
+
+  revokeAllBlobUrls(): void {
+    for (const url of this.createdBlobUrls.values()) {
+      URL.revokeObjectURL(url);
+    }
+    this.createdBlobUrls.clear();
   }
 
   getActiveProjectPath(): string | null {
@@ -231,7 +291,15 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
         };
 
         const size = file?.size ?? 120000;
-        const hash = `blake3-${Math.random().toString(16).slice(2, 18)}`;
+        let hash = `blake3-${Date.now()}`;
+        if (file) {
+          try {
+            const buf = await file.arrayBuffer();
+            hash = await computeSha256Hex(buf);
+          } catch {
+            hash = `sha256-${Date.now()}`;
+          }
+        }
 
         const artifact: Artifact = {
           id: artId,
@@ -246,6 +314,16 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
 
         data.documents.push(doc);
         data.artifacts.push(artifact);
+
+        if (file) {
+          this.artifactBlobs.set(artId, file);
+        } else {
+          // Se for mock/teste, cria um blob mínimo de fallback
+          this.artifactBlobs.set(
+            artId,
+            new Blob([`Documento ${doc.title}`], { type: artifact.mimeType }),
+          );
+        }
 
         return {
           document: doc,
@@ -317,6 +395,11 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
           createdAt: Date.now(),
         });
 
+        const parentBlob = this.artifactBlobs.get(req.artifactId);
+        if (parentBlob) {
+          this.artifactBlobs.set(newArtId, parentBlob);
+        }
+
         const result: PdfToolResult = {
           artifact: newArt,
           operation: op,
@@ -361,7 +444,107 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
           createdAt: Date.now(),
         });
 
+        const parentBlob = this.artifactBlobs.get(req.artifactId);
+        if (parentBlob) {
+          this.artifactBlobs.set(newArtId, parentBlob);
+        }
+
         const result: PdfToolResult = {
+          artifact: newArt,
+          operation: op,
+        };
+        return result as CommandResponse<Command>;
+      }
+
+      case "extract_pdf_images": {
+        const req = request as ExtractPdfImagesRequest;
+        const data = this.getData(req.projectPath);
+
+        const newArtId = asArtifactId(`art-img-zip-${Date.now()}`);
+        const inputBlob = this.artifactBlobs.get(req.artifactId);
+        let extractedImages: import("./browser-pdf-utils").ExtractedImageItem[] = [];
+        let zipBase64 = "";
+        let zipHash = `blake3-${Math.random().toString(16).slice(2, 18)}`;
+        let zipSize = 15420;
+
+        if (inputBlob) {
+          const buffer = new Uint8Array(await inputBlob.arrayBuffer());
+          const allFound = await extractJpegsFromPdfAsync(buffer);
+          const minW = req.minWidth ?? 0;
+          const minH = req.minHeight ?? 0;
+          extractedImages = allFound.filter((img) => img.width >= minW && img.height >= minH);
+
+          if (extractedImages.length > 0) {
+            const filesForZip = extractedImages.map((img, idx) => {
+              const binaryStr = atob(img.dataBase64);
+              const bytes = new Uint8Array(binaryStr.length);
+              for (let b = 0; b < binaryStr.length; b++) {
+                bytes[b] = binaryStr.charCodeAt(b);
+              }
+              return {
+                name: `imagem_${idx + 1}.${img.format.toLowerCase()}`,
+                data: bytes,
+              };
+            });
+
+            const zipBytes = createZipArchive(filesForZip);
+            let zipStr = "";
+            const chunkSize = 8192;
+            for (let c = 0; c < zipBytes.length; c += chunkSize) {
+              const chunk = zipBytes.subarray(c, Math.min(c + chunkSize, zipBytes.length));
+              zipStr += String.fromCharCode.apply(null, Array.from(chunk));
+            }
+            zipBase64 = btoa(zipStr);
+            zipHash = await computeSha256Hex(zipBytes);
+            zipSize = zipBytes.length;
+
+            this.artifactBlobs.set(
+              newArtId,
+              new Blob([zipBytes as unknown as BlobPart], { type: "application/zip" }),
+            );
+          }
+        }
+
+        const newArt: Artifact = {
+          id: newArtId,
+          documentId: req.documentId,
+          kind: "DERIVED",
+          mimeType: "application/zip",
+          hash: zipHash,
+          size: zipSize,
+          storagePath: `artifacts/${req.documentId}/${newArtId}.zip`,
+          createdAt: Date.now(),
+        };
+
+        const opId = asOperationId(`op-img-${Date.now()}`);
+        const op: Operation = {
+          id: opId,
+          toolId: "pdf-extract-images",
+          status: "SUCCEEDED",
+          createdAt: Date.now(),
+          parameters: {
+            pageNumbers: req.pageNumbers ?? [],
+            minWidth: req.minWidth ?? 0,
+            minHeight: req.minHeight ?? 0,
+          },
+        };
+
+        data.artifacts.push(newArt);
+        data.operations.push(op);
+        data.edges.push({
+          operationId: opId,
+          toolId: "pdf-extract-images",
+          inputArtifactId: req.artifactId,
+          outputArtifactId: newArtId,
+          parameters: {},
+          createdAt: Date.now(),
+        });
+
+        const result: ExtractPdfImagesResult = {
+          totalImages: extractedImages.length,
+          pagesScanned: 1,
+          images: extractedImages,
+          zipBase64,
           artifact: newArt,
           operation: op,
         };

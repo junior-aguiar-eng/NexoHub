@@ -163,6 +163,13 @@ pub fn extract_information(
     crate::python_engine::extract_information(request)
 }
 
+pub fn extract_pdf_images(
+    request: crate::python_engine::ExtractPdfImagesRequest,
+) -> CoreResult<crate::python_engine::ExtractPdfImagesResult> {
+    let _ = crate::grant_broker::require_granted(&request.project_path)?;
+    crate::python_engine::execute_extract_pdf_images(request)
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AuditProjectRequest {

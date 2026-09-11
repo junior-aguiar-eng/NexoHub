@@ -26,6 +26,17 @@ export const coreToolManifests = [
     executor: "native",
   },
   {
+    id: "pdf-extract-images",
+    version: "1.0.0",
+    name: "Extrair Imagens de PDF",
+    category: "pdf",
+    surfaces: ["quick", "studio"],
+    accepts: ["application/pdf"],
+    produces: ["application/zip", "image/png"],
+    capabilities: pdfCapabilities,
+    executor: "python",
+  },
+  {
     id: "pdf-ocr",
     version: "1.0.0",
     name: "OCR em PDF",

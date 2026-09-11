@@ -7,6 +7,10 @@ export interface DocumentCorePort {
     command: Command,
     request: CommandRequest<Command>,
   ): Promise<CommandResponse<Command>>;
+  getArtifactBlobUrl?(artifactId: string): string | null;
+  getArtifactBlob?(artifactId: string): Blob | null;
+  revokeArtifactBlobUrl?(artifactId: string): void;
+  revokeAllBlobUrls?(): void;
 }
 
 export class UnavailableDocumentCorePort implements DocumentCorePort {

@@ -125,6 +125,13 @@ fn extract_information(
 }
 
 #[tauri::command]
+fn extract_pdf_images(
+    request: nexohub_core::python_engine::ExtractPdfImagesRequest,
+) -> Result<nexohub_core::python_engine::ExtractPdfImagesResult, CoreError> {
+    nexohub_core::commands::extract_pdf_images(request)
+}
+
+#[tauri::command]
 fn audit_project(
     request: nexohub_core::commands::AuditProjectRequest,
 ) -> Result<nexohub_core::domain::IntegrityAuditReport, CoreError> {
@@ -385,6 +392,7 @@ pub fn run() {
             translate_text,
             list_translation_models,
             extract_information,
+            extract_pdf_images,
             audit_project,
             get_document_lineage,
             list_capabilities,

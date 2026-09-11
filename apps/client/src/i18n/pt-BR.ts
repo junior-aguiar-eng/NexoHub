@@ -60,6 +60,9 @@ export const ptBR = {
   "tool.pdfCompress.title": "Comprimir PDF",
   "tool.pdfCompress.description":
     "Reduzir o tamanho dos arquivos preservando a qualidade e a integridade jurídica.",
+  "tool.pdfExtractImages.title": "Extrair Imagens do PDF",
+  "tool.pdfExtractImages.description":
+    "Extrair fotografias e gráficos contidos no documento em pacote ZIP ou imagens individuais.",
   "tool.pdfOcr.title": "Reconhecer texto (OCR)",
   "tool.pdfOcr.description":
     "Extrair texto de documentos escaneados com alta precisão para peças jurídicas.",
@@ -116,6 +119,10 @@ export const ptBR = {
     "Selecione um documento ou artifact para examinar auditoria e metadados.",
   "studio.layers.title": "Nexo Layers",
   "studio.layers.empty": "Originals, derivados e overlays aparecerão como camadas independentes.",
+  "studio.history.title": "Histórico & Linhagem SQLite",
+  "studio.history.empty": "Nenhuma transformação documental registrada ainda.",
+  "studio.multipage.thumbnails": "Miniaturas",
+  "studio.multipage.fitWidth": "Ajustar à largura",
   "studio.flow.title": "NexoFlow",
   "studio.flow.empty": "Promova uma Quick Tool ou adicione uma etapa para iniciar um fluxo.",
   "studio.flow.draft": "Rascunho",

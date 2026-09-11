@@ -12,6 +12,13 @@ from .docx import DOCX_MIME_TYPE, DocxInputError, create_docx, inspect_docx
 from .docx import MAX_INPUT_BYTES as DOCX_MAX_INPUT_BYTES
 from .extraction import MAX_INPUT_BYTES as EXTRACT_MAX_INPUT_BYTES
 from .extraction import ExtractionInputError, extract_information
+from .image_extraction import (
+    MAX_INPUT_BYTES as IMAGE_EXTRACT_MAX_INPUT_BYTES,
+)
+from .image_extraction import (
+    ImageExtractionError,
+    extract_images_from_pdf,
+)
 from .limits import env_limit
 from .ocr import MAX_INPUT_BYTES as OCR_MAX_INPUT_BYTES
 from .ocr import OcrInputError, recognize_document
@@ -121,6 +128,23 @@ def handle_request(request: object) -> dict[str, Any]:
                 request_id,
                 "EXTRACTION_FAILED",
                 "O engine local não conseguiu extrair as informações.",
+            )
+        return {"id": request_id, "result": result.to_dict()}
+
+    if method == "pdf.extract_images":
+        encoded = params.get("contentBase64")
+        if not isinstance(encoded, str):
+            return _error(request_id, "INVALID_REQUEST", "contentBase64 é obrigatório.")
+        try:
+            content = _decode_base64_bounded(encoded, IMAGE_EXTRACT_MAX_INPUT_BYTES)
+            result = extract_images_from_pdf(content)
+        except (binascii.Error, ImageExtractionError) as error:
+            return _error(request_id, "INVALID_INPUT", str(error))
+        except Exception:
+            return _error(
+                request_id,
+                "IMAGE_EXTRACTION_FAILED",
+                "O engine local não conseguiu extrair as imagens do PDF.",
             )
         return {"id": request_id, "result": result.to_dict()}
 

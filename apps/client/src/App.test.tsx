@@ -10,7 +10,7 @@ describe("App", () => {
       screen.getByRole("heading", { name: /Documentos jurídicos|Documentos complexos/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Comece por uma tarefa" })).toBeInTheDocument();
-    expect(screen.getAllByText("Em breve")).toHaveLength(7);
+    expect(screen.getAllByText("Em breve")).toHaveLength(8);
     expect(screen.getByText("Organizar PDF").closest("article")).toContainElement(
       screen.getAllByTitle("Transformações de PDF chegam na Fase 4.")[0],
     );
@@ -46,8 +46,12 @@ describe("App", () => {
     expect(screen.getByText("Rascunho")).toBeInTheDocument();
     expect(screen.getAllByText("pdf-compress").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Nexo Layers" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Overlay PDF" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Adicionar overlay" })).toBeDisabled();
+    expect(
+      screen.getByRole("heading", { name: "Otimização e Compressão de PDF" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Comprimir e Registrar Nova Versão" }),
+    ).toBeInTheDocument();
   });
 
   it("abre a comparação de textos ao promover a ferramenta textual", () => {
@@ -104,7 +108,8 @@ describe("App", () => {
   it("filtra as ferramentas pela suíte ativa", () => {
     render(<App />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Processamento|PDF/i }));
+    const nav = screen.getByRole("navigation", { name: "Suítes do NexoHub" });
+    fireEvent.click(within(nav).getByRole("button", { name: /Processamento|PDF/i }));
 
     expect(screen.getByText("Organizar PDF")).toBeInTheDocument();
     expect(screen.queryByText("Comparar textos")).not.toBeInTheDocument();

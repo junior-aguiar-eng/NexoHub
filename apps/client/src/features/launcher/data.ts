@@ -5,6 +5,7 @@ import {
   FileArchive,
   FileScan,
   GitCompareArrows,
+  Images,
   Languages,
   ListFilter,
   SpellCheck2,
@@ -33,6 +34,12 @@ const presentation = {
     titleKey: "tool.pdfCompress.title",
     descriptionKey: "tool.pdfCompress.description",
     icon: FileArchive,
+  },
+  "pdf-extract-images": {
+    suite: "pdf",
+    titleKey: "tool.pdfExtractImages.title",
+    descriptionKey: "tool.pdfExtractImages.description",
+    icon: Images,
   },
   "pdf-ocr": {
     suite: "pdf",

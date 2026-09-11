@@ -17,11 +17,15 @@ import type { LauncherTool } from "@/features/launcher/model";
 import { browserRecipeStorage, RecipePanel, runStudioRecipe } from "@/features/recipes";
 import { translate } from "@/i18n";
 import type { DocumentCorePort } from "@/platform/document-core";
-import { ContextInspectorPanel } from "./ContextInspectorPanel";
+import { ContextInspectorPanel, type FactItem, type TimelineStep } from "./ContextInspectorPanel";
+import { DocumentHistoryModal } from "./DocumentHistoryModal";
 import { DocumentTreeSidebar } from "./DocumentTreeSidebar";
 import { DocumentViewerCanvas } from "./DocumentViewerCanvas";
 import { InformationExtractPanel } from "./InformationExtractPanel";
 import { OcrPanel } from "./OcrPanel";
+import { PdfCompressPanel } from "./PdfCompressPanel";
+import { PdfExtractImagesPanel } from "./PdfExtractImagesPanel";
+import { PdfOrganizePanel } from "./PdfOrganizePanel";
 import { PdfOverlayPanel } from "./PdfOverlayPanel";
 import { ReviewPanel } from "./ReviewPanel";
 import { TextComparePanel } from "./TextComparePanel";
@@ -52,12 +56,19 @@ export function StudioWorkspace({
   const [documents, setDocuments] = useState<readonly Document[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [artifacts, setArtifacts] = useState<readonly Artifact[]>([]);
-  const [_lineageEdges, setLineageEdges] = useState<readonly DocumentLineageEdge[]>([]);
+  const [selectedArtifact, setSelectedArtifact] = useState<Artifact | null>(null);
+  const [lineageEdges, setLineageEdges] = useState<readonly DocumentLineageEdge[]>([]);
+  const [activeBlobUrl, setActiveBlobUrl] = useState<string | null>(null);
+  const [documentFacts, setDocumentFacts] = useState<Record<string, FactItem[]>>({});
+  const [documentTimeline, setDocumentTimeline] = useState<Record<string, TimelineStep[]>>({});
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [auditReport, setAuditReport] = useState<IntegrityAuditReport | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [inspectorOpen, setInspectorOpen] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1280 : true,
+  );
   const [activeCanvasTab, setActiveCanvasTab] = useState<"document" | "tool" | "flow">(
     promotedFlow ? "tool" : "document",
   );
@@ -105,7 +116,9 @@ export function StudioWorkspace({
               .catch(() => {});
           });
       })
-      .catch(() => {});
+      .catch((err) => {
+        setErrorMessage(err instanceof Error ? err.message : String(err));
+      });
   }, [documentCore, activeProject]);
 
   useEffect(() => {
@@ -114,14 +127,22 @@ export function StudioWorkspace({
       setLineageEdges([]);
       return;
     }
+    let isCancelled = false;
+
     documentCore
       .invoke("list_artifacts", {
         projectPath: activeProject.path,
         documentId: selectedDocument.id,
       })
-      .then(setArtifacts)
+      .then((arts) => {
+        if (!isCancelled) {
+          setArtifacts(arts);
+        }
+      })
       .catch((err) => {
-        setErrorMessage(err instanceof Error ? err.message : String(err));
+        if (!isCancelled) {
+          setErrorMessage(err instanceof Error ? err.message : String(err));
+        }
       });
 
     documentCore
@@ -129,11 +150,65 @@ export function StudioWorkspace({
         projectPath: activeProject.path,
         documentId: selectedDocument.id,
       })
-      .then((lineage) => setLineageEdges(lineage.edges))
+      .then((lineage) => {
+        if (!isCancelled) {
+          setLineageEdges(lineage.edges);
+        }
+      })
       .catch(() => {
-        setLineageEdges([]);
+        if (!isCancelled) {
+          setLineageEdges([]);
+        }
       });
+
+    return () => {
+      isCancelled = true;
+    };
   }, [documentCore, activeProject, selectedDocument]);
+
+  // Sincroniza a URL do Blob real para o visualizador de PDF e previne memory leak
+  useEffect(() => {
+    if (!selectedArtifact || !documentCore?.getArtifactBlobUrl) {
+      setActiveBlobUrl(null);
+      return;
+    }
+    const currentArtifactId = selectedArtifact.id;
+    const url = documentCore.getArtifactBlobUrl(currentArtifactId);
+    setActiveBlobUrl(url);
+
+    return () => {
+      if (documentCore.revokeArtifactBlobUrl) {
+        documentCore.revokeArtifactBlobUrl(currentArtifactId);
+      }
+    };
+  }, [selectedArtifact, documentCore]);
+
+  const currentFacts = selectedDocument ? documentFacts[selectedDocument.id] || [] : [];
+  const currentTimeline = selectedDocument ? documentTimeline[selectedDocument.id] || [] : [];
+
+  const handleAddFact = (fact: FactItem) => {
+    if (!selectedDocument) return;
+    setDocumentFacts((prev) => ({
+      ...prev,
+      [selectedDocument.id]: [...(prev[selectedDocument.id] || []), fact],
+    }));
+  };
+
+  const handleRemoveFact = (factId: string) => {
+    if (!selectedDocument) return;
+    setDocumentFacts((prev) => ({
+      ...prev,
+      [selectedDocument.id]: (prev[selectedDocument.id] || []).filter((f) => f.id !== factId),
+    }));
+  };
+
+  const handleAddTimelineStep = (step: TimelineStep) => {
+    if (!selectedDocument) return;
+    setDocumentTimeline((prev) => ({
+      ...prev,
+      [selectedDocument.id]: [...(prev[selectedDocument.id] || []), step],
+    }));
+  };
 
   async function handleAuditProject() {
     if (!documentCore || !activeProject) return;
@@ -198,7 +273,7 @@ export function StudioWorkspace({
         return;
       }
 
-      await documentCore.invoke("import_document", {
+      const imported = await documentCore.invoke("import_document", {
         projectPath: activeProject.path,
         sourcePath: file.path,
         mimeType: file.mimeType,
@@ -207,11 +282,36 @@ export function StudioWorkspace({
 
       const docs = await documentCore.invoke("list_documents", { projectPath: activeProject.path });
       setDocuments(docs);
+      setSelectedDocument(imported.document);
+      setActivePage(1);
+
+      const arts = await documentCore.invoke("list_artifacts", {
+        projectPath: activeProject.path,
+        documentId: imported.document.id,
+      });
+      setArtifacts(arts);
+      if (arts.length > 0) {
+        setSelectedArtifact(arts[arts.length - 1]);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setErrorMessage(msg);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function refreshDocumentState(projPath: string, docId: DocumentId) {
+    if (!documentCore) return;
+    try {
+      const [updatedArts, lineage] = await Promise.all([
+        documentCore.invoke("list_artifacts", { projectPath: projPath, documentId: docId }),
+        documentCore.invoke("get_document_lineage", { projectPath: projPath, documentId: docId }),
+      ]);
+      setArtifacts(updatedArts);
+      setLineageEdges(lineage.edges);
+    } catch {
+      // Ignora erro secundário de linhagem
     }
   }
 
@@ -227,11 +327,7 @@ export function StudioWorkspace({
         artifactId: latest.id,
         compressionLevel: 6,
       });
-      const updated = await documentCore.invoke("list_artifacts", {
-        projectPath: activeProject.path,
-        documentId: selectedDocument.id,
-      });
-      setArtifacts(updated);
+      await refreshDocumentState(activeProject.path, selectedDocument.id);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setErrorMessage(msg);
@@ -252,11 +348,7 @@ export function StudioWorkspace({
         artifactId: latest.id,
         pageOrder: [1],
       });
-      const updated = await documentCore.invoke("list_artifacts", {
-        projectPath: activeProject.path,
-        documentId: selectedDocument.id,
-      });
-      setArtifacts(updated);
+      await refreshDocumentState(activeProject.path, selectedDocument.id);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setErrorMessage(msg);
@@ -276,11 +368,7 @@ export function StudioWorkspace({
         documentId: selectedDocument.id,
         artifactId: latest.id,
       });
-      const updated = await documentCore.invoke("list_artifacts", {
-        projectPath: activeProject.path,
-        documentId: selectedDocument.id,
-      });
-      setArtifacts(updated);
+      await refreshDocumentState(activeProject.path, selectedDocument.id);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setErrorMessage(msg);
@@ -442,6 +530,16 @@ export function StudioWorkspace({
           isOpen={sidebarOpen}
           onToggleOpen={() => setSidebarOpen((prev) => !prev)}
           isLoading={isLoading}
+          onSearchClick={() => {
+            const input = document.querySelector<HTMLInputElement>(".studio-header__search-input");
+            input?.focus();
+          }}
+          onStrategyClick={() => {
+            setInspectorOpen(true);
+          }}
+          onMonitoringClick={() => setIsHistoryModalOpen(true)}
+          onProductionClick={() => setActiveCanvasTab("flow")}
+          onReportsClick={handleAuditProject}
         />
 
         <section className="studio-canvas" aria-labelledby="studio-canvas-title">
@@ -603,6 +701,42 @@ export function StudioWorkspace({
                   documentId={selectedDocument?.id}
                   artifactId={artifacts[artifacts.length - 1]?.id}
                 />
+              ) : promotedFlow.tool.id === "pdf-organize" ? (
+                <PdfOrganizePanel
+                  documentCore={documentCore}
+                  projectPath={activeProject?.path}
+                  document={selectedDocument}
+                  artifacts={artifacts}
+                  onSuccess={() => {
+                    if (activeProject && selectedDocument) {
+                      refreshDocumentState(activeProject.path, selectedDocument.id);
+                    }
+                  }}
+                />
+              ) : promotedFlow.tool.id === "pdf-compress" ? (
+                <PdfCompressPanel
+                  documentCore={documentCore}
+                  projectPath={activeProject?.path}
+                  document={selectedDocument}
+                  artifacts={artifacts}
+                  onSuccess={() => {
+                    if (activeProject && selectedDocument) {
+                      refreshDocumentState(activeProject.path, selectedDocument.id);
+                    }
+                  }}
+                />
+              ) : promotedFlow.tool.id === "pdf-extract-images" ? (
+                <PdfExtractImagesPanel
+                  documentCore={documentCore}
+                  projectPath={activeProject?.path}
+                  activeDocument={selectedDocument}
+                  artifacts={artifacts}
+                  onSuccess={() => {
+                    if (activeProject && selectedDocument) {
+                      refreshDocumentState(activeProject.path, selectedDocument.id);
+                    }
+                  }}
+                />
               ) : promotedFlow.tool.manifest.category === "pdf" ? (
                 <PdfOverlayPanel />
               ) : promotedFlow.tool.manifest.category === "text" ? (
@@ -618,6 +752,14 @@ export function StudioWorkspace({
                   activeEvidenceId={activeEvidenceId}
                   onSelectEvidence={(ev) => setActiveEvidenceId(ev.id)}
                   scrollTargetRef={scrollTargetRef}
+                  pdfBlobUrl={activeBlobUrl}
+                  activeArtifactVersionName={
+                    selectedArtifact
+                      ? selectedArtifact.kind === "ORIGINAL"
+                        ? "Original"
+                        : "Derivado"
+                      : undefined
+                  }
                 />
               )}
             </div>
@@ -632,6 +774,14 @@ export function StudioWorkspace({
               activeEvidenceId={activeEvidenceId}
               onSelectEvidence={(ev) => setActiveEvidenceId(ev.id)}
               scrollTargetRef={scrollTargetRef}
+              pdfBlobUrl={activeBlobUrl}
+              activeArtifactVersionName={
+                selectedArtifact
+                  ? selectedArtifact.kind === "ORIGINAL"
+                    ? "Original"
+                    : "Derivado"
+                  : undefined
+              }
             />
           )}
         </section>
@@ -649,6 +799,28 @@ export function StudioWorkspace({
           promotedFlow={promotedFlow}
           artifacts={artifacts}
           isFlowView={activeCanvasTab === "flow"}
+          onOpenHistory={() => setIsHistoryModalOpen(true)}
+          onSelectArtifact={(art) => setSelectedArtifact(art)}
+          selectedArtifactId={selectedArtifact?.id}
+          facts={currentFacts}
+          onAddFact={handleAddFact}
+          onRemoveFact={handleRemoveFact}
+          timelineSteps={currentTimeline}
+          onAddTimelineStep={handleAddTimelineStep}
+        />
+
+        {/* Modal de Histórico e Linhagem SQLite */}
+        <DocumentHistoryModal
+          isOpen={isHistoryModalOpen}
+          onClose={() => setIsHistoryModalOpen(false)}
+          document={selectedDocument}
+          artifacts={artifacts}
+          edges={lineageEdges}
+          selectedArtifactId={selectedArtifact?.id}
+          onSelectArtifact={(art) => {
+            setSelectedArtifact(art);
+            setIsHistoryModalOpen(false);
+          }}
         />
       </main>
     </div>

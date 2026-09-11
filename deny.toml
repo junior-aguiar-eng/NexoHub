@@ -6,7 +6,8 @@ all-features = true
 unmaintained = "workspace"
 unsound = "all"
 ignore = [
-    "RUSTSEC-2026-0195",
+    "RUSTSEC-2024-0429",
+    "RUSTSEC-2026-0194",
 ]
 
 [licenses]

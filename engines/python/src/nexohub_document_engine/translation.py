@@ -192,7 +192,7 @@ class CTranslate2Backend:
             translated_parts.append(self._codec.decode(hypothesis))
 
         output = list(texts)
-        for idx, trans in zip(non_empty_indices, translated_parts):
+        for idx, trans in zip(non_empty_indices, translated_parts, strict=False):
             orig = texts[idx]
             suffix = "\r\n" if orig.endswith("\r\n") else ("\n" if orig.endswith("\n") else "")
             output[idx] = trans.strip() + suffix

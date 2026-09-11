@@ -18,7 +18,7 @@ with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False) as f:
     temp_name = f.name
 
 cmd = [str(java_exe), "-jar", str(jar_path), "-l", "pt-BR", "--json", temp_name]
-res = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+res = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", check=False)
 
 data = json.loads(res.stdout)
 matches = data.get("matches", [])

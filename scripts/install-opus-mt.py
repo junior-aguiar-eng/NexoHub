@@ -100,7 +100,10 @@ def main() -> None:
     os.environ["NEXOHUB_TRANSLATION_MODELS_DIR"] = str(models_dir)
     sys.path.insert(0, str(root_dir / "engines" / "python" / "src"))
 
-    from nexohub_document_engine.translation import list_installed_models, translate_text
+    from nexohub_document_engine.translation import (
+        list_installed_models,
+        translate_text,
+    )
 
     installed = list_installed_models(models_dir)
     print(f"Modelos detectados: {[m['modelId'] for m in installed]}")

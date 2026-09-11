@@ -141,9 +141,7 @@ fn is_compress_installed(root: &Path) -> bool {
 }
 
 /// Lista todas as capacidades com suas informações amigáveis e status em tempo real.
-pub fn list_capabilities(
-    _request: ListCapabilitiesRequest,
-) -> CoreResult<ListCapabilitiesResult> {
+pub fn list_capabilities(_request: ListCapabilitiesRequest) -> CoreResult<ListCapabilitiesResult> {
     let root = runtime_root();
 
     let translation_status = if is_translation_installed(&root) {
@@ -291,7 +289,9 @@ pub fn download_file_with_sha256(
 }
 
 /// Inicia a instalação de um superpoder documental.
-pub fn install_capability(request: InstallCapabilityRequest) -> CoreResult<InstallCapabilityResult> {
+pub fn install_capability(
+    request: InstallCapabilityRequest,
+) -> CoreResult<InstallCapabilityResult> {
     let root = runtime_root();
 
     match request.capability_id.as_str() {
@@ -299,7 +299,9 @@ pub fn install_capability(request: InstallCapabilityRequest) -> CoreResult<Insta
             if is_translation_installed(&root) {
                 return Ok(InstallCapabilityResult {
                     success: true,
-                    message: Some("O Tradutor Privado já está instalado e pronto para uso.".to_string()),
+                    message: Some(
+                        "O Tradutor Privado já está instalado e pronto para uso.".to_string(),
+                    ),
                 });
             }
 

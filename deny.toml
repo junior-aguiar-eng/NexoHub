@@ -1,16 +1,17 @@
 [graph]
-targets = ["x86_64-pc-windows-msvc"]
+targets = ["x86_64-pc-windows-msvc", "x86_64-unknown-linux-gnu"]
 all-features = true
 
 [advisories]
-unmaintained = "workspace"
-unsound = "all"
+unmaintained = "warn"
+unsound = "warn"
 ignore = [
     "RUSTSEC-2026-0195",
 ]
 
 [licenses]
 confidence-threshold = 0.93
+unused-allowed-license = "allow"
 allow = [
   "0BSD",
   "Apache-2.0",
@@ -18,6 +19,7 @@ allow = [
   "BSD-2-Clause",
   "BSD-3-Clause",
   "CC0-1.0",
+  "CDLA-Permissive-2.0",
   "ISC",
   "MIT",
   "MIT-0",

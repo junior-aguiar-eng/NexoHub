@@ -13,6 +13,7 @@
     "build:web": "pnpm --filter @nexohub/client build",
     "build:windows": "node scripts/construir.mjs --windows",
     "check": "biome check . && pnpm typecheck",
+    "lint": "biome check .",
     "check:windows-dependencies": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verificar-dependencias-windows.ps1",
     "check:write": "biome check --write .",
     "licenses:generate": "node scripts/audit-licenses.mjs",

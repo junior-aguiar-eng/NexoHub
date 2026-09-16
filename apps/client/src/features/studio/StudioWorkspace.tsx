@@ -1,6 +1,9 @@
-import type { DocumentLineageEdge, IntegrityAuditReport } from "@nexohub/contracts";
-import type { Artifact, Document, DocumentId, NexoFlowSnapshot } from "@nexohub/domain";
+import type { DocumentId, NexoFlowSnapshot } from "@nexohub/domain";
 import {
+  BookOpen,
+  CheckCircle2,
+  Database,
+  FileCheck2,
   FileText,
   Minimize2,
   MoveVertical,
@@ -10,18 +13,18 @@ import {
   ShieldCheck,
   Sparkles,
   Workflow,
+  Wrench,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { LauncherTool } from "@/features/launcher/model";
 import { browserRecipeStorage, RecipePanel, runStudioRecipe } from "@/features/recipes";
 import { translate } from "@/i18n";
 import type { DocumentCorePort } from "@/platform/document-core";
-import { ContextInspectorPanel, type FactItem, type TimelineStep } from "./ContextInspectorPanel";
+import { ContextInspectorPanel } from "./ContextInspectorPanel";
 import { DocumentHistoryModal } from "./DocumentHistoryModal";
 import { DocumentTreeSidebar } from "./DocumentTreeSidebar";
 import { DocumentViewerCanvas } from "./DocumentViewerCanvas";
-import { InformationExtractPanel } from "./InformationExtractPanel";
 import { OcrPanel } from "./OcrPanel";
 import { PdfCompressPanel } from "./PdfCompressPanel";
 import { PdfExtractImagesPanel } from "./PdfExtractImagesPanel";
@@ -31,6 +34,9 @@ import { ReviewPanel } from "./ReviewPanel";
 import { TextComparePanel } from "./TextComparePanel";
 import { TextEditor } from "./TextEditor";
 import { TranslationPanel } from "./TranslationPanel";
+import { useStudioWorkspace } from "./useStudioWorkspace";
+
+export type AdaptiveCenterMode = "read" | "transform" | "review" | "automate";
 
 type StudioWorkspaceProps = {
   onClose: () => void;
@@ -44,336 +50,153 @@ type StudioWorkspaceProps = {
     tool: LauncherTool;
     flow: NexoFlowSnapshot;
   };
+  initialDocument?: import("@nexohub/domain").Document;
+  initialProject?: { path: string; name: string };
 };
+
+function resolveInitialMode(promotedToolId?: string): AdaptiveCenterMode {
+  if (!promotedToolId) return "read";
+  if (["pdf-compress", "pdf-organize", "pdf-extract-images", "pdf-ocr"].includes(promotedToolId)) {
+    return "transform";
+  }
+  if (
+    [
+      "text-review",
+      "text-compare",
+      "text-translate",
+      "text-edit",
+      "text-editor",
+      "pdf-overlay",
+    ].includes(promotedToolId)
+  ) {
+    return "review";
+  }
+  if (promotedToolId === "flow" || promotedToolId.includes("recipe")) {
+    return "automate";
+  }
+  return "read";
+}
 
 export function StudioWorkspace({
   onClose,
   promotedFlow,
   documentCore,
   textRevisionContext,
+  initialDocument,
+  initialProject,
 }: StudioWorkspaceProps) {
-  const [activeProject, setActiveProject] = useState<{ path: string; name: string } | null>(null);
-  const [documents, setDocuments] = useState<readonly Document[]>([]);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
-  const [artifacts, setArtifacts] = useState<readonly Artifact[]>([]);
-  const [selectedArtifact, setSelectedArtifact] = useState<Artifact | null>(null);
-  const [lineageEdges, setLineageEdges] = useState<readonly DocumentLineageEdge[]>([]);
-  const [activeBlobUrl, setActiveBlobUrl] = useState<string | null>(null);
-  const [documentFacts, setDocumentFacts] = useState<Record<string, FactItem[]>>({});
-  const [documentTimeline, setDocumentTimeline] = useState<Record<string, TimelineStep[]>>({});
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
-  const [auditReport, setAuditReport] = useState<IntegrityAuditReport | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [inspectorOpen, setInspectorOpen] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth >= 1280 : true,
-  );
-  const [activeCanvasTab, setActiveCanvasTab] = useState<"document" | "tool" | "flow">(
-    promotedFlow ? "tool" : "document",
-  );
-  const [activeEvidenceId, setActiveEvidenceId] = useState<string>("f-1");
-  const [searchFilter, setSearchFilter] = useState("");
-  const [activePage, setActivePage] = useState(8);
-  const scrollTargetRef = useRef<HTMLDivElement | null>(null);
+  const {
+    activeProject,
+    documents,
+    selectedDocument,
+    setSelectedDocument,
+    artifacts,
+    setArtifacts,
+    selectedArtifact,
+    setSelectedArtifact,
+    lineageEdges,
+    setLineageEdges,
+    activeBlobUrl,
+    currentFacts,
+    currentTimeline,
+    isHistoryModalOpen,
+    setIsHistoryModalOpen,
+    auditReport,
+    errorMessage,
+    setErrorMessage,
+    isLoading,
+    sidebarOpen,
+    setSidebarOpen,
+    inspectorOpen,
+    setInspectorOpen,
+    activeEvidenceId,
+    setActiveEvidenceId,
+    searchFilter,
+    setSearchFilter,
+    activePage,
+    setActivePage,
+    scrollTargetRef,
+    fileInputRef,
+    handleAddFact,
+    handleRemoveFact,
+    handleAddTimelineStep,
+    handleAuditProject,
+    handleOpenProject,
+    handleFileSelected,
+    handleImportDocument,
+    refreshDocumentState,
+    handleCompressPdf,
+    handleOrganizePdf,
+    handleExecuteOcr,
+  } = useStudioWorkspace({ documentCore, initialDocument, initialProject });
 
-  function handleSelectCanvasTab(tab: "document" | "tool" | "flow") {
-    setActiveCanvasTab(tab);
-  }
+  const [activeMode, setActiveMode] = useState<AdaptiveCenterMode>(() =>
+    resolveInitialMode(promotedFlow?.tool.id),
+  );
+
+  const [selectedTransformTool, setSelectedTransformTool] = useState<string>(() =>
+    promotedFlow && resolveInitialMode(promotedFlow.tool.id) === "transform"
+      ? promotedFlow.tool.id
+      : "pdf-compress",
+  );
+
+  const [selectedReviewTool, setSelectedReviewTool] = useState<string>(() =>
+    promotedFlow && resolveInitialMode(promotedFlow.tool.id) === "review"
+      ? promotedFlow.tool.id
+      : "text-review",
+  );
 
   useEffect(() => {
     if (promotedFlow) {
-      setActiveCanvasTab("tool");
+      const mode = resolveInitialMode(promotedFlow.tool.id);
+      setActiveMode(mode);
+      if (mode === "transform") {
+        setSelectedTransformTool(promotedFlow.tool.id);
+      } else if (mode === "review") {
+        setSelectedReviewTool(promotedFlow.tool.id);
+      }
     }
   }, [promotedFlow]);
 
-  useEffect(() => {
-    if (!documentCore || activeProject) return;
-    documentCore
-      .invoke("pick_project_folder", {})
-      .then((picked) => {
-        if (!picked) return;
-        documentCore
-          .invoke("open_project", { projectPath: picked.path })
-          .then((proj) => {
-            setActiveProject({ path: picked.path, name: proj.name });
-            return documentCore.invoke("list_documents", { projectPath: picked.path });
-          })
-          .then((docs) => {
-            if (docs) {
-              setDocuments(docs);
-              if (docs.length > 0) {
-                setSelectedDocument(docs[0]);
-              }
-            }
-          })
-          .catch(() => {
-            documentCore
-              .invoke("create_project", { projectPath: picked.path, name: picked.name })
-              .then((proj) => {
-                setActiveProject({ path: picked.path, name: proj.name });
-              })
-              .catch(() => {});
-          });
-      })
-      .catch((err) => {
-        setErrorMessage(err instanceof Error ? err.message : String(err));
-      });
-  }, [documentCore, activeProject]);
+  const MODES = [
+    {
+      id: "read" as const,
+      labelKey: "studio.mode.read" as const,
+      descKey: "studio.mode.readDesc" as const,
+      icon: BookOpen,
+    },
+    {
+      id: "transform" as const,
+      labelKey: "studio.mode.transform" as const,
+      descKey: "studio.mode.transformDesc" as const,
+      icon: Wrench,
+    },
+    {
+      id: "review" as const,
+      labelKey: "studio.mode.review" as const,
+      descKey: "studio.mode.reviewDesc" as const,
+      icon: FileCheck2,
+    },
+    {
+      id: "automate" as const,
+      labelKey: "studio.mode.automate" as const,
+      descKey: "studio.mode.automateDesc" as const,
+      icon: Workflow,
+    },
+  ];
 
-  useEffect(() => {
-    if (!documentCore || !activeProject || !selectedDocument) {
-      setArtifacts([]);
-      setLineageEdges([]);
-      return;
-    }
-    let isCancelled = false;
-
-    documentCore
-      .invoke("list_artifacts", {
-        projectPath: activeProject.path,
-        documentId: selectedDocument.id,
-      })
-      .then((arts) => {
-        if (!isCancelled) {
-          setArtifacts(arts);
-        }
-      })
-      .catch((err) => {
-        if (!isCancelled) {
-          setErrorMessage(err instanceof Error ? err.message : String(err));
-        }
-      });
-
-    documentCore
-      .invoke("get_document_lineage", {
-        projectPath: activeProject.path,
-        documentId: selectedDocument.id,
-      })
-      .then((lineage) => {
-        if (!isCancelled) {
-          setLineageEdges(lineage.edges);
-        }
-      })
-      .catch(() => {
-        if (!isCancelled) {
-          setLineageEdges([]);
-        }
-      });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [documentCore, activeProject, selectedDocument]);
-
-  // Sincroniza a URL do Blob real para o visualizador de PDF e previne memory leak
-  useEffect(() => {
-    if (!selectedArtifact || !documentCore?.getArtifactBlobUrl) {
-      setActiveBlobUrl(null);
-      return;
-    }
-    const currentArtifactId = selectedArtifact.id;
-    const url = documentCore.getArtifactBlobUrl(currentArtifactId);
-    setActiveBlobUrl(url);
-
-    return () => {
-      if (documentCore.revokeArtifactBlobUrl) {
-        documentCore.revokeArtifactBlobUrl(currentArtifactId);
-      }
-    };
-  }, [selectedArtifact, documentCore]);
-
-  const currentFacts = selectedDocument ? documentFacts[selectedDocument.id] || [] : [];
-  const currentTimeline = selectedDocument ? documentTimeline[selectedDocument.id] || [] : [];
-
-  const handleAddFact = (fact: FactItem) => {
-    if (!selectedDocument) return;
-    setDocumentFacts((prev) => ({
-      ...prev,
-      [selectedDocument.id]: [...(prev[selectedDocument.id] || []), fact],
-    }));
-  };
-
-  const handleRemoveFact = (factId: string) => {
-    if (!selectedDocument) return;
-    setDocumentFacts((prev) => ({
-      ...prev,
-      [selectedDocument.id]: (prev[selectedDocument.id] || []).filter((f) => f.id !== factId),
-    }));
-  };
-
-  const handleAddTimelineStep = (step: TimelineStep) => {
-    if (!selectedDocument) return;
-    setDocumentTimeline((prev) => ({
-      ...prev,
-      [selectedDocument.id]: [...(prev[selectedDocument.id] || []), step],
-    }));
-  };
-
-  async function handleAuditProject() {
-    if (!documentCore || !activeProject) return;
-    try {
-      setIsLoading(true);
-      setErrorMessage(null);
-      const report = await documentCore.invoke("audit_project", {
-        projectPath: activeProject.path,
-      });
-      setAuditReport(report);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setErrorMessage(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleOpenProject() {
-    if (!documentCore) return;
-    try {
-      setIsLoading(true);
-      setErrorMessage(null);
-      const picked = await documentCore.invoke("pick_project_folder", {});
-      if (!picked) {
-        setIsLoading(false);
-        return;
-      }
-
-      let project: { name: string };
-      try {
-        project = await documentCore.invoke("open_project", { projectPath: picked.path });
-      } catch {
-        project = await documentCore.invoke("create_project", {
-          projectPath: picked.path,
-          name: picked.name,
-        });
-      }
-
-      setActiveProject({ path: picked.path, name: project.name });
-      const docs = await documentCore.invoke("list_documents", { projectPath: picked.path });
-      setDocuments(docs);
-      if (docs.length > 0) {
-        setSelectedDocument(docs[0]);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setErrorMessage(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleImportDocument() {
-    if (!documentCore || !activeProject) return;
-    try {
-      setIsLoading(true);
-      setErrorMessage(null);
-      const file = await documentCore.invoke("pick_document_file", {});
-      if (!file) {
-        setIsLoading(false);
-        return;
-      }
-
-      const imported = await documentCore.invoke("import_document", {
-        projectPath: activeProject.path,
-        sourcePath: file.path,
-        mimeType: file.mimeType,
-        title: file.name,
-      });
-
-      const docs = await documentCore.invoke("list_documents", { projectPath: activeProject.path });
-      setDocuments(docs);
-      setSelectedDocument(imported.document);
-      setActivePage(1);
-
-      const arts = await documentCore.invoke("list_artifacts", {
-        projectPath: activeProject.path,
-        documentId: imported.document.id,
-      });
-      setArtifacts(arts);
-      if (arts.length > 0) {
-        setSelectedArtifact(arts[arts.length - 1]);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setErrorMessage(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function refreshDocumentState(projPath: string, docId: DocumentId) {
-    if (!documentCore) return;
-    try {
-      const [updatedArts, lineage] = await Promise.all([
-        documentCore.invoke("list_artifacts", { projectPath: projPath, documentId: docId }),
-        documentCore.invoke("get_document_lineage", { projectPath: projPath, documentId: docId }),
-      ]);
-      setArtifacts(updatedArts);
-      setLineageEdges(lineage.edges);
-    } catch {
-      // Ignora erro secundário de linhagem
-    }
-  }
-
-  async function handleCompressPdf() {
-    if (!documentCore || !activeProject || !selectedDocument || artifacts.length === 0) return;
-    try {
-      setIsLoading(true);
-      setErrorMessage(null);
-      const latest = artifacts[artifacts.length - 1];
-      await documentCore.invoke("compress_pdf", {
-        projectPath: activeProject.path,
-        documentId: selectedDocument.id,
-        artifactId: latest.id,
-        compressionLevel: 6,
-      });
-      await refreshDocumentState(activeProject.path, selectedDocument.id);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setErrorMessage(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleOrganizePdf() {
-    if (!documentCore || !activeProject || !selectedDocument || artifacts.length === 0) return;
-    try {
-      setIsLoading(true);
-      setErrorMessage(null);
-      const latest = artifacts[artifacts.length - 1];
-      await documentCore.invoke("organize_pdf", {
-        projectPath: activeProject.path,
-        documentId: selectedDocument.id,
-        artifactId: latest.id,
-        pageOrder: [1],
-      });
-      await refreshDocumentState(activeProject.path, selectedDocument.id);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setErrorMessage(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleExecuteOcr() {
-    if (!documentCore || !activeProject || !selectedDocument || artifacts.length === 0) return;
-    try {
-      setIsLoading(true);
-      setErrorMessage(null);
-      const latest = artifacts[artifacts.length - 1];
-      await documentCore.invoke("execute_ocr", {
-        projectPath: activeProject.path,
-        documentId: selectedDocument.id,
-        artifactId: latest.id,
-      });
-      await refreshDocumentState(activeProject.path, selectedDocument.id);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setErrorMessage(msg);
-    } finally {
-      setIsLoading(false);
+  function handleTabKeyDown(e: React.KeyboardEvent) {
+    const currentIndex = MODES.findIndex((m) => m.id === activeMode);
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      const nextIndex = (currentIndex + 1) % MODES.length;
+      setActiveMode(MODES[nextIndex].id);
+      document.getElementById(`tab-${MODES[nextIndex].id}`)?.focus();
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      const prevIndex = (currentIndex - 1 + MODES.length) % MODES.length;
+      setActiveMode(MODES[prevIndex].id);
+      document.getElementById(`tab-${MODES[prevIndex].id}`)?.focus();
     }
   }
 
@@ -381,11 +204,8 @@ export function StudioWorkspace({
     <RecipePanel
       flow={promotedFlow?.flow}
       onSave={(recipe) => browserRecipeStorage.save(recipe)}
-      onOpenArtifact={(artifactId) => {
-        const found = artifacts.find((a) => a.id === artifactId);
-        if (found) {
-          // Artifact presente na lista
-        }
+      onOpenArtifact={(_artifactId) => {
+        // Artifact selection callback
       }}
       onRun={async (recipe, cancellationToken, onProgress) => {
         if (activeProject && selectedDocument && documentCore) {
@@ -466,13 +286,14 @@ export function StudioWorkspace({
         </div>
 
         <div className="studio-header__search">
-          <Search size={14} className="studio-header__search-icon" />
+          <Search size={14} className="studio-header__search-icon" aria-hidden="true" />
           <input
             type="text"
             className="studio-header__search-input"
             placeholder="Buscar no dossiê, jurisprudência ou pergunta..."
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
+            aria-label="Buscar no dossiê"
           />
         </div>
 
@@ -486,7 +307,7 @@ export function StudioWorkspace({
                 : ""
             }`}
           >
-            <ShieldCheck size={15} className="studio-integrity-pill__icon" />
+            <ShieldCheck size={15} className="studio-integrity-pill__icon" aria-hidden="true" />
             <span className="studio-integrity-pill__label">
               {auditReport
                 ? auditReport.isHealthy
@@ -506,7 +327,7 @@ export function StudioWorkspace({
             </Button>
           </div>
 
-          <div className="studio-header__avatar" title="Usuário Ativo">
+          <div className="studio-header__avatar" title="Usuário Ativo" aria-hidden="true">
             <span>AB</span>
           </div>
         </div>
@@ -538,11 +359,15 @@ export function StudioWorkspace({
             setInspectorOpen(true);
           }}
           onMonitoringClick={() => setIsHistoryModalOpen(true)}
-          onProductionClick={() => setActiveCanvasTab("flow")}
+          onProductionClick={() => setActiveMode("automate")}
           onReportsClick={handleAuditProject}
         />
 
-        <section className="studio-canvas" aria-labelledby="studio-canvas-title">
+        <section className="studio-canvas" aria-labelledby="studio-adaptive-title">
+          <h2 id="studio-adaptive-title" className="visually-hidden">
+            {translate("studio.adaptiveCenter.label")}
+          </h2>
+
           {errorMessage && (
             <div
               style={{
@@ -555,235 +380,369 @@ export function StudioWorkspace({
                 justifyContent: "space-between",
                 alignItems: "center",
               }}
+              role="alert"
             >
               <span>{errorMessage}</span>
               <button
                 type="button"
                 onClick={() => setErrorMessage(null)}
                 style={{ background: "none", border: "none", color: "inherit", cursor: "pointer" }}
+                aria-label="Dispensar mensagem de erro"
               >
                 ✕
               </button>
             </div>
           )}
 
-          {/* Clean Canvas Navigation Bar */}
-          <div className="studio-canvas-nav">
+          {/* Barra de Navegação do Centro Adaptativo (5 Modos Canônicos WAI-ARIA) */}
+          <div
+            className="studio-canvas-nav"
+            role="tablist"
+            aria-label={translate("studio.adaptiveCenter.label")}
+            onKeyDown={handleTabKeyDown}
+          >
             <div className="studio-canvas-nav__tabs">
-              <button
-                type="button"
-                className={`studio-canvas-nav__tab ${
-                  activeCanvasTab === "document" ? "studio-canvas-nav__tab--active" : ""
-                }`}
-                onClick={() => handleSelectCanvasTab("document")}
-              >
-                <FileText size={14} />
-                <span>Mesa de Leitura</span>
-              </button>
+              {MODES.map((mode) => {
+                const isActive = activeMode === mode.id;
+                const isPromoted =
+                  Boolean(promotedFlow) && resolveInitialMode(promotedFlow?.tool.id) === mode.id;
+                const IconComponent = mode.icon;
 
-              {promotedFlow && (
-                <button
-                  type="button"
-                  className={`studio-canvas-nav__tab studio-canvas-nav__tab--promoted ${
-                    activeCanvasTab === "tool" ? "studio-canvas-nav__tab--active" : ""
-                  }`}
-                  onClick={() => handleSelectCanvasTab("tool")}
-                >
-                  <Sparkles size={14} className="text-emerald-600" />
-                  <span>Ferramenta: {translate(promotedFlow.tool.titleKey)}</span>
-                  <span className="status-badge status-badge--compact">Ativa</span>
-                </button>
-              )}
-
-              <button
-                type="button"
-                className={`studio-canvas-nav__tab ${
-                  activeCanvasTab === "flow" ? "studio-canvas-nav__tab--active" : ""
-                }`}
-                onClick={() => handleSelectCanvasTab("flow")}
-              >
-                <Workflow size={14} />
-                <span>NexoFlow & Receitas</span>
-              </button>
+                return (
+                  <button
+                    key={mode.id}
+                    id={`tab-${mode.id}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-controls={`panel-${mode.id}`}
+                    tabIndex={isActive ? 0 : -1}
+                    className={`studio-canvas-nav__tab ${
+                      isActive ? "studio-canvas-nav__tab--active" : ""
+                    } ${isPromoted ? "studio-canvas-nav__tab--promoted" : ""}`}
+                    onClick={() => setActiveMode(mode.id)}
+                    title={translate(mode.descKey)}
+                  >
+                    <IconComponent size={14} aria-hidden="true" />
+                    <span>{translate(mode.labelKey)}</span>
+                    {isPromoted && (
+                      <span className="status-badge status-badge--compact" aria-hidden="true">
+                        Ativa
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
-            {promotedFlow && activeCanvasTab === "tool" && (
-              <div className="studio-canvas-nav__actions">
-                {promotedFlow.tool.id === "pdf-compress" && (
-                  <Button
-                    variant="primary"
-                    size="compact"
-                    onClick={handleCompressPdf}
-                    disabled={isLoading}
+            {/* Ações rápidas contextuais do modo ativo */}
+            <div className="studio-canvas-nav__actions">
+              {activeMode === "transform" && (
+                <>
+                  {selectedTransformTool === "pdf-compress" && (
+                    <Button
+                      variant="primary"
+                      size="compact"
+                      onClick={handleCompressPdf}
+                      disabled={isLoading}
+                    >
+                      <Minimize2 size={13} style={{ marginRight: "0.3rem" }} aria-hidden="true" />
+                      Comprimir PDF
+                    </Button>
+                  )}
+                  {selectedTransformTool === "pdf-organize" && (
+                    <Button
+                      variant="primary"
+                      size="compact"
+                      onClick={handleOrganizePdf}
+                      disabled={isLoading}
+                    >
+                      <MoveVertical
+                        size={13}
+                        style={{ marginRight: "0.3rem" }}
+                        aria-hidden="true"
+                      />
+                      Organizar Páginas
+                    </Button>
+                  )}
+                  {selectedTransformTool === "pdf-ocr" && (
+                    <Button
+                      variant="primary"
+                      size="compact"
+                      onClick={handleExecuteOcr}
+                      disabled={isLoading}
+                    >
+                      <ScanText size={13} style={{ marginRight: "0.3rem" }} aria-hidden="true" />
+                      Reconhecer OCR
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Painel do Centro Adaptativo (WAI-ARIA tabpanel) */}
+          <div
+            id={`panel-${activeMode}`}
+            role="tabpanel"
+            aria-labelledby={`tab-${activeMode}`}
+            className="studio-adaptive-panel"
+            style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
+          >
+            {/* 1. MODO LER */}
+            {activeMode === "read" && (
+              <DocumentViewerCanvas
+                documentTitle={selectedDocument?.title}
+                hasDocument={Boolean(selectedDocument)}
+                pageCount={selectedDocument ? Math.max(1, artifacts.length) : 0}
+                currentPage={activePage}
+                onPageChange={setActivePage}
+                activeEvidenceId={activeEvidenceId}
+                onSelectEvidence={(ev) => setActiveEvidenceId(ev.id)}
+                scrollTargetRef={scrollTargetRef}
+                pdfBlobUrl={activeBlobUrl}
+                onDropFile={handleFileSelected}
+                onImportClick={handleImportDocument}
+                activeArtifactVersionName={
+                  selectedArtifact
+                    ? selectedArtifact.kind === "ORIGINAL"
+                      ? "Original"
+                      : "Derivado"
+                    : undefined
+                }
+              />
+            )}
+
+            {/* 2. MODO TRANSFORMAR */}
+            {activeMode === "transform" && (
+              <div
+                className="studio-tool-wrapper"
+                style={{ display: "flex", flexDirection: "column", height: "100%" }}
+              >
+                {/* Seletor de sub-ferramentas de transformação */}
+                <div
+                  className="studio-subtool-selector"
+                  role="toolbar"
+                  aria-label="Ferramentas de transformação"
+                >
+                  <button
+                    type="button"
+                    className={`studio-subtool-pill ${
+                      selectedTransformTool === "pdf-compress" ? "studio-subtool-pill--active" : ""
+                    }`}
+                    onClick={() => setSelectedTransformTool("pdf-compress")}
                   >
-                    <Minimize2 size={13} style={{ marginRight: "0.3rem" }} />
-                    Comprimir PDF
-                  </Button>
-                )}
-                {promotedFlow.tool.id === "pdf-organize" && (
-                  <Button
-                    variant="primary"
-                    size="compact"
-                    onClick={handleOrganizePdf}
-                    disabled={isLoading}
+                    <Minimize2 size={13} aria-hidden="true" />
+                    <span>Comprimir PDF</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`studio-subtool-pill ${
+                      selectedTransformTool === "pdf-organize" ? "studio-subtool-pill--active" : ""
+                    }`}
+                    onClick={() => setSelectedTransformTool("pdf-organize")}
                   >
-                    <MoveVertical size={13} style={{ marginRight: "0.3rem" }} />
-                    Organizar Páginas
-                  </Button>
-                )}
-                {promotedFlow.tool.id === "pdf-ocr" && (
-                  <Button
-                    variant="primary"
-                    size="compact"
-                    onClick={handleExecuteOcr}
-                    disabled={isLoading}
+                    <MoveVertical size={13} aria-hidden="true" />
+                    <span>Organizar Páginas</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`studio-subtool-pill ${
+                      selectedTransformTool === "pdf-extract-images"
+                        ? "studio-subtool-pill--active"
+                        : ""
+                    }`}
+                    onClick={() => setSelectedTransformTool("pdf-extract-images")}
                   >
-                    <ScanText size={13} style={{ marginRight: "0.3rem" }} />
-                    Reconhecer OCR
-                  </Button>
-                )}
+                    <Sparkles size={13} aria-hidden="true" />
+                    <span>Extrair Imagens</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`studio-subtool-pill ${
+                      selectedTransformTool === "pdf-ocr" ? "studio-subtool-pill--active" : ""
+                    }`}
+                    onClick={() => setSelectedTransformTool("pdf-ocr")}
+                  >
+                    <ScanText size={13} aria-hidden="true" />
+                    <span>Reconhecer OCR</span>
+                  </button>
+                </div>
+
+                <div style={{ flex: 1, overflow: "auto" }}>
+                  {selectedTransformTool === "pdf-compress" && (
+                    <PdfCompressPanel
+                      documentCore={documentCore}
+                      projectPath={activeProject?.path}
+                      document={selectedDocument}
+                      artifacts={artifacts}
+                      onSuccess={() => {
+                        if (activeProject && selectedDocument) {
+                          refreshDocumentState(activeProject.path, selectedDocument.id);
+                        }
+                      }}
+                    />
+                  )}
+                  {selectedTransformTool === "pdf-organize" && (
+                    <PdfOrganizePanel
+                      documentCore={documentCore}
+                      projectPath={activeProject?.path}
+                      document={selectedDocument}
+                      artifacts={artifacts}
+                      onSuccess={() => {
+                        if (activeProject && selectedDocument) {
+                          refreshDocumentState(activeProject.path, selectedDocument.id);
+                        }
+                      }}
+                    />
+                  )}
+                  {selectedTransformTool === "pdf-extract-images" && (
+                    <PdfExtractImagesPanel
+                      documentCore={documentCore}
+                      projectPath={activeProject?.path}
+                      activeDocument={selectedDocument}
+                      artifacts={artifacts}
+                      onSuccess={() => {
+                        if (activeProject && selectedDocument) {
+                          refreshDocumentState(activeProject.path, selectedDocument.id);
+                        }
+                      }}
+                    />
+                  )}
+                  {selectedTransformTool === "pdf-ocr" && (
+                    <OcrPanel
+                      documentCore={documentCore}
+                      projectPath={activeProject?.path}
+                      documentId={selectedDocument?.id}
+                      artifactId={artifacts[artifacts.length - 1]?.id}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 3. MODO REVISAR */}
+            {activeMode === "review" && (
+              <div
+                className="studio-tool-wrapper"
+                style={{ display: "flex", flexDirection: "column", height: "100%" }}
+              >
+                {/* Seletor de sub-ferramentas de revisão */}
+                <div
+                  className="studio-subtool-selector"
+                  role="toolbar"
+                  aria-label="Ferramentas de revisão"
+                >
+                  <button
+                    type="button"
+                    className={`studio-subtool-pill ${
+                      selectedReviewTool === "text-review" ? "studio-subtool-pill--active" : ""
+                    }`}
+                    onClick={() => setSelectedReviewTool("text-review")}
+                  >
+                    <CheckCircle2 size={13} aria-hidden="true" />
+                    <span>Revisar Texto</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`studio-subtool-pill ${
+                      selectedReviewTool === "text-compare" ? "studio-subtool-pill--active" : ""
+                    }`}
+                    onClick={() => setSelectedReviewTool("text-compare")}
+                  >
+                    <FileText size={13} aria-hidden="true" />
+                    <span>Comparar Versões</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`studio-subtool-pill ${
+                      selectedReviewTool === "text-translate" ? "studio-subtool-pill--active" : ""
+                    }`}
+                    onClick={() => setSelectedReviewTool("text-translate")}
+                  >
+                    <Sparkles size={13} aria-hidden="true" />
+                    <span>Traduzir Texto</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`studio-subtool-pill ${
+                      selectedReviewTool === "text-editor" || selectedReviewTool === "text-edit"
+                        ? "studio-subtool-pill--active"
+                        : ""
+                    }`}
+                    onClick={() => setSelectedReviewTool("text-editor")}
+                  >
+                    <FileText size={13} aria-hidden="true" />
+                    <span>Editor UTF-8</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`studio-subtool-pill ${
+                      selectedReviewTool === "pdf-overlay" ? "studio-subtool-pill--active" : ""
+                    }`}
+                    onClick={() => setSelectedReviewTool("pdf-overlay")}
+                  >
+                    <FileCheck2 size={13} aria-hidden="true" />
+                    <span>Overlay PDF</span>
+                  </button>
+                </div>
+
+                <div style={{ flex: 1, overflow: "auto" }}>
+                  {selectedReviewTool === "text-review" && (
+                    <ReviewPanel
+                      documentCore={documentCore}
+                      revisionContext={
+                        textRevisionContext ||
+                        (activeProject && selectedDocument && artifacts.length > 0
+                          ? {
+                              projectPath: activeProject.path,
+                              documentId: selectedDocument.id,
+                              artifactId: artifacts[artifacts.length - 1].id,
+                            }
+                          : undefined)
+                      }
+                      onSuccess={async () => {
+                        if (activeProject && selectedDocument && documentCore) {
+                          const updated = await documentCore.invoke("list_artifacts", {
+                            projectPath: activeProject.path,
+                            documentId: selectedDocument.id,
+                          });
+                          setArtifacts(updated);
+                        }
+                      }}
+                    />
+                  )}
+                  {selectedReviewTool === "text-compare" && (
+                    <TextComparePanel
+                      documentCore={documentCore}
+                      projectPath={activeProject?.path}
+                      documentId={selectedDocument?.id}
+                      artifactId={artifacts[artifacts.length - 1]?.id}
+                    />
+                  )}
+                  {selectedReviewTool === "text-translate" && (
+                    <TranslationPanel
+                      documentCore={documentCore}
+                      projectPath={activeProject?.path}
+                      documentId={selectedDocument?.id}
+                      artifactId={artifacts[artifacts.length - 1]?.id}
+                    />
+                  )}
+                  {(selectedReviewTool === "text-editor" || selectedReviewTool === "text-edit") && (
+                    <TextEditor />
+                  )}
+                  {selectedReviewTool === "pdf-overlay" && <PdfOverlayPanel />}
+                </div>
+              </div>
+            )}
+
+            {/* 4. MODO AUTOMATIZAR */}
+            {activeMode === "automate" && (
+              <div className="studio-canvas__flow-view" style={{ flex: 1, overflow: "auto" }}>
+                {recipePanelElement}
               </div>
             )}
           </div>
-
-          {activeCanvasTab === "flow" ? (
-            <div className="studio-canvas__flow-view">{recipePanelElement}</div>
-          ) : activeCanvasTab === "tool" && promotedFlow ? (
-            <div className="studio-tool-wrapper">
-              {promotedFlow.tool.id === "text-review" ? (
-                <ReviewPanel
-                  documentCore={documentCore}
-                  revisionContext={
-                    textRevisionContext ||
-                    (activeProject && selectedDocument && artifacts.length > 0
-                      ? {
-                          projectPath: activeProject.path,
-                          documentId: selectedDocument.id,
-                          artifactId: artifacts[artifacts.length - 1].id,
-                        }
-                      : undefined)
-                  }
-                  onSuccess={async () => {
-                    if (activeProject && selectedDocument && documentCore) {
-                      const updated = await documentCore.invoke("list_artifacts", {
-                        projectPath: activeProject.path,
-                        documentId: selectedDocument.id,
-                      });
-                      setArtifacts(updated);
-                    }
-                  }}
-                />
-              ) : promotedFlow.tool.id === "text-translate" ? (
-                <TranslationPanel
-                  documentCore={documentCore}
-                  projectPath={activeProject?.path}
-                  documentId={selectedDocument?.id}
-                  artifactId={artifacts[artifacts.length - 1]?.id}
-                />
-              ) : promotedFlow.tool.id === "text-compare" ? (
-                <TextComparePanel
-                  documentCore={documentCore}
-                  projectPath={activeProject?.path}
-                  documentId={selectedDocument?.id}
-                  artifactId={artifacts[artifacts.length - 1]?.id}
-                />
-              ) : promotedFlow.tool.id === "pdf-ocr" ? (
-                <OcrPanel
-                  documentCore={documentCore}
-                  projectPath={activeProject?.path}
-                  documentId={selectedDocument?.id}
-                  artifactId={artifacts[artifacts.length - 1]?.id}
-                />
-              ) : promotedFlow.tool.id === "intelligence-extract" ? (
-                <InformationExtractPanel
-                  documentCore={documentCore}
-                  projectPath={activeProject?.path}
-                  documentId={selectedDocument?.id}
-                  artifactId={artifacts[artifacts.length - 1]?.id}
-                />
-              ) : promotedFlow.tool.id === "pdf-organize" ? (
-                <PdfOrganizePanel
-                  documentCore={documentCore}
-                  projectPath={activeProject?.path}
-                  document={selectedDocument}
-                  artifacts={artifacts}
-                  onSuccess={() => {
-                    if (activeProject && selectedDocument) {
-                      refreshDocumentState(activeProject.path, selectedDocument.id);
-                    }
-                  }}
-                />
-              ) : promotedFlow.tool.id === "pdf-compress" ? (
-                <PdfCompressPanel
-                  documentCore={documentCore}
-                  projectPath={activeProject?.path}
-                  document={selectedDocument}
-                  artifacts={artifacts}
-                  onSuccess={() => {
-                    if (activeProject && selectedDocument) {
-                      refreshDocumentState(activeProject.path, selectedDocument.id);
-                    }
-                  }}
-                />
-              ) : promotedFlow.tool.id === "pdf-extract-images" ? (
-                <PdfExtractImagesPanel
-                  documentCore={documentCore}
-                  projectPath={activeProject?.path}
-                  activeDocument={selectedDocument}
-                  artifacts={artifacts}
-                  onSuccess={() => {
-                    if (activeProject && selectedDocument) {
-                      refreshDocumentState(activeProject.path, selectedDocument.id);
-                    }
-                  }}
-                />
-              ) : promotedFlow.tool.manifest.category === "pdf" ? (
-                <PdfOverlayPanel />
-              ) : promotedFlow.tool.manifest.category === "text" ? (
-                <TextEditor />
-              ) : (
-                <DocumentViewerCanvas
-                  documentTitle={
-                    selectedDocument ? selectedDocument.title : "Doc. 02 - Laudo pericial.pdf"
-                  }
-                  pageCount={selectedDocument ? Math.max(12, artifacts.length * 4) : 42}
-                  currentPage={activePage}
-                  onPageChange={setActivePage}
-                  activeEvidenceId={activeEvidenceId}
-                  onSelectEvidence={(ev) => setActiveEvidenceId(ev.id)}
-                  scrollTargetRef={scrollTargetRef}
-                  pdfBlobUrl={activeBlobUrl}
-                  activeArtifactVersionName={
-                    selectedArtifact
-                      ? selectedArtifact.kind === "ORIGINAL"
-                        ? "Original"
-                        : "Derivado"
-                      : undefined
-                  }
-                />
-              )}
-            </div>
-          ) : (
-            <DocumentViewerCanvas
-              documentTitle={
-                selectedDocument ? selectedDocument.title : "Doc. 02 - Laudo pericial.pdf"
-              }
-              pageCount={selectedDocument ? Math.max(12, artifacts.length * 4) : 42}
-              currentPage={activePage}
-              onPageChange={setActivePage}
-              activeEvidenceId={activeEvidenceId}
-              onSelectEvidence={(ev) => setActiveEvidenceId(ev.id)}
-              scrollTargetRef={scrollTargetRef}
-              pdfBlobUrl={activeBlobUrl}
-              activeArtifactVersionName={
-                selectedArtifact
-                  ? selectedArtifact.kind === "ORIGINAL"
-                    ? "Original"
-                    : "Derivado"
-                  : undefined
-              }
-            />
-          )}
         </section>
 
         <ContextInspectorPanel
@@ -798,7 +757,7 @@ export function StudioWorkspace({
           onAuditClick={handleAuditProject}
           promotedFlow={promotedFlow}
           artifacts={artifacts}
-          isFlowView={activeCanvasTab === "flow"}
+          isFlowView={activeMode === "automate"}
           onOpenHistory={() => setIsHistoryModalOpen(true)}
           onSelectArtifact={(art) => setSelectedArtifact(art)}
           selectedArtifactId={selectedArtifact?.id}
@@ -821,6 +780,20 @@ export function StudioWorkspace({
             setSelectedArtifact(art);
             setIsHistoryModalOpen(false);
           }}
+        />
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="visually-hidden"
+          accept=".pdf,.docx,.txt,.md,.json,image/*"
+          onChange={(e) => {
+            if (e.target.files && e.target.files.length > 0) {
+              handleFileSelected(e.target.files[0]);
+              e.target.value = "";
+            }
+          }}
+          aria-label="Selecionar arquivo para o Studio"
         />
       </main>
     </div>

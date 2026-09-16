@@ -4,14 +4,17 @@ import type { MessageKey } from "@/i18n/pt-BR";
 
 export type SuiteId =
   | "overview"
+  | "popular"
+  | "organize"
+  | "optimize"
+  | "text"
+  | "security"
   | "processing"
   | "review"
   | "compliance"
   | "extraction"
   | "flow"
-  | "pdf"
-  | "security"
-  | "text";
+  | "pdf";
 
 export type Suite = {
   id: SuiteId;
@@ -27,4 +30,6 @@ export type LauncherTool = {
   titleKey: MessageKey;
   descriptionKey: MessageKey;
   icon: LucideIcon;
+  accentColor?: string;
+  badge?: string;
 };

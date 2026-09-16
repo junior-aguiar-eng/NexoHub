@@ -1,4 +1,4 @@
-import { FilePlus2, FileText, UploadCloud } from "lucide-react";
+import { FilePlus2, FileText, FolderOpen, UploadCloud } from "lucide-react";
 import { type DragEvent, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
@@ -6,9 +6,14 @@ import { translate } from "@/i18n";
 type OperationalDropzoneProps = {
   onOpenStudio: () => void;
   onFileImport?: (file: File) => void;
+  onOpenProject?: () => void;
 };
 
-export function OperationalDropzone({ onOpenStudio, onFileImport }: OperationalDropzoneProps) {
+export function OperationalDropzone({
+  onOpenStudio,
+  onFileImport,
+  onOpenProject,
+}: OperationalDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -76,8 +81,27 @@ export function OperationalDropzone({ onOpenStudio, onFileImport }: OperationalD
         </Button>
       </section>
 
-      <div className="operational-dropzone__secondary-action">
-        <Button variant="secondary" className="operational-new-dossier-pill" onClick={onOpenStudio}>
+      <div
+        className="operational-dropzone__secondary-action"
+        style={{ display: "flex", gap: "0.5rem" }}
+      >
+        {onOpenProject && (
+          <Button
+            variant="secondary"
+            className="operational-new-dossier-pill"
+            onClick={onOpenProject}
+            title={translate("launcher.action.openProject")}
+          >
+            <FolderOpen size={16} aria-hidden="true" />
+            <span>{translate("launcher.action.openProject")}</span>
+          </Button>
+        )}
+        <Button
+          variant="secondary"
+          className="operational-new-dossier-pill"
+          onClick={onOpenStudio}
+          title={translate("hero.newDossier")}
+        >
           <FilePlus2 size={16} aria-hidden="true" />
           <span>{translate("hero.newDossier")}</span>
         </Button>

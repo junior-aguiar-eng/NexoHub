@@ -1,46 +1,41 @@
 # Produto
 
-O NexoHub é uma estação documental open source, local-first, Windows-first e com client web
-suportado. Um documento entra uma vez e pode atravessar criação, importação, leitura,
-transformação, revisão e exportação sem reenvio ou reprocessamento desnecessário.
+O NexoHub é um hub de ferramentas práticas para PDFs e documentos, 100% gratuito, local-first,
+Windows-first e com client web suportado. Sem complexidade, burocracia ou termos jurídicos:
+o foco é a produtividade direta ao estilo iLovePDF, com a segurança e privacidade do processamento
+offline no computador do usuário.
 
 ## Plataformas
 
-- **Windows desktop:** alvo produtivo atual. O aplicativo usa Tauri, Rust e WebView2 e recebe os
-  gates nativos de desenvolvimento, teste e build.
-- **Web:** alvo suportado pelo mesmo client React/TypeScript, limitado às capacidades disponíveis
-  no navegador.
-- **Linux, Android e iOS:** alvos congelados por prazo indeterminado. Não recebem desenvolvimento,
-  validação, release, prazo, marco nem promessa de compatibilidade.
-- **Demais sistemas nativos:** congelados por prazo indeterminado e fora do produto, da matriz de
-  validação e do roadmap.
+- **Windows desktop:** alvo produtivo principal. O aplicativo usa Tauri v2, Rust e WebView2,
+  com processamento local ultra-rápido e sem filas.
+- **Web:** alvo suportado pelo mesmo client React 19/TypeScript, executando transformações
+  documentais com suporte local em memória e sem upload de arquivos para servidores externos.
+- **Linux, Android e iOS:** alvos congelados por prazo indeterminado.
 
-O congelamento não remove a estrutura multiplataforma do Tauri, mas sua preservação representa
-somente possibilidade técnica: não expressa intenção, promessa, planejamento ou obrigação de
-suporte. Qualquer avaliação de outro sistema dependerá de decisão futura, discricionária e expressa
-do mantenedor, sem condicionar o desenvolvimento Windows.
+## Experiência do Produto
 
-## Superfícies
-
-- **Launcher:** entrada orientada à tarefa, com Quick Tools reais e acesso a projetos.
-- **Studio:** workspace orientado ao documento, com árvore, abas, viewer, inspector, Nexo Layers e
-  NexoFlow.
+- **Hub de Ferramentas (Home):** vitrine limpa, colorida e elegante de ferramentas práticas
+  (Juntar, Dividir, Comprimir, OCR, Corretor de Texto, Traduzir, Comparar, etc.) organizadas
+  por categorias ágeis (Organizar, Otimizar, Texto e OCR, Segurança).
+- **Tela Dedicada por Ferramenta:** experiência sem fricção ao estilo iLovePDF:
+  1. O usuário clica na ferramenta desejada.
+  2. Acessa uma tela focada com botão amplo de seleção/arraste de arquivo PDF.
+  3. Ajusta opções simples (ex: nível de compressão, idioma do OCR).
+  4. Executa a tarefa localmente e baixa o resultado instantaneamente.
 
 ## Garantias do produto
 
-- originals são imutáveis;
-- transformações geram artifacts derivados rastreáveis;
-- funções locais permanecem disponíveis offline;
-- upload externo exige ação explícita;
-- Quick Tools e Studio compartilham domínio e executores;
-- indisponibilidade deve ser explícita, nunca simulada.
+- **100% Gratuito & Livre:** sem cobranças, sem limites arbitrários de páginas ou filas artificiais;
+- **Privacidade total (Local-first):** arquivos são processados diretamente na máquina do usuário;
+- **Originais preservados:** as operações produzem novos arquivos derivados, sem sobrescrever o original;
+- **Indisponibilidade transparente:** requisitos de sidecars opcionais (como OCR ou corretor) são
+  gerenciados de forma explícita através de Superpoderes locais.
 
-Contas, billing, cloud obrigatória, colaboração simultânea, marketplace, funcionalidades mobile,
-LLM obrigatório, RAG e recursos jurídicos estão fora do escopo anterior ao 1.0.
+Contas obrigatórias, billing, telemetria invasiva, jargões jurídicos e mesas de edição excessivamente
+complexas estão fora do escopo do produto.
 
 ## Idioma
 
-O idioma canônico do NexoHub é português brasileiro (`pt-BR`). Documentação, decisões
-arquiteturais, mensagens e experiência inicial são concebidas em pt-BR. Outros idiomas serão
-adicionados por catálogos de internacionalização versionados, sem duplicar componentes ou criar
-fluxos funcionais divergentes.
+O idioma canônico do NexoHub é português brasileiro (`pt-BR`).
+

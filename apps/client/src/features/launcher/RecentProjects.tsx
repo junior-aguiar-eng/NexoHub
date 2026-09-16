@@ -1,4 +1,4 @@
-import { ArrowRight, FileText, Lock, ShieldCheck, Sparkles, Trash2 } from "lucide-react";
+import { FileText, Lock, ShieldCheck, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import type { RecentOperation } from "./useRecentOperations";
@@ -11,9 +11,12 @@ type RecentProjectsProps = {
 
 export function RecentProjects({
   operations,
-  onOpenStudio,
   onClearOperations,
 }: RecentProjectsProps) {
+  if (operations.length === 0) {
+    return null;
+  }
+
   const formatTime = (ts: number) => {
     const diff = Date.now() - ts;
     const mins = Math.floor(diff / (1000 * 60));
@@ -51,45 +54,31 @@ export function RecentProjects({
               title="Limpar histórico de operações locais"
             >
               <Trash2 size={13} aria-hidden="true" />
-              <span>Limpar</span>
+              <span>Limpar histórico</span>
             </Button>
           )}
-          <button
-            type="button"
-            className="recent-projects-view-all"
-            onClick={onOpenStudio}
-            aria-label={translate("recent.viewAll")}
-          >
-            <span>{translate("recent.viewAll")}</span>
-            <ArrowRight size={15} aria-hidden="true" />
-          </button>
         </div>
       </div>
 
       {operations.length > 0 ? (
-        <ul className="recent-dossiers-list">
+        <ul className="recent-operations-list">
           {operations.map((item) => (
-            <li key={item.id} className="recent-dossier-item">
-              <div className="recent-dossier-card">
-                <button
-                  type="button"
-                  className="recent-dossier-card__main-btn"
-                  onClick={onOpenStudio}
-                  aria-label={`Abrir projeto: ${item.documentName}`}
-                >
-                  <div className="recent-dossier-card__icon-box" aria-hidden="true">
+            <li key={item.id} className="recent-operation-item">
+              <div className="recent-operation-card">
+                <div className="recent-operation-card__main">
+                  <div className="recent-operation-card__icon-box" aria-hidden="true">
                     <FileText size={18} />
                   </div>
-                  <div className="recent-dossier-card__meta">
-                    <strong className="recent-dossier-card__title">{item.documentName}</strong>
-                    <p className="recent-dossier-card__subline">
+                  <div className="recent-operation-card__meta">
+                    <strong className="recent-operation-card__title">{item.documentName}</strong>
+                    <p className="recent-operation-card__subline">
                       {item.toolName} • {formatTime(item.timestamp)}
                       {item.resultSize ? ` • ${formatSize(item.resultSize)}` : ""}
                     </p>
                   </div>
-                </button>
+                </div>
 
-                <div className="recent-dossier-card__right">
+                <div className="recent-operation-card__right">
                   <span
                     className="recent-badge-local"
                     title="Processado integralmente no ambiente local"
@@ -106,7 +95,7 @@ export function RecentProjects({
                       title={`Integridade verificada: SHA-256 ${item.sha256}`}
                     >
                       <ShieldCheck size={13} aria-hidden="true" />
-                      <span>SHA-256 Verificado</span>
+                      <span>{translate("recent.verifiedBlake3")}</span>
                     </span>
                   )}
                 </div>
@@ -115,25 +104,12 @@ export function RecentProjects({
           ))}
         </ul>
       ) : (
-        <div
-          className="recent-empty-state"
-          style={{
-            padding: "2rem",
-            textAlign: "center",
-            background: "var(--color-surface-muted, #f8fafc)",
-            borderRadius: "var(--radius-md, 0.5rem)",
-          }}
-        >
-          <Sparkles
-            size={24}
-            style={{ margin: "0 auto var(--space-2)", color: "var(--color-brand, #0f766e)" }}
-          />
-          <h3 style={{ margin: "0 0 0.25rem", fontSize: "1rem" }}>
-            {translate("recent.emptyTitle")}
-          </h3>
-          <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--color-ink-muted, #64748b)" }}>
-            {translate("recent.emptyDescription")}
-          </p>
+        <div className="recent-empty-state">
+          <div className="recent-empty-icon" aria-hidden="true">
+            <FileText size={24} />
+          </div>
+          <h3>{translate("recent.emptyTitle")}</h3>
+          <p>{translate("recent.emptyDescription")}</p>
         </div>
       )}
     </section>

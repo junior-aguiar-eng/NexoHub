@@ -1,16 +1,15 @@
 import { translate } from "@/i18n";
-import { JusticeFlowCard } from "./JusticeFlowCard";
 import type { LauncherTool } from "./model";
 import { ToolCard } from "./ToolCard";
 
 type QuickToolGridProps = {
   tools: readonly LauncherTool[];
-  onPromote: (tool: LauncherTool) => void;
+  onPromote?: (tool: LauncherTool) => void;
   onRunTool?: (tool: LauncherTool) => void;
   onOpenStudio?: () => void;
 };
 
-export function QuickToolGrid({ tools, onPromote, onRunTool, onOpenStudio }: QuickToolGridProps) {
+export function QuickToolGrid({ tools, onPromote, onRunTool }: QuickToolGridProps) {
   return (
     <section className="section-block quick-tools-section" aria-labelledby="quick-tools-title">
       <div className="section-heading quick-tools-heading">
@@ -21,11 +20,7 @@ export function QuickToolGrid({ tools, onPromote, onRunTool, onOpenStudio }: Qui
         <p className="quick-tools-heading__desc">{translate("tools.description")}</p>
       </div>
       {tools.length > 0 ? (
-        <div
-          className="tool-grid"
-          data-count={tools.length}
-          data-density={tools.length <= 3 ? "spacious" : "compact"}
-        >
+        <div className="tool-grid">
           {tools.map((tool, index) => (
             <ToolCard
               key={tool.id}
@@ -35,7 +30,6 @@ export function QuickToolGrid({ tools, onPromote, onRunTool, onOpenStudio }: Qui
               onRunTool={onRunTool}
             />
           ))}
-          {tools.length >= 7 && <JusticeFlowCard onOpenStudio={onOpenStudio} />}
         </div>
       ) : (
         <p className="empty-search" role="status">

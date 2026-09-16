@@ -15,20 +15,22 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@base-ui/react": "1.7.0",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/playfair-display": "5.2.8",
+    "@fontsource-variable/plus-jakarta-sans": "5.2.8",
     "@nexohub/contracts": "workspace:*",
     "@nexohub/domain": "workspace:*",
     "@nexohub/tool-registry": "workspace:*",
     "@nexohub/tool-sdk": "workspace:*",
-    "@base-ui/react": "1.7.0",
-    "@fontsource-variable/playfair-display": "5.2.8",
-    "@fontsource-variable/plus-jakarta-sans": "5.2.8",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "lucide-react": "0.542.0",
     "motion": "12.23.24",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "tailwind-merge": "3.3.1"
+    "tailwind-merge": "3.3.1",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

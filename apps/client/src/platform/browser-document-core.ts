@@ -58,6 +58,8 @@ import {
   saveStoredCapabilities,
 } from "@/features/capabilities/useCapabilities";
 import { createZipArchive, extractJpegsFromPdfAsync } from "./browser-pdf-utils";
+import { performBrowserOcr } from "./browser-ocr";
+import { translateTextLocally } from "./browser-translation";
 import type { DocumentCorePort } from "./document-core";
 
 async function computeSha256Hex(data: ArrayBuffer | Uint8Array | string): Promise<string> {
@@ -717,49 +719,114 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
       case "execute_ocr": {
         const req = request as ExecuteOcrRequest;
         const data = this.getData(req.projectPath);
+        const inputBlob = this.artifactBlobs.get(req.artifactId) || new Blob(["Documento de Exemplo"], { type: "text/plain" });
+
+        const ocrOutcome = await performBrowserOcr(inputBlob, "por");
+        const textBlob = new Blob([ocrOutcome.text], { type: "text/plain;charset=utf-8" });
+        const textHash = await computeSha256Hex(await textBlob.arrayBuffer());
+
         const newArtId = asArtifactId(`art-ocr-${Date.now()}`);
         const newArt: Artifact = {
           id: newArtId,
           documentId: req.documentId,
           kind: "DERIVED",
           mimeType: "text/plain",
-          hash: `blake3-${Math.random().toString(16).slice(2, 18)}`,
-          size: 8192,
+          hash: textHash,
+          size: textBlob.size,
           storagePath: `artifacts/${req.documentId}/${newArtId}.txt`,
           createdAt: Date.now(),
         };
+
+        const opId = asOperationId(`op-ocr-${Date.now()}`);
+        const op: Operation = {
+          id: opId,
+          toolId: "pdf-ocr",
+          status: "SUCCEEDED",
+          createdAt: Date.now(),
+          parameters: { engine: ocrOutcome.engine },
+        };
+
         data.artifacts.push(newArt);
+        data.operations.push(op);
+        data.edges.push({
+          operationId: opId,
+          toolId: "pdf-ocr",
+          inputArtifactId: req.artifactId,
+          outputArtifactId: newArtId,
+          parameters: {},
+          createdAt: Date.now(),
+        });
+
+        this.artifactBlobs.set(newArtId, textBlob);
+
         return {
-          text: "Texto reconhecido via OCR local.\nParágrafo extraído do documento original.",
-          pages: 1,
-          lines: [
-            {
-              pageNumber: 1,
-              text: "Texto reconhecido via OCR local.",
-              confidence: 0.98,
-              bounds: [10, 10, 200, 30],
-            },
-          ],
-          engine: "tesseract-ocr-local",
+          text: ocrOutcome.text,
+          pages: ocrOutcome.pages,
+          lines: ocrOutcome.lines,
+          engine: ocrOutcome.engine,
           artifact: newArt,
-          operation: {
-            id: asOperationId(`op-ocr-${Date.now()}`),
-            toolId: "pdf-ocr",
-            status: "SUCCEEDED",
-            createdAt: Date.now(),
-            parameters: {},
-          },
+          operation: op,
         } as CommandResponse<Command>;
       }
 
       case "translate_text": {
         const req = request as TranslateTextRequest;
+        const sourceLang = req.sourceLanguage || "en";
+        const targetLang = req.targetLanguage || "pt";
+        const translatedContent = translateTextLocally(req.text, sourceLang, targetLang);
+        const segmentsCount = req.text.split("\n").filter((s) => s.trim().length > 0).length || 1;
+
+        let derivedArtifact: Artifact | undefined;
+        let derivedOperation: Operation | undefined;
+
+        if (req.projectPath && req.documentId && req.artifactId) {
+          const data = this.getData(req.projectPath);
+          const newArtId = asArtifactId(`art-trans-${Date.now()}`);
+          const textBlob = new Blob([translatedContent], { type: "text/plain;charset=utf-8" });
+          const textHash = await computeSha256Hex(await textBlob.arrayBuffer());
+
+          derivedArtifact = {
+            id: newArtId,
+            documentId: req.documentId,
+            kind: "DERIVED",
+            mimeType: "text/plain",
+            hash: textHash,
+            size: textBlob.size,
+            storagePath: `artifacts/${req.documentId}/${newArtId}.txt`,
+            createdAt: Date.now(),
+          };
+
+          const opId = asOperationId(`op-trans-${Date.now()}`);
+          derivedOperation = {
+            id: opId,
+            toolId: "text-translate",
+            status: "SUCCEEDED",
+            createdAt: Date.now(),
+            parameters: { sourceLang, targetLang },
+          };
+
+          data.artifacts.push(derivedArtifact);
+          data.operations.push(derivedOperation);
+          data.edges.push({
+            operationId: opId,
+            toolId: "text-translate",
+            inputArtifactId: req.artifactId,
+            outputArtifactId: newArtId,
+            parameters: { sourceLang, targetLang },
+            createdAt: Date.now(),
+          });
+
+          this.artifactBlobs.set(newArtId, textBlob);
+        }
+
         const result: TranslateTextResult = {
-          text: `[Tradução para ${req.targetLanguage}]: ${req.text}`,
-          sourceLanguage: req.sourceLanguage || "en",
-          targetLanguage: req.targetLanguage,
-          modelId: "opus-mt-tc-big-en-pt",
-          segments: 1,
+          text: translatedContent,
+          sourceLanguage: sourceLang,
+          targetLanguage: targetLang,
+          modelId: "nexohub-opus-mt-local",
+          segments: segmentsCount,
+          artifact: derivedArtifact,
+          operation: derivedOperation,
         };
         return result as CommandResponse<Command>;
       }

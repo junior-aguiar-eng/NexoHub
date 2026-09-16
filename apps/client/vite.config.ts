@@ -15,13 +15,13 @@ export default defineConfig({
   clearScreen: false,
   server: {
     host: tauriHost || false,
-    port: 5173,
-    strictPort: true,
+    port: 5180,
+    strictPort: Boolean(tauriHost),
     hmr: tauriHost
       ? {
           protocol: "ws",
           host: tauriHost,
-          port: 5174,
+          port: 5181,
         }
       : undefined,
   },

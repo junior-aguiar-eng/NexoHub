@@ -80,17 +80,6 @@ export const coreToolManifests = [
     capabilities: ["documents.read", "documents.write", "translation.execute"],
     executor: "python",
   },
-  {
-    id: "intelligence-extract",
-    version: "1.0.0",
-    name: "Extrair informações",
-    category: "intelligence",
-    surfaces: ["quick", "studio"],
-    accepts: ["text/plain", "application/pdf"],
-    produces: ["application/json"],
-    capabilities: ["documents.read", "documents.write", "intelligence.extract"],
-    executor: "python",
-  },
 ] as const satisfies readonly ToolManifest[];
 
 export function createCoreToolRegistry(): ToolRegistry {

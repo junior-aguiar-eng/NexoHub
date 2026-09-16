@@ -14,12 +14,27 @@ describe("DocumentViewerCanvas - Visualização Multi-Página", () => {
       />,
     );
 
-    expect(screen.getByText("Contrato de Prestação.pdf")).toBeInTheDocument();
-    expect(screen.getByText(/I. IDENTIFICAÇÃO E QUALIFICAÇÃO/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Contrato de Prestação.pdf" })).toBeInTheDocument();
+    expect(screen.getByText(/cadeia de custódia local do NexoHub/i)).toBeInTheDocument();
 
     const nextBtn = screen.getByTitle("Próxima página");
     fireEvent.click(nextBtn);
     expect(onPageChange).toHaveBeenCalledWith(2);
+  });
+
+  it("renderiza o empty state quando não há documento carregado", () => {
+    const onImportClick = vi.fn();
+    render(<DocumentViewerCanvas hasDocument={false} onImportClick={onImportClick} />);
+
+    expect(screen.getByText("Mesa de Trabalho Documental")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Arraste e solte um arquivo PDF, Word ou Texto aqui/i),
+    ).toBeInTheDocument();
+
+    const selectBtn = screen.getByRole("button", { name: /Selecionar Documento/i });
+    expect(selectBtn).toBeInTheDocument();
+    fireEvent.click(selectBtn);
+    expect(onImportClick).toHaveBeenCalledTimes(1);
   });
 
   it("abre e fecha o painel retrátil de miniaturas de páginas", () => {

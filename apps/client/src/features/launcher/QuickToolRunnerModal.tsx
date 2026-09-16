@@ -115,9 +115,8 @@ export function QuickToolRunnerModal({
     setProgressStatus("Preparando ambiente e registrando documento imutável...");
 
     try {
-      // 1. Obter ou criar projeto padrão para a operação rápida
-      const project = await documentCore.invoke("pick_project_folder", {});
-      const projectPath = project?.path || "/meus-documentos/dossie-local";
+      // 1. Utilizar projeto padrão para a operação rápida sem abrir diálogo invasivo de pasta
+      const projectPath = "/meus-documentos/dossie-local";
 
       let docId = asDocumentId(`doc-${Date.now()}`);
       let artId = asArtifactId(`art-${Date.now()}`);
@@ -239,13 +238,28 @@ export function QuickToolRunnerModal({
         resultArtifactName = `ocr-${fileName}.txt`;
         textOutput = res.text || "Texto reconhecido com sucesso pelo motor de OCR local.";
         downloadBlob = new Blob([textOutput], { type: "text/plain;charset=utf-8" });
+      } else if (tool.id === "text-translate") {
+        setProgressStatus("Traduzindo texto via motor neural local...");
+        const textToTranslate = rawText || (selectedFile ? await selectedFile.text() : "");
+        const res = await documentCore.invoke("translate_text", {
+          projectPath,
+          documentId: docId,
+          artifactId: artId,
+          text: textToTranslate,
+          sourceLanguage: "en",
+          targetLanguage: "pt",
+        });
+        textOutput = res.text || "";
+        resultArtifactName = `traduzido-${fileName.replace(/\.[^/.]+$/, "")}.txt`;
+        downloadBlob = new Blob([textOutput], { type: "text/plain;charset=utf-8" });
+        resultingSize = downloadBlob.size;
       } else if (tool.id === "text-review") {
-        setProgressStatus("Analisando gramática, estilo e conformidade jurídica...");
+        setProgressStatus("Analisando gramática, estilo e ortografia...");
         const textToReview = rawText || (selectedFile ? await selectedFile.text() : "");
         const res = await documentCore.invoke("review_text", {
           text: textToReview,
         });
-        textOutput = `Revisão concluída: ${res.matches.length} apontamentos encontrados pelo LanguageTool.`;
+        textOutput = `Revisão concluída: ${res.matches.length} apontamentos encontrados pelo corretor ortográfico.`;
         resultArtifactName = `revisao-${fileName}`;
         downloadBlob = new Blob([textOutput], { type: "text/plain;charset=utf-8" });
       } else {

@@ -127,12 +127,27 @@ test("gerencia ciclo de vida dos superpoderes documentais no modal", async ({ pa
   await expect(page.getByRole("heading", { name: "Superpoderes Documentais" })).toHaveCount(0);
 });
 
-test("navega por múltiplas páginas e miniaturas no Studio", async ({ page }) => {
+test("apresenta mesa de trabalho no Studio e navega por páginas e miniaturas após importação", async ({
+  page,
+}) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Abrir Studio" }).first().click();
 
-  await expect(page.locator(".document-canvas__doc-title")).toBeVisible();
-  await expect(page.getByText("IV. CONCLUSÃO")).toBeVisible();
+  // Garante que o Empty State Apple-grade é exibido sem diálogos intrusivos
+  await expect(page.getByText("Mesa de Trabalho Documental")).toBeVisible();
+  await expect(page.getByText(/Arraste e solte um arquivo PDF, Word ou Texto aqui/i)).toBeVisible();
+
+  // Importa um documento real de teste
+  const fileInput = page.getByLabel("Selecionar arquivo para o Studio");
+  await fileInput.setInputFiles({
+    name: "Contrato_Auditado.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4 Mock de teste documental"),
+  });
+
+  // Valida que o documento foi registrado na árvore e na mesa
+  await expect(page.locator(".document-canvas__doc-title")).toHaveText("Contrato_Auditado.pdf");
+  await expect(page.locator("iframe[title='Contrato_Auditado.pdf']")).toBeVisible();
 
   // Abre trilho de miniaturas
   const thumbBtn = page.getByRole("button", { name: "Miniaturas" });
@@ -145,13 +160,7 @@ test("navega por múltiplas páginas e miniaturas no Studio", async ({ page }) =
 
   // Clica na miniatura Pág. 1
   await pag1Btn.click();
-  await expect(page.getByText("I. IDENTIFICAÇÃO E QUALIFICAÇÃO")).toBeVisible();
-
-  // Usa o input direto de página para ir à página 8
-  const pageInput = page.getByTitle("Digite a página e tecle Enter");
-  await pageInput.fill("8");
-  await pageInput.press("Enter");
-  await expect(page.getByText("IV. CONCLUSÃO")).toBeVisible();
+  await expect(page.getByText("Contrato_Auditado.pdf").first()).toBeVisible();
 });
 
 test("inspeciona a cadeia de custódia e histórico SQLite no Studio", async ({ page }) => {

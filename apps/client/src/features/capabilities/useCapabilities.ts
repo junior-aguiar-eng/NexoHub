@@ -41,9 +41,9 @@ export const DEFAULT_CAPABILITIES: readonly CapabilityItem[] = [
     id: "pdf.super_compress",
     title: "Super-Compactador de PDFs",
     summary:
-      "Compactação profunda com reamostragem inteligente de imagens para e-mails e tribunais.",
+      "Compactação profunda com reamostragem inteligente de imagens para envio por e-mail e web.",
     benefit:
-      "Reduz arquivos pesados para atender aos limites rígidos de envio de portais e peticionamentos.",
+      "Reduz arquivos pesados mantendo a legibilidade visual para respeitar limites de envio.",
     category: "compression",
     diskSizeBytes: 41943040, // ~40 MB
     status: "not_installed",

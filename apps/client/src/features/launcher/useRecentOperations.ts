@@ -9,62 +9,54 @@ export interface RecentOperation {
   originalSize?: number;
   resultSize?: number;
   sha256?: string;
-  categoryKey: "recent.type.procedural" | "recent.type.contracts" | "recent.type.opinion";
+  categoryKey:
+    | "recent.type.general"
+    | "recent.type.document"
+    | "recent.type.pdf"
+    | "recent.type.procedural"
+    | "recent.type.contracts"
+    | "recent.type.opinion";
   artifactPath?: string;
   downloadUrl?: string;
 }
 
 const STORAGE_KEY = "nexohub:recent-operations";
 
-const INITIAL_FALLBACK: RecentOperation[] = [
-  {
-    id: "rec-1",
-    documentName: "Apelação Cível – 0019284-82.2025.8.19.0001.pdf",
-    toolId: "pdf-compress",
-    toolName: "Compressão de Arquivo",
-    timestamp: Date.now() - 1000 * 60 * 35,
-    originalSize: 4_850_000,
-    resultSize: 1_420_000,
-    sha256: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
-    categoryKey: "recent.type.procedural",
-  },
-  {
-    id: "rec-2",
-    documentName: "Contrato de Prestação de Serviços – Minuta v3.docx",
-    toolId: "text-review",
-    toolName: "Análise Linguística",
-    timestamp: Date.now() - 1000 * 60 * 180,
-    originalSize: 340_000,
-    resultSize: 340_000,
-    sha256: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
-    categoryKey: "recent.type.contracts",
-  },
-  {
-    id: "rec-3",
-    documentName: "Parecer Jurídico – Compliance Tributário.pdf",
-    toolId: "pdf-ocr",
-    toolName: "Extração de Texto",
-    timestamp: Date.now() - 1000 * 60 * 60 * 24,
-    originalSize: 1_200_000,
-    resultSize: 1_850_000,
-    sha256: "4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a",
-    categoryKey: "recent.type.opinion",
-  },
-];
+function isMockDocumentName(name: string): boolean {
+  const n = name.toLowerCase();
+  return (
+    n.includes("apresentacao_comercial") ||
+    n.includes("relatorio_mensal") ||
+    n.includes("documento_digitalizado") ||
+    n.includes("dossie") ||
+    n.includes("peticao") ||
+    n.includes("apelacao") ||
+    n.includes("contrato_prestacao")
+  );
+}
 
 export function useRecentOperations() {
   const [operations, setOperations] = useState<RecentOperation[]>(() => {
-    if (typeof window === "undefined") return INITIAL_FALLBACK;
+    if (typeof window === "undefined") return [];
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          // Filtra qualquer registro mock legado que tenha ficado no localStorage
+          const clean = parsed.filter(
+            (item) => item && item.documentName && !isMockDocumentName(item.documentName),
+          );
+          if (clean.length !== parsed.length) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
+          }
+          return clean;
+        }
       }
     } catch (e) {
       console.warn("Falha ao ler histórico de operações:", e);
     }
-    return INITIAL_FALLBACK;
+    return [];
   });
 
   useEffect(() => {

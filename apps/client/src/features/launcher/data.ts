@@ -14,126 +14,94 @@ import { translate } from "@/i18n";
 import type { LauncherTool, Suite } from "./model";
 
 export const suites: readonly Suite[] = [
-  { id: "overview", labelKey: "suite.all", ariaLabel: "Todas" },
-  { id: "processing", labelKey: "suite.processing", ariaLabel: "Processamento" },
-  { id: "review", labelKey: "suite.review", ariaLabel: "Revisão" },
-  { id: "compliance", labelKey: "suite.compliance", ariaLabel: "Compliance" },
-  { id: "extraction", labelKey: "suite.extraction", ariaLabel: "Extração" },
-  { id: "flow", labelKey: "suite.flow", ariaLabel: "NexoFlow" },
+  { id: "overview", labelKey: "suite.all", ariaLabel: "Todas as ferramentas" },
+  { id: "organize", labelKey: "suite.organize", ariaLabel: "Organizar PDF" },
+  { id: "optimize", labelKey: "suite.optimize", ariaLabel: "Otimizar PDF" },
+  { id: "text", labelKey: "suite.text", ariaLabel: "Texto" },
 ];
 
 const presentation = {
   "pdf-organize": {
-    suite: "pdf",
-    titleKey: "tool.pdfOrganize.title",
-    descriptionKey: "tool.pdfOrganize.description",
+    suite: "organize" as const,
+    titleKey: "tool.pdfOrganize.title" as const,
+    descriptionKey: "tool.pdfOrganize.description" as const,
     icon: BetweenHorizontalStart,
+    accentColor: "#EF4444", // Vermelho Coral
   },
   "pdf-compress": {
-    suite: "pdf",
-    titleKey: "tool.pdfCompress.title",
-    descriptionKey: "tool.pdfCompress.description",
+    suite: "optimize" as const,
+    titleKey: "tool.pdfCompress.title" as const,
+    descriptionKey: "tool.pdfCompress.description" as const,
     icon: FileArchive,
+    accentColor: "#10B981", // Verde Esmeralda
   },
   "pdf-extract-images": {
-    suite: "pdf",
-    titleKey: "tool.pdfExtractImages.title",
-    descriptionKey: "tool.pdfExtractImages.description",
+    suite: "organize" as const,
+    titleKey: "tool.pdfExtractImages.title" as const,
+    descriptionKey: "tool.pdfExtractImages.description" as const,
     icon: Images,
+    accentColor: "#F59E0B", // Âmbar / Ouro Solar
   },
   "pdf-ocr": {
-    suite: "pdf",
-    titleKey: "tool.pdfOcr.title",
-    descriptionKey: "tool.pdfOcr.description",
+    suite: "organize" as const,
+    titleKey: "tool.pdfOcr.title" as const,
+    descriptionKey: "tool.pdfOcr.description" as const,
     icon: FileScan,
+    accentColor: "#8B5CF6", // Violeta Moderno
   },
   "text-compare": {
-    suite: "text",
-    titleKey: "tool.textCompare.title",
-    descriptionKey: "tool.textCompare.description",
+    suite: "text" as const,
+    titleKey: "tool.textCompare.title" as const,
+    descriptionKey: "tool.textCompare.description" as const,
     icon: GitCompareArrows,
+    accentColor: "#3B82F6", // Azul Real
   },
   "text-review": {
-    suite: "text",
-    titleKey: "tool.textReview.title",
-    descriptionKey: "tool.textReview.description",
+    suite: "text" as const,
+    titleKey: "tool.textReview.title" as const,
+    descriptionKey: "tool.textReview.description" as const,
     icon: SpellCheck2,
+    accentColor: "#6366F1", // Índigo
   },
   "text-translate": {
-    suite: "text",
-    titleKey: "tool.textTranslate.title",
-    descriptionKey: "tool.textTranslate.description",
+    suite: "text" as const,
+    titleKey: "tool.textTranslate.title" as const,
+    descriptionKey: "tool.textTranslate.description" as const,
     icon: Languages,
-  },
-  "intelligence-extract": {
-    suite: "text",
-    titleKey: "tool.intelligenceExtract.title",
-    descriptionKey: "tool.intelligenceExtract.description",
-    icon: ListFilter,
+    accentColor: "#06B6D4", // Ciano / Turquesa
   },
 } as const;
 
-import type { CapabilityItem } from "@nexohub/contracts";
 import type { CapabilityProvider } from "@nexohub/tool-sdk";
-import { BrowserDocumentCorePort } from "@/platform/browser-document-core";
 import type { DocumentCorePort } from "@/platform/document-core";
 
-export function createDynamicCapabilitiesProvider(
-  capabilities?: readonly CapabilityItem[],
-  documentCore?: DocumentCorePort,
-): CapabilityProvider {
-  const isTranslationInstalled = Boolean(
-    capabilities?.some((c) => c.id === "translation.neural" && c.status === "installed"),
-  );
-  const isOcrInstalled = Boolean(
-    capabilities?.some((c) => c.id === "ocr.vision" && c.status === "installed"),
-  );
-  const isReviewInstalled = Boolean(
-    capabilities?.some((c) => c.id === "text.deep_review" && c.status === "installed"),
-  );
-  const isCompressInstalled = Boolean(
-    capabilities?.some((c) => c.id === "pdf.super_compress" && c.status === "installed"),
-  );
-
-  const isNativeDocumentCore = Boolean(
-    documentCore && !(documentCore instanceof BrowserDocumentCorePort),
-  );
-
+export function createDynamicCapabilitiesProvider(): CapabilityProvider {
   return new StaticCapabilityProvider({
     "documents.read": { available: true },
     "documents.write": { available: true },
-    "pdf.transform":
-      isNativeDocumentCore || isCompressInstalled
-        ? { available: true }
-        : { available: false, reason: translate("tools.unavailable.pdf") },
-    "ocr.execute": isOcrInstalled
-      ? { available: true }
-      : { available: false, reason: translate("tools.unavailable.ocr") },
-    "text.compare": { available: false, reason: translate("tools.unavailable.compare") },
-    "text.review": isReviewInstalled
-      ? { available: true }
-      : { available: false, reason: translate("tools.unavailable.review") },
-    "translation.execute": isTranslationInstalled
-      ? { available: true }
-      : { available: false, reason: translate("tools.unavailable.translation") },
-    "intelligence.extract": {
-      available: false,
-      reason: translate("tools.unavailable.extract"),
-    },
+    "pdf.transform": { available: true },
+    "text.compare": { available: true },
+    "text.review": { available: true },
+    "ocr.execute": { available: true },
+    "translation.execute": { available: true },
   });
 }
 
 export function resolveLauncherTools(
-  capabilities?: readonly CapabilityItem[],
-  documentCore?: DocumentCorePort,
+  _capabilities?: readonly unknown[],
+  _documentCore?: DocumentCorePort,
 ): readonly LauncherTool[] {
-  const provider = createDynamicCapabilitiesProvider(capabilities, documentCore);
-  return coreToolRegistry.list("quick").map((manifest) => ({
-    ...presentation[manifest.id as keyof typeof presentation],
-    id: manifest.id,
-    manifest,
-    availability: resolveToolAvailability(manifest, provider),
-  }));
+  const provider = createDynamicCapabilitiesProvider();
+  return coreToolRegistry
+    .list("quick")
+    .filter((manifest) => manifest.id in presentation)
+    .map((manifest) => ({
+      ...presentation[manifest.id as keyof typeof presentation],
+      id: manifest.id,
+      manifest,
+      availability: resolveToolAvailability(manifest, provider),
+    }))
+    .filter((tool) => tool.availability.available);
 }
 
 export const launcherTools: readonly LauncherTool[] = resolveLauncherTools();

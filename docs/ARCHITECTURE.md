@@ -4,7 +4,7 @@ O NexoHub adota monólito modular, ports and adapters e módulos verticais. O cl
 é compartilhado pela web e pelo shell Tauri; não existe um segundo frontend desktop.
 
 ```text
-React UI (Launcher / Studio)
+React UI (Hub de Ferramentas / Telas Dedicadas / Studio Avançado)
         |
 Application Core — Document Domain — Tool Registry
         |

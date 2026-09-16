@@ -1,4 +1,4 @@
-import type { ArtifactId, Document, DocumentId, ProjectId } from "@nexohub/domain";
+import type { Document } from "@nexohub/domain";
 import {
   Briefcase,
   ChevronDown,
@@ -38,16 +38,6 @@ type DocumentTreeSidebarProps = {
   onReportsClick?: () => void;
 };
 
-// Exemplos de documentos representativos exibidos quando nenhum documento real foi importado ainda
-const SAMPLE_DOCS: Array<{ id: string; title: string; mimeType: string }> = [
-  { id: "sample-1", title: "Petição inicial.pdf", mimeType: "application/pdf" },
-  { id: "sample-2", title: "Contestação.pdf", mimeType: "application/pdf" },
-  { id: "sample-3", title: "Doc. 01 - Contrato.pdf", mimeType: "application/pdf" },
-  { id: "sample-4", title: "Doc. 02 - Laudo pericial.pdf", mimeType: "application/pdf" },
-  { id: "sample-5", title: "Doc. 03 - E-mails.pdf", mimeType: "application/pdf" },
-  { id: "sample-6", title: "Doc. 04 - Fotos.pdf", mimeType: "application/pdf" },
-];
-
 export function DocumentTreeSidebar({
   activeProject,
   documents,
@@ -65,20 +55,6 @@ export function DocumentTreeSidebar({
   onReportsClick,
 }: DocumentTreeSidebarProps) {
   const [dossierExpanded, setDossierExpanded] = useState(true);
-  const [selectedSampleId, setSelectedSampleId] = useState("sample-4");
-
-  const effectiveDocs =
-    documents.length > 0
-      ? documents
-      : SAMPLE_DOCS.map((s) => ({
-          id: s.id as DocumentId,
-          projectId: (activeProject?.path ?? "local") as ProjectId,
-          title: s.title,
-          originalMimeType: s.mimeType,
-          originalArtifactId: "sample-art" as ArtifactId,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        }));
 
   return (
     <aside
@@ -133,7 +109,7 @@ export function DocumentTreeSidebar({
                 {dossierExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 <Folder size={15} className="studio-tree-group__icon" />
                 <span className="studio-tree-group__title">
-                  {activeProject ? activeProject.name : "Dossiê Processual"}
+                  {activeProject ? activeProject.name : "Dossiê Local"}
                 </span>
               </button>
 
@@ -142,38 +118,43 @@ export function DocumentTreeSidebar({
                   <div className="studio-tree-subgroup">
                     <div className="studio-tree-subgroup__header">
                       <span className="studio-tree-subgroup__label">
-                        Documentos ({effectiveDocs.length})
+                        Documentos ({documents.length})
                       </span>
                     </div>
 
-                    <ul className="studio-tree-list">
-                      {effectiveDocs.map((doc) => {
-                        const isSelected = selectedDocument
-                          ? selectedDocument.id === doc.id
-                          : selectedSampleId === doc.id;
+                    {documents.length > 0 ? (
+                      <ul className="studio-tree-list">
+                        {documents.map((doc) => {
+                          const isSelected = selectedDocument?.id === doc.id;
 
-                        return (
-                          <li key={doc.id}>
-                            <button
-                              type="button"
-                              className={`studio-tree-item ${
-                                isSelected ? "studio-tree-item--active" : ""
-                              }`}
-                              onClick={() => {
-                                if (documents.length > 0) {
-                                  onSelectDocument(doc);
-                                } else {
-                                  setSelectedSampleId(doc.id);
-                                }
-                              }}
-                            >
-                              <FileText size={14} className="studio-tree-item__icon" />
-                              <span className="studio-tree-item__name">{doc.title}</span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                          return (
+                            <li key={doc.id}>
+                              <button
+                                type="button"
+                                className={`studio-tree-item ${
+                                  isSelected ? "studio-tree-item--active" : ""
+                                }`}
+                                onClick={() => onSelectDocument(doc)}
+                              >
+                                <FileText size={14} className="studio-tree-item__icon" />
+                                <span className="studio-tree-item__name">{doc.title}</span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : (
+                      <div
+                        style={{
+                          padding: "0.5rem 0.75rem",
+                          fontSize: "0.75rem",
+                          color: "var(--color-ink-muted, #667771)",
+                          fontStyle: "italic",
+                        }}
+                      >
+                        Nenhum documento anexado.
+                      </div>
+                    )}
 
                     {/* Add Document Action */}
                     <button

@@ -9,6 +9,7 @@ import {
   Minimize2,
   Scaling,
   Sparkles,
+  UploadCloud,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
@@ -29,6 +30,7 @@ export type DocumentEvidence = {
 
 type DocumentViewerCanvasProps = {
   documentTitle?: string;
+  hasDocument?: boolean;
   pageCount?: number;
   currentPage?: number;
   onPageChange?: (page: number) => void;
@@ -38,11 +40,14 @@ type DocumentViewerCanvasProps = {
   scrollTargetRef?: RefObject<HTMLDivElement | null>;
   activeArtifactVersionName?: string;
   pdfBlobUrl?: string | null;
+  onDropFile?: (file: File) => void;
+  onImportClick?: () => void;
 };
 
 export function DocumentViewerCanvas({
-  documentTitle = "Doc. 02 - Laudo pericial.pdf",
-  pageCount = 42,
+  documentTitle,
+  hasDocument,
+  pageCount = 1,
   currentPage: externalPage,
   onPageChange,
   evidences = [],
@@ -51,12 +56,21 @@ export function DocumentViewerCanvas({
   scrollTargetRef,
   activeArtifactVersionName,
   pdfBlobUrl,
+  onDropFile,
+  onImportClick,
 }: DocumentViewerCanvasProps) {
-  const [internalPage, setInternalPage] = useState(8);
+  const isDocumentActive =
+    hasDocument ??
+    (Boolean(pdfBlobUrl) ||
+      (Boolean(documentTitle) &&
+        documentTitle !== "Nenhum documento aberto" &&
+        documentTitle !== "Nenhum documento anexado."));
+  const [internalPage, setInternalPage] = useState(1);
   const [zoom, setZoom] = useState(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showThumbnails, setShowThumbnails] = useState(false);
   const [pageInputVal, setPageInputVal] = useState<string>("");
+  const [isCanvasDragging, setIsCanvasDragging] = useState(false);
 
   const currentPage = externalPage ?? internalPage;
 
@@ -100,53 +114,6 @@ export function DocumentViewerCanvas({
     }
   }
 
-  // Seções dinâmicas de acordo com a página do documento
-  const getPageSection = (page: number) => {
-    if (page === 1) {
-      return {
-        title: "I. IDENTIFICAÇÃO E QUALIFICAÇÃO DAS PARTES",
-        body1:
-          "Autos do Processo nº 0812345-67.2023.8.26.0100. Ação Declaratória com Pedido de Indenização por Danos Materiais e Reparação Civil promovida em face da requerida.",
-        body2:
-          "Os documentos anexos instruem a petição inicial demonstrando a relação jurídica havida entre as partes e os comprovantes de protocolo perante a autoridade competente.",
-      };
-    }
-    if (page === 2 || page === 3) {
-      return {
-        title: "II. DOS FATOS E DO HISTÓRICO CONTRATUAL",
-        body1:
-          "Constata-se que a contratação original previa obrigações mútuas e prazos de entrega estritos, devidamente discriminados nas cláusulas contratuais e aditivos posteriores.",
-        body2:
-          "Houve notificações extrajudiciais comprovando a ciência inequívoca da parte contrária a respeito das inconformidades e dos atrasos verificados na execução.",
-      };
-    }
-    if (page >= 4 && page <= 7) {
-      return {
-        title: "III. DO LAUDO TÉCNICO PERICIAL E METODOLOGIA",
-        body1:
-          "A perícia foi realizada em observância às normas da ABNT e aos quesitos formulados por ambas as partes, empregando-se vistoria presencial e análise documental exaustiva.",
-        body2:
-          "As medições técnicas e apurações financeiras foram tabuladas em conformidade com as melhores práticas de auditoria pericial contábil e de engenharia.",
-      };
-    }
-    if (page === 8) {
-      return {
-        title: "IV. CONCLUSÃO PERICIAL E NEXO CAUSAL",
-        body1:
-          "Com base nas análises técnicas realizadas, nos documentos apresentados e nas diligências efetuadas, é possível afirmar que houve descumprimento das normas técnicas aplicáveis ao caso concreto.",
-        body2:
-          "Esse entendimento está em consonância com a jurisprudência consolidada do Superior Tribunal de Justiça, conforme precedentes normativos catalogados na sequência dos trabalhos periciais.",
-      };
-    }
-    return {
-      title: `V. ANEXOS TÉCNICOS E PRECEDENTES (PÁGINA ${page})`,
-      body1: `Registro complementar de evidências, tabelas e notas explicativas vinculadas ao documento principal na página ${page}.`,
-      body2:
-        "Toda a cadeia de custódia e histórico de transformações permanecem auditáveis no banco de dados SQLite local do projeto sob hash BLAKE3.",
-    };
-  };
-
-  const pageSection = getPageSection(currentPage);
   const pageEvidences = evidences.filter((ev) => ev.page === currentPage);
   const currentEvidence = pageEvidences.length > 0 ? pageEvidences[0] : evidences[0];
 
@@ -164,7 +131,7 @@ export function DocumentViewerCanvas({
       <div className="document-canvas__toolbar">
         <div className="document-canvas__doc-badge">
           <FileText size={15} className="document-canvas__doc-icon" />
-          <span className="document-canvas__doc-title">{documentTitle}</span>
+          <span className="document-canvas__doc-title">{documentTitle || "Mesa de Trabalho"}</span>
           {activeArtifactVersionName && (
             <span
               style={{
@@ -458,6 +425,101 @@ export function DocumentViewerCanvas({
                 }}
               />
             </div>
+          ) : !isDocumentActive ? (
+            <section
+              aria-label="Mesa de trabalho documental"
+              className={`document-empty-canvas ${isCanvasDragging ? "document-empty-canvas--active" : ""}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsCanvasDragging(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsCanvasDragging(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsCanvasDragging(false);
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  onDropFile?.(e.dataTransfer.files[0]);
+                }
+              }}
+              style={{
+                width: "100%",
+                maxWidth: "680px",
+                margin: "4rem auto",
+                padding: "3.5rem 2.5rem",
+                borderRadius: "16px",
+                border: isCanvasDragging
+                  ? "2px dashed var(--color-brand, #0d4f3f)"
+                  : "1px solid var(--color-border, #cbd5e1)",
+                background: isCanvasDragging
+                  ? "var(--color-brand-soft, rgba(13, 79, 63, 0.08))"
+                  : "var(--color-surface, #ffffff)",
+                boxShadow: "var(--shadow-sheet)",
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "1.25rem",
+                transition: "all 0.2s ease-in-out",
+              }}
+            >
+              <div
+                style={{
+                  width: "64px",
+                  height: "64px",
+                  borderRadius: "50%",
+                  background: "var(--color-brand-soft, rgba(13, 79, 63, 0.1))",
+                  color: "var(--color-brand, #0d4f3f)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <UploadCloud size={32} />
+              </div>
+              <div>
+                <h3
+                  style={{
+                    fontSize: "1.25rem",
+                    fontWeight: 700,
+                    color: "var(--color-ink, #1f2937)",
+                    marginBottom: "0.5rem",
+                    fontFamily: "var(--font-heading)",
+                  }}
+                >
+                  Mesa de Trabalho Documental
+                </h3>
+                <p
+                  style={{
+                    fontSize: "0.875rem",
+                    color: "var(--color-ink-muted, #667771)",
+                    maxWidth: "420px",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Arraste e solte um arquivo PDF, Word ou Texto aqui para iniciar a análise e
+                  transformação com integridade preservada.
+                </p>
+              </div>
+              <Button
+                variant="primary"
+                onClick={onImportClick}
+                style={{
+                  padding: "0.6rem 1.4rem",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  gap: "0.5rem",
+                }}
+              >
+                <FileText size={16} />
+                <span>Selecionar Documento</span>
+              </Button>
+            </section>
           ) : (
             <div
               className="document-sheet"
@@ -466,29 +528,28 @@ export function DocumentViewerCanvas({
                 transformOrigin: "top center",
               }}
             >
-              {/* Page Tag Floating Corner */}
               <div className="document-sheet__page-tag">p. {currentPage}</div>
 
-              {/* Document Content Header */}
               <div className="document-sheet__content">
-                <h2 className="document-sheet__section-title">{pageSection.title}</h2>
+                <h2 className="document-sheet__section-title">
+                  {documentTitle || "Documento Local"}
+                </h2>
 
-                <p className="document-sheet__paragraph">{pageSection.body1}</p>
+                <p className="document-sheet__paragraph">
+                  Este artefato está registrado sob a cadeia de custódia local do NexoHub. A
+                  integridade estrutural e os metadados do documento permanecem protegidos contra
+                  alterações destrutivas.
+                </p>
 
-                {/* Highlighted Evidence Anchor Block (Renderizado se a página tiver evidências ou na pág 8) */}
-                {(currentPage === 8 || pageEvidences.length > 0) && currentEvidence && (
+                {pageEvidences.length > 0 && currentEvidence && (
                   <div
                     ref={scrollTargetRef}
                     className={`document-sheet__highlight-block ${
                       activeEvidenceId ? "document-sheet__highlight-block--selected" : ""
                     }`}
                   >
-                    <mark className="document-sheet__mark">
-                      {currentEvidence.highlightText ||
-                        "Diante do conjunto probatório analisado, conclui-se que os danos identificados decorrem diretamente da falha na prestação do serviço, havendo nexo causal inequívoco entre a conduta da requerida e os prejuízos experimentados pela parte autora."}
-                    </mark>
+                    <mark className="document-sheet__mark">{currentEvidence.highlightText}</mark>
 
-                    {/* Discrete Lateral Evidence Anchor Badge */}
                     <button
                       type="button"
                       className="document-sheet__anchor-pill"
@@ -500,7 +561,7 @@ export function DocumentViewerCanvas({
                       <span className="document-sheet__anchor-icon">
                         <Hash size={12} />
                       </span>
-                      <span className="document-sheet__anchor-label">Âncora #1</span>
+                      <span className="document-sheet__anchor-label">Âncora</span>
                       <span className="document-sheet__anchor-hash">
                         {currentEvidence.anchorHash
                           ? `${currentEvidence.anchorHash.substring(0, 4)}…`
@@ -511,24 +572,9 @@ export function DocumentViewerCanvas({
                   </div>
                 )}
 
-                <p className="document-sheet__paragraph">{pageSection.body2}</p>
-
-                {currentPage === pageCount && (
-                  <>
-                    <h2 className="document-sheet__section-title" style={{ marginTop: "2.5rem" }}>
-                      VI. ENCERRAMENTO E PROTOCOLO
-                    </h2>
-                    <p className="document-sheet__paragraph">
-                      Nada mais havendo a consignar ou suscitar quanto aos quesitos formulados pelas
-                      partes, encerra-se o presente laudo técnico pericial de constatação
-                      documental.
-                    </p>
-                  </>
-                )}
-
-                <div className="document-sheet__watermark">
+                <div className="document-sheet__watermark" style={{ marginTop: "3rem" }}>
                   <Sparkles size={13} style={{ marginRight: "0.4rem" }} />
-                  Integridade criptográfica auditada via BLAKE3 • Imutabilidade garantida
+                  Integridade criptográfica auditada • Imutabilidade garantida
                 </div>
               </div>
             </div>

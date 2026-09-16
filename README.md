@@ -15,41 +15,34 @@
   </a>
 </p>
 
-Estação documental **open source**, **local-first** e de **alta performance** para organizar projetos, preservar originais imutáveis e produzir novos artefatos derivados através de Quick Tools, Studio, automação visual (NexoFlow) e CLI.
+Hub de ferramentas práticas de PDF e documentos **open source**, **100% gratuito**, **local-first** e de **alta performance**. Junte, divida, comprima, reconheça texto (OCR), revise e converta seus arquivos diretamente no seu computador, com total privacidade e sem filas.
 
 > **Estado**: `0.1.0-alpha.1` em preparação e validação contínua. Build automatizado para Windows x64 ativo via GitHub Actions.
 
 ---
 
-## 🖥️ Visão Geral e Superfícies
+## 🖥️ Visão Geral e Experiência
 
-O NexoHub foi concebido em camadas especializadas, garantindo que o núcleo documental e os executores de tarefas sejam compartilhados entre a interface gráfica e o terminal:
-
-![Launcher do NexoHub](docs/images/launcher.png)
-
-![Studio do NexoHub](docs/images/studio.png)
+O NexoHub combina a simplicidade e agilidade visual do **iLovePDF** com a força do processamento nativo e seguro:
 
 ### Superfícies do Produto
 
-1. **Desktop Launcher (Tauri v2 + React 19)**:
-   - Entrada rápida orientada a tarefas com **Quick Tools** reais (compressão, divisão, junção, OCR, conversão, metadados).
-   - Gerenciamento de projetos locais e histórico recente sem conexão externa.
-2. **Desktop Studio**:
-   - Workspace documental avançado com visualizador multi-página, árvore de documentos, **Nexo Layers**, **NexoFlow** (DAG de pipelines visuais) e editor de texto imutável.
-3. **CLI (@nexohub/cli)**:
-   - Linha de comando para automação em scripts e terminal com comandos dedicados (`nexohub split`, `merge`, `compress`, `ocr`, `meta`, etc.), validada por suíte de testes automatizados.
-4. **Engines Especializados**:
-   - **Rust Core (`crates/`)**: I/O seguro de alta performance, verificação SHA-256, cancelamento atômico de operações e IPC tipado.
-   - **Python Engine (`engines/python`)**: Sidecar isolado e gerenciado por `uv` (Python 3.14) provendo OCR (Tesseract), renderização e manipulação avançada com PyMuPDF.
+1. **Hub de Ferramentas (Tauri v2 + React 19)**:
+   - Vitrine limpa e categorizada de ferramentas essenciais: **Juntar PDF**, **Dividir PDF**, **Comprimir**, **Reconhecer Texto (OCR)**, **Corretor de Texto**, **Traduzir**, **Comparar** e **Extrair Imagens**.
+   - **Telas Dedicadas por Ferramenta**: Selecione ou arraste seus arquivos, ajuste opções com facilidade e processe instantaneamente.
+   - Histórico local de operações sem envio para a nuvem.
+2. **Engines Especializados de Alta Performance**:
+   - **Rust Core (`crates/`)**: I/O seguro de alta performance, verificação SHA-256 e cancelamento atômico.
+   - **Python Engine (`engines/python`)**: Sidecar gerenciado por `uv` provendo OCR (Tesseract) e manipulação avançada com PyMuPDF.
+   - **LanguageTool Community**: Correção sintática e gramatical avançada em ambiente local.
 
 ---
 
 ## 🔒 Princípios de Privacidade e Modelo Local-First
 
-- **Imutabilidade**: O arquivo original importado jamais é alterado ou sobrescrito; toda transformação produz um novo artefato derivado rastreável no Artifact Graph.
-- **100% Offline e Local**: Não há telemetria invasiva, criação de conta obrigatória nem dependência de servidores remotos para funcionalidades locais.
-- **Isolamento de Sidecars**: A interface do usuário não acessa o sistema de arquivos, SQLite ou processos nativos diretamente — toda interação é auditada através de portas de capacidade tipadas.
-- A política completa de governança está detalhada em [`docs/PRIVACY.md`](docs/PRIVACY.md).
+- **100% Gratuito e Sem Limites**: Sem planos pagos artificiais, limites de páginas ou filas de espera.
+- **Seus Arquivos Ficam no seu PC**: Processamento local em memória ou disco nativo, sem telemetria e sem servidores remotos obrigatórios.
+- **Imutabilidade**: O arquivo original jamais é sobrescrito; toda operação gera um novo arquivo resultante.
 
 ---
 
@@ -58,10 +51,10 @@ O NexoHub foi concebido em camadas especializadas, garantindo que o núcleo docu
 O alvo nativo principal de distribuição é **Windows x64**.
 
 ### Pré-requisitos
-- **Node.js**: `24.19.0` (ou LTS equivalente)
-- **pnpm**: `11.19.0`
+- **Node.js**: `24.x` (ou LTS equivalente)
+- **pnpm**: `11.x`
 - **Rust**: `1.88+` (com target `x86_64-pc-windows-msvc`)
-- **Python / uv**: Python 3.14 gerenciado pelo `uv`
+- **Python / uv**: Python gerenciado pelo `uv`
 - **WebView2**: Runtime do Windows (já incluído no Windows 10/11)
 
 ### Configuração do Ambiente Local
@@ -75,13 +68,6 @@ uv sync --locked --project engines/python
 
 # 3. Executar o aplicativo desktop em modo de desenvolvimento (Tauri + Vite)
 pnpm --filter @nexohub/desktop dev
-```
-
-### Execução da CLI
-
-```powershell
-# Executar a CLI localmente
-pnpm --filter @nexohub/cli test
 ```
 
 ### LanguageTool (Opcional para Revisão Gramatical)

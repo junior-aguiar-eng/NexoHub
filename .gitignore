@@ -25,3 +25,7 @@ apps/desktop/src-tauri/resources/runtime/*
 !apps/desktop/src-tauri/resources/runtime/README.md
 runtime/languagetool/
 runtime/models/
+runtime/tessdata/*
+!runtime/tessdata/.gitkeep
+*.log
+

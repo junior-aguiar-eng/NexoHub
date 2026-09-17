@@ -7,11 +7,10 @@ import type { LauncherTool } from "./model";
 type ToolCardProps = {
   tool: LauncherTool;
   index: number;
-  onPromote?: (tool: LauncherTool) => void;
   onRunTool?: (tool: LauncherTool, initialFiles?: File[]) => void;
 };
 
-export function ToolCard({ tool, index, onPromote, onRunTool }: ToolCardProps) {
+export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
   const reduceMotion = useReducedMotion();
   const [isDragOver, setIsDragOver] = useState(false);
   const Icon = tool.icon;
@@ -101,30 +100,6 @@ export function ToolCard({ tool, index, onPromote, onRunTool }: ToolCardProps) {
         <h3 className="tool-card__title">{translate(tool.titleKey)}</h3>
         <p className="tool-card__desc">{translate(tool.descriptionKey)}</p>
       </div>
-
-      {onPromote && (
-        <button
-          type="button"
-          className="tool-card__promote-btn"
-          style={{
-            marginTop: "8px",
-            fontSize: "0.75rem",
-            color: "var(--color-muted)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: 0,
-            textAlign: "left",
-            textDecoration: "underline",
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onPromote(tool);
-          }}
-        >
-          Continuar no Studio
-        </button>
-      )}
 
       <div className="tool-card__hover-arrow" aria-hidden="true">
         <ArrowRight size={14} style={{ color: accent }} />

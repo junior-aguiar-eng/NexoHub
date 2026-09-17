@@ -1,4 +1,3 @@
-import { type NexoFlowSnapshot, promoteQuickTool } from "@nexohub/domain";
 import { Database, FileCheck, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AuthProvider, useAuth } from "@/features/account/AuthContext";
@@ -14,7 +13,6 @@ import type { LauncherTool, SuiteId } from "@/features/launcher/model";
 import { QuickToolGrid } from "@/features/launcher/QuickToolGrid";
 import { RecentProjects } from "@/features/launcher/RecentProjects";
 import { useRecentOperations } from "@/features/launcher/useRecentOperations";
-import { StudioWorkspace } from "@/features/studio/StudioWorkspace";
 import { translate } from "@/i18n";
 import { createDocumentCorePort } from "@/platform/document-core";
 
@@ -53,15 +51,7 @@ function AppContent() {
   const [activeSuite, setActiveSuite] = useState<SuiteId>("overview");
   const [searchQuery] = useState("");
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [isStudioOpen, setIsStudioOpen] = useState(false);
   const [isCapabilitiesOpen, setIsCapabilitiesOpen] = useState(false);
-  const [promotedFlow, setPromotedFlow] = useState<
-    | {
-        tool: LauncherTool;
-        flow: NexoFlowSnapshot;
-      }
-    | undefined
-  >(undefined);
 
   useEffect(() => {
     function handleShortcut(event: KeyboardEvent) {
@@ -89,22 +79,6 @@ function AppContent() {
       return matchesSuite && normalize(searchableText).includes(normalizedQuery);
     });
   }, [dynamicTools, activeSuite, searchQuery]);
-
-  // Se o usuário selecionou o Studio, exibe a mesa de trabalho do Studio
-  if (isStudioOpen) {
-    return (
-      <div className="app-shell">
-        <StudioWorkspace
-          onClose={() => {
-            setIsStudioOpen(false);
-            setPromotedFlow(undefined);
-          }}
-          documentCore={documentCore}
-          promotedFlow={promotedFlow}
-        />
-      </div>
-    );
-  }
 
   // Se o usuário selecionou uma ferramenta dedicada, exibe a tela dedicada da ferramenta
   if (activeDedicatedTool) {
@@ -135,10 +109,6 @@ function AppContent() {
         activeSuite={activeSuite}
         onSelectSuite={(suite) => setActiveSuite(suite)}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-        onOpenStudio={() => {
-          setPromotedFlow(undefined);
-          setIsStudioOpen(true);
-        }}
         onOpenCapabilities={() => setIsCapabilitiesOpen(true)}
         searchQuery={searchQuery}
       />
@@ -150,11 +120,6 @@ function AppContent() {
         <div className="launcher-grid-container">
           <QuickToolGrid
             tools={filteredTools}
-            onPromote={(tool) => {
-              const flow = promoteQuickTool(tool.id).snapshot;
-              setPromotedFlow({ tool, flow });
-              setIsStudioOpen(true);
-            }}
             onRunTool={(tool, files) => {
               setInitialFilesForTool(files || []);
               setActiveDedicatedTool(tool);

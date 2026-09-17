@@ -9,7 +9,6 @@ type HeaderProps = {
   activeSuite: SuiteId;
   onSelectSuite: (suite: SuiteId) => void;
   onOpenCommandPalette: () => void;
-  onOpenStudio?: () => void;
   onOpenCapabilities?: () => void;
   searchQuery?: string;
 };
@@ -18,7 +17,6 @@ export function Header({
   activeSuite,
   onSelectSuite,
   onOpenCommandPalette,
-  onOpenStudio,
   onOpenCapabilities,
   searchQuery,
 }: HeaderProps) {
@@ -58,24 +56,6 @@ export function Header({
           </span>
           <kbd className="header-command-input__kbd">{translate("header.searchShortcut")}</kbd>
         </button>
-
-        {onOpenStudio && (
-          <button
-            type="button"
-            className="btn btn--secondary header-studio-btn"
-            onClick={onOpenStudio}
-            style={{
-              fontSize: "0.8125rem",
-              padding: "6px 12px",
-              borderRadius: "6px",
-              border: "1px solid var(--color-border)",
-              background: "var(--color-surface-hover)",
-              cursor: "pointer",
-            }}
-          >
-            Abrir Studio
-          </button>
-        )}
 
         {onOpenCapabilities && (
           <button

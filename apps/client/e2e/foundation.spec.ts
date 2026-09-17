@@ -1,19 +1,24 @@
 import { expect, test } from "@playwright/test";
 
-test("abre o Launcher compartilhado", async ({ page }) => {
+test("abre o Launcher compartilhado com vitrine de ferramentas", async ({ page }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: /Documentos jurídicos|Documentos complexos/i }),
+    page.getByRole("heading", {
+      name: "Documentos complexos e tarefas de PDF simplificados",
+    }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Comece por uma tarefa" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ferramentas práticas" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Organizar PDF" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Comprimir PDF" })).toBeVisible();
 });
 
 test("troca de suíte e filtra os cards", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Processamento", exact: true }).click();
 
-  await expect(page.getByText("Organizar PDF")).toBeVisible();
-  await expect(page.getByText("Comparar textos")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Organizar PDF" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Comparar textos" })).toHaveCount(0);
 });
 
 test("navega entre suítes pelo teclado", async ({ page }) => {
@@ -25,12 +30,12 @@ test("navega entre suítes pelo teclado", async ({ page }) => {
     "aria-current",
     "page",
   );
-  await expect(page.getByText("Organizar PDF")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Organizar PDF" })).toBeVisible();
 });
 
 test("abre e fecha a paleta de comandos", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("button", { name: /Buscar no NexoHub/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Buscar no NexoHub" })).toBeVisible();
   await page.keyboard.press("Control+k");
 
   await expect(page.getByRole("dialog", { name: "Paleta de comandos" })).toBeVisible();
@@ -40,74 +45,73 @@ test("abre e fecha a paleta de comandos", async ({ page }) => {
   await expect(page.getByRole("dialog", { name: "Paleta de comandos" })).toHaveCount(0);
 });
 
-test("abre o Studio e retorna ao Launcher", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: "Abrir Studio" }).first().click();
-
-  await expect(
-    page.getByRole("heading", { name: "Seu documento, com contexto preservado" }),
-  ).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Documentos" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /Auditor|Inspector/i })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /Âncoras|Anchors/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Criar âncora|Criar anchor/i })).toBeDisabled();
-
-  await page.getByRole("button", { name: "Voltar ao Launcher" }).click();
-  await expect(
-    page.getByRole("heading", { name: /Documentos jurídicos|Documentos complexos/i }),
-  ).toBeVisible();
-});
-
-test("promove uma Quick Tool para um NexoFlow no Studio", async ({ page }) => {
+test("abre a tela dedicada de Comprimir PDF e retorna ao Launcher", async ({ page }) => {
   await page.goto("/");
   const card = page.locator("article").filter({ hasText: "Comprimir PDF" });
-  await card.getByRole("button", { name: "Continuar no Studio" }).click();
+  await card.click();
 
-  await expect(page.getByRole("heading", { name: "NexoFlow" })).toBeVisible();
-  await expect(
-    page
-      .getByRole("region", { name: "NexoFlow" })
-      .getByRole("listitem")
-      .filter({ hasText: /^pdf-compress$/ }),
-  ).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Nexo Layers" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Otimização e Compressão de PDF" })).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Comprimir e Registrar Nova Versão" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Comprimir PDF", level: 1 })).toBeVisible();
+  await expect(page.getByText("Nível de compressão", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Recomendada \(ótimo equilíbrio\)/i)).toBeVisible();
+
+  // Retorna ao Launcher
+  await page.getByRole("button", { name: "Todas as ferramentas" }).click();
+  await expect(page.getByRole("heading", { name: "Ferramentas práticas" })).toBeVisible();
 });
 
-test("edita um rascunho textual sem simular persistência", async ({ page }) => {
+test("abre a tela dedicada de Organizar PDF", async ({ page }) => {
+  await page.goto("/");
+  const card = page.locator("article").filter({ hasText: "Organizar PDF" });
+  await card.click();
+
+  await expect(page.getByRole("heading", { name: "Organizar PDF", level: 1 })).toBeVisible();
+  await expect(page.getByText("Selecionar arquivo PDF")).toBeVisible();
+  await expect(page.getByText("ou arraste e solte seus arquivos aqui")).toBeVisible();
+});
+
+test("digita e compara textos na tela dedicada de Comparação", async ({ page }) => {
   await page.goto("/");
   const card = page.locator("article").filter({ hasText: "Comparar textos" });
-  await card.getByRole("button", { name: "Continuar no Studio" }).click();
+  await card.click();
 
-  const editor = page.getByRole("textbox", { name: "Texto original" });
-  await editor.fill("Texto jurídico em UTF-8");
-  await expect(editor).toHaveValue("Texto jurídico em UTF-8");
-  await expect(page.getByRole("button", { name: "Comparar", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Comparar textos", level: 1 })).toBeVisible();
+
+  const originalInput = page.getByPlaceholder(
+    "Cole ou digite o texto do Documento 1 (Original)...",
+  );
+  await originalInput.fill("Primeira versão do texto.");
+  await expect(originalInput).toHaveValue("Primeira versão do texto.");
+
+  const modifiedInput = page.getByPlaceholder(
+    "Cole ou digite o texto do Documento 2 (Alterado)...",
+  );
+  await modifiedInput.fill("Segunda versão alterada.");
+  await expect(modifiedInput).toHaveValue("Segunda versão alterada.");
 });
 
-test("exige o LanguageTool Community para revisar texto", async ({ page }) => {
+test("digita texto diretamente no Corretor Gramatical", async ({ page }) => {
   await page.goto("/");
   const card = page.locator("article").filter({ hasText: "Revisar texto" });
-  await card.getByRole("button", { name: "Continuar no Studio" }).click();
+  await card.click();
 
-  await expect(page.getByText(/LanguageTool Community pt-BR é obrigatório/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Analisar texto" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Criar revisão" })).toBeDisabled();
+  await expect(page.getByRole("heading", { name: "Revisar texto", level: 1 })).toBeVisible();
+  await page.getByRole("button", { name: "Digitar Texto" }).click();
+
+  const textInput = page.getByPlaceholder(
+    "Digite ou cole o texto do documento aqui para processamento imediato...",
+  );
+  await textInput.fill("Texto para revisão rápida.");
+  await expect(textInput).toHaveValue("Texto para revisão rápida.");
 });
 
-test("apresenta o OCR como processamento local condicionado a artifact", async ({ page }) => {
+test("abre a tela dedicada de Reconhecimento OCR", async ({ page }) => {
   await page.goto("/");
   const card = page.locator("article").filter({ hasText: "Reconhecer texto" });
-  await card.getByRole("button", { name: "Continuar no Studio" }).click();
+  await card.click();
 
-  await expect(
-    page.getByRole("heading", { name: "Reconhecimento óptico de caracteres" }),
-  ).toBeVisible();
-  await expect(page.getByText(/Processamento offline/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Executar OCR" })).toBeDisabled();
+  await expect(page.getByRole("heading", { name: "Reconhecer texto", level: 1 })).toBeVisible();
+  await expect(page.getByText("Idioma do documento", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Executar agora" })).toBeVisible();
 });
 
 test("gerencia ciclo de vida dos superpoderes documentais no modal", async ({ page }) => {
@@ -125,59 +129,4 @@ test("gerencia ciclo de vida dos superpoderes documentais no modal", async ({ pa
   // Fecha o modal
   await page.getByRole("button", { name: "Fechar" }).last().click();
   await expect(page.getByRole("heading", { name: "Superpoderes Documentais" })).toHaveCount(0);
-});
-
-test("apresenta mesa de trabalho no Studio e navega por páginas e miniaturas após importação", async ({
-  page,
-}) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: "Abrir Studio" }).first().click();
-
-  // Garante que o Empty State Apple-grade é exibido sem diálogos intrusivos
-  await expect(page.getByText("Mesa de Trabalho Documental")).toBeVisible();
-  await expect(page.getByText(/Arraste e solte um arquivo PDF, Word ou Texto aqui/i)).toBeVisible();
-
-  // Importa um documento real de teste
-  const fileInput = page.getByLabel("Selecionar arquivo para o Studio");
-  await fileInput.setInputFiles({
-    name: "Contrato_Auditado.pdf",
-    mimeType: "application/pdf",
-    buffer: Buffer.from("%PDF-1.4 Mock de teste documental"),
-  });
-
-  // Valida que o documento foi registrado na árvore e na mesa
-  await expect(page.locator(".document-canvas__doc-title")).toHaveText("Contrato_Auditado.pdf");
-  await expect(page.locator("iframe[title='Contrato_Auditado.pdf']")).toBeVisible();
-
-  // Abre trilho de miniaturas
-  const thumbBtn = page.getByRole("button", { name: "Miniaturas" });
-  await expect(thumbBtn).toBeVisible();
-  await thumbBtn.click();
-
-  await expect(page.getByLabel("Lista de páginas do documento")).toBeVisible();
-  const pag1Btn = page.getByRole("button", { name: "Pág. 1", exact: true });
-  await expect(pag1Btn).toBeVisible();
-
-  // Clica na miniatura Pág. 1
-  await pag1Btn.click();
-  await expect(page.getByText("Contrato_Auditado.pdf").first()).toBeVisible();
-});
-
-test("inspeciona a cadeia de custódia e histórico SQLite no Studio", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: "Abrir Studio" }).first().click();
-
-  // Abre modal de histórico SQLite a partir do Auditor
-  const historyBtn = page.getByRole("button", { name: "Ver histórico" });
-  await expect(historyBtn).toBeVisible();
-  await historyBtn.click();
-
-  await expect(page.getByRole("heading", { name: "Histórico & Linhagem SQLite" })).toBeVisible();
-  await expect(page.getByText(/Cadeia de custódia auditável/i)).toBeVisible();
-  await expect(page.getByText("Imutável (BLAKE3)")).toBeVisible();
-  await expect(page.getByText("Grafo Genealógico de Artefatos")).toBeVisible();
-
-  // Fecha o modal
-  await page.getByRole("button", { name: "Concluído" }).click();
-  await expect(page.getByRole("heading", { name: "Histórico & Linhagem SQLite" })).toHaveCount(0);
 });

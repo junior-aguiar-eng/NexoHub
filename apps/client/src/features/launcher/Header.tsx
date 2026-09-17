@@ -9,6 +9,8 @@ type HeaderProps = {
   activeSuite: SuiteId;
   onSelectSuite: (suite: SuiteId) => void;
   onOpenCommandPalette: () => void;
+  onOpenStudio?: () => void;
+  onOpenCapabilities?: () => void;
   searchQuery?: string;
 };
 
@@ -16,6 +18,8 @@ export function Header({
   activeSuite,
   onSelectSuite,
   onOpenCommandPalette,
+  onOpenStudio,
+  onOpenCapabilities,
   searchQuery,
 }: HeaderProps) {
   const isDesktop = isTauriEnvironment();
@@ -46,7 +50,7 @@ export function Header({
           type="button"
           className="header-command-input"
           onClick={onOpenCommandPalette}
-          aria-label={translate("header.search")}
+          aria-label="Buscar no NexoHub"
         >
           <Search size={15} aria-hidden="true" className="header-command-input__icon" />
           <span className="header-command-input__placeholder">
@@ -54,6 +58,42 @@ export function Header({
           </span>
           <kbd className="header-command-input__kbd">{translate("header.searchShortcut")}</kbd>
         </button>
+
+        {onOpenStudio && (
+          <button
+            type="button"
+            className="btn btn--secondary header-studio-btn"
+            onClick={onOpenStudio}
+            style={{
+              fontSize: "0.8125rem",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              border: "1px solid var(--color-border)",
+              background: "var(--color-surface-hover)",
+              cursor: "pointer",
+            }}
+          >
+            Abrir Studio
+          </button>
+        )}
+
+        {onOpenCapabilities && (
+          <button
+            type="button"
+            className="btn btn--secondary header-superpowers-btn"
+            onClick={onOpenCapabilities}
+            style={{
+              fontSize: "0.8125rem",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              border: "1px solid var(--color-border)",
+              background: "var(--color-surface-hover)",
+              cursor: "pointer",
+            }}
+          >
+            Superpoderes
+          </button>
+        )}
 
         <UserMenu />
       </div>

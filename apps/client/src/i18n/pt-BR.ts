@@ -19,7 +19,7 @@ export const ptBR = {
   "suite.optimize": "Otimizar PDF",
   "suite.text": "Texto e OCR",
   "suite.security": "Segurança",
-  "suite.processing": "Organizar PDF",
+  "suite.processing": "Processamento",
   "suite.review": "Texto e OCR",
   "suite.compliance": "Segurança",
   "suite.extraction": "Extração",
@@ -72,13 +72,13 @@ export const ptBR = {
   "tool.pdfExtractImages.title": "Extrair Imagens",
   "tool.pdfExtractImages.description":
     "Extrair todas as fotos e ilustrações contidas no PDF em alta resolução.",
-  "tool.pdfOcr.title": "Reconhecer Texto (OCR)",
+  "tool.pdfOcr.title": "Reconhecer texto",
   "tool.pdfOcr.description":
     "Converter documentos escaneados e imagens em texto selecionável e pesquisável.",
-  "tool.textCompare.title": "Comparar Documentos",
+  "tool.textCompare.title": "Comparar textos",
   "tool.textCompare.description":
     "Identificar diferenças e alterações entre duas versões de um texto ou documento.",
-  "tool.textReview.title": "Corretor de Texto",
+  "tool.textReview.title": "Revisar texto",
   "tool.textReview.description":
     "Verificar ortografia, gramática e estilo com sugestões inteligentes e instantâneas.",
   "tool.textTranslate.title": "Traduzir Texto",

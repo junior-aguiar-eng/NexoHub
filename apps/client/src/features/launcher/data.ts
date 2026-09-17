@@ -12,8 +12,8 @@ import {
 import type { LauncherTool, Suite } from "./model";
 
 export const suites: readonly Suite[] = [
-  { id: "overview", labelKey: "suite.all", ariaLabel: "Todas as ferramentas" },
-  { id: "organize", labelKey: "suite.organize", ariaLabel: "Organizar PDF" },
+  { id: "overview", labelKey: "suite.all", ariaLabel: "Todas" },
+  { id: "organize", labelKey: "suite.processing", ariaLabel: "Processamento" },
   { id: "optimize", labelKey: "suite.optimize", ariaLabel: "Otimizar PDF" },
   { id: "text", labelKey: "suite.text", ariaLabel: "Texto" },
 ];

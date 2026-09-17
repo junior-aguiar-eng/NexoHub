@@ -275,7 +275,7 @@ export function StudioWorkspace({
             N
           </span>
           <div>
-            <span className="eyebrow">NexoJuri</span>
+            <span className="eyebrow">NexoHub Studio</span>
             <strong>
               {activeProject
                 ? `${activeProject.name} — Mesa de Trabalho`

@@ -6,13 +6,13 @@ describe("App", () => {
   it("renderiza o Hub de ferramentas práticas estilo iLovePDF", () => {
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: /Olá, Boni, vamos começar/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Documentos complexos/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Ferramentas práticas" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Organizar PDF" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Comprimir PDF" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Extrair Imagens" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Corretor de Texto" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Comparar Documentos" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Revisar texto" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Comparar textos" })).toBeInTheDocument();
   });
 
   it("abre a tela dedicada ao clicar em uma ferramenta e retorna ao hub", () => {
@@ -29,17 +29,17 @@ describe("App", () => {
 
     // Retorna ao Hub
     fireEvent.click(screen.getByRole("button", { name: /Todas as ferramentas/i }));
-    expect(screen.getByRole("heading", { name: /Olá, Boni, vamos começar/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Documentos complexos/i })).toBeInTheDocument();
   });
 
   it("filtra as ferramentas pelas categorias do topo", () => {
     render(<App />);
 
     const nav = screen.getByRole("navigation", { name: /Categorias de ferramentas/i });
-    fireEvent.click(within(nav).getByRole("button", { name: "Organizar PDF" }));
+    fireEvent.click(within(nav).getByRole("button", { name: "Processamento" }));
 
     expect(screen.getByRole("heading", { name: "Organizar PDF" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Comparar Documentos" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Comparar textos" })).not.toBeInTheDocument();
   });
 
   it("abre e fecha a paleta por teclado (Ctrl+K)", () => {

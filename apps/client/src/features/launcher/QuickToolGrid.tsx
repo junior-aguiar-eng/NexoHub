@@ -5,7 +5,7 @@ import { ToolCard } from "./ToolCard";
 type QuickToolGridProps = {
   tools: readonly LauncherTool[];
   onPromote?: (tool: LauncherTool) => void;
-  onRunTool?: (tool: LauncherTool) => void;
+  onRunTool?: (tool: LauncherTool, initialFiles?: File[]) => void;
   onOpenStudio?: () => void;
 };
 

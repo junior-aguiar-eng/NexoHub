@@ -9,10 +9,7 @@ type RecentProjectsProps = {
   onClearOperations?: () => void;
 };
 
-export function RecentProjects({
-  operations,
-  onClearOperations,
-}: RecentProjectsProps) {
+export function RecentProjects({ operations, onClearOperations }: RecentProjectsProps) {
   if (operations.length === 0) {
     return null;
   }

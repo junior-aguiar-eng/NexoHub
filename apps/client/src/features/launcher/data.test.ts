@@ -25,4 +25,3 @@ describe("Strict Functional Tools Catalog", () => {
     }
   });
 });
-

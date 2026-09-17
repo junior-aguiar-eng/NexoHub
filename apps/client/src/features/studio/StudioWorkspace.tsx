@@ -2,7 +2,6 @@ import type { DocumentId, NexoFlowSnapshot } from "@nexohub/domain";
 import {
   BookOpen,
   CheckCircle2,
-  Database,
   FileCheck2,
   FileText,
   Minimize2,
@@ -290,10 +289,10 @@ export function StudioWorkspace({
           <input
             type="text"
             className="studio-header__search-input"
-            placeholder="Buscar no dossiê, jurisprudência ou pergunta..."
+            placeholder="Buscar no documento ou conteúdo..."
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
-            aria-label="Buscar no dossiê"
+            aria-label="Buscar no documento"
           />
         </div>
 

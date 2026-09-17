@@ -68,7 +68,7 @@ jobs:
           rustup default stable
 
       - name: Instalar dependências de build
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Compilar binários da CLI e do Core (Release)
         run: cargo build --workspace --release --locked

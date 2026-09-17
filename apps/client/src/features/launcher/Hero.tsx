@@ -13,8 +13,21 @@ export function Hero() {
       transition={{ duration: reduceMotion ? 0 : 0.35, ease: "easeOut" }}
       aria-labelledby="hero-title"
     >
+      <h2
+        className="hero__eyebrow"
+        style={{
+          fontSize: "0.875rem",
+          color: "var(--color-brand)",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          marginBottom: "4px",
+        }}
+      >
+        Comece por uma tarefa
+      </h2>
       <h1 id="hero-title" className="hero__welcome-title">
-        {translate("hero.welcome")}
+        Documentos complexos e tarefas de PDF simplificados
       </h1>
       <p className="hero__description">{translate("hero.description")}</p>
 

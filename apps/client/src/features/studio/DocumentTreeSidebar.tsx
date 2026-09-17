@@ -109,7 +109,7 @@ export function DocumentTreeSidebar({
                 {dossierExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 <Folder size={15} className="studio-tree-group__icon" />
                 <span className="studio-tree-group__title">
-                  {activeProject ? activeProject.name : "Dossiê Local"}
+                  {activeProject ? activeProject.name : "Pasta Local"}
                 </span>
               </button>
 
@@ -186,7 +186,7 @@ export function DocumentTreeSidebar({
                 type="button"
                 className="studio-sidebar__shortcut-item"
                 onClick={onStrategyClick}
-                title="Abrir Matriz de Fatos e Estratégia"
+                title="Abrir Estratégia e Visão Geral"
               >
                 <SlidersHorizontal size={14} />
                 <span>Estratégia</span>
@@ -195,7 +195,7 @@ export function DocumentTreeSidebar({
                 type="button"
                 className="studio-sidebar__shortcut-item"
                 onClick={onMonitoringClick}
-                title="Abrir Histórico & Linhagem SQLite"
+                title="Abrir Histórico & Linhagem de Operações"
               >
                 <History size={14} />
                 <span>Monitoramento</span>
@@ -213,7 +213,7 @@ export function DocumentTreeSidebar({
                 type="button"
                 className="studio-sidebar__shortcut-item"
                 onClick={onReportsClick}
-                title="Emitir auditoria de integridade do dossiê"
+                title="Emitir relatório de integridade documental"
               >
                 <FileCheck2 size={14} />
                 <span>Relatórios</span>

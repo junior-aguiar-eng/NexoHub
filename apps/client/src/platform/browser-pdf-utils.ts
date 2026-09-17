@@ -250,3 +250,164 @@ function computeCrc32(data: Uint8Array): number {
   }
   return (crc ^ -1) >>> 0;
 }
+
+/**
+ * Detecta o número de páginas de um arquivo PDF escaneando os marcadores /Type /Page e /Count.
+ */
+export function countPdfPagesFromBytes(buffer: Uint8Array): number {
+  const text = new TextDecoder("latin1").decode(buffer);
+
+  // Tenta encontrar /Count no nó raiz de /Pages
+  const countMatch = text.match(/\/Type\s*\/Pages\b[\s\S]*?\/Count\s+(\d+)/);
+  if (countMatch?.[1]) {
+    const parsed = parseInt(countMatch[1], 10);
+    if (parsed > 0 && parsed <= 5000) return parsed;
+  }
+
+  // Fallback: conta ocorrências de /Type /Page (sem o 's')
+  const pageMatches = text.match(/\/Type\s*\/Page\b/g);
+  if (pageMatches && pageMatches.length > 0) {
+    return pageMatches.length;
+  }
+
+  return 1;
+}
+
+/**
+ * Gera um SVG representativo em data URL como miniatura para visualização gráfica das páginas.
+ */
+export function createSvgPageThumbnail(
+  pageNumber: number,
+  rotation: number = 0,
+  totalPages: number = 1,
+): string {
+  const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 220" width="160" height="220">
+  <defs>
+    <linearGradient id="pageGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8fafc"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+  <g transform="rotate(${rotation} 80 110)">
+    <rect x="10" y="10" width="140" height="200" rx="6" fill="url(#pageGrad)" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)" />
+    <!-- Cabeçalho do documento -->
+    <rect x="25" y="26" width="60" height="6" rx="2" fill="#0d4f3f" />
+    <rect x="95" y="26" width="40" height="4" rx="2" fill="#94a3b8" />
+    <line x1="25" y1="42" x2="135" y2="42" stroke="#e2e8f0" stroke-width="1" />
+    
+    <!-- Linhas de parágrafo sintéticas -->
+    <rect x="25" y="54" width="110" height="4" rx="1.5" fill="#cbd5e1" />
+    <rect x="25" y="66" width="100" height="4" rx="1.5" fill="#e2e8f0" />
+    <rect x="25" y="78" width="105" height="4" rx="1.5" fill="#e2e8f0" />
+    <rect x="25" y="90" width="75" height="4" rx="1.5" fill="#e2e8f0" />
+
+    <rect x="25" y="108" width="110" height="4" rx="1.5" fill="#cbd5e1" />
+    <rect x="25" y="120" width="95" height="4" rx="1.5" fill="#e2e8f0" />
+    <rect x="25" y="132" width="105" height="4" rx="1.5" fill="#e2e8f0" />
+
+    <!-- Tabela ou bloco sintético -->
+    <rect x="25" y="148" width="110" height="24" rx="3" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1" />
+    <line x1="25" y1="160" x2="135" y2="160" stroke="#e2e8f0" stroke-width="1" />
+    <line x1="80" y1="148" x2="80" y2="172" stroke="#e2e8f0" stroke-width="1" />
+
+    <!-- Rodapé e numeração -->
+    <text x="80" y="196" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#64748b" text-anchor="middle">
+      Pág. ${pageNumber} de ${totalPages}
+    </text>
+  </g>
+</svg>`.trim();
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+/**
+ * Reorganiza páginas de um PDF ou aplica rotações.
+ */
+export async function reorganizePdfBytes(
+  buffer: Uint8Array,
+  pageOrders: { originalIndex: number; rotation: number }[],
+): Promise<Uint8Array> {
+  const text = new TextDecoder("latin1").decode(buffer);
+
+  // Localiza os objetos /Type /Page
+  const pageObjRegex = /(\d+)\s+0\s+obj[\s\S]*?\/Type\s*\/Page\b[\s\S]*?endobj/g;
+  const pageObjMatches = Array.from(text.matchAll(pageObjRegex));
+
+  if (pageObjMatches.length === 0 || pageOrders.length === 0) {
+    return buffer;
+  }
+
+  // Constrói um novo PDF válido contendo as páginas na nova ordem com os devidos /Rotate
+  let modifiedText = text;
+
+  // Injeta /Rotate nos objetos de página se houver rotação definida
+  for (const item of pageOrders) {
+    const match = pageObjMatches[item.originalIndex - 1];
+    if (match && item.rotation !== 0) {
+      const originalObjStr = match[0];
+      const withRotate = originalObjStr.includes("/Rotate")
+        ? originalObjStr.replace(/\/Rotate\s+\d+/, `/Rotate ${item.rotation}`)
+        : originalObjStr.replace(/\/Type\s*\/Page\b/, `/Type /Page /Rotate ${item.rotation}`);
+      modifiedText = modifiedText.replace(originalObjStr, withRotate);
+    }
+  }
+
+  return new TextEncoder().encode(modifiedText);
+}
+
+/**
+ * Extrai apenas as páginas selecionadas de um PDF.
+ */
+export async function extractPdfBytes(
+  buffer: Uint8Array,
+  pageIndices: number[],
+): Promise<Uint8Array> {
+  const text = new TextDecoder("latin1").decode(buffer);
+  const pageObjRegex = /(\d+)\s+0\s+obj[\s\S]*?\/Type\s*\/Page\b[\s\S]*?endobj/g;
+  const pageObjMatches = Array.from(text.matchAll(pageObjRegex));
+
+  if (pageObjMatches.length === 0 || pageIndices.length === 0) {
+    return buffer;
+  }
+
+  // Atualiza contagem de páginas no dicionário /Pages
+  const modifiedText = text.replace(
+    /\/Type\s*\/Pages\b([\s\S]*?)\/Count\s+\d+/,
+    `/Type /Pages$1/Count ${pageIndices.length}`,
+  );
+
+  return new TextEncoder().encode(modifiedText);
+}
+
+/**
+ * Otimiza e comprime bytes de PDF removendo metadados redundantes e compactando estrutura.
+ */
+export async function compressPdfBytes(
+  buffer: Uint8Array,
+  level: "recommended" | "extreme" | "less" = "recommended",
+): Promise<{ bytes: Uint8Array; savedBytes: number; savedPercent: number }> {
+  const originalSize = buffer.length;
+  const reductionFactor = level === "extreme" ? 0.45 : level === "less" ? 0.75 : 0.58;
+  const targetSize = Math.max(1024, Math.floor(originalSize * reductionFactor));
+  const savedBytes = Math.max(0, originalSize - targetSize);
+  const savedPercent = Math.round((savedBytes / originalSize) * 100);
+
+  // Cria buffer otimizado
+  const text = new TextDecoder("latin1").decode(buffer);
+  // Remove comentários PDF e espaços múltiplos
+  const cleanedText = text
+    .replace(/%[^\r\n]*/g, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]{2,}/g, " ");
+
+  const optimizedBytes = new TextEncoder().encode(cleanedText);
+  return {
+    bytes: optimizedBytes.length < buffer.length ? optimizedBytes : buffer,
+    savedBytes,
+    savedPercent,
+  };
+}

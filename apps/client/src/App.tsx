@@ -1,14 +1,20 @@
+import { type NexoFlowSnapshot, promoteQuickTool } from "@nexohub/domain";
 import { Database, FileCheck, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { AuthProvider, useAuth } from "@/features/account/AuthContext";
+import { AuthModal } from "@/features/account/AuthModal";
+import { UserProfileModal } from "@/features/account/UserProfileModal";
+import { CapabilitiesModal } from "@/features/capabilities/CapabilitiesModal";
 import { CommandPalette } from "@/features/launcher/CommandPalette";
-import { resolveLauncherTools } from "@/features/launcher/data";
 import { DedicatedToolView } from "@/features/launcher/DedicatedToolView";
+import { resolveLauncherTools } from "@/features/launcher/data";
 import { Header } from "@/features/launcher/Header";
 import { Hero } from "@/features/launcher/Hero";
 import type { LauncherTool, SuiteId } from "@/features/launcher/model";
 import { QuickToolGrid } from "@/features/launcher/QuickToolGrid";
 import { RecentProjects } from "@/features/launcher/RecentProjects";
 import { useRecentOperations } from "@/features/launcher/useRecentOperations";
+import { StudioWorkspace } from "@/features/studio/StudioWorkspace";
 import { translate } from "@/i18n";
 import { createDocumentCorePort } from "@/platform/document-core";
 
@@ -20,17 +26,42 @@ function normalize(value: string) {
 }
 
 export function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+function AppContent() {
   const documentCore = useMemo(() => createDocumentCorePort(), []);
   const { operations, addOperation, clearOperations } = useRecentOperations();
+  const {
+    authModalOpen,
+    authModalTab,
+    closeAuthModal,
+    userProfileModalOpen,
+    closeUserProfileModal,
+  } = useAuth();
 
   const dynamicTools = useMemo(() => {
     return resolveLauncherTools([], documentCore);
   }, [documentCore]);
 
   const [activeDedicatedTool, setActiveDedicatedTool] = useState<LauncherTool | null>(null);
+  const [initialFilesForTool, setInitialFilesForTool] = useState<File[]>([]);
   const [activeSuite, setActiveSuite] = useState<SuiteId>("overview");
   const [searchQuery] = useState("");
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [isStudioOpen, setIsStudioOpen] = useState(false);
+  const [isCapabilitiesOpen, setIsCapabilitiesOpen] = useState(false);
+  const [promotedFlow, setPromotedFlow] = useState<
+    | {
+        tool: LauncherTool;
+        flow: NexoFlowSnapshot;
+      }
+    | undefined
+  >(undefined);
 
   useEffect(() => {
     function handleShortcut(event: KeyboardEvent) {
@@ -50,7 +81,8 @@ export function App() {
       const matchesSuite =
         activeSuite === "overview" ||
         activeSuite === tool.suite ||
-        (activeSuite === "organize" && (tool.suite === "organize" || (tool.suite as string) === "pdf")) ||
+        (activeSuite === "organize" &&
+          (tool.suite === "organize" || (tool.suite as string) === "pdf")) ||
         (activeSuite === "optimize" && (tool.suite === "optimize" || tool.id === "pdf-compress")) ||
         (activeSuite === "text" && (tool.suite === "text" || (tool.suite as string) === "review"));
       const searchableText = `${translate(tool.titleKey)} ${translate(tool.descriptionKey)}`;
@@ -58,14 +90,34 @@ export function App() {
     });
   }, [dynamicTools, activeSuite, searchQuery]);
 
-  // Se o usuário selecionou uma ferramenta, exibe a tela dedicada da ferramenta
+  // Se o usuário selecionou o Studio, exibe a mesa de trabalho do Studio
+  if (isStudioOpen) {
+    return (
+      <div className="app-shell">
+        <StudioWorkspace
+          onClose={() => {
+            setIsStudioOpen(false);
+            setPromotedFlow(undefined);
+          }}
+          documentCore={documentCore}
+          promotedFlow={promotedFlow}
+        />
+      </div>
+    );
+  }
+
+  // Se o usuário selecionou uma ferramenta dedicada, exibe a tela dedicada da ferramenta
   if (activeDedicatedTool) {
     return (
       <div className="app-shell">
         <DedicatedToolView
           tool={activeDedicatedTool}
           documentCore={documentCore}
-          onBack={() => setActiveDedicatedTool(null)}
+          initialFiles={initialFilesForTool}
+          onBack={() => {
+            setActiveDedicatedTool(null);
+            setInitialFilesForTool([]);
+          }}
           onOperationComplete={(op) => {
             addOperation(op);
           }}
@@ -83,6 +135,11 @@ export function App() {
         activeSuite={activeSuite}
         onSelectSuite={(suite) => setActiveSuite(suite)}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+        onOpenStudio={() => {
+          setPromotedFlow(undefined);
+          setIsStudioOpen(true);
+        }}
+        onOpenCapabilities={() => setIsCapabilitiesOpen(true)}
         searchQuery={searchQuery}
       />
       <main id="main-content" className="launcher-content launcher-content--full">
@@ -93,17 +150,20 @@ export function App() {
         <div className="launcher-grid-container">
           <QuickToolGrid
             tools={filteredTools}
-            onRunTool={(tool) => {
+            onPromote={(tool) => {
+              const flow = promoteQuickTool(tool.id).snapshot;
+              setPromotedFlow({ tool, flow });
+              setIsStudioOpen(true);
+            }}
+            onRunTool={(tool, files) => {
+              setInitialFilesForTool(files || []);
               setActiveDedicatedTool(tool);
             }}
           />
         </div>
 
         <div className="launcher-recent-container">
-          <RecentProjects
-            operations={operations}
-            onClearOperations={clearOperations}
-          />
+          <RecentProjects operations={operations} onClearOperations={clearOperations} />
         </div>
       </main>
 
@@ -147,6 +207,16 @@ export function App() {
         onOpenChange={setCommandPaletteOpen}
         onSelectSuite={setActiveSuite}
       />
+
+      <CapabilitiesModal
+        open={isCapabilitiesOpen}
+        onClose={() => setIsCapabilitiesOpen(false)}
+        documentCore={documentCore}
+      />
+
+      <AuthModal open={authModalOpen} onClose={closeAuthModal} initialTab={authModalTab} />
+
+      <UserProfileModal open={userProfileModalOpen} onClose={closeUserProfileModal} />
     </div>
   );
 }

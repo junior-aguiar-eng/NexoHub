@@ -2,8 +2,7 @@ packages:
   - apps/*
   - packages/*
 
-allowBuilds:
-  tesseract.js: set this to true or false
-
 onlyBuiltDependencies:
+  - "@biomejs/biome"
   - esbuild
+  - tesseract.js

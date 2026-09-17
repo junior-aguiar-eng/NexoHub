@@ -24,8 +24,15 @@ export class UnavailableDocumentCorePort implements DocumentCorePort {
 
 let browserPortSingleton: BrowserDocumentCorePort | null = null;
 
+export function isTauriEnvironment(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    Boolean(window.__TAURI_INTERNALS__ || (window as unknown as { __TAURI__?: unknown }).__TAURI__)
+  );
+}
+
 export function createDocumentCorePort(): DocumentCorePort {
-  if (typeof window !== "undefined" && window.__TAURI_INTERNALS__) {
+  if (isTauriEnvironment()) {
     return new TauriDocumentCorePort();
   }
   if (!browserPortSingleton) {

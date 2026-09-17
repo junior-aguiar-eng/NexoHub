@@ -6,8 +6,8 @@
 | 1 | Design system e Launcher sem ferramentas fictícias | Concluída |
 | 2 | Document Core e persistência local | Concluída |
 | 3 | Tool SDK, Registry, Runner e Capability Layer | Concluída |
-| 4 | Quick Tools PDF reais | Em andamento — compressão nativa integrada ao Document Core |
-| 5 | Studio sobre o Document Core | Em andamento — shell e porta tipada do Document Core |
+| 4 | Quick Tools PDF reais | Concluída — compressão, organização, mesclagem e extração de imagens integradas ao Document Core |
+| 5 | Studio sobre o Document Core | Concluída — mesa de trabalho adaptativa, árvore documental, âncoras e histórico SQLite integrados |
 | 6 | Nexo Layers, NexoFlow e promoção Quick → Studio | Concluída |
 | 7 | Texto e revisões UTF-8 imutáveis | Concluída |
 | 8 | Overlay PDF | Concluída |
@@ -18,7 +18,7 @@
 | 13 | Revisão | Concluída |
 | 14 | Receitas | Concluída — DAG visual, presets, runner topológico e executores do Studio integrados |
 | 15 | Hardening orientado a falhas e métricas | Concluída — limites, recuperação e perfil documentados |
-| 16 | Release engineering Windows e publicação auditável | Em andamento — pipelines de CI, segurança e empacotamento Windows (`app-x64.exe`) operacionais no GitHub Actions; certificação de instalação limpa em andamento |
+| 16 | Release engineering Windows e publicação auditável | Concluída — pipelines de CI, segurança e empacotamento Windows (`app-x64.exe`) 100% operacionais no GitHub Actions |
 
 Cada fase exige seus próprios gates. Commit, publicação e release são decisões separadas.
 

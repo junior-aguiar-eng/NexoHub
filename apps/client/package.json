@@ -23,6 +23,7 @@
     "@nexohub/domain": "workspace:*",
     "@nexohub/tool-registry": "workspace:*",
     "@nexohub/tool-sdk": "workspace:*",
+    "@supabase/supabase-js": "^2.116.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "lucide-react": "0.542.0",

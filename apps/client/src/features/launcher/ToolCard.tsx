@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
+import { type DragEvent, useState } from "react";
 import { translate } from "@/i18n";
 import type { LauncherTool } from "./model";
 
@@ -7,19 +8,52 @@ type ToolCardProps = {
   tool: LauncherTool;
   index: number;
   onPromote?: (tool: LauncherTool) => void;
-  onRunTool?: (tool: LauncherTool) => void;
+  onRunTool?: (tool: LauncherTool, initialFiles?: File[]) => void;
 };
 
 export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
   const reduceMotion = useReducedMotion();
+  const [isDragOver, setIsDragOver] = useState(false);
   const Icon = tool.icon;
   const accent = tool.accentColor || "var(--color-brand)";
   const isAvailable = tool.availability.available;
-  const unavailableReason = isAvailable ? undefined : tool.availability.reasons.join(" ");
+
+  function handleMouseEnter() {
+    // Pré-carregamento dinâmico e silencioso de módulos pesados ao passar o mouse
+    if (tool.id === "pdf-ocr") {
+      import("tesseract.js").catch(() => {
+        // Silencioso em caso de pre-warm
+      });
+    }
+  }
+
+  function handleDragOver(e: DragEvent<HTMLElement>) {
+    if (!isAvailable) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }
+
+  function handleDragLeave(e: DragEvent<HTMLElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }
+
+  function handleDrop(e: DragEvent<HTMLElement>) {
+    if (!isAvailable) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const droppedFiles = Array.from(e.dataTransfer.files);
+      onRunTool?.(tool, droppedFiles);
+    }
+  }
 
   return (
     <motion.article
-      className="tool-card"
+      className={`tool-card ${isDragOver ? "tool-card--drag-over" : ""}`}
       initial={reduceMotion ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: reduceMotion ? 0 : 0.25, delay: reduceMotion ? 0 : index * 0.03 }}
@@ -30,8 +64,14 @@ export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
         {
           cursor: isAvailable ? "pointer" : "default",
           "--tool-accent": accent,
+          borderColor: isDragOver ? accent : undefined,
+          backgroundColor: isDragOver ? `${accent}12` : undefined,
         } as React.CSSProperties
       }
+      onMouseEnter={handleMouseEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       onClick={() => {
         if (isAvailable && onRunTool) {
           onRunTool(tool);

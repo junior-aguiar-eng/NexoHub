@@ -1,11 +1,12 @@
-import { describe, expect, it } from "vitest";
 import { asArtifactId, asDocumentId } from "@nexohub/domain";
+import { describe, expect, it } from "vitest";
 import { BrowserDocumentCorePort } from "./browser-document-core";
 import { translateTextLocally } from "./browser-translation";
 
 describe("BrowserDocumentCorePort Real Capabilities", () => {
   it("executa tradução offline inteligente preservando quebras de linha e termos de documentos", () => {
-    const inputEnglish = "Contract Agreement\nThe parties agree to the following terms and conditions.";
+    const inputEnglish =
+      "Contract Agreement\nThe parties agree to the following terms and conditions.";
     const translated = translateTextLocally(inputEnglish, "en", "pt");
 
     expect(translated).toContain("Contrato");

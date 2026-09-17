@@ -57,8 +57,13 @@ import {
   getStoredCapabilities,
   saveStoredCapabilities,
 } from "@/features/capabilities/useCapabilities";
-import { createZipArchive, extractJpegsFromPdfAsync } from "./browser-pdf-utils";
 import { performBrowserOcr } from "./browser-ocr";
+import {
+  compressPdfBytes,
+  createZipArchive,
+  extractJpegsFromPdfAsync,
+  reorganizePdfBytes,
+} from "./browser-pdf-utils";
 import { translateTextLocally } from "./browser-translation";
 import type { DocumentCorePort } from "./document-core";
 
@@ -101,6 +106,8 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
   private pendingFiles: Map<string, File> = new Map();
   private artifactBlobs: Map<string, Blob> = new Map();
   private createdBlobUrls: Map<string, string> = new Map();
+  private blobUrlAccessQueue: string[] = [];
+  private static readonly MAX_ACTIVE_BLOB_URLS = 35;
   private activeProjectPath: string | null = null;
 
   constructor() {
@@ -116,26 +123,57 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
     if (!blob) return null;
     const existing = this.createdBlobUrls.get(artifactId);
     if (existing) {
+      // Move para o final da fila de acesso (LRU)
+      this.blobUrlAccessQueue = this.blobUrlAccessQueue.filter((id) => id !== artifactId);
+      this.blobUrlAccessQueue.push(artifactId);
       return existing;
     }
+
+    // Se ultrapassou o limite do cache de URLs, revoga a mais antiga
+    if (this.createdBlobUrls.size >= BrowserDocumentCorePort.MAX_ACTIVE_BLOB_URLS) {
+      const oldestId = this.blobUrlAccessQueue.shift();
+      if (oldestId) {
+        const oldUrl = this.createdBlobUrls.get(oldestId);
+        if (oldUrl) {
+          try {
+            URL.revokeObjectURL(oldUrl);
+          } catch {
+            // Safe fallback
+          }
+          this.createdBlobUrls.delete(oldestId);
+        }
+      }
+    }
+
     const url = URL.createObjectURL(blob);
     this.createdBlobUrls.set(artifactId, url);
+    this.blobUrlAccessQueue.push(artifactId);
     return url;
   }
 
   revokeArtifactBlobUrl(artifactId: string): void {
     const existing = this.createdBlobUrls.get(artifactId);
     if (existing) {
-      URL.revokeObjectURL(existing);
+      try {
+        URL.revokeObjectURL(existing);
+      } catch {
+        // Safe fallback
+      }
       this.createdBlobUrls.delete(artifactId);
+      this.blobUrlAccessQueue = this.blobUrlAccessQueue.filter((id) => id !== artifactId);
     }
   }
 
   revokeAllBlobUrls(): void {
     for (const url of this.createdBlobUrls.values()) {
-      URL.revokeObjectURL(url);
+      try {
+        URL.revokeObjectURL(url);
+      } catch {
+        // Safe fallback
+      }
     }
     this.createdBlobUrls.clear();
+    this.blobUrlAccessQueue = [];
   }
 
   getActiveProjectPath(): string | null {
@@ -143,12 +181,12 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
   }
 
   private ensureDefaultProject(): StoredProjectData {
-    const defaultPath = "/meus-documentos/dossie-local";
+    const defaultPath = "/meus-documentos/pasta-local";
     let data = this.projectData.get(defaultPath);
     if (!data) {
       const project: Project & { path: string } = {
         id: asProjectId("proj-local"),
-        name: "Dossiê Pessoal e Jurídico",
+        name: "Meus Documentos",
         path: defaultPath,
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -360,18 +398,40 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
         const req = request as CompressPdfRequest;
         const data = this.getData(req.projectPath);
         const parentArt = data.artifacts.find((a) => a.id === req.artifactId);
+        const parentBlob = this.artifactBlobs.get(req.artifactId);
 
         const newArtId = asArtifactId(`art-cmp-${Date.now()}`);
-        const originalSize = parentArt?.size ?? 500000;
-        const reductionRatio = Math.max(0.35, 1 - req.compressionLevel * 0.08);
-        const newSize = Math.floor(originalSize * reductionRatio);
+        let newSize = 50000;
+        let compressedBlob: Blob | null = null;
+        let compHash = `blake3-${Math.random().toString(16).slice(2, 18)}`;
+
+        if (parentBlob) {
+          const buffer = new Uint8Array(await parentBlob.arrayBuffer());
+          const compLevel =
+            req.compressionLevel === 3
+              ? "extreme"
+              : req.compressionLevel === 1
+                ? "less"
+                : "recommended";
+          const res = await compressPdfBytes(buffer, compLevel);
+          compressedBlob = new Blob([res.bytes as unknown as BlobPart], {
+            type: "application/pdf",
+          });
+          newSize = compressedBlob.size;
+          compHash = await computeSha256Hex(res.bytes);
+          this.artifactBlobs.set(newArtId, compressedBlob);
+        } else {
+          const originalSize = parentArt?.size ?? 500000;
+          const reductionRatio = Math.max(0.35, 1 - req.compressionLevel * 0.08);
+          newSize = Math.floor(originalSize * reductionRatio);
+        }
 
         const newArt: Artifact = {
           id: newArtId,
           documentId: req.documentId,
           kind: "DERIVED",
           mimeType: "application/pdf",
-          hash: `blake3-${Math.random().toString(16).slice(2, 18)}`,
+          hash: compHash,
           size: newSize,
           storagePath: `artifacts/${req.documentId}/${newArtId}.pdf`,
           createdAt: Date.now(),
@@ -397,11 +457,6 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
           createdAt: Date.now(),
         });
 
-        const parentBlob = this.artifactBlobs.get(req.artifactId);
-        if (parentBlob) {
-          this.artifactBlobs.set(newArtId, parentBlob);
-        }
-
         const result: PdfToolResult = {
           artifact: newArt,
           operation: op,
@@ -413,15 +468,34 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
         const req = request as OrganizePdfRequest;
         const data = this.getData(req.projectPath);
         const parentArt = data.artifacts.find((a) => a.id === req.artifactId);
+        const parentBlob = this.artifactBlobs.get(req.artifactId);
 
         const newArtId = asArtifactId(`art-org-${Date.now()}`);
+        let newSize = parentArt?.size ?? 150000;
+        let orgHash = `blake3-${Math.random().toString(16).slice(2, 18)}`;
+
+        if (parentBlob) {
+          const buffer = new Uint8Array(await parentBlob.arrayBuffer());
+          const pageOrders = (req.pageOrder || [1]).map((pg) => ({
+            originalIndex: pg,
+            rotation: req.rotationDegrees ?? 0,
+          }));
+          const organizedBytes = await reorganizePdfBytes(buffer, pageOrders);
+          const organizedBlob = new Blob([organizedBytes as unknown as BlobPart], {
+            type: "application/pdf",
+          });
+          newSize = organizedBlob.size;
+          orgHash = await computeSha256Hex(organizedBytes);
+          this.artifactBlobs.set(newArtId, organizedBlob);
+        }
+
         const newArt: Artifact = {
           id: newArtId,
           documentId: req.documentId,
           kind: "DERIVED",
           mimeType: "application/pdf",
-          hash: `blake3-${Math.random().toString(16).slice(2, 18)}`,
-          size: parentArt?.size ?? 150000,
+          hash: orgHash,
+          size: newSize,
           storagePath: `artifacts/${req.documentId}/${newArtId}.pdf`,
           createdAt: Date.now(),
         };
@@ -445,11 +519,6 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
           parameters: { pageOrder: req.pageOrder },
           createdAt: Date.now(),
         });
-
-        const parentBlob = this.artifactBlobs.get(req.artifactId);
-        if (parentBlob) {
-          this.artifactBlobs.set(newArtId, parentBlob);
-        }
 
         const result: PdfToolResult = {
           artifact: newArt,
@@ -719,7 +788,9 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
       case "execute_ocr": {
         const req = request as ExecuteOcrRequest;
         const data = this.getData(req.projectPath);
-        const inputBlob = this.artifactBlobs.get(req.artifactId) || new Blob(["Documento de Exemplo"], { type: "text/plain" });
+        const inputBlob =
+          this.artifactBlobs.get(req.artifactId) ||
+          new Blob(["Documento de Exemplo"], { type: "text/plain" });
 
         const ocrOutcome = await performBrowserOcr(inputBlob, "por");
         const textBlob = new Blob([ocrOutcome.text], { type: "text/plain;charset=utf-8" });

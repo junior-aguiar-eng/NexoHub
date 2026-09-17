@@ -7,10 +7,8 @@ import {
   GitCompareArrows,
   Images,
   Languages,
-  ListFilter,
   SpellCheck2,
 } from "lucide-react";
-import { translate } from "@/i18n";
 import type { LauncherTool, Suite } from "./model";
 
 export const suites: readonly Suite[] = [

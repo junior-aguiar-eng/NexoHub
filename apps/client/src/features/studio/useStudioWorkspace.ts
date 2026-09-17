@@ -17,7 +17,7 @@ export function useStudioWorkspace({
   initialProject,
 }: UseStudioWorkspaceOptions) {
   const [activeProject, setActiveProject] = useState<{ path: string; name: string } | null>(
-    () => initialProject ?? { path: "/meus-documentos/dossie-local", name: "Dossiê Local" },
+    () => initialProject ?? { path: "/meus-documentos/pasta-local", name: "Pasta Local" },
   );
   const [documents, setDocuments] = useState<readonly Document[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(

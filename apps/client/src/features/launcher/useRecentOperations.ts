@@ -20,18 +20,24 @@ export interface RecentOperation {
   downloadUrl?: string;
 }
 
-const STORAGE_KEY = "nexohub:recent-operations";
+const STORAGE_KEY = "nexohub:recent-operations:v2";
+const LEGACY_STORAGE_KEY = "nexohub:recent-operations";
 
 function isMockDocumentName(name: string): boolean {
-  const n = name.toLowerCase();
+  const n = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
   return (
-    n.includes("apresentacao_comercial") ||
-    n.includes("relatorio_mensal") ||
-    n.includes("documento_digitalizado") ||
+    n.includes("apresentacao") ||
+    n.includes("relatorio") ||
+    n.includes("digitalizado") ||
     n.includes("dossie") ||
     n.includes("peticao") ||
     n.includes("apelacao") ||
-    n.includes("contrato_prestacao")
+    n.includes("parecer") ||
+    n.includes("minuta") ||
+    n.includes("contrato")
   );
 }
 
@@ -39,13 +45,15 @@ export function useRecentOperations() {
   const [operations, setOperations] = useState<RecentOperation[]>(() => {
     if (typeof window === "undefined") return [];
     try {
+      // Limpeza forçada de dados legados do storage antigo
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          // Filtra qualquer registro mock legado que tenha ficado no localStorage
           const clean = parsed.filter(
-            (item) => item && item.documentName && !isMockDocumentName(item.documentName),
+            (item) => item?.documentName && !isMockDocumentName(item.documentName),
           );
           if (clean.length !== parsed.length) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));

@@ -1,8 +1,11 @@
 import { Database, FileCheck, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { AuthProvider, useAuth } from "@/features/account/AuthContext";
+import { AuthModal } from "@/features/account/AuthModal";
+import { UserProfileModal } from "@/features/account/UserProfileModal";
 import { CommandPalette } from "@/features/launcher/CommandPalette";
-import { resolveLauncherTools } from "@/features/launcher/data";
 import { DedicatedToolView } from "@/features/launcher/DedicatedToolView";
+import { resolveLauncherTools } from "@/features/launcher/data";
 import { Header } from "@/features/launcher/Header";
 import { Hero } from "@/features/launcher/Hero";
 import type { LauncherTool, SuiteId } from "@/features/launcher/model";
@@ -20,14 +23,30 @@ function normalize(value: string) {
 }
 
 export function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+function AppContent() {
   const documentCore = useMemo(() => createDocumentCorePort(), []);
   const { operations, addOperation, clearOperations } = useRecentOperations();
+  const {
+    authModalOpen,
+    authModalTab,
+    closeAuthModal,
+    userProfileModalOpen,
+    closeUserProfileModal,
+  } = useAuth();
 
   const dynamicTools = useMemo(() => {
     return resolveLauncherTools([], documentCore);
   }, [documentCore]);
 
   const [activeDedicatedTool, setActiveDedicatedTool] = useState<LauncherTool | null>(null);
+  const [initialFilesForTool, setInitialFilesForTool] = useState<File[]>([]);
   const [activeSuite, setActiveSuite] = useState<SuiteId>("overview");
   const [searchQuery] = useState("");
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -50,7 +69,8 @@ export function App() {
       const matchesSuite =
         activeSuite === "overview" ||
         activeSuite === tool.suite ||
-        (activeSuite === "organize" && (tool.suite === "organize" || (tool.suite as string) === "pdf")) ||
+        (activeSuite === "organize" &&
+          (tool.suite === "organize" || (tool.suite as string) === "pdf")) ||
         (activeSuite === "optimize" && (tool.suite === "optimize" || tool.id === "pdf-compress")) ||
         (activeSuite === "text" && (tool.suite === "text" || (tool.suite as string) === "review"));
       const searchableText = `${translate(tool.titleKey)} ${translate(tool.descriptionKey)}`;
@@ -65,7 +85,11 @@ export function App() {
         <DedicatedToolView
           tool={activeDedicatedTool}
           documentCore={documentCore}
-          onBack={() => setActiveDedicatedTool(null)}
+          initialFiles={initialFilesForTool}
+          onBack={() => {
+            setActiveDedicatedTool(null);
+            setInitialFilesForTool([]);
+          }}
           onOperationComplete={(op) => {
             addOperation(op);
           }}
@@ -93,17 +117,15 @@ export function App() {
         <div className="launcher-grid-container">
           <QuickToolGrid
             tools={filteredTools}
-            onRunTool={(tool) => {
+            onRunTool={(tool, files) => {
+              setInitialFilesForTool(files || []);
               setActiveDedicatedTool(tool);
             }}
           />
         </div>
 
         <div className="launcher-recent-container">
-          <RecentProjects
-            operations={operations}
-            onClearOperations={clearOperations}
-          />
+          <RecentProjects operations={operations} onClearOperations={clearOperations} />
         </div>
       </main>
 
@@ -147,6 +169,10 @@ export function App() {
         onOpenChange={setCommandPaletteOpen}
         onSelectSuite={setActiveSuite}
       />
+
+      <AuthModal open={authModalOpen} onClose={closeAuthModal} initialTab={authModalTab} />
+
+      <UserProfileModal open={userProfileModalOpen} onClose={closeUserProfileModal} />
     </div>
   );
 }

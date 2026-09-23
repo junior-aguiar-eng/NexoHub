@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 
+
 def rotate_pdf(input_path: Path, angle: int, page_spec: str, output_path: Path) -> Path:
     """Rotaciona páginas de um PDF usando qpdf (ex: angle=+90, page_spec='1-z')."""
     rotation_arg = f"{'+' if angle > 0 else ''}{angle}:{page_spec}"

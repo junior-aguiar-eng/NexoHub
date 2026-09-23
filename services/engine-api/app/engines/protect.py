@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 
+
 def protect_pdf(input_path: Path, user_password: str, owner_password: str, output_path: Path) -> Path:
     """Criptografa e protege PDF com senha AES-256 usando qpdf."""
     cmd = [

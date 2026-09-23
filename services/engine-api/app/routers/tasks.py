@@ -1,9 +1,10 @@
 import asyncio
 import json
-from pathlib import Path
+
 from celery.result import AsyncResult
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
+
 from app.celery_app import celery_app
 from app.config import TMP_DIR
 

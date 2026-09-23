@@ -1,8 +1,8 @@
 import subprocess
 from pathlib import Path
-from typing import List
 
-def merge_pdfs(input_paths: List[Path], output_path: Path) -> Path:
+
+def merge_pdfs(input_paths: list[Path], output_path: Path) -> Path:
     """Mescla múltiplos PDFs em um único arquivo usando qpdf."""
     if not input_paths:
         raise ValueError("Nenhum arquivo fornecido para mesclagem.")

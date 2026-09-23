@@ -1,13 +1,10 @@
-import os
-import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
+
 from app.celery_app import celery_app
-from app.config import TMP_DIR
 from app.engines import (
     compress_pdf,
     convert_office_document,
-    generate_pdf_thumbnails,
     images_to_pdf,
     merge_pdfs,
     perform_pdf_ocr,
@@ -16,8 +13,9 @@ from app.engines import (
     split_pdf,
 )
 
+
 @celery_app.task(bind=True)
-def run_pdf_task(self, tool_id: str, task_dir_str: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def run_pdf_task(self, tool_id: str, task_dir_str: str, params: dict[str, Any]) -> dict[str, Any]:
     task_dir = Path(task_dir_str)
     output_dir = task_dir / "output"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -152,4 +150,4 @@ def run_pdf_task(self, tool_id: str, task_dir_str: str, params: Dict[str, Any]) 
 
     except Exception as exc:
         self.update_state(state="FAILURE", meta={"error": str(exc)})
-        raise exc
+        raise

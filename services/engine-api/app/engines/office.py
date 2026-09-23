@@ -1,6 +1,7 @@
-import subprocess
 import shutil
+import subprocess
 from pathlib import Path
+
 
 def convert_office_document(input_path: Path, target_format: str, output_dir: Path, task_id: str) -> Path:
     """

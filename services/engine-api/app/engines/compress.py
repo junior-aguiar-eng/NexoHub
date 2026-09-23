@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 
+
 def compress_pdf(input_path: Path, output_path: Path, preset: str = "ebook") -> tuple[Path, int, int]:
     """
     Comprime PDF com Ghostscript aplicando downsampling real de imagens e otimização de streams.
@@ -19,7 +20,7 @@ def compress_pdf(input_path: Path, output_path: Path, preset: str = "ebook") -> 
         "-dNOPAUSE",
         "-dQUIET",
         "-dBATCH",
-        f"-sOutputFile={str(output_path)}",
+        f"-sOutputFile={output_path!s}",
         str(input_path),
     ]
 
@@ -29,6 +30,5 @@ def compress_pdf(input_path: Path, output_path: Path, preset: str = "ebook") -> 
 
     orig_size = input_path.stat().st_size
     comp_size = output_path.stat().st_size
-    saved_bytes = max(0, orig_size - comp_size)
 
     return output_path, orig_size, comp_size

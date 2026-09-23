@@ -1,8 +1,9 @@
-import img2pdf
 from pathlib import Path
-from typing import List
 
-def images_to_pdf(image_paths: List[Path], output_path: Path) -> Path:
+import img2pdf
+
+
+def images_to_pdf(image_paths: list[Path], output_path: Path) -> Path:
     """Converte lista de imagens (JPEG, PNG, etc.) em um único PDF sem perdas de qualidade."""
     if not image_paths:
         raise ValueError("Nenhuma imagem fornecida para conversão.")

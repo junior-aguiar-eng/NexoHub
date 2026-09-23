@@ -1,9 +1,11 @@
 import shutil
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from typing import Any
+
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
+
 from app.config import TMP_DIR
 from app.engines.thumbnails import generate_pdf_thumbnails
 from app.tasks import run_pdf_task
@@ -12,12 +14,12 @@ router = APIRouter(prefix="/api/v1/tools", tags=["tools"])
 
 class ProcessRequest(BaseModel):
     task_id: str
-    params: Dict[str, Any] = {}
+    params: dict[str, Any] = {}
 
 @router.post("/{tool_id}/upload")
 async def upload_files_for_tool(
     tool_id: str,
-    files: List[UploadFile] = File(...),
+    files: list[UploadFile] = File(...),  # noqa: B008
 ):
     if not files:
         raise HTTPException(status_code=400, detail="Nenhum arquivo enviado.")
@@ -32,7 +34,7 @@ async def upload_files_for_tool(
     for file in files:
         safe_filename = Path(file.filename).name
         dest_path = input_dir / safe_filename
-        with open(dest_path, "wb") as buffer:
+        with open(dest_path, "wb") as buffer:  # noqa: ASYNC230
             shutil.copyfileobj(file.file, buffer)
         saved_files.append(safe_filename)
 
@@ -43,7 +45,7 @@ async def upload_files_for_tool(
         try:
             thumb_paths = generate_pdf_thumbnails(first_file, thumb_dir, dpi=100, max_pages=30)
             thumbnails = [f"/api/v1/tasks/{task_id}/thumbnails/{p.name}" for p in thumb_paths]
-        except Exception:
+        except Exception:  # noqa: BLE001
             thumbnails = []
 
     return {
@@ -65,7 +67,7 @@ async def start_tool_processing(
         raise HTTPException(status_code=404, detail="Sessão de arquivo não encontrada ou expirada.")
 
     # Dispara a tarefa assíncrona no Celery
-    async_result = run_pdf_task.apply_async(
+    run_pdf_task.apply_async(
         args=[tool_id, str(task_dir), body.params],
         task_id=task_id
     )

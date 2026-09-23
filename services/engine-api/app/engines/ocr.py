@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 
+
 def perform_pdf_ocr(input_path: Path, output_path: Path, language: str = "por+eng") -> Path:
     """
     Executa OCR em PDF usando ocrmypdf e Tesseract, gerando PDF pesquisável com camada de texto real.

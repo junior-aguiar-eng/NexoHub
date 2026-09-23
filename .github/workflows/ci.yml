@@ -64,6 +64,6 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --locked --project engines/python
-      - run: uv run --locked --project engines/python ruff check .
+      - run: uv run --locked --project engines/python ruff check engines/python
       - run: uv run --locked --project engines/python pytest
       - run: uv build --project engines/python

@@ -25,6 +25,7 @@ type PdfPageGridPanelProps = {
   totalPages: number;
   pages: PdfPageItem[];
   selectedIndices: number[];
+  realThumbnails?: string[];
   onPagesChange?: (pages: PdfPageItem[]) => void;
   onSelectedIndicesChange?: (indices: number[]) => void;
   onRotateAll?: () => void;
@@ -36,6 +37,7 @@ export function PdfPageGridPanel({
   totalPages,
   pages,
   selectedIndices,
+  realThumbnails,
   onPagesChange,
   onSelectedIndicesChange,
   onRotateAll,
@@ -228,7 +230,9 @@ export function PdfPageGridPanel({
       <div className="pdf-page-cards-grid">
         {pages.map((page, index) => {
           const isSelected = mode === "extract" && selectedIndices.includes(page.originalIndex);
-          const thumbUrl = createSvgPageThumbnail(page.originalIndex, page.rotation, totalPages);
+          const realThumb = realThumbnails?.[page.originalIndex - 1];
+          const thumbUrl =
+            realThumb || createSvgPageThumbnail(page.originalIndex, page.rotation, totalPages);
 
           if (mode === "extract") {
             return (

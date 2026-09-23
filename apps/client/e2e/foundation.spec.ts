@@ -4,18 +4,21 @@ test("abre o Launcher compartilhado com vitrine de ferramentas", async ({ page }
   await page.goto("/");
   await expect(
     page.getByRole("heading", {
-      name: "Documentos complexos e tarefas de PDF simplificados",
+      name: "Olá, Boni, o que faremos hoje?",
     }),
   ).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Comece por uma tarefa" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Ferramentas práticas" })).toBeVisible();
+  await expect(
+    page.getByText("Use todas as ferramentas de forma gratuita e ilimitada"),
+  ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Organizar PDF" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Comprimir PDF" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Juntar PDF" })).toBeVisible();
 });
 
 test("troca de suíte e filtra os cards", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Processamento", exact: true }).click();
+  const suiteNav = page.getByRole("navigation", { name: "Categorias de ferramentas" });
+  await suiteNav.getByRole("button", { name: "Organizar PDF", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Organizar PDF" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Comparar textos" })).toHaveCount(0);
@@ -23,13 +26,13 @@ test("troca de suíte e filtra os cards", async ({ page }) => {
 
 test("navega entre suítes pelo teclado", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Todas", exact: true }).focus();
+  const suiteNav = page.getByRole("navigation", { name: "Categorias de ferramentas" });
+  await suiteNav.getByRole("button", { name: "Todas", exact: true }).focus();
   await page.keyboard.press("ArrowRight");
 
-  await expect(page.getByRole("button", { name: "Processamento", exact: true })).toHaveAttribute(
-    "aria-current",
-    "page",
-  );
+  await expect(
+    suiteNav.getByRole("button", { name: "Organizar PDF", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("heading", { name: "Organizar PDF" })).toBeVisible();
 });
 
@@ -51,22 +54,27 @@ test("abre a tela dedicada de Comprimir PDF e retorna ao Launcher", async ({ pag
   await card.click();
 
   await expect(page.getByRole("heading", { name: "Comprimir PDF", level: 1 })).toBeVisible();
-  await expect(page.getByText("Nível de compressão", { exact: true })).toBeVisible();
-  await expect(page.getByText(/Recomendada \(ótimo equilíbrio\)/i)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Selecionar arquivo PDF" })).toBeVisible();
+  await expect(page.getByText("ou arraste e solte seus arquivos aqui")).toBeVisible();
 
-  // Retorna ao Launcher
-  await page.getByRole("button", { name: "Todas as ferramentas" }).click();
-  await expect(page.getByRole("heading", { name: "Ferramentas práticas" })).toBeVisible();
+  // Retorna ao Launcher via botão Voltar
+  await page.getByRole("button", { name: "Todas as ferramentas", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Olá, Boni, o que faremos hoje?" })).toBeVisible();
 });
 
-test("abre a tela dedicada de Organizar PDF", async ({ page }) => {
+test("abre a tela dedicada de Organizar PDF e retorna clicando no logo NexoHub", async ({
+  page,
+}) => {
   await page.goto("/");
   const card = page.locator("article").filter({ hasText: "Organizar PDF" });
   await card.click();
 
   await expect(page.getByRole("heading", { name: "Organizar PDF", level: 1 })).toBeVisible();
-  await expect(page.getByText("Selecionar arquivo PDF")).toBeVisible();
-  await expect(page.getByText("ou arraste e solte seus arquivos aqui")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Selecionar arquivo PDF" })).toBeVisible();
+
+  // Retorna clicando no Logo NexoHub no cabeçalho
+  await page.getByRole("button", { name: "NexoHub - Página Inicial" }).click();
+  await expect(page.getByRole("heading", { name: "Olá, Boni, o que faremos hoje?" })).toBeVisible();
 });
 
 test("digita e compara textos na tela dedicada de Comparação", async ({ page }) => {
@@ -110,8 +118,8 @@ test("abre a tela dedicada de Reconhecimento OCR", async ({ page }) => {
   await card.click();
 
   await expect(page.getByRole("heading", { name: "Reconhecer texto", level: 1 })).toBeVisible();
-  await expect(page.getByText("Idioma do documento", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Executar agora" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Selecionar arquivo PDF" })).toBeVisible();
+  await expect(page.getByText("ou arraste e solte seus arquivos aqui")).toBeVisible();
 });
 
 test("gerencia ciclo de vida dos superpoderes documentais no modal", async ({ page }) => {

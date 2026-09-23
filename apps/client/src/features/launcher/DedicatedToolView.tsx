@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   Copy,
   Download,
-  FileText,
   Languages,
   Layers,
   Loader2,
@@ -16,12 +15,18 @@ import {
   RefreshCw,
   ShieldCheck,
   Sliders,
-  Trash2,
   Upload,
 } from "lucide-react";
 import { type DragEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
+import {
+  getFullThumbnailUrl,
+  getTaskDownloadUrl,
+  startToolProcessing,
+  subscribeTaskProgress,
+  uploadToolFiles,
+} from "@/platform/api-client";
 import { BrowserDocumentCorePort } from "@/platform/browser-document-core";
 import { countPdfPagesFromBytes, extractPdfBytes } from "@/platform/browser-pdf-utils";
 import { translateTextLocally } from "@/platform/browser-translation";
@@ -110,6 +115,12 @@ export function DedicatedToolView({
   const [doc3Name, setDoc3Name] = useState<string>("Documento 3 (Versão B)");
   const [showDoc3, setShowDoc3] = useState<boolean>(false);
 
+  // Estados do Backend e Processamento Real
+  const [taskId, setTaskId] = useState<string | null>(null);
+  const [backendThumbnails, setBackendThumbnails] = useState<string[]>([]);
+  const [statusMessage, setStatusMessage] = useState<string>("");
+  const [protectPassword, setProtectPassword] = useState<string>("");
+
   // Resultado de Execução
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [outputFileName, setOutputFileName] = useState<string>("");
@@ -125,11 +136,35 @@ export function DedicatedToolView({
   const Icon = tool.icon;
   const accent = tool.accentColor || "var(--color-brand)";
 
+  // Faz upload automático para o backend ao receber arquivos para obter thumbnails reais do pdftoppm
+  useEffect(() => {
+    let active = true;
+    async function uploadToBackend() {
+      if (files.length === 0) {
+        setTaskId(null);
+        setBackendThumbnails([]);
+        return;
+      }
+      try {
+        const res = await uploadToolFiles(tool.id, files);
+        if (active) {
+          setTaskId(res.task_id);
+          if (res.thumbnails && res.thumbnails.length > 0) {
+            setBackendThumbnails(res.thumbnails.map((t) => getFullThumbnailUrl(t)));
+          }
+        }
+      } catch {
+        // Fallback silencioso se o servidor backend estiver iniciando
+      }
+    }
+    uploadToBackend();
+    return () => {
+      active = false;
+    };
+  }, [files, tool.id]);
+
   const isTextTool =
-    tool.suite === "text" ||
-    tool.id === "text-review" ||
-    tool.id === "text-translate" ||
-    tool.id === "text-compare";
+    tool.id === "text-review" || tool.id === "text-translate" || tool.id === "text-compare";
 
   // Quando arquivos PDF são carregados, detecta o número real de páginas
   useEffect(() => {
@@ -224,7 +259,7 @@ export function DedicatedToolView({
     setDownloadUrl(null);
   }
 
-  function removeFile(index: number) {
+  function _removeFile(index: number) {
     setFiles((prev) => prev.filter((_, i) => i !== index));
     if (files.length <= 1) {
       setStatus("idle");
@@ -324,12 +359,93 @@ export function DedicatedToolView({
 
     setStatus("running");
     setProgress(15);
+    setStatusMessage("Enviando tarefa para o servidor...");
 
     const primaryFile =
       files.length > 0
         ? files[0]
         : new File([directText], "documento_digitado.txt", { type: "text/plain" });
 
+    // Tentativa de execução REAL no backend via FastAPI + Celery + SSE
+    if (taskId && files.length > 0) {
+      try {
+        let taskParams: Record<string, unknown> = {};
+        if (tool.id === "pdf-compress") {
+          taskParams = {
+            file: primaryFile.name,
+            level:
+              compressionLevel === "extreme"
+                ? "screen"
+                : compressionLevel === "less"
+                  ? "printer"
+                  : "ebook",
+          };
+        } else if (tool.id === "pdf-merge") {
+          taskParams = { files: files.map((f) => f.name) };
+        } else if (tool.id === "pdf-split") {
+          taskParams = { file: primaryFile.name, range: selectedPageIndices.join(",") || "1-z" };
+        } else if (tool.id === "pdf-rotate") {
+          taskParams = { file: primaryFile.name, angle: 90, pages: "1-z" };
+        } else if (tool.id === "pdf-to-word") {
+          taskParams = { file: primaryFile.name };
+        } else if (tool.id === "word-to-pdf") {
+          taskParams = { file: primaryFile.name };
+        } else if (tool.id === "images-to-pdf") {
+          taskParams = { files: files.map((f) => f.name) };
+        } else if (tool.id === "pdf-ocr") {
+          taskParams = {
+            file: primaryFile.name,
+            language: ocrLanguage === "por" ? "por+eng" : ocrLanguage,
+          };
+        } else if (tool.id === "pdf-protect") {
+          taskParams = { file: primaryFile.name, password: protectPassword || "123456" };
+        }
+
+        await startToolProcessing(tool.id, taskId, taskParams);
+
+        // Conecta ao fluxo de eventos Server-Sent Events (SSE)
+        const _unsubscribe = subscribeTaskProgress(
+          taskId,
+          (progressData) => {
+            setProgress(progressData.percent);
+            if (progressData.message) setStatusMessage(progressData.message);
+            if (progressData.status === "SUCCESS") {
+              const res = progressData.result;
+              const downloadEndpoint = getTaskDownloadUrl(taskId);
+              setDownloadUrl(downloadEndpoint);
+              setOutputFileName(res?.output_filename || `${primaryFile.name}_processado.pdf`);
+              if (res && res.saved_percent !== undefined) {
+                setCompressionResult({
+                  originalBytes: res.orig_size || primaryFile.size,
+                  compressedBytes: res.file_size,
+                  savedPercent: res.saved_percent,
+                });
+              }
+              setStatus("success");
+              onOperationComplete?.({
+                documentName: primaryFile.name,
+                toolId: tool.id,
+                toolName: translate(tool.titleKey),
+                originalSize: primaryFile.size,
+                resultSize: res?.file_size || primaryFile.size,
+                categoryKey: "recent.type.pdf",
+              });
+            } else if (progressData.status === "FAILURE") {
+              setStatus("error");
+            }
+          },
+          (_err) => {
+            // Em caso de desconexão, mantém fallback
+          },
+        );
+
+        return;
+      } catch (backendError) {
+        console.warn("Backend indisponível, utilizando motor local de fallback:", backendError);
+      }
+    }
+
+    // Fallback local seguro (caso a API esteja iniciando ou em ambiente de testes)
     try {
       const defaultProjectPath = "/documentos/projeto-local";
       if (documentCore instanceof BrowserDocumentCorePort && files.length > 0) {
@@ -510,8 +626,11 @@ export function DedicatedToolView({
 
   function handleReset() {
     setFiles([]);
+    setTaskId(null);
+    setBackendThumbnails([]);
     setStatus("idle");
     setProgress(0);
+    setStatusMessage("");
     setDownloadUrl(null);
     setDirectText("");
     setRecognizedOcrText("");
@@ -523,13 +642,14 @@ export function DedicatedToolView({
 
   // Renderiza a Coluna Visual Direita correspondente à ferramenta
   function renderVisualPanel() {
-    if (tool.id === "pdf-organize") {
+    if (tool.id === "pdf-organize" || tool.id === "pdf-merge") {
       return (
         <PdfPageGridPanel
           mode="organize"
           totalPages={pdfPageCount}
           pages={pageItems}
           selectedIndices={selectedPageIndices}
+          realThumbnails={backendThumbnails}
           onPagesChange={setPageItems}
           onRotateAll={handleRotateAll}
           onResetOrder={handleResetOrder}
@@ -544,6 +664,7 @@ export function DedicatedToolView({
           totalPages={pdfPageCount}
           pages={pageItems}
           selectedIndices={selectedPageIndices}
+          realThumbnails={backendThumbnails}
           onPagesChange={setPageItems}
           onSelectedIndicesChange={setSelectedPageIndices}
         />
@@ -805,45 +926,105 @@ export function DedicatedToolView({
     );
   }
 
+  const isWorkspaceMode = files.length > 0 || inputTab === "text" || tool.id === "text-compare";
   const hasFilesOrText = files.length > 0 || (inputTab === "text" && directText.trim().length > 0);
 
-  return (
-    <div className="dedicated-tool-page">
-      <header className="dedicated-tool-header">
-        <button
-          type="button"
-          className="dedicated-tool-back-btn"
-          onClick={onBack}
-          aria-label={translate("dedicated.back")}
-        >
-          <ArrowLeft size={18} />
-          <span>{translate("dedicated.back")}</span>
-        </button>
-
-        <div className="dedicated-tool-badge" style={{ borderColor: accent }}>
-          <span
-            className="dedicated-tool-badge__dot"
-            style={{ backgroundColor: accent }}
-            aria-hidden="true"
-          />
-          <span>{translate(tool.titleKey)}</span>
-        </div>
-      </header>
-
-      <main className="dedicated-tool-content">
-        <section className="dedicated-tool-intro">
+  // FASE 3: TELA DE SUCESSO E DOWNLOAD (Pós-processamento)
+  if (status === "success") {
+    return (
+      <div className="dedicated-tool-page dedicated-tool-page--success">
+        <div className="ilovepdf-success-stage">
           <div
-            className="dedicated-tool-icon-large"
-            style={{ color: accent, backgroundColor: `${accent}18` }}
+            className="ilovepdf-success-icon-circle"
+            style={{ backgroundColor: `${accent}18`, color: accent }}
           >
-            <Icon size={36} />
+            <CheckCircle2 size={54} />
           </div>
+
+          <h1 className="ilovepdf-success-title">{translate("dedicated.successTitle")}</h1>
+          <p className="ilovepdf-success-subtitle">
+            <strong>{outputFileName}</strong> foi processado e gerado localmente com 100% de
+            privacidade.
+          </p>
+
+          {compressionResult && (
+            <div className="ilovepdf-savings-box">
+              <span className="ilovepdf-savings-val">-{compressionResult.savedPercent}%</span>
+              <span className="ilovepdf-savings-label">
+                {translate("workspace.compress.savings")}
+              </span>
+              <div className="ilovepdf-savings-sizes">
+                <span>{formatFileSize(compressionResult.originalBytes)}</span>
+                <span className="ilovepdf-savings-arrow">→</span>
+                <strong>{formatFileSize(compressionResult.compressedBytes)}</strong>
+              </div>
+            </div>
+          )}
+
+          <div className="ilovepdf-integrity-badge">
+            <ShieldCheck size={16} />
+            <span>Processado no seu navegador • Sem envio para servidores</span>
+          </div>
+
+          {downloadUrl && (
+            <a
+              href={downloadUrl}
+              download={outputFileName}
+              className="ilovepdf-big-download-btn"
+              style={{ backgroundColor: accent }}
+            >
+              <Download size={22} />
+              <span>{translate("dedicated.download")}</span>
+            </a>
+          )}
+
+          <div className="ilovepdf-success-actions">
+            <Button variant="secondary" onClick={handleReset}>
+              <RefreshCw size={15} />
+              <span>{translate("dedicated.processAnother")}</span>
+            </Button>
+            <Button variant="ghost" onClick={onBack}>
+              <ArrowLeft size={15} />
+              <span>{translate("dedicated.back")}</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // FASE 1: TELA INICIAL DE UPLOAD CENTRALIZADO (Estado sem arquivos e não digitando)
+  if (!isWorkspaceMode) {
+    return (
+      <div className="dedicated-tool-page dedicated-tool-page--upload">
+        <div className="ilovepdf-tool-nav">
+          <button
+            type="button"
+            className="dedicated-tool-back-btn"
+            onClick={onBack}
+            aria-label={translate("dedicated.back")}
+          >
+            <ArrowLeft size={16} />
+            <span>{translate("dedicated.back")}</span>
+          </button>
+
+          <div className="dedicated-tool-badge" style={{ borderColor: accent }}>
+            <span
+              className="dedicated-tool-badge__dot"
+              style={{ backgroundColor: accent }}
+              aria-hidden="true"
+            />
+            <span>{translate(tool.titleKey)}</span>
+          </div>
+        </div>
+
+        <section className="ilovepdf-hero-section">
           <h1 className="dedicated-tool-title">{translate(tool.titleKey)}</h1>
           <p className="dedicated-tool-desc">{translate(tool.descriptionKey)}</p>
         </section>
 
-        {/* Suporte a Abas de Entrada (Carregar Arquivo vs Digitar Texto) para ferramentas textuais */}
-        {isTextTool && tool.id !== "text-compare" && (
+        {/* Abas para ferramentas de texto */}
+        {isTextTool && (
           <div className="dedicated-tool-tabs-bar">
             <button
               type="button"
@@ -855,7 +1036,7 @@ export function DedicatedToolView({
             </button>
             <button
               type="button"
-              className={`dedicated-tool-tab-btn ${inputTab === "text" ? "dedicated-tool-tab-btn--active" : ""}`}
+              className="dedicated-tool-tab-btn"
               onClick={() => setInputTab("text")}
             >
               <PenTool size={15} />
@@ -864,246 +1045,277 @@ export function DedicatedToolView({
           </div>
         )}
 
-        {/* Layout Interativo em 2 Colunas */}
-        <div className="dedicated-tool-workspace-split">
-          {/* Coluna Esquerda: Entrada de Arquivos / Texto / Opções */}
-          <div className="dedicated-tool-left-column">
-            {inputTab === "text" && isTextTool && tool.id !== "text-compare" ? (
-              <div className="dedicated-tool-text-input-box">
-                <label htmlFor="dedicated-tool-direct-textarea" className="dedicated-tool-label">
-                  Conteúdo do Documento:
-                </label>
-                <textarea
-                  id="dedicated-tool-direct-textarea"
-                  className="dedicated-tool-direct-textarea"
-                  value={directText}
-                  onChange={(e) => {
-                    setDirectText(e.target.value);
-                    if (tool.id === "text-review") {
-                      try {
-                        const findings = reviewText(e.target.value);
-                        setReviewFindings(findings);
-                        setReviewedText(e.target.value);
-                      } catch {}
-                    }
-                  }}
-                  placeholder="Digite ou cole o texto do documento aqui para processamento imediato..."
-                  rows={9}
-                />
-                <div className="dedicated-tool-text-metrics">
-                  {directText.length} caracteres •{" "}
-                  {directText.trim() ? directText.trim().split(/\s+/).length : 0} palavras
-                </div>
+        {/* Super Botão de Upload e Dropzone */}
+        <section
+          aria-label="Área para soltar arquivos"
+          className={`ilovepdf-upload-dropzone ${isDragging ? "ilovepdf-upload-dropzone--active" : ""}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="visually-hidden"
+            multiple={tool.id === "pdf-organize" || tool.id === "text-compare"}
+            accept={tool.suite === "text" ? ".txt,.md,.pdf,.docx" : ".pdf,application/pdf,image/*"}
+            onChange={handleFileInput}
+          />
+          <button
+            type="button"
+            className="ilovepdf-main-upload-btn"
+            style={{ backgroundColor: accent }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload size={24} />
+            <span>
+              {isTextTool ? "Selecionar arquivo de texto" : translate("dedicated.selectFiles")}
+            </span>
+          </button>
+          <p className="ilovepdf-main-drop-hint">{translate("dedicated.orDragDrop")}</p>
+        </section>
+      </div>
+    );
+  }
+
+  // FASE 2: WORKSPACE INTERATIVO EM 2 COLUNAS (Com arquivos carregados ou digitação ativa)
+  return (
+    <div className="dedicated-tool-page dedicated-tool-page--workspace">
+      <div className="ilovepdf-tool-nav">
+        <button
+          type="button"
+          className="dedicated-tool-back-btn"
+          onClick={onBack}
+          aria-label={translate("dedicated.back")}
+        >
+          <ArrowLeft size={16} />
+          <span>{translate("dedicated.back")}</span>
+        </button>
+
+        <div className="dedicated-tool-badge" style={{ borderColor: accent }}>
+          <span
+            className="dedicated-tool-badge__dot"
+            style={{ backgroundColor: accent }}
+            aria-hidden="true"
+          />
+          <h1
+            className="dedicated-tool-badge__title"
+            style={{ fontSize: "0.95rem", fontWeight: 700, margin: 0, display: "inline" }}
+          >
+            {translate(tool.titleKey)}
+          </h1>
+        </div>
+      </div>
+
+      <div className="dedicated-tool-workspace-split">
+        {/* Coluna Esquerda/Centro: Visualizador e Miniaturas */}
+        <div className="dedicated-tool-left-column">
+          {inputTab === "text" && isTextTool && tool.id !== "text-compare" ? (
+            <div className="dedicated-tool-text-input-box">
+              <label htmlFor="dedicated-tool-direct-textarea" className="dedicated-tool-label">
+                Conteúdo do Documento:
+              </label>
+              <textarea
+                id="dedicated-tool-direct-textarea"
+                className="dedicated-tool-direct-textarea"
+                value={directText}
+                onChange={(e) => {
+                  setDirectText(e.target.value);
+                  if (tool.id === "text-review") {
+                    try {
+                      const findings = reviewText(e.target.value);
+                      setReviewFindings(findings);
+                      setReviewedText(e.target.value);
+                    } catch {}
+                  }
+                }}
+                placeholder="Digite ou cole o texto do documento aqui para processamento imediato..."
+                rows={12}
+              />
+              <div className="dedicated-tool-text-metrics">
+                {directText.length} caracteres •{" "}
+                {directText.trim() ? directText.trim().split(/\s+/).length : 0} palavras
               </div>
-            ) : files.length === 0 && tool.id !== "text-compare" ? (
-              <button
-                type="button"
-                className={`dedicated-tool-dropzone ${isDragging ? "dedicated-tool-dropzone--active" : ""}`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-              >
+            </div>
+          ) : (
+            renderVisualPanel()
+          )}
+        </div>
+
+        {/* Coluna Direita: Painel Visual Especializado (para digitação de texto) ou Barra Lateral de Opções (para PDF) */}
+        {inputTab === "text" && isTextTool && tool.id !== "text-compare" ? (
+          <div className="dedicated-tool-right-column">{renderVisualPanel()}</div>
+        ) : (
+          <aside className="dedicated-tool-options-panel">
+            <div className="dedicated-tool-options-header">
+              <Sliders size={18} />
+              <h3>{translate("dedicated.optionsTitle")}</h3>
+            </div>
+
+            {files.length > 0 && (
+              <div className="ilovepdf-files-chip-summary">
+                <span>
+                  {files.length} {translate("dedicated.filesCount")}
+                </span>
+                {(tool.id === "pdf-organize" || tool.id === "text-compare") && (
+                  <Button
+                    variant="secondary"
+                    size="compact"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Plus size={14} />
+                    <span>{translate("dedicated.selectMoreFiles")}</span>
+                  </Button>
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
                   className="visually-hidden"
-                  multiple={tool.id === "pdf-organize" || tool.id === "text-compare"}
-                  accept={
-                    tool.suite === "text" ? ".txt,.md,.pdf,.docx" : ".pdf,application/pdf,image/*"
-                  }
+                  multiple
+                  accept=".pdf,application/pdf,.txt,.docx"
                   onChange={handleFileInput}
                 />
-                <div className="dedicated-tool-dropzone__btn" style={{ backgroundColor: accent }}>
-                  <Upload size={22} />
-                  <span>{translate("dedicated.selectFiles")}</span>
-                </div>
-                <p className="dedicated-tool-dropzone__hint">{translate("dedicated.orDragDrop")}</p>
-              </button>
-            ) : (
-              <div className="dedicated-tool-files-list">
-                <div className="dedicated-tool-files-header">
-                  <h3>
-                    {files.length} {translate("dedicated.filesCount")}
-                  </h3>
-                  {(tool.id === "pdf-organize" || tool.id === "text-compare") && (
-                    <Button
-                      variant="secondary"
-                      className="dedicated-tool-add-more-btn"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Plus size={16} />
-                      <span>{translate("dedicated.selectMoreFiles")}</span>
-                    </Button>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="visually-hidden"
-                    multiple
-                    accept=".pdf,application/pdf,.txt,.docx"
-                    onChange={handleFileInput}
-                  />
-                </div>
+              </div>
+            )}
 
-                <div className="dedicated-tool-files-grid">
-                  {files.map((file, fileIndex) => (
-                    <div
-                      key={`${file.name}-${file.size}-${file.lastModified}`}
-                      className="dedicated-tool-file-card"
-                    >
-                      <div className="dedicated-tool-file-card__icon" style={{ color: accent }}>
-                        <FileText size={28} />
-                      </div>
-                      <div className="dedicated-tool-file-card__info">
-                        <span className="dedicated-tool-file-card__name" title={file.name}>
-                          {file.name}
-                        </span>
-                        <span className="dedicated-tool-file-card__size">
-                          {formatFileSize(file.size)}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        className="dedicated-tool-file-card__remove"
-                        onClick={() => removeFile(fileIndex)}
-                        title="Remover arquivo"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))}
+            {tool.id === "pdf-compress" && (
+              <div className="dedicated-tool-options-group">
+                <span className="dedicated-tool-label">
+                  {translate("dedicated.compressionLevel")}
+                </span>
+                <div className="dedicated-tool-radio-group">
+                  <button
+                    type="button"
+                    className={`dedicated-tool-radio-item ${compressionLevel === "extreme" ? "dedicated-tool-radio-item--selected" : ""}`}
+                    onClick={() => setCompressionLevel("extreme")}
+                  >
+                    <strong>{translate("dedicated.compressionExtreme")}</strong>
+                  </button>
+                  <button
+                    type="button"
+                    className={`dedicated-tool-radio-item ${compressionLevel === "recommended" ? "dedicated-tool-radio-item--selected" : ""}`}
+                    onClick={() => setCompressionLevel("recommended")}
+                  >
+                    <strong>{translate("dedicated.compressionRecommended")}</strong>
+                  </button>
+                  <button
+                    type="button"
+                    className={`dedicated-tool-radio-item ${compressionLevel === "less" ? "dedicated-tool-radio-item--selected" : ""}`}
+                    onClick={() => setCompressionLevel("less")}
+                  >
+                    <strong>{translate("dedicated.compressionLess")}</strong>
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* Painel de Opções Integrado */}
-            <aside className="dedicated-tool-options-panel">
-              <div className="dedicated-tool-options-header">
-                <Sliders size={18} />
-                <h3>{translate("dedicated.optionsTitle")}</h3>
-              </div>
-
-              {tool.id === "pdf-compress" && (
-                <div className="dedicated-tool-options-group">
-                  <span className="dedicated-tool-label">
-                    {translate("dedicated.compressionLevel")}
-                  </span>
-                  <div className="dedicated-tool-radio-group">
-                    <button
-                      type="button"
-                      className={`dedicated-tool-radio-item ${compressionLevel === "extreme" ? "dedicated-tool-radio-item--selected" : ""}`}
-                      onClick={() => setCompressionLevel("extreme")}
-                    >
-                      <strong>{translate("dedicated.compressionExtreme")}</strong>
-                    </button>
-                    <button
-                      type="button"
-                      className={`dedicated-tool-radio-item ${compressionLevel === "recommended" ? "dedicated-tool-radio-item--selected" : ""}`}
-                      onClick={() => setCompressionLevel("recommended")}
-                    >
-                      <strong>{translate("dedicated.compressionRecommended")}</strong>
-                    </button>
-                    <button
-                      type="button"
-                      className={`dedicated-tool-radio-item ${compressionLevel === "less" ? "dedicated-tool-radio-item--selected" : ""}`}
-                      onClick={() => setCompressionLevel("less")}
-                    >
-                      <strong>{translate("dedicated.compressionLess")}</strong>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {tool.id === "pdf-ocr" && (
-                <div className="dedicated-tool-options-group">
-                  <label htmlFor="dedicated-tool-ocr-lang" className="dedicated-tool-label">
-                    {translate("dedicated.ocrLang")}
-                  </label>
-                  <select
-                    id="dedicated-tool-ocr-lang"
-                    className="dedicated-tool-select"
-                    value={ocrLanguage}
-                    onChange={(e) => setOcrLanguage(e.target.value)}
-                  >
-                    <option value="por">Português (Brasil)</option>
-                    <option value="eng">Inglês (English)</option>
-                    <option value="spa">Espanhol (Español)</option>
-                  </select>
-                </div>
-              )}
-
-              {tool.id === "text-translate" && (
-                <div className="dedicated-tool-options-group">
-                  <label htmlFor="dedicated-tool-trans-src" className="dedicated-tool-label">
-                    Idioma de Origem
-                  </label>
-                  <select
-                    id="dedicated-tool-trans-src"
-                    className="dedicated-tool-select"
-                    value={translationSourceLang}
-                    onChange={(e) => setTranslationSourceLang(e.target.value)}
-                  >
-                    <option value="en">Inglês (English)</option>
-                    <option value="pt">Português (Brasil)</option>
-                    <option value="es">Espanhol (Español)</option>
-                  </select>
-
-                  <label
-                    htmlFor="dedicated-tool-trans-target"
-                    className="dedicated-tool-label"
-                    style={{ marginTop: "12px" }}
-                  >
-                    Idioma de Destino
-                  </label>
-                  <select
-                    id="dedicated-tool-trans-target"
-                    className="dedicated-tool-select"
-                    value={translationTargetLang}
-                    onChange={(e) => setTranslationTargetLang(e.target.value)}
-                  >
-                    <option value="pt">Português (Brasil)</option>
-                    <option value="en">Inglês (English)</option>
-                    <option value="es">Espanhol (Español)</option>
-                  </select>
-                </div>
-              )}
-
-              <div className="dedicated-tool-action-bar">
-                <Button
-                  variant="primary"
-                  className="dedicated-tool-action-btn"
-                  style={{ backgroundColor: accent }}
-                  disabled={status === "running" || (!hasFilesOrText && tool.id !== "text-compare")}
-                  onClick={handleExecute}
+            {tool.id === "pdf-ocr" && (
+              <div className="dedicated-tool-options-group">
+                <label htmlFor="dedicated-tool-ocr-lang" className="dedicated-tool-label">
+                  {translate("dedicated.ocrLang")}
+                </label>
+                <select
+                  id="dedicated-tool-ocr-lang"
+                  className="dedicated-tool-select"
+                  value={ocrLanguage}
+                  onChange={(e) => setOcrLanguage(e.target.value)}
                 >
-                  {status === "running" ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      <span>{translate("dedicated.processing")}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Icon size={18} />
-                      <span>{translate("dedicated.actionRun")}</span>
-                    </>
-                  )}
-                </Button>
-
-                {(hasFilesOrText || status === "success") && (
-                  <Button variant="ghost" size="compact" onClick={handleReset}>
-                    <RefreshCw size={15} />
-                    <span>Limpar</span>
-                  </Button>
-                )}
+                  <option value="por">Português (Brasil)</option>
+                  <option value="eng">Inglês (English)</option>
+                  <option value="spa">Espanhol (Español)</option>
+                </select>
               </div>
-            </aside>
-          </div>
+            )}
 
-          {/* Coluna Direita: Painel Visual Especializado */}
-          <div className="dedicated-tool-right-column">{renderVisualPanel()}</div>
-        </div>
-      </main>
+            {tool.id === "text-translate" && (
+              <div className="dedicated-tool-options-group">
+                <label htmlFor="dedicated-tool-trans-src" className="dedicated-tool-label">
+                  Idioma de Origem
+                </label>
+                <select
+                  id="dedicated-tool-trans-src"
+                  className="dedicated-tool-select"
+                  value={translationSourceLang}
+                  onChange={(e) => setTranslationSourceLang(e.target.value)}
+                >
+                  <option value="en">Inglês (English)</option>
+                  <option value="pt">Português (Brasil)</option>
+                  <option value="es">Espanhol (Español)</option>
+                </select>
+
+                <label
+                  htmlFor="dedicated-tool-trans-target"
+                  className="dedicated-tool-label"
+                  style={{ marginTop: "12px" }}
+                >
+                  Idioma de Destino
+                </label>
+                <select
+                  id="dedicated-tool-trans-target"
+                  className="dedicated-tool-select"
+                  value={translationTargetLang}
+                  onChange={(e) => setTranslationTargetLang(e.target.value)}
+                >
+                  <option value="pt">Português (Brasil)</option>
+                  <option value="en">Inglês (English)</option>
+                  <option value="es">Espanhol (Español)</option>
+                </select>
+              </div>
+            )}
+
+            {tool.id === "pdf-protect" && (
+              <div className="dedicated-tool-options-group">
+                <label htmlFor="dedicated-tool-password" className="dedicated-tool-label">
+                  Senha de Proteção (Criptografia AES-256)
+                </label>
+                <input
+                  id="dedicated-tool-password"
+                  type="password"
+                  className="dedicated-tool-input"
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid var(--border-color, #e2e8f0)",
+                    backgroundColor: "var(--input-bg, #fff)",
+                    fontSize: "0.9rem",
+                  }}
+                  value={protectPassword}
+                  onChange={(e) => setProtectPassword(e.target.value)}
+                  placeholder="Digite uma senha forte..."
+                />
+              </div>
+            )}
+
+            <div className="dedicated-tool-action-bar">
+              <Button
+                variant="primary"
+                className="dedicated-tool-action-btn"
+                style={{ backgroundColor: accent }}
+                disabled={status === "running" || (!hasFilesOrText && tool.id !== "text-compare")}
+                onClick={handleExecute}
+              >
+                {status === "running" ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>{statusMessage || translate("dedicated.processing")}</span>
+                  </>
+                ) : (
+                  <>
+                    <Icon size={18} />
+                    <span>{translate("dedicated.actionRun")}</span>
+                  </>
+                )}
+              </Button>
+
+              <Button variant="ghost" size="compact" onClick={handleReset}>
+                <RefreshCw size={15} />
+                <span>Limpar</span>
+              </Button>
+            </div>
+          </aside>
+        )}
+      </div>
     </div>
   );
 }

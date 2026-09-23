@@ -11,7 +11,7 @@ import { Header } from "@/features/launcher/Header";
 import { Hero } from "@/features/launcher/Hero";
 import type { LauncherTool, SuiteId } from "@/features/launcher/model";
 import { QuickToolGrid } from "@/features/launcher/QuickToolGrid";
-import { RecentProjects } from "@/features/launcher/RecentProjects";
+import { SuiteNavigation } from "@/features/launcher/SuiteNavigation";
 import { useRecentOperations } from "@/features/launcher/useRecentOperations";
 import { translate } from "@/i18n";
 import { createDocumentCorePort } from "@/platform/document-core";
@@ -23,6 +23,49 @@ function normalize(value: string) {
     .toLocaleLowerCase("pt-BR");
 }
 
+const ROUTE_TOOL_MAP: Record<string, string> = {
+  "/juntar-pdf": "pdf-merge",
+  "/merge-pdf": "pdf-merge",
+  "/dividir-pdf": "pdf-split",
+  "/split-pdf": "pdf-split",
+  "/rotacionar-pdf": "pdf-rotate",
+  "/rotate-pdf": "pdf-rotate",
+  "/comprimir-pdf": "pdf-compress",
+  "/compress-pdf": "pdf-compress",
+  "/organizar-pdf": "pdf-organize",
+  "/pdf-para-word": "pdf-to-word",
+  "/pdf-to-word": "pdf-to-word",
+  "/word-para-pdf": "word-to-pdf",
+  "/word-to-pdf": "word-to-pdf",
+  "/imagem-para-pdf": "images-to-pdf",
+  "/jpg-to-pdf": "images-to-pdf",
+  "/ocr-pdf": "pdf-ocr",
+  "/ocr": "pdf-ocr",
+  "/proteger-pdf": "pdf-protect",
+  "/protect-pdf": "pdf-protect",
+  "/extrair-imagens": "pdf-extract-images",
+  "/comparar-textos": "text-compare",
+  "/revisar-texto": "text-review",
+  "/traduzir-texto": "text-translate",
+};
+
+const TOOL_ROUTE_MAP: Record<string, string> = {
+  "pdf-merge": "/juntar-pdf",
+  "pdf-split": "/dividir-pdf",
+  "pdf-rotate": "/rotacionar-pdf",
+  "pdf-compress": "/comprimir-pdf",
+  "pdf-organize": "/organizar-pdf",
+  "pdf-to-word": "/pdf-para-word",
+  "word-to-pdf": "/word-para-pdf",
+  "images-to-pdf": "/imagem-para-pdf",
+  "pdf-ocr": "/ocr-pdf",
+  "pdf-protect": "/proteger-pdf",
+  "pdf-extract-images": "/extrair-imagens",
+  "text-compare": "/comparar-textos",
+  "text-review": "/revisar-texto",
+  "text-translate": "/traduzir-texto",
+};
+
 export function App() {
   return (
     <AuthProvider>
@@ -33,7 +76,7 @@ export function App() {
 
 function AppContent() {
   const documentCore = useMemo(() => createDocumentCorePort(), []);
-  const { operations, addOperation, clearOperations } = useRecentOperations();
+  const { addOperation } = useRecentOperations();
   const {
     authModalOpen,
     authModalTab,
@@ -46,12 +89,56 @@ function AppContent() {
     return resolveLauncherTools([], documentCore);
   }, [documentCore]);
 
-  const [activeDedicatedTool, setActiveDedicatedTool] = useState<LauncherTool | null>(null);
+  const [activeDedicatedTool, setActiveDedicatedTool] = useState<LauncherTool | null>(() => {
+    if (typeof window !== "undefined") {
+      const pathname = window.location.pathname.replace(/\/$/, "");
+      const matchedToolId = ROUTE_TOOL_MAP[pathname];
+      if (matchedToolId) {
+        return dynamicTools.find((t) => t.id === matchedToolId) || null;
+      }
+    }
+    return null;
+  });
+
   const [initialFilesForTool, setInitialFilesForTool] = useState<File[]>([]);
   const [activeSuite, setActiveSuite] = useState<SuiteId>("overview");
   const [searchQuery] = useState("");
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [isCapabilitiesOpen, setIsCapabilitiesOpen] = useState(false);
+
+  // Sincroniza a URL do navegador com a ferramenta ativa
+  useEffect(() => {
+    function handlePopState() {
+      const pathname = window.location.pathname.replace(/\/$/, "");
+      const matchedToolId = ROUTE_TOOL_MAP[pathname];
+      if (matchedToolId) {
+        const found = dynamicTools.find((t) => t.id === matchedToolId);
+        if (found) {
+          setActiveDedicatedTool(found);
+          return;
+        }
+      }
+      setActiveDedicatedTool(null);
+    }
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [dynamicTools]);
+
+  const selectToolWithUrl = (tool: LauncherTool | null, files?: File[]) => {
+    setInitialFilesForTool(files || []);
+    setActiveDedicatedTool(tool);
+    if (tool) {
+      const targetRoute = TOOL_ROUTE_MAP[tool.id] || `/${tool.id}`;
+      if (window.location.pathname !== targetRoute) {
+        window.history.pushState({ toolId: tool.id }, "", targetRoute);
+      }
+    } else {
+      if (window.location.pathname !== "/") {
+        window.history.pushState({}, "", "/");
+      }
+    }
+  };
 
   useEffect(() => {
     function handleShortcut(event: KeyboardEvent) {
@@ -74,31 +161,14 @@ function AppContent() {
         (activeSuite === "organize" &&
           (tool.suite === "organize" || (tool.suite as string) === "pdf")) ||
         (activeSuite === "optimize" && (tool.suite === "optimize" || tool.id === "pdf-compress")) ||
-        (activeSuite === "text" && (tool.suite === "text" || (tool.suite as string) === "review"));
+        (activeSuite === "convert" && tool.suite === "convert") ||
+        (activeSuite === "text" &&
+          (tool.suite === "text" || (tool.suite as string) === "review")) ||
+        (activeSuite === "security" && tool.suite === "security");
       const searchableText = `${translate(tool.titleKey)} ${translate(tool.descriptionKey)}`;
       return matchesSuite && normalize(searchableText).includes(normalizedQuery);
     });
   }, [dynamicTools, activeSuite, searchQuery]);
-
-  // Se o usuário selecionou uma ferramenta dedicada, exibe a tela dedicada da ferramenta
-  if (activeDedicatedTool) {
-    return (
-      <div className="app-shell">
-        <DedicatedToolView
-          tool={activeDedicatedTool}
-          documentCore={documentCore}
-          initialFiles={initialFilesForTool}
-          onBack={() => {
-            setActiveDedicatedTool(null);
-            setInitialFilesForTool([]);
-          }}
-          onOperationComplete={(op) => {
-            addOperation(op);
-          }}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="app-shell">
@@ -107,29 +177,55 @@ function AppContent() {
       </a>
       <Header
         activeSuite={activeSuite}
-        onSelectSuite={(suite) => setActiveSuite(suite)}
+        onSelectSuite={(suite) => {
+          setActiveSuite(suite);
+          selectToolWithUrl(null);
+        }}
+        onSelectTool={(toolId) => {
+          const found = dynamicTools.find((t) => t.id === toolId);
+          if (found) selectToolWithUrl(found);
+        }}
+        activeToolId={activeDedicatedTool?.id}
+        onLogoClick={() => {
+          selectToolWithUrl(null);
+          setActiveSuite("overview");
+        }}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
         onOpenCapabilities={() => setIsCapabilitiesOpen(true)}
         searchQuery={searchQuery}
       />
       <main id="main-content" className="launcher-content launcher-content--full">
-        <div className="launcher-welcome-container">
-          <Hero />
-        </div>
-
-        <div className="launcher-grid-container">
-          <QuickToolGrid
-            tools={filteredTools}
-            onRunTool={(tool, files) => {
-              setInitialFilesForTool(files || []);
-              setActiveDedicatedTool(tool);
+        {activeDedicatedTool ? (
+          <DedicatedToolView
+            tool={activeDedicatedTool}
+            documentCore={documentCore}
+            initialFiles={initialFilesForTool}
+            onBack={() => {
+              selectToolWithUrl(null);
+            }}
+            onOperationComplete={(op) => {
+              addOperation(op);
             }}
           />
-        </div>
+        ) : (
+          <>
+            <div className="launcher-welcome-container">
+              <Hero />
+              <div className="launcher-suites-center">
+                <SuiteNavigation activeSuite={activeSuite} onSelect={setActiveSuite} />
+              </div>
+            </div>
 
-        <div className="launcher-recent-container">
-          <RecentProjects operations={operations} onClearOperations={clearOperations} />
-        </div>
+            <div className="launcher-grid-container">
+              <QuickToolGrid
+                tools={filteredTools}
+                onRunTool={(tool, files) => {
+                  selectToolWithUrl(tool, files);
+                }}
+              />
+            </div>
+          </>
+        )}
       </main>
 
       <footer className="app-footer">

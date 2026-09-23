@@ -1,13 +1,21 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
 
 describe("App", () => {
+  beforeEach(() => {
+    window.history.pushState({}, "", "/");
+  });
+
   it("renderiza o Hub de ferramentas práticas estilo iLovePDF", () => {
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: /Documentos complexos/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Ferramentas práticas" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /Olá, Boni, o que faremos hoje\?/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Use todas as ferramentas de forma gratuita e ilimitada/i),
+    ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Organizar PDF" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Comprimir PDF" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Extrair Imagens" })).toBeInTheDocument();
@@ -24,19 +32,22 @@ describe("App", () => {
     fireEvent.click(card);
 
     // Deve estar na tela dedicada da ferramenta
-    expect(screen.getByRole("button", { name: /Todas as ferramentas/i })).toBeInTheDocument();
-    expect(screen.getByText(/Selecionar arquivo PDF/i)).toBeInTheDocument();
+    const main = screen.getByRole("main");
+    expect(within(main).getByRole("button", { name: /Todas as ferramentas/i })).toBeInTheDocument();
+    expect(within(main).getByText(/Selecionar arquivo PDF/i)).toBeInTheDocument();
 
     // Retorna ao Hub
-    fireEvent.click(screen.getByRole("button", { name: /Todas as ferramentas/i }));
-    expect(screen.getByRole("heading", { name: /Documentos complexos/i })).toBeInTheDocument();
+    fireEvent.click(within(main).getByRole("button", { name: /Todas as ferramentas/i }));
+    expect(
+      screen.getByRole("heading", { name: /Olá, Boni, o que faremos hoje\?/i }),
+    ).toBeInTheDocument();
   });
 
   it("filtra as ferramentas pelas categorias do topo", () => {
     render(<App />);
 
     const nav = screen.getByRole("navigation", { name: /Categorias de ferramentas/i });
-    fireEvent.click(within(nav).getByRole("button", { name: "Processamento" }));
+    fireEvent.click(within(nav).getByRole("button", { name: "Organizar PDF" }));
 
     expect(screen.getByRole("heading", { name: "Organizar PDF" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Comparar textos" })).not.toBeInTheDocument();

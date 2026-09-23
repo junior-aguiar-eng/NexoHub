@@ -9,14 +9,10 @@ type QuickToolGridProps = {
 
 export function QuickToolGrid({ tools, onRunTool }: QuickToolGridProps) {
   return (
-    <section className="section-block quick-tools-section" aria-labelledby="quick-tools-title">
-      <div className="section-heading quick-tools-heading">
-        <div className="quick-tools-heading__left">
-          <p className="eyebrow">{translate("tools.eyebrow")}</p>
-          <h2 id="quick-tools-title">{translate("tools.title")}</h2>
-        </div>
-        <p className="quick-tools-heading__desc">{translate("tools.description")}</p>
-      </div>
+    <section
+      className="section-block quick-tools-section quick-tools-section--clean"
+      aria-label="Ferramentas"
+    >
       {tools.length > 0 ? (
         <div className="tool-grid">
           {tools.map((tool, index) => (

@@ -17,6 +17,7 @@ export const ptBR = {
   "suite.popular": "Mais acessadas",
   "suite.organize": "Organizar PDF",
   "suite.optimize": "Otimizar PDF",
+  "suite.convert": "Converter PDF",
   "suite.text": "Texto e OCR",
   "suite.security": "Segurança",
   "suite.processing": "Processamento",
@@ -87,8 +88,18 @@ export const ptBR = {
   "tool.intelligenceExtract.title": "Extrair Informações",
   "tool.intelligenceExtract.description":
     "Detectar e extrair dados estruturados como e-mails, telefones, tabelas e valores.",
+  "tool.pdfRotate.title": "Rotacionar PDF",
+  "tool.pdfRotate.description": "Girar páginas de arquivos PDF no sentido horário ou anti-horário.",
+  "tool.pdfToWord.title": "PDF para Word",
+  "tool.pdfToWord.description": "Converter documentos PDF em arquivos DOCX editáveis com precisão.",
+  "tool.wordToPdf.title": "Word para PDF",
+  "tool.wordToPdf.description": "Converter documentos DOCX e DOC para PDF de alta qualidade.",
+  "tool.imagesToPdf.title": "Imagem para PDF",
+  "tool.imagesToPdf.description":
+    "Transformar fotos JPG, PNG e WEBP em documentos PDF consolidados.",
   "tool.pdfProtect.title": "Proteger PDF",
-  "tool.pdfProtect.description": "Adicionar senha e criptografar documentos confidenciais.",
+  "tool.pdfProtect.description":
+    "Adicionar senha e criptografar documentos confidenciais com AES-256.",
   "tool.pdfUnlock.title": "Desbloquear PDF",
   "tool.pdfUnlock.description": "Remover senha e restrições de edição ou impressão de PDFs.",
   "recent.eyebrow": "Histórico",

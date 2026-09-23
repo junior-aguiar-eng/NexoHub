@@ -7,6 +7,7 @@ export type SuiteId =
   | "popular"
   | "organize"
   | "optimize"
+  | "convert"
   | "text"
   | "security"
   | "processing"

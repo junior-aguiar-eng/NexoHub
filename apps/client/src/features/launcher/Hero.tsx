@@ -1,50 +1,20 @@
-import { Lock, ShieldCheck, Zap } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import { translate } from "@/i18n";
 
 export function Hero() {
   const reduceMotion = useReducedMotion();
 
   return (
     <motion.section
-      className="hero"
-      initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+      className="hero hero--clean"
+      initial={reduceMotion ? false : { opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduceMotion ? 0 : 0.35, ease: "easeOut" }}
+      transition={{ duration: reduceMotion ? 0 : 0.3, ease: "easeOut" }}
       aria-labelledby="hero-title"
     >
-      <h2
-        className="hero__eyebrow"
-        style={{
-          fontSize: "0.875rem",
-          color: "var(--color-brand)",
-          fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          marginBottom: "4px",
-        }}
-      >
-        Comece por uma tarefa
-      </h2>
       <h1 id="hero-title" className="hero__welcome-title">
-        Documentos complexos e tarefas de PDF simplificados
+        Olá, Boni, o que faremos hoje?
       </h1>
-      <p className="hero__description">{translate("hero.description")}</p>
-
-      <ul className="hero__trust-row" aria-label="Garantias de processamento local">
-        <li className="hero__trust-item">
-          <ShieldCheck size={15} aria-hidden="true" style={{ color: "var(--color-brand)" }} />
-          <span className="hero__trust-label">{translate("hero.trust.local")}</span>
-        </li>
-        <li className="hero__trust-item">
-          <Lock size={15} aria-hidden="true" style={{ color: "var(--color-brand)" }} />
-          <span className="hero__trust-label">{translate("hero.trust.privacy")}</span>
-        </li>
-        <li className="hero__trust-item">
-          <Zap size={15} aria-hidden="true" style={{ color: "var(--color-brand)" }} />
-          <span className="hero__trust-label">{translate("hero.trust.traceability")}</span>
-        </li>
-      </ul>
+      <p className="hero__clean-subtitle">Use todas as ferramentas de forma gratuita e ilimitada</p>
     </motion.section>
   );
 }

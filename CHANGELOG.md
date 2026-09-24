@@ -16,8 +16,14 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 - **Auditoria multiplataforma de licenças**: Ajuste no `scripts/audit-licenses.mjs` com modo `--check` resiliente a variações de quebra de linha entre ambientes Linux/Windows.
 - **Pipelines reproduzíveis**: Cobertura contínua para TypeScript/Node.js, Rust no Windows, Python 3.14 via `uv`, Playwright E2E, Gitleaks e auditoria de licenças.
 
+### Removido
+
+- **Extirpação de microserviço remoto e containers**: Remoção definitiva de `services/engine-api` (FastAPI/Celery/Redis) e `docker-compose.yml`, eliminando riscos de licença AGPLv3 (Ghostscript) e restaurando a garantia de processamento 100% offline.
+- **Expurgo do subsistema Supabase Auth**: Desinstalação da dependência `@supabase/supabase-js` e exclusão do módulo `features/account`, eliminando telemetria e contas em nuvem em estrita aderência ao `docs/PRODUCT.md`.
+
 ### Corrigido
 
+- **Desacoplamento e conformidade de `DedicatedToolView`**: Canalização da execução de ferramentas estritamente através do `documentCore` canônico, eliminando requisições HTTP e fallbacks com caminhos não concedidos pelo `grant_broker`.
 - Compatibilidade de supply-chain com `pnpm 11` via `ignore-scripts=true` no `.npmrc`.
 - Atualização da crate `rustls >= 0.23.45` no `Cargo.lock` eliminando advisory de segurança detectado pelo `cargo-deny`.
 - Resolução de permissão `pull-requests: read` no Gitleaks do GitHub Actions.

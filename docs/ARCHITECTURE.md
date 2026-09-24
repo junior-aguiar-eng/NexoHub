@@ -19,7 +19,9 @@ Browser adapters         Tauri IPC — Windows
 
 Componentes React não inferem capacidades pelo sistema operacional e não acessam filesystem,
 SQLite, shell ou sidecars. O Rust valida comandos, argumentos e caminhos. Sidecars usam protocolo
-estruturado por stdin/stdout, nunca servidor HTTP local por padrão.
+estruturado por stdin/stdout, nunca servidor HTTP local por padrão. O projeto é estritamente
+local-first: não são admitidos microserviços, servidores de background com portas de rede abertas,
+uploads para servidores remotos ou autenticação externa em nuvem.
 
 O domínio é um Document Artifact Graph: `Project` contém `Document`; documentos possuem `Artifact`,
 `Representation`, `Asset`, `Overlay` e operações ligando inputs a outputs. Blobs persistentes usam

@@ -1,8 +1,5 @@
 import { Database, FileCheck, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { AuthProvider, useAuth } from "@/features/account/AuthContext";
-import { AuthModal } from "@/features/account/AuthModal";
-import { UserProfileModal } from "@/features/account/UserProfileModal";
 import { CapabilitiesModal } from "@/features/capabilities/CapabilitiesModal";
 import { CommandPalette } from "@/features/launcher/CommandPalette";
 import { DedicatedToolView } from "@/features/launcher/DedicatedToolView";
@@ -67,23 +64,8 @@ const TOOL_ROUTE_MAP: Record<string, string> = {
 };
 
 export function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
-}
-
-function AppContent() {
   const documentCore = useMemo(() => createDocumentCorePort(), []);
   const { addOperation } = useRecentOperations();
-  const {
-    authModalOpen,
-    authModalTab,
-    closeAuthModal,
-    userProfileModalOpen,
-    closeUserProfileModal,
-  } = useAuth();
 
   const dynamicTools = useMemo(() => {
     return resolveLauncherTools([], documentCore);
@@ -274,10 +256,6 @@ function AppContent() {
         onClose={() => setIsCapabilitiesOpen(false)}
         documentCore={documentCore}
       />
-
-      <AuthModal open={authModalOpen} onClose={closeAuthModal} initialTab={authModalTab} />
-
-      <UserProfileModal open={userProfileModalOpen} onClose={closeUserProfileModal} />
     </div>
   );
 }

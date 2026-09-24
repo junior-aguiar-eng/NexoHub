@@ -20,13 +20,6 @@ import {
 import { type DragEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
-import {
-  getFullThumbnailUrl,
-  getTaskDownloadUrl,
-  startToolProcessing,
-  subscribeTaskProgress,
-  uploadToolFiles,
-} from "@/platform/api-client";
 import { BrowserDocumentCorePort } from "@/platform/browser-document-core";
 import { countPdfPagesFromBytes, extractPdfBytes } from "@/platform/browser-pdf-utils";
 import { translateTextLocally } from "@/platform/browser-translation";
@@ -115,10 +108,6 @@ export function DedicatedToolView({
   const [doc3Name, setDoc3Name] = useState<string>("Documento 3 (Versão B)");
   const [showDoc3, setShowDoc3] = useState<boolean>(false);
 
-  // Estados do Backend e Processamento Real
-  const [taskId, setTaskId] = useState<string | null>(null);
-  const [backendThumbnails, setBackendThumbnails] = useState<string[]>([]);
-  const [statusMessage, setStatusMessage] = useState<string>("");
   const [protectPassword, setProtectPassword] = useState<string>("");
 
   // Resultado de Execução
@@ -135,33 +124,6 @@ export function DedicatedToolView({
   const _doc3InputRef = useRef<HTMLInputElement | null>(null);
   const Icon = tool.icon;
   const accent = tool.accentColor || "var(--color-brand)";
-
-  // Faz upload automático para o backend ao receber arquivos para obter thumbnails reais do pdftoppm
-  useEffect(() => {
-    let active = true;
-    async function uploadToBackend() {
-      if (files.length === 0) {
-        setTaskId(null);
-        setBackendThumbnails([]);
-        return;
-      }
-      try {
-        const res = await uploadToolFiles(tool.id, files);
-        if (active) {
-          setTaskId(res.task_id);
-          if (res.thumbnails && res.thumbnails.length > 0) {
-            setBackendThumbnails(res.thumbnails.map((t) => getFullThumbnailUrl(t)));
-          }
-        }
-      } catch {
-        // Fallback silencioso se o servidor backend estiver iniciando
-      }
-    }
-    uploadToBackend();
-    return () => {
-      active = false;
-    };
-  }, [files, tool.id]);
 
   const isTextTool =
     tool.id === "text-review" || tool.id === "text-translate" || tool.id === "text-compare";
@@ -358,94 +320,13 @@ export function DedicatedToolView({
     if (files.length === 0 && !isDirectTextInput && tool.id !== "text-compare") return;
 
     setStatus("running");
-    setProgress(15);
-    setStatusMessage("Enviando tarefa para o servidor...");
+    setProgress(20);
 
     const primaryFile =
       files.length > 0
         ? files[0]
         : new File([directText], "documento_digitado.txt", { type: "text/plain" });
 
-    // Tentativa de execução REAL no backend via FastAPI + Celery + SSE
-    if (taskId && files.length > 0) {
-      try {
-        let taskParams: Record<string, unknown> = {};
-        if (tool.id === "pdf-compress") {
-          taskParams = {
-            file: primaryFile.name,
-            level:
-              compressionLevel === "extreme"
-                ? "screen"
-                : compressionLevel === "less"
-                  ? "printer"
-                  : "ebook",
-          };
-        } else if (tool.id === "pdf-merge") {
-          taskParams = { files: files.map((f) => f.name) };
-        } else if (tool.id === "pdf-split") {
-          taskParams = { file: primaryFile.name, range: selectedPageIndices.join(",") || "1-z" };
-        } else if (tool.id === "pdf-rotate") {
-          taskParams = { file: primaryFile.name, angle: 90, pages: "1-z" };
-        } else if (tool.id === "pdf-to-word") {
-          taskParams = { file: primaryFile.name };
-        } else if (tool.id === "word-to-pdf") {
-          taskParams = { file: primaryFile.name };
-        } else if (tool.id === "images-to-pdf") {
-          taskParams = { files: files.map((f) => f.name) };
-        } else if (tool.id === "pdf-ocr") {
-          taskParams = {
-            file: primaryFile.name,
-            language: ocrLanguage === "por" ? "por+eng" : ocrLanguage,
-          };
-        } else if (tool.id === "pdf-protect") {
-          taskParams = { file: primaryFile.name, password: protectPassword || "123456" };
-        }
-
-        await startToolProcessing(tool.id, taskId, taskParams);
-
-        // Conecta ao fluxo de eventos Server-Sent Events (SSE)
-        const _unsubscribe = subscribeTaskProgress(
-          taskId,
-          (progressData) => {
-            setProgress(progressData.percent);
-            if (progressData.message) setStatusMessage(progressData.message);
-            if (progressData.status === "SUCCESS") {
-              const res = progressData.result;
-              const downloadEndpoint = getTaskDownloadUrl(taskId);
-              setDownloadUrl(downloadEndpoint);
-              setOutputFileName(res?.output_filename || `${primaryFile.name}_processado.pdf`);
-              if (res && res.saved_percent !== undefined) {
-                setCompressionResult({
-                  originalBytes: res.orig_size || primaryFile.size,
-                  compressedBytes: res.file_size,
-                  savedPercent: res.saved_percent,
-                });
-              }
-              setStatus("success");
-              onOperationComplete?.({
-                documentName: primaryFile.name,
-                toolId: tool.id,
-                toolName: translate(tool.titleKey),
-                originalSize: primaryFile.size,
-                resultSize: res?.file_size || primaryFile.size,
-                categoryKey: "recent.type.pdf",
-              });
-            } else if (progressData.status === "FAILURE") {
-              setStatus("error");
-            }
-          },
-          (_err) => {
-            // Em caso de desconexão, mantém fallback
-          },
-        );
-
-        return;
-      } catch (backendError) {
-        console.warn("Backend indisponível, utilizando motor local de fallback:", backendError);
-      }
-    }
-
-    // Fallback local seguro (caso a API esteja iniciando ou em ambiente de testes)
     try {
       const defaultProjectPath = "/documentos/projeto-local";
       if (documentCore instanceof BrowserDocumentCorePort && files.length > 0) {
@@ -454,7 +335,7 @@ export function DedicatedToolView({
         }
       }
 
-      setProgress(30);
+      setProgress(40);
 
       const imported = await documentCore.invoke("import_document", {
         projectPath: defaultProjectPath,
@@ -626,11 +507,8 @@ export function DedicatedToolView({
 
   function handleReset() {
     setFiles([]);
-    setTaskId(null);
-    setBackendThumbnails([]);
     setStatus("idle");
     setProgress(0);
-    setStatusMessage("");
     setDownloadUrl(null);
     setDirectText("");
     setRecognizedOcrText("");
@@ -649,7 +527,6 @@ export function DedicatedToolView({
           totalPages={pdfPageCount}
           pages={pageItems}
           selectedIndices={selectedPageIndices}
-          realThumbnails={backendThumbnails}
           onPagesChange={setPageItems}
           onRotateAll={handleRotateAll}
           onResetOrder={handleResetOrder}
@@ -664,7 +541,6 @@ export function DedicatedToolView({
           totalPages={pdfPageCount}
           pages={pageItems}
           selectedIndices={selectedPageIndices}
-          realThumbnails={backendThumbnails}
           onPagesChange={setPageItems}
           onSelectedIndicesChange={setSelectedPageIndices}
         />
@@ -1298,7 +1174,7 @@ export function DedicatedToolView({
                 {status === "running" ? (
                   <>
                     <Loader2 size={18} className="animate-spin" />
-                    <span>{statusMessage || translate("dedicated.processing")}</span>
+                    <span>{translate("dedicated.processing")}</span>
                   </>
                 ) : (
                   <>

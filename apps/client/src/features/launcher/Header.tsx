@@ -18,7 +18,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { UserMenu } from "@/features/account/UserMenu";
 import type { SuiteId } from "./model";
 
 type HeaderProps = {
@@ -347,8 +346,6 @@ export function Header({
         >
           <Search size={18} />
         </button>
-
-        <UserMenu />
       </div>
     </header>
   );

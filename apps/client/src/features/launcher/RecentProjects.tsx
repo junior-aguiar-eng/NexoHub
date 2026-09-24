@@ -1,4 +1,4 @@
-import { FileText, Lock, ShieldCheck, Trash2 } from "lucide-react";
+import { Check, FileText, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import type { RecentOperation } from "./useRecentOperations";
@@ -76,25 +76,11 @@ export function RecentProjects({ operations, onClearOperations }: RecentProjects
                 </div>
 
                 <div className="recent-operation-card__right">
-                  <span
-                    className="recent-badge-local"
-                    title="Processado integralmente no ambiente local"
-                  >
-                    <Lock size={12} aria-hidden="true" />
-                    <span>{translate("recent.processedLocally")}</span>
-                  </span>
-
                   <span className="recent-badge-category">{translate(item.categoryKey)}</span>
-
-                  {item.sha256 && (
-                    <span
-                      className="recent-badge-verified"
-                      title={`Integridade verificada: SHA-256 ${item.sha256}`}
-                    >
-                      <ShieldCheck size={13} aria-hidden="true" />
-                      <span>{translate("recent.verifiedBlake3")}</span>
-                    </span>
-                  )}
+                  <span className="recent-badge-local">
+                    <Check size={12} aria-hidden="true" />
+                    <span>Concluído</span>
+                  </span>
                 </div>
               </div>
             </li>

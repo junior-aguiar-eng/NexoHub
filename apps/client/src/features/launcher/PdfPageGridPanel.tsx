@@ -1,13 +1,11 @@
 import {
   ArrowLeftRight,
   Check,
-  CheckSquare,
   ChevronLeft,
   ChevronRight,
-  Grid,
   RotateCw,
-  Square,
   Trash2,
+  Undo2,
 } from "lucide-react";
 import { type ChangeEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +16,7 @@ export type PdfPageItem = {
   id: string;
   originalIndex: number;
   rotation: number;
+  deleted?: boolean;
 };
 
 type PdfPageGridPanelProps = {
@@ -44,6 +43,25 @@ export function PdfPageGridPanel({
   onResetOrder,
 }: PdfPageGridPanelProps) {
   const [rangeInput, setRangeInput] = useState<string>("");
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  // Arrastar e soltar nativo e responsivo
+  function handleDragStart(index: number) {
+    setDraggedIndex(index);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+  }
+
+  function handleDrop(targetIndex: number) {
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+    const newPages = [...pages];
+    const [moved] = newPages.splice(draggedIndex, 1);
+    newPages.splice(targetIndex, 0, moved);
+    onPagesChange?.(newPages);
+    setDraggedIndex(null);
+  }
 
   function handleMove(index: number, direction: "left" | "right") {
     const targetIndex = direction === "left" ? index - 1 : index + 1;
@@ -66,9 +84,13 @@ export function PdfPageGridPanel({
     onPagesChange?.(newPages);
   }
 
-  function handleDelete(index: number) {
-    if (pages.length <= 1) return;
-    const newPages = pages.filter((_, i) => i !== index);
+  function handleToggleDelete(index: number) {
+    const newPages = pages.map((page, i) => {
+      if (i === index) {
+        return { ...page, deleted: !page.deleted };
+      }
+      return page;
+    });
     onPagesChange?.(newPages);
   }
 
@@ -101,7 +123,6 @@ export function PdfPageGridPanel({
     const val = e.target.value;
     setRangeInput(val);
 
-    // Converte string de intervalo como "1-3, 5" em array de números
     const parsedIndices = new Set<number>();
     const parts = val.split(/[,;]/);
     for (const part of parts) {
@@ -123,80 +144,46 @@ export function PdfPageGridPanel({
         }
       }
     }
-    if (parsedIndices.size > 0) {
-      onSelectedIndicesChange?.(Array.from(parsedIndices).sort((a, b) => a - b));
-    }
+    onSelectedIndicesChange?.(Array.from(parsedIndices).sort((a, b) => a - b));
   }
+
+  const activePagesCount = pages.filter((p) => !p.deleted).length;
+  const deletedPagesCount = pages.filter((p) => p.deleted).length;
 
   return (
     <div className="pdf-page-grid-panel">
-      {/* Barra Superior com Título e Ações */}
-      <div className="pdf-page-grid-header">
-        <div className="pdf-page-grid-title-block">
-          <Grid size={18} className="pdf-page-grid-icon" />
-          <div>
-            <h3 className="pdf-page-grid-title">
-              {translate("workspace.pageGrid.title")} ({pages.length}{" "}
-              {pages.length === 1 ? "página" : "páginas"})
-            </h3>
-            <p className="pdf-page-grid-hint">
-              {mode === "organize"
-                ? translate("workspace.pageGrid.hint")
-                : translate("workspace.pageGrid.extractHint")}
-            </p>
-          </div>
+      {/* Barra de Ações Rápidas no Topo */}
+      <div className="pdf-page-grid-toolbar">
+        <div className="pdf-page-grid-stats">
+          <span className="pdf-page-grid-title">Organização Visual de Páginas</span>
+          <span className="pdf-page-grid-counter">
+            {activePagesCount} de {totalPages} página(s) ativas
+            {deletedPagesCount > 0 && ` (${deletedPagesCount} excluída(s))`}
+          </span>
         </div>
 
         <div className="pdf-page-grid-actions">
           {mode === "organize" ? (
             <>
-              <Button
-                variant="ghost"
-                size="compact"
-                onClick={onRotateAll}
-                title="Girar todas as páginas em 90 graus"
-              >
+              <Button variant="ghost" size="compact" onClick={onRotateAll}>
                 <RotateCw size={14} />
                 <span>Girar Todas</span>
               </Button>
-              {onResetOrder && (
-                <Button
-                  variant="ghost"
-                  size="compact"
-                  onClick={onResetOrder}
-                  title="Restaurar ordem original das páginas"
-                >
-                  <ArrowLeftRight size={14} />
-                  <span>Restaurar Ordem</span>
-                </Button>
-              )}
+              <Button variant="ghost" size="compact" onClick={onResetOrder}>
+                <ArrowLeftRight size={14} />
+                <span>Restaurar Ordem</span>
+              </Button>
             </>
           ) : (
             <>
-              <Button
-                variant="ghost"
-                size="compact"
-                onClick={handleSelectAll}
-                title="Selecionar todas as páginas"
-              >
-                <CheckSquare size={14} />
+              <Button variant="ghost" size="compact" onClick={handleSelectAll}>
+                <Check size={14} />
                 <span>{translate("workspace.pageGrid.selectAll")}</span>
               </Button>
-              <Button
-                variant="ghost"
-                size="compact"
-                onClick={handleClearSelection}
-                title="Limpar seleção"
-              >
-                <Square size={14} />
+              <Button variant="ghost" size="compact" onClick={handleClearSelection}>
                 <span>{translate("workspace.pageGrid.clearSelection")}</span>
               </Button>
-              <Button
-                variant="ghost"
-                size="compact"
-                onClick={handleInvertSelection}
-                title="Inverter seleção de páginas"
-              >
+              <Button variant="ghost" size="compact" onClick={handleInvertSelection}>
                 <ArrowLeftRight size={14} />
                 <span>Inverter</span>
               </Button>
@@ -205,7 +192,6 @@ export function PdfPageGridPanel({
         </div>
       </div>
 
-      {/* Se for modo Extrator, exibe barra de intervalo digitado e contador */}
       {mode === "extract" && (
         <div className="pdf-page-extract-bar">
           <div className="pdf-page-extract-input-group">
@@ -226,13 +212,14 @@ export function PdfPageGridPanel({
         </div>
       )}
 
-      {/* Grade Visual de Miniaturas */}
+      {/* Grade Visual de Miniaturas com Drag & Drop */}
       <div className="pdf-page-cards-grid">
         {pages.map((page, index) => {
           const isSelected = mode === "extract" && selectedIndices.includes(page.originalIndex);
           const realThumb = realThumbnails?.[page.originalIndex - 1];
           const thumbUrl =
             realThumb || createSvgPageThumbnail(page.originalIndex, page.rotation, totalPages);
+          const isDeleted = Boolean(page.deleted);
 
           if (mode === "extract") {
             return (
@@ -242,7 +229,6 @@ export function PdfPageGridPanel({
                 className={`pdf-page-card ${isSelected ? "pdf-page-card--selected" : ""}`}
                 onClick={() => handleToggleSelect(page.originalIndex)}
               >
-                {/* Badge de número / checkbox */}
                 <div className="pdf-page-card-header">
                   <span className="pdf-page-badge">Pág. {page.originalIndex}</span>
                   <div
@@ -252,7 +238,6 @@ export function PdfPageGridPanel({
                   </div>
                 </div>
 
-                {/* Prévia da Página */}
                 <div className="pdf-page-card-preview">
                   <img
                     src={thumbUrl}
@@ -269,13 +254,23 @@ export function PdfPageGridPanel({
           }
 
           return (
-            <div key={page.id} className="pdf-page-card">
-              {/* Badge de número */}
+            // biome-ignore lint/a11y/noStaticElementInteractions: card de arrastar e soltar para reorganização de páginas
+            <div
+              key={page.id}
+              className={`pdf-page-card ${isDeleted ? "pdf-page-card--deleted" : ""}`}
+              draggable={!isDeleted}
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={handleDragOver}
+              onDrop={() => handleDrop(index)}
+            >
               <div className="pdf-page-card-header">
-                <span className="pdf-page-badge">Pág. {index + 1}</span>
+                <span className="pdf-page-badge">
+                  {isDeleted
+                    ? `Pág. ${page.originalIndex} (Excluída)`
+                    : `Pág. ${page.originalIndex}`}
+                </span>
               </div>
 
-              {/* Prévia da Página */}
               <div className="pdf-page-card-preview">
                 <img
                   src={thumbUrl}
@@ -284,62 +279,92 @@ export function PdfPageGridPanel({
                   style={{
                     transform: `rotate(${page.rotation}deg)`,
                     transition: "transform 0.2s ease-in-out",
+                    opacity: isDeleted ? 0.35 : 1,
                   }}
                 />
+
+                {isDeleted && (
+                  <div className="pdf-page-deleted-overlay">
+                    <span className="pdf-page-deleted-text">Página Excluída</span>
+                    <button
+                      type="button"
+                      className="pdf-page-undo-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleDelete(index);
+                      }}
+                    >
+                      <Undo2 size={13} />
+                      <span>Desfazer</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Botões de Ação na Miniatura (apenas no modo organizar) */}
-              {mode === "organize" && (
-                <div className="pdf-page-card-toolbar">
+              <div className="pdf-page-card-toolbar">
+                {!isDeleted ? (
+                  <>
+                    <button
+                      type="button"
+                      className="pdf-page-tool-btn"
+                      disabled={index === 0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMove(index, "left");
+                      }}
+                      title="Mover para esquerda"
+                    >
+                      <ChevronLeft size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className="pdf-page-tool-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRotate(index);
+                      }}
+                      title="Girar 90°"
+                    >
+                      <RotateCw size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className="pdf-page-tool-btn pdf-page-tool-btn--danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleDelete(index);
+                      }}
+                      title="Excluir esta página"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className="pdf-page-tool-btn"
+                      disabled={index === pages.length - 1}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMove(index, "right");
+                      }}
+                      title="Mover para direita"
+                    >
+                      <ChevronRight size={14} />
+                    </button>
+                  </>
+                ) : (
                   <button
                     type="button"
-                    className="pdf-page-tool-btn"
-                    disabled={index === 0}
+                    className="pdf-page-tool-btn pdf-page-tool-btn--undo-full"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleMove(index, "left");
+                      handleToggleDelete(index);
                     }}
-                    title={translate("workspace.pageGrid.moveLeft")}
                   >
-                    <ChevronLeft size={14} />
+                    <Undo2 size={13} />
+                    <span>Recuperar página</span>
                   </button>
-                  <button
-                    type="button"
-                    className="pdf-page-tool-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRotate(index);
-                    }}
-                    title={translate("workspace.pageGrid.rotate")}
-                  >
-                    <RotateCw size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    className="pdf-page-tool-btn pdf-page-tool-btn--danger"
-                    disabled={pages.length <= 1}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(index);
-                    }}
-                    title={translate("workspace.pageGrid.delete")}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    className="pdf-page-tool-btn"
-                    disabled={index === pages.length - 1}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleMove(index, "right");
-                    }}
-                    title={translate("workspace.pageGrid.moveRight")}
-                  >
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           );
         })}

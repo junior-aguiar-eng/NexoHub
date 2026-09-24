@@ -151,7 +151,7 @@ export function OcrScannerPanel({
           onChange={(e) => onTextChange?.(e.target.value)}
           placeholder={
             isScanning
-              ? "Processando texto óptico localmente no seu dispositivo..."
+              ? "Reconhecendo texto do documento..."
               : "O texto reconhecido aparecerá aqui após o processamento. Você poderá editá-lo diretamente."
           }
           readOnly={isScanning}

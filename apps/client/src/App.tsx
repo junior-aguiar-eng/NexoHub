@@ -1,6 +1,5 @@
 import { Database, FileCheck, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { CapabilitiesModal } from "@/features/capabilities/CapabilitiesModal";
 import { CommandPalette } from "@/features/launcher/CommandPalette";
 import { DedicatedToolView } from "@/features/launcher/DedicatedToolView";
 import { resolveLauncherTools } from "@/features/launcher/data";
@@ -86,7 +85,6 @@ export function App() {
   const [activeSuite, setActiveSuite] = useState<SuiteId>("overview");
   const [searchQuery] = useState("");
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [isCapabilitiesOpen, setIsCapabilitiesOpen] = useState(false);
 
   // Sincroniza a URL do navegador com a ferramenta ativa
   useEffect(() => {
@@ -173,7 +171,6 @@ export function App() {
           setActiveSuite("overview");
         }}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-        onOpenCapabilities={() => setIsCapabilitiesOpen(true)}
         searchQuery={searchQuery}
       />
       <main id="main-content" className="launcher-content launcher-content--full">
@@ -249,12 +246,6 @@ export function App() {
         open={commandPaletteOpen}
         onOpenChange={setCommandPaletteOpen}
         onSelectSuite={setActiveSuite}
-      />
-
-      <CapabilitiesModal
-        open={isCapabilitiesOpen}
-        onClose={() => setIsCapabilitiesOpen(false)}
-        documentCore={documentCore}
       />
     </div>
   );

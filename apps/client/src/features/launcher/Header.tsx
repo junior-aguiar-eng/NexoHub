@@ -15,7 +15,6 @@ import {
   Scissors,
   Search,
   SpellCheck2,
-  Zap,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { SuiteId } from "./model";
@@ -27,7 +26,6 @@ type HeaderProps = {
   activeToolId?: string | null;
   onLogoClick?: () => void;
   onOpenCommandPalette: () => void;
-  onOpenCapabilities?: () => void;
   searchQuery?: string;
 };
 
@@ -38,7 +36,6 @@ export function Header({
   activeToolId: _activeToolId,
   onLogoClick,
   onOpenCommandPalette,
-  onOpenCapabilities,
   searchQuery: _searchQuery,
 }: HeaderProps) {
   const [convertMenuOpen, setConvertMenuOpen] = useState(false);
@@ -322,21 +319,8 @@ export function Header({
         </div>
       </nav>
 
-      {/* Canto Direito com Superpoderes, Busca e Avatar */}
+      {/* Canto Direito com Busca Rápida */}
       <div className="header-actions">
-        {onOpenCapabilities && (
-          <button
-            type="button"
-            className="header-capabilities-btn"
-            onClick={onOpenCapabilities}
-            aria-label="Superpoderes Documentais"
-            title="Superpoderes Documentais (Sidecars e Motores)"
-          >
-            <Zap size={15} />
-            <span>Superpoderes</span>
-          </button>
-        )}
-
         <button
           type="button"
           className="header-search-icon-btn"

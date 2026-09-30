@@ -36,7 +36,7 @@ jobs:
           cache: pnpm
       - run: rustup toolchain install stable --profile minimal
       - run: rustup default stable
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Verificar versão e manifestos
         shell: powershell
         run: |
@@ -90,7 +90,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm build:web
       - run: uv build --project engines/python
       - uses: actions/upload-artifact@v4

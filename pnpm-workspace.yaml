@@ -6,3 +6,6 @@ onlyBuiltDependencies:
   - "@biomejs/biome"
   - esbuild
   - tesseract.js
+
+overrides:
+  undici: "^8.11.2"

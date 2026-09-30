@@ -15,7 +15,7 @@
   </a>
 </p>
 
-Hub de ferramentas práticas de PDF e documentos **open source**, **100% gratuito**, **local-first** e de **alta performance**. Junte, divida, comprima, reconheça texto (OCR), revise e converta seus arquivos diretamente no seu computador, com total privacidade e sem filas.
+Hub de ferramentas de PDF e documentos **open source**, gratuito e **local-first**. O catálogo exibido depende dos executores disponíveis na plataforma. Na web, as operações expostas são organização, junção, divisão, rotação e compressão de PDF e comparação de textos; os arquivos são processados localmente.
 
 > **Estado**: `0.1.0-alpha.1` em preparação e validação contínua. Build automatizado para Windows x64 ativo via GitHub Actions.
 
@@ -28,19 +28,37 @@ O NexoHub combina a simplicidade e agilidade visual do **iLovePDF** com a força
 ### Superfícies do Produto
 
 1. **Hub de Ferramentas (Tauri v2 + React 19)**:
-   - Vitrine limpa e categorizada de ferramentas essenciais: **Juntar PDF**, **Dividir PDF**, **Comprimir**, **Reconhecer Texto (OCR)**, **Corretor de Texto**, **Traduzir**, **Comparar** e **Extrair Imagens**.
-   - **Telas Dedicadas por Ferramenta**: Selecione ou arraste seus arquivos, ajuste opções com facilidade e processe instantaneamente.
-   - Histórico local de operações sem envio para a nuvem.
+   - Vitrine categorizada conforme a disponibilidade do executor no client. Conversão, proteção, OCR de PDF, revisão, tradução e extração de imagens não são anunciados como ferramentas web executáveis nesta versão.
+   - **Telas dedicadas:** seleção de arquivo, opções da operação e download do resultado. O navegador mantém os artifacts do Document Core em memória; não há reabertura de projeto web após fechar a sessão.
+   - Histórico recente local de operações concluídas. O histórico não substitui a persistência dos arquivos de saída.
 2. **Engines Especializados de Alta Performance**:
-   - **Rust Core (`crates/`)**: I/O seguro de alta performance, verificação SHA-256 e cancelamento atômico.
-   - **Python Engine (`engines/python`)**: Sidecar gerenciado por `uv` provendo OCR (Tesseract) e manipulação avançada com PyMuPDF.
-   - **LanguageTool Community**: Correção sintática e gramatical avançada em ambiente local.
+   - **Rust Core (`crates/`)**: armazenamento local com blobs endereçados por BLAKE3, controle de integridade e escrita atômica.
+   - **Python Engine (`engines/python`)**: Sidecar local para funções como OCR, extração, tradução e revisão; a presença no core não prova integração de cada função na tela dedicada ou no aplicativo instalado.
+   - **LanguageTool Community**: Módulo opcional de revisão local quando instalado e integrado ao fluxo nativo.
+
+### Disponibilidade na tela dedicada
+
+| Ferramenta | Web | Windows desktop | Entrada → saída | Executor atual |
+| --- | --- | --- | --- | --- |
+| Organizar PDF | Disponível; artifact em memória | Implementado com artifact persistido; QA do aplicativo instalado pendente | PDF → PDF | `pdf-lib` na web; Rust no desktop |
+| Comprimir PDF | Disponível; artifact em memória | Implementado com artifact persistido; QA do aplicativo instalado pendente | PDF → PDF | `pdf-lib` na web; Rust no desktop |
+| Juntar, dividir e rotacionar PDF | Disponível | Processamento no client; resultado e linhagem persistidos no Document Core nativo; QA do aplicativo instalado pendente | PDF → PDF ou ZIP | `pdf-lib` no client; persistência Rust no desktop |
+| Comparar textos | Disponível | Processamento no client; originais, relatório e linhagem persistidos no Document Core nativo; QA do aplicativo instalado pendente | texto → relatório de diferenças | domínio TypeScript; persistência Rust no desktop |
+| OCR de PDF, revisão, tradução e extração de imagens | Indisponível na tela dedicada | Indisponível na tela dedicada | Conforme o comando do core | Engines existentes ainda sem fluxo de UI validado |
+| Conversão e proteção de PDF | Indisponível | Indisponível | Conforme a ferramenta | Sem executor integrado |
+
+No desktop, a importação pela tela dedicada de compressão e organização solicita uma pasta e cria
+`NexoHub.nexohub` nela. As outras quatro ferramentas usam a mesma pasta para registrar entradas e
+resultado. A ponte IPC da tela dedicada limita cada importação, resultado e download a 64 MiB. A
+organização nativa expõe reordenação e exclusão de páginas; a rotação por página fica oculta nessa
+superfície até que o core aceite esse parâmetro. A execução do aplicativo instalado ainda requer
+validação específica, distinta dos testes do core, do client e da janela Tauri em desenvolvimento.
 
 ---
 
 ## 🔒 Princípios de Privacidade e Modelo Local-First
 
-- **100% Gratuito e Sem Limites**: Sem planos pagos artificiais, limites de páginas ou filas de espera.
+- **Gratuito:** sem planos pagos ou filas de processamento remoto. Os engines aplicam limites técnicos de tamanho e páginas.
 - **Seus Arquivos Ficam no seu PC**: Processamento local em memória ou disco nativo, sem telemetria e sem servidores remotos obrigatórios.
 - **Imutabilidade**: O arquivo original jamais é sobrescrito; toda operação gera um novo arquivo resultante.
 
@@ -105,7 +123,7 @@ pnpm licenses:check
 ```
 
 ### Workflows do GitHub Actions
-- **Pipeline Main**: Executado em push para a `main` em dois estágios sequenciais — validação da CLI diretamente do código e empacotamento do executável Windows (`app-x64.exe`).
+- **Instalador Windows**: `pnpm build:windows` gera um único instalador Inno Setup em `target/release/installer`. A distribuição por tag exige os gates de CI e segurança do workflow de release.
 - **CI**: Execução cruzada de testes de JavaScript/Playwright, Python 3.14 e compilação completa do Rust no Windows.
 - **Segurança e Licenças**: Varredura de segredos (Gitleaks), auditoria de vulnerabilidades (`cargo-deny`) e conformidade de licenças (`audit-licenses.mjs`).
 

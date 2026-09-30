@@ -51,41 +51,13 @@ export const DEFAULT_CAPABILITIES: readonly CapabilityItem[] = [
   },
 ];
 
-const STORAGE_KEY = "nexohub_capabilities_demo_state";
-
-export function getStoredCapabilities(): readonly CapabilityItem[] {
-  if (typeof window === "undefined") return DEFAULT_CAPABILITIES;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-  } catch {
-    // Falha silenciosa no storage
-  }
-  return DEFAULT_CAPABILITIES;
-}
-
-export function saveStoredCapabilities(items: readonly CapabilityItem[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // Falha silenciosa no storage
-  }
-}
-
 export function useCapabilities(documentCore?: DocumentCorePort) {
-  const [capabilities, setCapabilities] =
-    useState<readonly CapabilityItem[]>(getStoredCapabilities);
+  const [capabilities, setCapabilities] = useState<readonly CapabilityItem[]>(DEFAULT_CAPABILITIES);
   const [isLoading, setIsLoading] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!documentCore) {
-      setCapabilities(getStoredCapabilities());
+      setCapabilities(DEFAULT_CAPABILITIES);
       return;
     }
     setIsLoading(true);
@@ -93,7 +65,7 @@ export function useCapabilities(documentCore?: DocumentCorePort) {
       const res = await documentCore.invoke("list_capabilities", {});
       setCapabilities(res.capabilities);
     } catch {
-      setCapabilities(getStoredCapabilities());
+      setCapabilities(DEFAULT_CAPABILITIES);
     } finally {
       setIsLoading(false);
     }
@@ -109,14 +81,7 @@ export function useCapabilities(documentCore?: DocumentCorePort) {
         await documentCore.invoke("install_capability", { capabilityId: id });
         await refresh();
       } else {
-        await new Promise((resolve) => setTimeout(resolve, 1200));
-        setCapabilities((prev) => {
-          const updated = prev.map((cap) =>
-            cap.id === id ? { ...cap, status: "installed" as const } : cap,
-          );
-          saveStoredCapabilities(updated);
-          return updated;
-        });
+        throw new Error("CAPABILITY_NOT_FOUND");
       }
     },
     [documentCore, refresh],
@@ -129,18 +94,7 @@ export function useCapabilities(documentCore?: DocumentCorePort) {
         await refresh();
         return res.freedBytes;
       } else {
-        await new Promise((resolve) => setTimeout(resolve, 400));
-        let freed = 0;
-        setCapabilities((prev) => {
-          const target = prev.find((c) => c.id === id);
-          freed = target?.diskSizeBytes ?? 0;
-          const updated = prev.map((cap) =>
-            cap.id === id ? { ...cap, status: "not_installed" as const } : cap,
-          );
-          saveStoredCapabilities(updated);
-          return updated;
-        });
-        return freed;
+        throw new Error("CAPABILITY_NOT_FOUND");
       }
     },
     [documentCore, refresh],

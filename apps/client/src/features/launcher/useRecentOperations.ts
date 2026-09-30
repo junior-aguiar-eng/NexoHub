@@ -21,40 +21,16 @@ export interface RecentOperation {
 }
 
 const STORAGE_KEY = "nexohub:recent-operations:v2";
-const LEGACY_STORAGE_KEY = "nexohub:recent-operations";
-
-function isMockDocumentName(name: string): boolean {
-  const n = name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-  return (
-    n.includes("apresentacao") ||
-    n.includes("relatorio") ||
-    n.includes("digitalizado") ||
-    n.includes("dossie") ||
-    n.includes("peticao") ||
-    n.includes("apelacao") ||
-    n.includes("parecer") ||
-    n.includes("minuta") ||
-    n.includes("contrato")
-  );
-}
 
 export function useRecentOperations() {
   const [operations, setOperations] = useState<RecentOperation[]>(() => {
     if (typeof window === "undefined") return [];
     try {
-      // Limpeza forçada de dados legados do storage antigo
-      localStorage.removeItem(LEGACY_STORAGE_KEY);
-
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          const clean = parsed.filter(
-            (item) => item?.documentName && !isMockDocumentName(item.documentName),
-          );
+          const clean = parsed.filter((item) => item?.id && item?.documentName);
           if (clean.length !== parsed.length) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
           }

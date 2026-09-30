@@ -43,6 +43,14 @@ documento. O resultado contém o artifact derivado e a operação `pdf-compress`
 PDF inválido retorna `PDF_PROCESSING`; caminhos, IDs e tipos incompatíveis usam os códigos estáveis
 do Document Core.
 
+Os três perfis da interface mapeiam para os níveis nativos 3 (baixa), 6 (recomendada) e 9
+(extrema). Além da recompressão estrutural, o executor reencoda imagens `DCTDecode` e
+`FlateDecode` elegíveis, com qualidade JPEG e dimensão máxima distintas por perfil. Imagens com
+máscara, espaços de cor complexos ou parâmetros de decodificação não são alteradas. O navegador
+aplica os mesmos perfis a imagens RGB elegíveis. Se a regravação não reduzir o arquivo, o
+derivado preserva os bytes de entrada; o original importado permanece imutável. PDFs com
+assinatura digital são recusados, pois a regravação invalidaria a assinatura.
+
 ## Fase 7 — texto
 
 `create_text_revision` recebe `projectPath`, `documentId`, `artifactId` e conteúdo UTF-8. O artifact

@@ -3,7 +3,7 @@
 ## Preparação
 
 - Confirmar versão idêntica nos manifests e lockfiles com `pnpm release:verify`.
-- Confirmar a versão numérica MSI/WiX: `alpha=1000+n`, `beta=2000+n`, `rc=3000+n` e estável `4000`.
+- Confirmar versão do produto e nome do instalador Inno Setup em `target/release/installer`.
 - Confirmar `pnpm-lock.yaml`, `Cargo.lock` e `engines/python/uv.lock` versionados e imutáveis.
 - Gerar `THIRD_PARTY_LICENSES.md` e executar auditorias de dependências e licenças.
 - Obter sidecars exclusivamente pelo manifesto versionado e validar SHA-256, tamanho, componentes
@@ -16,8 +16,8 @@
 - `cargo fmt --check`, `cargo clippy`, `cargo test` e `cargo build --release --locked` verdes.
 - `uv sync --locked`, Ruff, pytest, `uv audit --locked` e wheel Python verdes.
 - `pnpm audit`, `cargo deny` e `pnpm licenses:check` verdes.
-- MSI e NSIS construídos no Windows com sidecars verificados; instalação, abertura, desinstalação e
-  checksums validados em máquina limpa.
+- Instalador Inno Setup único construído no Windows com sidecars verificados; instalação, abertura,
+  atualização, desinstalação, requisito WebView2 e checksum validados em máquina limpa.
 
 ## Publicação
 

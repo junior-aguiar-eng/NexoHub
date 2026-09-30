@@ -16,7 +16,7 @@ jobs:
     uses: ./.github/workflows/security.yml
 
   windows-installer:
-    name: Instalador Windows (MSI e NSIS)
+    name: Instalador Windows (Inno Setup)
     needs: [gates, security-gates]
     runs-on: windows-latest
     timeout-minutes: 60
@@ -42,19 +42,30 @@ jobs:
       - name: Obter sidecars com integridade verificada
         shell: powershell
         run: ./scripts/install-languagetool.ps1 -InstallRoot ./apps/desktop/src-tauri/resources/runtime/languagetool
+      - name: Instalar Inno Setup 6.7.3
+        shell: powershell
+        run: |
+          $url = 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe'
+          $installer = Join-Path $env:RUNNER_TEMP 'innosetup-6.7.3.exe'
+          Invoke-WebRequest -Uri $url -OutFile $installer
+          $actual = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne '9c73c3bae7ed48d44112a0f48e66742c00090bdb5bef71d9d3c056c66e97b732') {
+            throw 'Checksum inválido do instalador do Inno Setup.'
+          }
+          $process = Start-Process -FilePath $installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-' -WindowStyle Hidden -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Instalação do Inno Setup falhou: $($process.ExitCode)" }
       - run: pnpm build:windows
       - name: Gerar checksums
         shell: powershell
         run: |
-          $files = Get-ChildItem target/release/bundle -Recurse -File -Include *.exe,*.msi
-          $files | ForEach-Object { "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name } | Set-Content target/release/bundle/SHA256SUMS.txt
+          $files = Get-ChildItem target/release/installer -File -Filter *.exe
+          $files | ForEach-Object { "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name } | Set-Content target/release/installer/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: nexohub-community-windows-x64
           path: |
-            target/release/bundle/nsis/*.exe
-            target/release/bundle/msi/*.msi
-            target/release/bundle/SHA256SUMS.txt
+            target/release/installer/*.exe
+            target/release/installer/SHA256SUMS.txt
           if-no-files-found: error
 
   portable-artifacts:

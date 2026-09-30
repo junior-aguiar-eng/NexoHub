@@ -6408,6 +6408,18 @@ button.capability-btn-danger:hover {
   flex: 1;
 }
 
+.pdf-page-grid-toolbar,
+.pdf-page-grid-stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.pdf-page-grid-toolbar {
+  justify-content: space-between;
+}
+
 .pdf-page-grid-header {
   display: flex;
   align-items: center;
@@ -7626,6 +7638,13 @@ body,
   text-decoration: none;
 }
 
+.brand-app-icon {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 7px;
+}
+
 .brand-logo-text {
   font-size: 1.45rem;
   font-weight: 900;
@@ -7706,9 +7725,13 @@ body,
 }
 
 .megamenu-panel--all {
-  grid-template-columns: repeat(6, 175px);
-  left: auto;
-  right: -80px;
+  position: fixed;
+  top: 64px;
+  left: 1rem;
+  right: 1rem;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   transform: none;
 }
 

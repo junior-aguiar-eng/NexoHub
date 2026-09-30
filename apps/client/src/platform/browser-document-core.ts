@@ -1,6 +1,4 @@
 import type {
-  AuditProjectRequest,
-  CapabilityId,
   CommandRequest,
   CommandResponse,
   CompressPdfRequest,
@@ -11,31 +9,17 @@ import type {
   DocumentCoreCommand,
   DocumentLineage,
   DocumentLineageEdge,
-  DocxInspectionResult,
-  ExecuteOcrRequest,
-  ExtractInformationRequest,
-  ExtractInformationResult,
-  ExtractPdfImagesRequest,
-  ExtractPdfImagesResult,
   ImportDocumentRequest,
-  IntegrityAuditReport,
-  LanguageToolMatch,
   ListAnchorsRequest,
   ListArtifactsRequest,
   ListDocumentsRequest,
   ListPdfOverlaysRequest,
-  ListTranslationModelsRequest,
-  ListTranslationModelsResult,
   OpenProjectRequest,
   OrganizePdfRequest,
   PdfToolResult,
   PickDocumentFileResult,
   PickProjectFolderResult,
-  ReviewTextRequest,
-  ReviewTextResult,
   TextToolResult,
-  TranslateTextRequest,
-  TranslateTextResult,
 } from "@nexohub/contracts";
 import {
   type Anchor,
@@ -51,21 +35,10 @@ import {
   type Operation,
   type Overlay,
   type Project,
-  reviewText,
 } from "@nexohub/domain";
-import {
-  getStoredCapabilities,
-  saveStoredCapabilities,
-} from "@/features/capabilities/useCapabilities";
-import { performBrowserOcr } from "./browser-ocr";
-import {
-  compressPdfBytes,
-  createZipArchive,
-  extractJpegsFromPdfAsync,
-  reorganizePdfBytes,
-} from "./browser-pdf-utils";
-import { translateTextLocally } from "./browser-translation";
+import { DEFAULT_CAPABILITIES } from "@/features/capabilities/useCapabilities";
 import type { DocumentCorePort } from "./document-core";
+import { compressPdfDocument, reorganizePdfDocument } from "./pdf-engine";
 
 async function computeSha256Hex(data: ArrayBuffer | Uint8Array | string): Promise<string> {
   if (typeof crypto !== "undefined" && crypto.subtle) {
@@ -88,7 +61,7 @@ async function computeSha256Hex(data: ArrayBuffer | Uint8Array | string): Promis
       // Fallback
     }
   }
-  return `sha256-${Date.now()}`;
+  throw new Error("HASH_UNAVAILABLE");
 }
 
 interface StoredProjectData {
@@ -102,6 +75,14 @@ interface StoredProjectData {
 }
 
 export class BrowserDocumentCorePort implements DocumentCorePort {
+  readonly supportedToolIds: ReadonlySet<string> = new Set([
+    "pdf-organize",
+    "pdf-merge",
+    "pdf-split",
+    "pdf-rotate",
+    "pdf-compress",
+    "text-compare",
+  ]);
   private projectData: Map<string, StoredProjectData> = new Map();
   private pendingFiles: Map<string, File> = new Map();
   private artifactBlobs: Map<string, Blob> = new Map();
@@ -315,8 +296,9 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
 
       case "import_document": {
         const req = request as ImportDocumentRequest;
-        const data = this.getData(req.projectPath);
         const file = this.pendingFiles.get(req.sourcePath);
+        if (!file) throw new Error("DOCUMENT_NOT_FOUND");
+        const data = this.getData(req.projectPath);
 
         const docId = asDocumentId(`doc-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`);
         const artId = asArtifactId(`art-orig-${Date.now()}`);
@@ -324,28 +306,19 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
         const doc: Document = {
           id: docId,
           projectId: data.project.id,
-          title:
-            req.title || file?.name || req.sourcePath.split("/").pop() || "Documento Importado",
+          title: req.title || file.name || req.sourcePath.split("/").pop() || "Documento Importado",
           createdAt: Date.now(),
           updatedAt: Date.now(),
         };
 
-        const size = file?.size ?? 120000;
-        let hash = `blake3-${Date.now()}`;
-        if (file) {
-          try {
-            const buf = await file.arrayBuffer();
-            hash = await computeSha256Hex(buf);
-          } catch {
-            hash = `sha256-${Date.now()}`;
-          }
-        }
+        const size = file.size;
+        const hash = await computeSha256Hex(await file.arrayBuffer());
 
         const artifact: Artifact = {
           id: artId,
           documentId: docId,
           kind: "ORIGINAL",
-          mimeType: req.mimeType || file?.type || "application/pdf",
+          mimeType: req.mimeType || file.type || "application/pdf",
           hash,
           size,
           storagePath: `artifacts/${docId}/${artId}.bin`,
@@ -355,15 +328,7 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
         data.documents.push(doc);
         data.artifacts.push(artifact);
 
-        if (file) {
-          this.artifactBlobs.set(artId, file);
-        } else {
-          // Se for mock/teste, cria um blob mínimo de fallback
-          this.artifactBlobs.set(
-            artId,
-            new Blob([`Documento ${doc.title}`], { type: artifact.mimeType }),
-          );
-        }
+        this.artifactBlobs.set(artId, file);
 
         return {
           document: doc,
@@ -399,32 +364,26 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
         const data = this.getData(req.projectPath);
         const parentArt = data.artifacts.find((a) => a.id === req.artifactId);
         const parentBlob = this.artifactBlobs.get(req.artifactId);
+        if (!parentArt || !parentBlob || parentArt.documentId !== req.documentId) {
+          throw new Error("ARTIFACT_NOT_FOUND");
+        }
 
         const newArtId = asArtifactId(`art-cmp-${Date.now()}`);
-        let newSize = 50000;
-        let compressedBlob: Blob | null = null;
-        let compHash = `blake3-${Math.random().toString(16).slice(2, 18)}`;
-
-        if (parentBlob) {
-          const buffer = new Uint8Array(await parentBlob.arrayBuffer());
-          const compLevel =
-            req.compressionLevel === 3
-              ? "extreme"
-              : req.compressionLevel === 1
-                ? "less"
-                : "recommended";
-          const res = await compressPdfBytes(buffer, compLevel);
-          compressedBlob = new Blob([res.bytes as unknown as BlobPart], {
-            type: "application/pdf",
-          });
-          newSize = compressedBlob.size;
-          compHash = await computeSha256Hex(res.bytes);
-          this.artifactBlobs.set(newArtId, compressedBlob);
-        } else {
-          const originalSize = parentArt?.size ?? 500000;
-          const reductionRatio = Math.max(0.35, 1 - req.compressionLevel * 0.08);
-          newSize = Math.floor(originalSize * reductionRatio);
-        }
+        const buffer = new Uint8Array(await parentBlob.arrayBuffer());
+        const compressed = await compressPdfDocument(
+          buffer,
+          req.compressionLevel >= 7
+            ? "extreme"
+            : req.compressionLevel <= 3
+              ? "less"
+              : "recommended",
+        );
+        const compressedBlob = new Blob([compressed.bytes as unknown as BlobPart], {
+          type: "application/pdf",
+        });
+        const newSize = compressedBlob.size;
+        const compHash = await computeSha256Hex(compressed.bytes);
+        this.artifactBlobs.set(newArtId, compressedBlob);
 
         const newArt: Artifact = {
           id: newArtId,
@@ -469,25 +428,24 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
         const data = this.getData(req.projectPath);
         const parentArt = data.artifacts.find((a) => a.id === req.artifactId);
         const parentBlob = this.artifactBlobs.get(req.artifactId);
+        if (!parentArt || !parentBlob || parentArt.documentId !== req.documentId) {
+          throw new Error("ARTIFACT_NOT_FOUND");
+        }
+        if (req.pageOrder.length === 0) throw new Error("INVALID_PAGE_ORDER");
 
         const newArtId = asArtifactId(`art-org-${Date.now()}`);
-        let newSize = parentArt?.size ?? 150000;
-        let orgHash = `blake3-${Math.random().toString(16).slice(2, 18)}`;
-
-        if (parentBlob) {
-          const buffer = new Uint8Array(await parentBlob.arrayBuffer());
-          const pageOrders = (req.pageOrder || [1]).map((pg) => ({
-            originalIndex: pg,
-            rotation: req.rotationDegrees ?? 0,
-          }));
-          const organizedBytes = await reorganizePdfBytes(buffer, pageOrders);
-          const organizedBlob = new Blob([organizedBytes as unknown as BlobPart], {
-            type: "application/pdf",
-          });
-          newSize = organizedBlob.size;
-          orgHash = await computeSha256Hex(organizedBytes);
-          this.artifactBlobs.set(newArtId, organizedBlob);
-        }
+        const buffer = new Uint8Array(await parentBlob.arrayBuffer());
+        const pageOrders = req.pageOrder.map((pg) => ({
+          originalIndex: pg,
+          rotation: req.rotationDegrees ?? 0,
+        }));
+        const organizedBytes = await reorganizePdfDocument(buffer, pageOrders);
+        const organizedBlob = new Blob([organizedBytes as unknown as BlobPart], {
+          type: "application/pdf",
+        });
+        const newSize = organizedBlob.size;
+        const orgHash = await computeSha256Hex(organizedBytes);
+        this.artifactBlobs.set(newArtId, organizedBlob);
 
         const newArt: Artifact = {
           id: newArtId,
@@ -528,98 +486,7 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
       }
 
       case "extract_pdf_images": {
-        const req = request as ExtractPdfImagesRequest;
-        const data = this.getData(req.projectPath);
-
-        const newArtId = asArtifactId(`art-img-zip-${Date.now()}`);
-        const inputBlob = this.artifactBlobs.get(req.artifactId);
-        let extractedImages: import("./browser-pdf-utils").ExtractedImageItem[] = [];
-        let zipBase64 = "";
-        let zipHash = `blake3-${Math.random().toString(16).slice(2, 18)}`;
-        let zipSize = 15420;
-
-        if (inputBlob) {
-          const buffer = new Uint8Array(await inputBlob.arrayBuffer());
-          const allFound = await extractJpegsFromPdfAsync(buffer);
-          const minW = req.minWidth ?? 0;
-          const minH = req.minHeight ?? 0;
-          extractedImages = allFound.filter((img) => img.width >= minW && img.height >= minH);
-
-          if (extractedImages.length > 0) {
-            const filesForZip = extractedImages.map((img, idx) => {
-              const binaryStr = atob(img.dataBase64);
-              const bytes = new Uint8Array(binaryStr.length);
-              for (let b = 0; b < binaryStr.length; b++) {
-                bytes[b] = binaryStr.charCodeAt(b);
-              }
-              return {
-                name: `imagem_${idx + 1}.${img.format.toLowerCase()}`,
-                data: bytes,
-              };
-            });
-
-            const zipBytes = createZipArchive(filesForZip);
-            let zipStr = "";
-            const chunkSize = 8192;
-            for (let c = 0; c < zipBytes.length; c += chunkSize) {
-              const chunk = zipBytes.subarray(c, Math.min(c + chunkSize, zipBytes.length));
-              zipStr += String.fromCharCode.apply(null, Array.from(chunk));
-            }
-            zipBase64 = btoa(zipStr);
-            zipHash = await computeSha256Hex(zipBytes);
-            zipSize = zipBytes.length;
-
-            this.artifactBlobs.set(
-              newArtId,
-              new Blob([zipBytes as unknown as BlobPart], { type: "application/zip" }),
-            );
-          }
-        }
-
-        const newArt: Artifact = {
-          id: newArtId,
-          documentId: req.documentId,
-          kind: "DERIVED",
-          mimeType: "application/zip",
-          hash: zipHash,
-          size: zipSize,
-          storagePath: `artifacts/${req.documentId}/${newArtId}.zip`,
-          createdAt: Date.now(),
-        };
-
-        const opId = asOperationId(`op-img-${Date.now()}`);
-        const op: Operation = {
-          id: opId,
-          toolId: "pdf-extract-images",
-          status: "SUCCEEDED",
-          createdAt: Date.now(),
-          parameters: {
-            pageNumbers: req.pageNumbers ?? [],
-            minWidth: req.minWidth ?? 0,
-            minHeight: req.minHeight ?? 0,
-          },
-        };
-
-        data.artifacts.push(newArt);
-        data.operations.push(op);
-        data.edges.push({
-          operationId: opId,
-          toolId: "pdf-extract-images",
-          inputArtifactId: req.artifactId,
-          outputArtifactId: newArtId,
-          parameters: {},
-          createdAt: Date.now(),
-        });
-
-        const result: ExtractPdfImagesResult = {
-          totalImages: extractedImages.length,
-          pagesScanned: 1,
-          images: extractedImages,
-          zipBase64,
-          artifact: newArt,
-          operation: op,
-        };
-        return result as CommandResponse<Command>;
+        throw new Error("TOOL_UNAVAILABLE");
       }
 
       case "create_text_revision": {
@@ -666,27 +533,7 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
       }
 
       case "review_text": {
-        const req = request as ReviewTextRequest;
-        const findings = reviewText(req.text);
-        const matches: LanguageToolMatch[] = findings.map((f) => ({
-          message: f.message,
-          shortMessage: f.message,
-          offset: f.start,
-          length: f.end - f.start,
-          replacements: f.replacement ? [{ value: f.replacement }] : [],
-          rule: {
-            id: f.id,
-            description: f.message,
-            issueType: f.severity === "warning" ? "typographical" : "grammar",
-          },
-        }));
-        const result: ReviewTextResult = {
-          language: "pt-BR",
-          engine: "languagetool-community",
-          version: "6.9-SNAPSHOT",
-          matches,
-        };
-        return result as CommandResponse<Command>;
+        throw new Error("REVIEW_UNAVAILABLE");
       }
 
       case "get_document_lineage": {
@@ -702,250 +549,47 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
       }
 
       case "audit_project": {
-        const req = request as AuditProjectRequest;
-        const data = this.getData(req.projectPath);
-        const total = data.artifacts.length;
-        const report: IntegrityAuditReport = {
-          totalArtifacts: total,
-          validArtifacts: total,
-          corruptedArtifacts: [],
-          missingBlobs: [],
-          isHealthy: true,
-        };
-        return report as CommandResponse<Command>;
+        throw new Error("CAPABILITY_NOT_FOUND");
       }
 
       case "list_capabilities": {
-        const items = getStoredCapabilities();
-        return { capabilities: items } as CommandResponse<Command>;
+        return { capabilities: DEFAULT_CAPABILITIES } as CommandResponse<Command>;
       }
 
       case "install_capability": {
-        const req = request as { capabilityId: CapabilityId };
-        const items = getStoredCapabilities();
-        const updated = items.map((c) =>
-          c.id === req.capabilityId ? { ...c, status: "installed" as const } : c,
-        );
-        saveStoredCapabilities(updated);
-        return {
-          success: true,
-          message: "Superpoder ativado no navegador!",
-        } as CommandResponse<Command>;
+        throw new Error("CAPABILITY_NOT_FOUND");
       }
 
       case "uninstall_capability": {
-        const req = request as { capabilityId: CapabilityId };
-        const items = getStoredCapabilities();
-        const target = items.find((c) => c.id === req.capabilityId);
-        const updated = items.map((c) =>
-          c.id === req.capabilityId ? { ...c, status: "not_installed" as const } : c,
-        );
-        saveStoredCapabilities(updated);
-        return {
-          success: true,
-          freedBytes: target?.diskSizeBytes || 50000000,
-        } as CommandResponse<Command>;
+        throw new Error("CAPABILITY_NOT_FOUND");
       }
 
       case "cancel_capability_download": {
-        return { success: true } as CommandResponse<Command>;
+        throw new Error("CAPABILITY_NOT_FOUND");
       }
 
       case "inspect_docx": {
-        const result: DocxInspectionResult = {
-          title: "Documento DOCX Inspecionado",
-          paragraphs: [
-            { text: "Primeiro parágrafo do documento DOCX importado.", style: "Normal" },
-            { text: "Segundo parágrafo com termos contratuais.", style: "Heading1" },
-          ],
-          tables: [],
-        };
-        return result as CommandResponse<Command>;
+        throw new Error("CAPABILITY_NOT_FOUND");
       }
 
       case "create_docx": {
-        return {
-          artifact: {
-            id: asArtifactId(`art-docx-${Date.now()}`),
-            documentId: asDocumentId("doc-docx"),
-            kind: "DERIVED",
-            mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            hash: `blake3-${Math.random().toString(16).slice(2, 18)}`,
-            size: 24500,
-            storagePath: "artifacts/doc-docx/art-docx.docx",
-            createdAt: Date.now(),
-          },
-          operation: {
-            id: asOperationId(`op-docx-${Date.now()}`),
-            toolId: "docx-create",
-            status: "SUCCEEDED",
-            createdAt: Date.now(),
-            parameters: {},
-          },
-        } as CommandResponse<Command>;
+        throw new Error("CAPABILITY_NOT_FOUND");
       }
 
       case "execute_ocr": {
-        const req = request as ExecuteOcrRequest;
-        const data = this.getData(req.projectPath);
-        const inputBlob =
-          this.artifactBlobs.get(req.artifactId) ||
-          new Blob(["Documento de Exemplo"], { type: "text/plain" });
-
-        const ocrOutcome = await performBrowserOcr(inputBlob, "por");
-        const textBlob = new Blob([ocrOutcome.text], { type: "text/plain;charset=utf-8" });
-        const textHash = await computeSha256Hex(await textBlob.arrayBuffer());
-
-        const newArtId = asArtifactId(`art-ocr-${Date.now()}`);
-        const newArt: Artifact = {
-          id: newArtId,
-          documentId: req.documentId,
-          kind: "DERIVED",
-          mimeType: "text/plain",
-          hash: textHash,
-          size: textBlob.size,
-          storagePath: `artifacts/${req.documentId}/${newArtId}.txt`,
-          createdAt: Date.now(),
-        };
-
-        const opId = asOperationId(`op-ocr-${Date.now()}`);
-        const op: Operation = {
-          id: opId,
-          toolId: "pdf-ocr",
-          status: "SUCCEEDED",
-          createdAt: Date.now(),
-          parameters: { engine: ocrOutcome.engine },
-        };
-
-        data.artifacts.push(newArt);
-        data.operations.push(op);
-        data.edges.push({
-          operationId: opId,
-          toolId: "pdf-ocr",
-          inputArtifactId: req.artifactId,
-          outputArtifactId: newArtId,
-          parameters: {},
-          createdAt: Date.now(),
-        });
-
-        this.artifactBlobs.set(newArtId, textBlob);
-
-        return {
-          text: ocrOutcome.text,
-          pages: ocrOutcome.pages,
-          lines: ocrOutcome.lines,
-          engine: ocrOutcome.engine,
-          artifact: newArt,
-          operation: op,
-        } as CommandResponse<Command>;
+        throw new Error("CAPABILITY_NOT_FOUND");
       }
 
       case "translate_text": {
-        const req = request as TranslateTextRequest;
-        const sourceLang = req.sourceLanguage || "en";
-        const targetLang = req.targetLanguage || "pt";
-        const translatedContent = translateTextLocally(req.text, sourceLang, targetLang);
-        const segmentsCount = req.text.split("\n").filter((s) => s.trim().length > 0).length || 1;
-
-        let derivedArtifact: Artifact | undefined;
-        let derivedOperation: Operation | undefined;
-
-        if (req.projectPath && req.documentId && req.artifactId) {
-          const data = this.getData(req.projectPath);
-          const newArtId = asArtifactId(`art-trans-${Date.now()}`);
-          const textBlob = new Blob([translatedContent], { type: "text/plain;charset=utf-8" });
-          const textHash = await computeSha256Hex(await textBlob.arrayBuffer());
-
-          derivedArtifact = {
-            id: newArtId,
-            documentId: req.documentId,
-            kind: "DERIVED",
-            mimeType: "text/plain",
-            hash: textHash,
-            size: textBlob.size,
-            storagePath: `artifacts/${req.documentId}/${newArtId}.txt`,
-            createdAt: Date.now(),
-          };
-
-          const opId = asOperationId(`op-trans-${Date.now()}`);
-          derivedOperation = {
-            id: opId,
-            toolId: "text-translate",
-            status: "SUCCEEDED",
-            createdAt: Date.now(),
-            parameters: { sourceLang, targetLang },
-          };
-
-          data.artifacts.push(derivedArtifact);
-          data.operations.push(derivedOperation);
-          data.edges.push({
-            operationId: opId,
-            toolId: "text-translate",
-            inputArtifactId: req.artifactId,
-            outputArtifactId: newArtId,
-            parameters: { sourceLang, targetLang },
-            createdAt: Date.now(),
-          });
-
-          this.artifactBlobs.set(newArtId, textBlob);
-        }
-
-        const result: TranslateTextResult = {
-          text: translatedContent,
-          sourceLanguage: sourceLang,
-          targetLanguage: targetLang,
-          modelId: "nexohub-opus-mt-local",
-          segments: segmentsCount,
-          artifact: derivedArtifact,
-          operation: derivedOperation,
-        };
-        return result as CommandResponse<Command>;
+        throw new Error("CAPABILITY_NOT_FOUND");
       }
 
       case "list_translation_models": {
-        const _req = request as ListTranslationModelsRequest;
-        const items = getStoredCapabilities();
-        const hasTranslator = items.some(
-          (c) => c.id === "translation.neural" && c.status === "installed",
-        );
-        const result: ListTranslationModelsResult = {
-          models: hasTranslator
-            ? [
-                {
-                  modelId: "opus-mt-tc-big-en-pt",
-                  name: "OPUS-MT TC Big Inglês para Português",
-                  family: "opus-mt",
-                  sourceLanguages: ["en"],
-                  targetLanguages: ["pt", "pt-BR"],
-                  license: "CC-BY-4.0",
-                  isReady: true,
-                },
-              ]
-            : [],
-        };
-        return result as CommandResponse<Command>;
+        throw new Error("CAPABILITY_NOT_FOUND");
       }
 
       case "extract_information": {
-        const req = request as ExtractInformationRequest;
-        const text = req.text || "Exemplo de documento para extração estruturada.";
-        const result: ExtractInformationResult = {
-          text,
-          markdown: `### Resumo da Extração\n- Caracteres: ${text.length}\n- Palavras: ${text.split(/\s+/).length}`,
-          mode: req.mode || "all",
-          metrics: {
-            charCount: text.length,
-            wordCount: text.split(/\s+/).length,
-            lineCount: text.split("\n").length,
-            pageCount: 1,
-            language: "pt-BR",
-          },
-          entities: [],
-          keyValues: {},
-          tables: [],
-          sections: [],
-        };
-        return result as CommandResponse<Command>;
+        throw new Error("CAPABILITY_NOT_FOUND");
       }
 
       case "create_pdf_overlay": {

@@ -1,6 +1,6 @@
 //! Persistência local SQLite e operações do Document Core.
 
-use crate::blob_store::BlobStore;
+use crate::blob_store::{BlobStore, StoredBlob};
 use crate::domain::{
     Anchor, Artifact, ArtifactKind, CorruptedArtifactItem, Document, DocumentLineage,
     DocumentLineageEdge, ImportedDocument, IntegrityAuditReport, Operation, OperationInput,
@@ -247,12 +247,35 @@ impl ProjectStore {
         let source_size = source.metadata().map_err(|_| CoreError::io())?.len();
         self.ensure_project_capacity(source_size)?;
         let stored = self.blobs.put_file(source)?;
+        self.persist_imported_document(stored, &resolved_title, mime_type)
+    }
+
+    /// Importa bytes recebidos pela porta IPC, preservando o mesmo grafo do import por caminho.
+    pub fn import_document_bytes(
+        &mut self,
+        bytes: &[u8],
+        title: &str,
+        mime_type: &str,
+    ) -> CoreResult<ImportedDocument> {
+        validate_text(title, "O título do documento é obrigatório.")?;
+        validate_text(mime_type, "O tipo MIME é obrigatório.")?;
+        self.ensure_project_capacity(bytes.len() as u64)?;
+        let stored = self.blobs.put_bytes(bytes)?;
+        self.persist_imported_document(stored, title, mime_type)
+    }
+
+    fn persist_imported_document(
+        &mut self,
+        stored: StoredBlob,
+        title: &str,
+        mime_type: &str,
+    ) -> CoreResult<ImportedDocument> {
         let project = self.project()?;
         let now = current_time_millis()?;
         let document = Document {
             id: Uuid::new_v4().to_string(),
             project_id: project.id,
-            title: resolved_title,
+            title: title.trim().to_owned(),
             created_at: now,
             updated_at: now,
         };
@@ -519,14 +542,48 @@ impl ProjectStore {
         tool_id: &str,
         parameters: Value,
     ) -> CoreResult<(Artifact, Operation)> {
+        self.create_derived_artifact_from_inputs(
+            document_id,
+            &[input_artifact_id.to_owned()],
+            mime_type,
+            bytes,
+            tool_id,
+            parameters,
+        )
+    }
+
+    pub fn create_derived_artifact_from_inputs(
+        &mut self,
+        document_id: &str,
+        input_artifact_ids: &[String],
+        mime_type: &str,
+        bytes: &[u8],
+        tool_id: &str,
+        parameters: Value,
+    ) -> CoreResult<(Artifact, Operation)> {
         self.get_document(document_id)?;
         validate_text(mime_type, "O tipo MIME é obrigatório.")?;
         validate_text(tool_id, "O identificador da ferramenta é obrigatório.")?;
-        let input = self.get_artifact(input_artifact_id)?;
-        if input.document_id != document_id {
+        if input_artifact_ids.is_empty() || input_artifact_ids.len() > 32 {
             return Err(CoreError::new(
                 ErrorCode::InvalidArgument,
-                "O artifact de entrada não pertence ao documento informado.",
+                "A operação exige entre 1 e 32 artifacts de entrada.",
+            ));
+        }
+        let mut inputs = Vec::with_capacity(input_artifact_ids.len());
+        for (index, input_id) in input_artifact_ids.iter().enumerate() {
+            if input_artifact_ids[..index].contains(input_id) {
+                return Err(CoreError::new(
+                    ErrorCode::InvalidArgument,
+                    "A operação contém artifacts de entrada repetidos.",
+                ));
+            }
+            inputs.push(self.get_artifact(input_id)?);
+        }
+        if inputs[0].document_id != document_id {
+            return Err(CoreError::new(
+                ErrorCode::InvalidArgument,
+                "O primeiro artifact de entrada não pertence ao documento informado.",
             ));
         }
 
@@ -583,20 +640,22 @@ impl ProjectStore {
                 ],
             )
             .map_err(|_| CoreError::database())?;
-        let input_edge = OperationInput {
-            operation_id: operation.id.clone(),
-            artifact_id: input.id,
-        };
         let output_edge = OperationOutput {
             operation_id: operation.id.clone(),
             artifact_id: artifact.id.clone(),
         };
-        transaction
-            .execute(
-                "INSERT INTO operation_inputs(operation_id, artifact_id) VALUES (?1, ?2)",
-                params![input_edge.operation_id, input_edge.artifact_id],
-            )
-            .map_err(|_| CoreError::database())?;
+        for input in inputs {
+            let input_edge = OperationInput {
+                operation_id: operation.id.clone(),
+                artifact_id: input.id,
+            };
+            transaction
+                .execute(
+                    "INSERT INTO operation_inputs(operation_id, artifact_id) VALUES (?1, ?2)",
+                    params![input_edge.operation_id, input_edge.artifact_id],
+                )
+                .map_err(|_| CoreError::database())?;
+        }
         transaction
             .execute(
                 "INSERT INTO operation_outputs(operation_id, artifact_id) VALUES (?1, ?2)",

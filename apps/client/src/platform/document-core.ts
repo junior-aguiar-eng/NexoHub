@@ -3,6 +3,21 @@ import { BrowserDocumentCorePort } from "./browser-document-core";
 import { TauriDocumentCorePort } from "./tauri-document-core";
 
 export interface DocumentCorePort {
+  readonly supportedToolIds: ReadonlySet<string>;
+  saveOutputFile?(request: { blob: Blob; fileName: string }): Promise<boolean>;
+  registerUploadedFile?(file: File): { path: string; name: string; mimeType: string };
+  executePdfTool?(request: {
+    toolId: "pdf-compress" | "pdf-organize";
+    file: File;
+    pageOrder?: readonly number[];
+    compressionLevel?: "less" | "recommended" | "extreme";
+  }): Promise<Blob>;
+  persistLauncherResult?(request: {
+    toolId: "pdf-merge" | "pdf-split" | "pdf-rotate" | "text-compare";
+    files: readonly File[];
+    output: Blob;
+    parameters: Readonly<Record<string, unknown>>;
+  }): Promise<Blob>;
   invoke<Command extends DocumentCoreCommand>(
     command: Command,
     request: CommandRequest<Command>,
@@ -14,6 +29,7 @@ export interface DocumentCorePort {
 }
 
 export class UnavailableDocumentCorePort implements DocumentCorePort {
+  readonly supportedToolIds = new Set<string>();
   async invoke<Command extends DocumentCoreCommand>(
     _command: Command,
     _request: CommandRequest<Command>,

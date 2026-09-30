@@ -8,30 +8,18 @@ export interface BrowserOcrOutcome {
 }
 
 /**
- * Executa OCR local usando Tesseract.js no navegador ou fallback inteligente
- * com total privacidade e sem chamadas a servidores externos.
+ * Executa OCR local de imagens usando Tesseract.js no navegador.
  */
 export async function performBrowserOcr(
   blob: Blob,
   language: string = "por",
 ): Promise<BrowserOcrOutcome> {
-  // Se estiver em ambiente Node/vitest ou sem Web Worker completo
+  if (blob.type === "application/pdf") {
+    throw new Error("OCR_PDF_UNAVAILABLE_IN_BROWSER");
+  }
+
   if (typeof window === "undefined" || typeof Worker === "undefined") {
-    const fallbackText =
-      "Documento processado via OCR local.\nConteúdo extraído com integridade e segurança.";
-    return {
-      text: fallbackText,
-      pages: 1,
-      lines: [
-        {
-          pageNumber: 1,
-          text: fallbackText,
-          confidence: 0.99,
-          bounds: [0, 0, 100, 100],
-        },
-      ],
-      engine: "tesseract-wasm-embedded",
-    };
+    throw new Error("OCR_WORKER_UNAVAILABLE");
   }
 
   try {
@@ -40,10 +28,15 @@ export async function performBrowserOcr(
 
     // Inicializa o worker do Tesseract.js
     const worker = await createWorker(langCode);
-    const ret = await worker.recognize(blob);
-    await worker.terminate();
+    let ret: Awaited<ReturnType<typeof worker.recognize>>;
+    try {
+      ret = await worker.recognize(blob);
+    } finally {
+      await worker.terminate();
+    }
 
     const recognizedText = ret.data.text.trim();
+    if (!recognizedText) throw new Error("OCR_NO_TEXT_FOUND");
     const rawLines =
       (
         ret.data as unknown as {
@@ -57,44 +50,17 @@ export async function performBrowserOcr(
     const lines: OcrLineResult[] = rawLines.map((line) => ({
       pageNumber: 1,
       text: line.text.trim(),
-      confidence: (line.confidence || 90) / 100,
+      confidence: (line.confidence ?? ret.data.confidence) / 100,
       bounds: [line.bbox?.x0 ?? 0, line.bbox?.y0 ?? 0, line.bbox?.x1 ?? 0, line.bbox?.y1 ?? 0],
     }));
 
     return {
-      text: recognizedText || "Nenhum caractere detectado na imagem fornecida.",
+      text: recognizedText,
       pages: 1,
-      lines:
-        lines.length > 0
-          ? lines
-          : [
-              {
-                pageNumber: 1,
-                text: recognizedText,
-                confidence: (ret.data.confidence || 90) / 100,
-                bounds: [0, 0, 100, 100],
-              },
-            ],
+      lines,
       engine: "tesseract.js-wasm",
     };
-  } catch (error) {
-    console.warn(
-      "Falha ao instanciar Tesseract.js worker, utilizando processamento nativo:",
-      error,
-    );
-    const fallbackText = "Processamento OCR finalizado pelo motor local.";
-    return {
-      text: fallbackText,
-      pages: 1,
-      lines: [
-        {
-          pageNumber: 1,
-          text: fallbackText,
-          confidence: 0.95,
-          bounds: [0, 0, 100, 100],
-        },
-      ],
-      engine: "tesseract-local-fallback",
-    };
+  } catch {
+    throw new Error("OCR_PROCESSING_FAILED");
   }
 }

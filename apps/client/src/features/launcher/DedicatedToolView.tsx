@@ -1,4 +1,5 @@
 import { applyReviewFindings, type ReviewFinding, reviewText } from "@nexohub/domain";
+import { ToolRunError } from "@nexohub/tool-sdk";
 import {
   ArrowLeft,
   ArrowRight,
@@ -17,20 +18,10 @@ import {
 import { type DragEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
-import { performBrowserOcr } from "@/platform/browser-ocr";
-import { createZipArchive, extractJpegsFromPdfAsync } from "@/platform/browser-pdf-utils";
 import { translateTextLocally } from "@/platform/browser-translation";
 import type { DocumentCorePort } from "@/platform/document-core";
-import {
-  compressPdfDocument,
-  extractPdfSelectedPages,
-  getPdfPageCount,
-  mergePdfDocuments,
-  renderPdfPageToDataUrl,
-  reorganizePdfDocument,
-  rotatePdfDocument,
-  splitPdfByInterval,
-} from "@/platform/pdf-engine";
+import { runLauncherTool } from "@/platform/launcher-tool-runner";
+import { getPdfPageCount, renderPdfPageToDataUrl } from "@/platform/pdf-engine";
 import { CompressPdfPanel } from "./CompressPdfPanel";
 import { DocumentComparePanel } from "./DocumentComparePanel";
 import { MergePdfPanel } from "./MergePdfPanel";
@@ -69,7 +60,7 @@ function formatFileSize(bytes: number): string {
 
 export function DedicatedToolView({
   tool,
-  documentCore: _documentCore,
+  documentCore,
   onBack,
   initialFiles,
   onOperationComplete,
@@ -77,13 +68,14 @@ export function DedicatedToolView({
   const [files, setFiles] = useState<File[]>(() => initialFiles ?? []);
   const [isDragging, setIsDragging] = useState(false);
   const [status, setStatus] = useState<"idle" | "running" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [_progress, setProgress] = useState(0);
   const [inputTab, setInputTab] = useState<"upload" | "text">("upload");
 
   // Miniaturas Reais Geradas com PDF.js
   const [firstPageThumb, setFirstPageThumb] = useState<string>("");
   const [lastPageThumb, setLastPageThumb] = useState<string>("");
-  const [fileThumbnails, setFileThumbnails] = useState<Record<string, string>>({});
+  const [fileThumbnails, setFileThumbnails] = useState<ReadonlyMap<File, string>>(new Map());
   const [allPageThumbnails, setAllPageThumbnails] = useState<string[]>([]);
 
   // Estados de Dividir PDF estilo iLovePDF
@@ -95,10 +87,9 @@ export function DedicatedToolView({
   const [splitSelectedPages, setSplitSelectedPages] = useState<number[]>([1]);
 
   // Parâmetros de Ferramentas
-  const [compressionLevel, setCompressionLevel] = useState<"recommended" | "extreme" | "less">(
+  const [compressionLevel, setCompressionLevel] = useState<"less" | "recommended" | "extreme">(
     "recommended",
   );
-  const [ocrLanguage, _setOcrLanguage] = useState<string>("por");
   const [translationSourceLang, setTranslationSourceLang] = useState<string>("en");
   const [translationTargetLang, setTranslationTargetLang] = useState<string>("pt");
   const [rotateAngle, setRotateAngle] = useState<number>(0);
@@ -135,14 +126,33 @@ export function DedicatedToolView({
 
   // Resultado de Execução
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [outputBlob, setOutputBlob] = useState<Blob | null>(null);
   const [outputFileName, setOutputFileName] = useState<string>("");
   const [compressionResult, setCompressionResult] = useState<{
     originalBytes: number;
     compressedBytes: number;
+    savedBytes: number;
     savedPercent: number;
   } | null>(null);
 
+  useEffect(
+    () => () => {
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+    },
+    [downloadUrl],
+  );
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInput = (
+    <input
+      ref={fileInputRef}
+      type="file"
+      className="visually-hidden"
+      multiple={tool.id === "pdf-organize" || tool.id === "pdf-merge" || tool.id === "text-compare"}
+      accept={tool.suite === "text" ? ".txt,.md,.pdf,.docx" : ".pdf,application/pdf"}
+      onChange={handleFileInput}
+    />
+  );
   const accent = tool.accentColor || "#e5322d";
   const isTextTool =
     tool.id === "text-review" || tool.id === "text-translate" || tool.id === "text-compare";
@@ -174,7 +184,20 @@ export function DedicatedToolView({
           if (isCancelled) return;
           setLastPageThumb(thumbLast);
 
-          setFileThumbnails((prev) => ({ ...prev, [files[0].name]: thumb1 }));
+          setFileThumbnails((prev) => new Map(prev).set(files[0], thumb1));
+
+          if (tool.id === "pdf-merge") {
+            for (const file of files.slice(1)) {
+              if (isCancelled) return;
+              const preview = await renderPdfPageToDataUrl(
+                new Uint8Array(await file.arrayBuffer()),
+                1,
+                0.6,
+              );
+              if (isCancelled) return;
+              setFileThumbnails((prev) => new Map(prev).set(file, preview));
+            }
+          }
 
           const items: PdfPageItem[] = Array.from({ length: count }, (_, i) => ({
             id: `page-${i + 1}`,
@@ -264,6 +287,7 @@ export function DedicatedToolView({
   function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files.length > 0) {
       addFiles(Array.from(e.target.files));
+      e.target.value = "";
     }
   }
 
@@ -274,7 +298,9 @@ export function DedicatedToolView({
       setFiles(newFiles.slice(0, 1));
     }
     setStatus("idle");
+    setErrorMessage(null);
     setDownloadUrl(null);
+    setOutputBlob(null);
   }
 
   function handleRemoveFile(index: number) {
@@ -319,6 +345,11 @@ export function DedicatedToolView({
       setReviewedText(corrected);
       setReviewFindings([]);
     } catch (err) {
+      if (err instanceof ToolRunError && err.code === "CANCELLED") {
+        setStatus("idle");
+        setProgress(0);
+        return;
+      }
       console.error("Erro ao aplicar correções:", err);
     }
   }
@@ -354,13 +385,14 @@ export function DedicatedToolView({
   }
 
   // =========================================================================
-  // EXECUÇÃO 100% REAL E INFALÍVEL (WEB + TAURI DESKTOP)
+  // Execução da ferramenta selecionada
   // =========================================================================
   async function handleExecute() {
     const isDirectTextInput = inputTab === "text" && directText.trim().length > 0;
     if (files.length === 0 && !isDirectTextInput && tool.id !== "text-compare") return;
 
     setStatus("running");
+    setErrorMessage(null);
     setProgress(20);
 
     const primaryFile =
@@ -369,158 +401,40 @@ export function DedicatedToolView({
         : new File([directText], "documento_digitado.txt", { type: "text/plain" });
 
     try {
-      let outputBlob: Blob | null = null;
-      let outName = "";
-      let categoryKey: "recent.type.pdf" | "recent.type.document" = "recent.type.pdf";
-      let resultSizeBytes = primaryFile.size;
-
-      setProgress(40);
-
-      // DIVIDIR PDF
-      if (tool.id === "pdf-split" || tool.id === "pdf-extract") {
-        const buffer = new Uint8Array(await primaryFile.arrayBuffer());
-        if (splitMode === "interval") {
-          const first = splitIntervals[0] || { start: 1, end: pdfPageCount };
-          const splitBytes = await splitPdfByInterval(buffer, first.start, first.end);
-          outputBlob = new Blob([splitBytes as unknown as BlobPart], { type: "application/pdf" });
-          outName = `${primaryFile.name.replace(/\.[^/.]+$/, "")}_paginas_${first.start}_a_${first.end}.pdf`;
-        } else {
-          const pagesToExtract =
-            splitSelectedPages.length > 0 ? splitSelectedPages : selectedPageIndices;
-          const extractedBytes = await extractPdfSelectedPages(buffer, pagesToExtract);
-          outputBlob = new Blob([extractedBytes as unknown as BlobPart], {
-            type: "application/pdf",
-          });
-          outName = `${primaryFile.name.replace(/\.[^/.]+$/, "")}_extraido.pdf`;
-        }
-        resultSizeBytes = outputBlob.size;
+      if (!documentCore.supportedToolIds.has(tool.id)) {
+        throw new Error("TOOL_UNAVAILABLE");
       }
-      // COMPRIMIR PDF
-      else if (tool.id === "pdf-compress") {
-        const buffer = new Uint8Array(await primaryFile.arrayBuffer());
-        const comp = await compressPdfDocument(buffer, compressionLevel);
-        outputBlob = new Blob([comp.bytes as unknown as BlobPart], { type: "application/pdf" });
-        outName = `${primaryFile.name.replace(/\.[^/.]+$/, "")}_comprimido.pdf`;
-        resultSizeBytes = outputBlob.size;
+      setProgress(40);
+      const output = await runLauncherTool(documentCore, tool.id, {
+        files: files.length > 0 ? files : [primaryFile],
+        splitMode,
+        splitIntervals,
+        mergeIntervals: splitMergeIntervals,
+        selectedPages: splitSelectedPages,
+        pages: pageItems,
+        rotateAngle,
+        compressionLevel,
+        firstText: doc1Text,
+        secondText: doc2Text,
+      });
+      const outputBlob = output.blob;
+      const outName = output.fileName;
+      const categoryKey = output.categoryKey;
+      const resultSizeBytes = outputBlob.size;
+      if (tool.id === "pdf-compress") {
         setCompressionResult({
           originalBytes: primaryFile.size,
           compressedBytes: resultSizeBytes,
-          savedPercent: comp.savedPercent,
+          savedBytes: primaryFile.size - resultSizeBytes,
+          savedPercent: Math.round(((primaryFile.size - resultSizeBytes) / primaryFile.size) * 100),
         });
       }
-      // JUNTAR PDF
-      else if (tool.id === "pdf-merge") {
-        const buffers: Uint8Array[] = [];
-        for (const f of files) {
-          buffers.push(new Uint8Array(await f.arrayBuffer()));
-        }
-        const mergedBytes = await mergePdfDocuments(buffers);
-        outputBlob = new Blob([mergedBytes as unknown as BlobPart], { type: "application/pdf" });
-        outName = `nexohub_mesclado_${Date.now()}.pdf`;
-        resultSizeBytes = outputBlob.size;
-      }
-      // ORGANIZAR PDF
-      else if (tool.id === "pdf-organize") {
-        const activePages = pageItems.filter((p) => !p.deleted);
-        if (activePages.length === 0) {
-          throw new Error("Pelo menos uma página precisa ser mantida no documento.");
-        }
-        const buffer = new Uint8Array(await primaryFile.arrayBuffer());
-        const organizedBytes = await reorganizePdfDocument(buffer, activePages);
-        outputBlob = new Blob([organizedBytes as unknown as BlobPart], {
-          type: "application/pdf",
-        });
-        outName = `${primaryFile.name.replace(/\.[^/.]+$/, "")}_organizado.pdf`;
-        resultSizeBytes = outputBlob.size;
-      }
-      // ROTACIONAR PDF
-      else if (tool.id === "pdf-rotate") {
-        const buffer = new Uint8Array(await primaryFile.arrayBuffer());
-        const rotatedBytes = await rotatePdfDocument(buffer, rotateAngle);
-        outputBlob = new Blob([rotatedBytes as unknown as BlobPart], {
-          type: "application/pdf",
-        });
-        outName = `${primaryFile.name.replace(/\.[^/.]+$/, "")}_rotacionado.pdf`;
-        resultSizeBytes = outputBlob.size;
-      }
-      // EXTRAIR IMAGENS
-      else if (tool.id === "pdf-extract-images") {
-        const buffer = new Uint8Array(await primaryFile.arrayBuffer());
-        const allFound = await extractJpegsFromPdfAsync(buffer);
-        if (allFound.length > 0) {
-          const filesForZip = allFound.map((img, idx) => {
-            const binaryStr = atob(img.dataBase64);
-            const bytes = new Uint8Array(binaryStr.length);
-            for (let b = 0; b < binaryStr.length; b++) bytes[b] = binaryStr.charCodeAt(b);
-            return { name: `imagem_${idx + 1}.${img.format.toLowerCase()}`, data: bytes };
-          });
-          const zipBytes = createZipArchive(filesForZip);
-          outputBlob = new Blob([zipBytes as unknown as BlobPart], { type: "application/zip" });
-          outName = `${primaryFile.name.replace(/\.[^/.]+$/, "")}_imagens.zip`;
-          resultSizeBytes = outputBlob.size;
-        } else {
-          outputBlob = primaryFile;
-          outName = primaryFile.name;
-        }
-        categoryKey = "recent.type.document";
-      }
-      // OCR
-      else if (tool.id === "pdf-ocr") {
-        const ocrOutcome = await performBrowserOcr(primaryFile, ocrLanguage);
-        setRecognizedOcrText(ocrOutcome.text);
-        outputBlob = new Blob([ocrOutcome.text], { type: "text/plain;charset=utf-8" });
-        outName = `${primaryFile.name.replace(/\.[^/.]+$/, "")}_ocr.txt`;
-        categoryKey = "recent.type.document";
-        resultSizeBytes = outputBlob.size;
-      }
-      // TRADUZIR TEXTO
-      else if (tool.id === "text-translate") {
-        const textContent = isDirectTextInput ? directText : await primaryFile.text();
-        const translated = translateTextLocally(
-          textContent,
-          translationSourceLang,
-          translationTargetLang,
-        );
-        setTranslatedText(translated);
-        outputBlob = new Blob([translated], { type: "text/plain;charset=utf-8" });
-        outName = `${primaryFile.name.replace(/\.[^/.]+$/, "")}_traduzido_${translationTargetLang}.txt`;
-        categoryKey = "recent.type.document";
-        resultSizeBytes = outputBlob.size;
-      }
-      // REVISAR TEXTO
-      else if (tool.id === "text-review") {
-        const textContent = isDirectTextInput ? directText : await primaryFile.text();
-        const findings = reviewText(textContent);
-        setReviewFindings(findings);
-        setReviewedText(textContent);
-        outputBlob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
-        outName = `${primaryFile.name.replace(/\.[^/.]+$/, "")}_revisado.txt`;
-        categoryKey = "recent.type.document";
-        resultSizeBytes = outputBlob.size;
-      }
-      // COMPARAR TEXTOS
-      else if (tool.id === "text-compare") {
-        const text1 = doc1Text || (files.length > 0 ? await files[0].text() : "");
-        const text2 = doc2Text || (files.length > 1 ? await files[1].text() : text1);
-        const diffRes = await import("@nexohub/domain").then((m) => m.diffText(text1, text2));
-        const diffLines = diffRes.lines
-          .map((l) => `${l.type === "added" ? "+" : l.type === "removed" ? "-" : " "} ${l.content}`)
-          .join("\n");
-        const diffSummary = `RELATÓRIO DE COMPARAÇÃO DE TEXTO\n================================\nAdições: +${diffRes.stats.additions}\nRemoções: -${diffRes.stats.deletions}\nInalteradas: ${diffRes.stats.unchanged}\n\n${diffLines}`;
-        outputBlob = new Blob([diffSummary], { type: "text/plain;charset=utf-8" });
-        outName = `${primaryFile.name.replace(/\.[^/.]+$/, "")}_comparacao.diff.txt`;
-        categoryKey = "recent.type.document";
-        resultSizeBytes = outputBlob.size;
-      } else {
-        outName = `${primaryFile.name.replace(/\.[^/.]+$/, "")}_processado.pdf`;
-        outputBlob = primaryFile;
-      }
-
       setProgress(100);
       setOutputFileName(outName);
 
       const url = URL.createObjectURL(outputBlob);
       setDownloadUrl(url);
+      setOutputBlob(outputBlob);
       setStatus("success");
 
       onOperationComplete?.({
@@ -532,7 +446,18 @@ export function DedicatedToolView({
         categoryKey,
       });
     } catch (err) {
-      console.error("Erro na execução da ferramenta:", err);
+      if (!(err instanceof ToolRunError && err.code === "INVALID_INPUT")) {
+        console.error("Erro na execução da ferramenta:", err);
+      }
+      setErrorMessage(
+        err instanceof ToolRunError && err.code === "INVALID_INPUT"
+          ? err.message
+          : err instanceof Error && err.message === "TOOL_UNAVAILABLE"
+            ? translate("dedicated.errorUnavailable")
+            : err instanceof Error && err.message === "NO_IMAGES_FOUND"
+              ? translate("dedicated.noImagesFound")
+              : translate("dedicated.errorProcessing"),
+      );
       setStatus("error");
     }
   }
@@ -540,14 +465,26 @@ export function DedicatedToolView({
   function handleReset() {
     setFiles([]);
     setStatus("idle");
+    setErrorMessage(null);
     setProgress(0);
     setDownloadUrl(null);
+    setOutputBlob(null);
     setDirectText("");
     setRecognizedOcrText("");
     setTranslatedText("");
     setReviewedText("");
     setReviewFindings([]);
     setCompressionResult(null);
+  }
+
+  async function handleSaveOutput() {
+    if (!outputBlob || !documentCore.saveOutputFile) return;
+    setErrorMessage(null);
+    try {
+      await documentCore.saveOutputFile({ blob: outputBlob, fileName: outputFileName });
+    } catch {
+      setErrorMessage(translate("dedicated.errorSaving"));
+    }
   }
 
   // Título do Botão Principal estilo iLovePDF
@@ -623,6 +560,7 @@ export function DedicatedToolView({
           realThumbnails={allPageThumbnails}
           onPagesChange={setPageItems}
           onRotateAll={handleRotateAll}
+          allowRotation={!documentCore.executePdfTool}
           onResetOrder={handleResetOrder}
         />
       );
@@ -668,6 +606,7 @@ export function DedicatedToolView({
           onDoc3TextChange={setDoc3Text}
           showDoc3={showDoc3}
           onToggleDoc3={setShowDoc3}
+          onExportDiff={() => void handleExecute()}
         />
       );
     }
@@ -830,9 +769,17 @@ export function DedicatedToolView({
 
           {compressionResult && (
             <div className="ilovepdf-savings-box">
-              <span className="ilovepdf-savings-val">-{compressionResult.savedPercent}%</span>
+              <span className="ilovepdf-savings-val">
+                {compressionResult.savedBytes !== 0 && compressionResult.savedPercent === 0
+                  ? "<1%"
+                  : `${Math.abs(compressionResult.savedPercent)}%`}
+              </span>
               <span className="ilovepdf-savings-label">
-                {translate("workspace.compress.savings")}
+                {compressionResult.savedBytes > 0
+                  ? translate("compress.sizeReduced")
+                  : compressionResult.savedBytes < 0
+                    ? translate("compress.sizeIncreased")
+                    : translate("compress.sizeUnchanged")}
               </span>
               <div className="ilovepdf-savings-sizes">
                 <span>{formatFileSize(compressionResult.originalBytes)}</span>
@@ -842,17 +789,31 @@ export function DedicatedToolView({
             </div>
           )}
 
-          {downloadUrl && (
-            <a
-              href={downloadUrl}
-              download={outputFileName}
+          {documentCore.saveOutputFile && outputBlob ? (
+            <button
+              type="button"
               className="ilovepdf-big-download-btn"
               style={{ backgroundColor: "#e5322d" }}
+              onClick={() => void handleSaveOutput()}
             >
               <Download size={22} />
               <span>{translate("dedicated.download")}</span>
-            </a>
+            </button>
+          ) : (
+            downloadUrl && (
+              <a
+                href={downloadUrl}
+                download={outputFileName}
+                className="ilovepdf-big-download-btn"
+                style={{ backgroundColor: "#e5322d" }}
+              >
+                <Download size={22} />
+                <span>{translate("dedicated.download")}</span>
+              </a>
+            )
           )}
+
+          {errorMessage && <p role="alert">{errorMessage}</p>}
 
           <div className="ilovepdf-success-actions">
             <Button variant="secondary" onClick={handleReset}>
@@ -927,16 +888,7 @@ export function DedicatedToolView({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="visually-hidden"
-            multiple={
-              tool.id === "pdf-organize" || tool.id === "pdf-merge" || tool.id === "text-compare"
-            }
-            accept={tool.suite === "text" ? ".txt,.md,.pdf,.docx" : ".pdf,application/pdf,image/*"}
-            onChange={handleFileInput}
-          />
+          {fileInput}
           <button
             type="button"
             className="ilovepdf-main-upload-btn"
@@ -957,6 +909,7 @@ export function DedicatedToolView({
   // FASE 2: WORKSPACE ATIVO
   return (
     <div className="dedicated-tool-page dedicated-tool-page--workspace">
+      {fileInput}
       <div className="ilovepdf-tool-nav">
         <button
           type="button"
@@ -1022,6 +975,7 @@ export function DedicatedToolView({
 
         {/* Barra de Ação Inferior Fixa com Botão Vermelho Estilo iLovePDF */}
         <div className="dedicated-tool-bottom-bar" style={{ marginTop: "1.5rem" }}>
+          {errorMessage && <p role="alert">{errorMessage}</p>}
           <button
             type="button"
             className="ilovepdf-action-red-btn"

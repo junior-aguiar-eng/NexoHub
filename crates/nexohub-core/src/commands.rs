@@ -3,12 +3,13 @@
 use crate::anchor_tools::{CreateAnchorRequest, ListAnchorsRequest};
 use crate::domain::{Anchor, Overlay};
 use crate::domain::{Artifact, Document, ImportedDocument, Project};
-use crate::error::CoreResult;
+use crate::error::{CoreError, CoreResult, ErrorCode};
 use crate::overlay_tools::{CreatePdfOverlayRequest, ListPdfOverlaysRequest};
 use crate::pdf_tools::{CompressPdfRequest, OrganizePdfRequest, PdfToolResult};
 use crate::storage::ProjectStore;
 use crate::text_tools::{CreateTextRevisionRequest, TextToolResult};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -30,6 +31,34 @@ pub struct ImportDocumentRequest {
     pub source_path: String,
     pub title: Option<String>,
     pub mime_type: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportDocumentBytesRequest {
+    pub project_path: String,
+    pub title: String,
+    pub mime_type: String,
+    pub bytes: Vec<u8>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReadArtifactBytesRequest {
+    pub project_path: String,
+    pub artifact_id: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RecordLauncherResultRequest {
+    pub project_path: String,
+    pub document_id: String,
+    pub input_artifact_ids: Vec<String>,
+    pub tool_id: String,
+    pub mime_type: String,
+    pub bytes: Vec<u8>,
+    pub parameters: Value,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -72,6 +101,108 @@ pub fn import_document(request: ImportDocumentRequest) -> CoreResult<ImportedDoc
     )
 }
 
+pub fn import_document_bytes(request: ImportDocumentBytesRequest) -> CoreResult<ImportedDocument> {
+    if request.bytes.len() > 64 * 1024 * 1024 {
+        return Err(CoreError::new(
+            ErrorCode::ResourceLimit,
+            "O arquivo excede 64 MiB para importação pela interface.",
+        ));
+    }
+    let project_path = crate::grant_broker::require_granted(&request.project_path)?;
+    ProjectStore::open(project_path)?.import_document_bytes(
+        &request.bytes,
+        &request.title,
+        &request.mime_type,
+    )
+}
+
+pub fn read_artifact_bytes(request: ReadArtifactBytesRequest) -> CoreResult<Vec<u8>> {
+    let project_path = crate::grant_broker::require_granted(&request.project_path)?;
+    let store = ProjectStore::open(project_path)?;
+    if store.get_artifact(&request.artifact_id)?.size > 64 * 1024 * 1024 {
+        return Err(CoreError::new(
+            ErrorCode::ResourceLimit,
+            "O artifact excede 64 MiB para download pela interface.",
+        ));
+    }
+    store.read_artifact_bytes(&request.artifact_id)
+}
+
+pub fn record_launcher_result(request: RecordLauncherResultRequest) -> CoreResult<PdfToolResult> {
+    if request.bytes.is_empty() || request.bytes.len() > 64 * 1024 * 1024 {
+        return Err(CoreError::new(
+            ErrorCode::ResourceLimit,
+            "O resultado deve conter entre 1 byte e 64 MiB.",
+        ));
+    }
+    let valid_type = match request.tool_id.as_str() {
+        "pdf-merge" | "pdf-rotate" => request.mime_type == "application/pdf",
+        "pdf-split" => matches!(
+            request.mime_type.as_str(),
+            "application/pdf" | "application/zip"
+        ),
+        "text-compare" => request.mime_type == "text/plain",
+        _ => false,
+    };
+    if !valid_type {
+        return Err(CoreError::new(
+            ErrorCode::InvalidArgument,
+            "Ferramenta ou tipo de resultado inválido.",
+        ));
+    }
+    let valid_input_count = match request.tool_id.as_str() {
+        "pdf-merge" => (2..=32).contains(&request.input_artifact_ids.len()),
+        "pdf-split" | "pdf-rotate" => request.input_artifact_ids.len() == 1,
+        "text-compare" => request.input_artifact_ids.len() == 2,
+        _ => false,
+    };
+    if !valid_input_count {
+        return Err(CoreError::new(
+            ErrorCode::InvalidArgument,
+            "A quantidade de artifacts de entrada não corresponde à ferramenta.",
+        ));
+    }
+    let valid_content = match request.mime_type.as_str() {
+        "application/pdf" => request.bytes.starts_with(b"%PDF-"),
+        "application/zip" => request.bytes.starts_with(b"PK\x03\x04"),
+        "text/plain" => std::str::from_utf8(&request.bytes).is_ok(),
+        _ => false,
+    };
+    if !valid_content {
+        return Err(CoreError::new(
+            ErrorCode::InvalidArgument,
+            "O conteúdo do resultado não corresponde ao tipo declarado.",
+        ));
+    }
+    let project_path = crate::grant_broker::require_granted(&request.project_path)?;
+    let mut store = ProjectStore::open(project_path)?;
+    let expected_input_mime = if request.tool_id == "text-compare" {
+        "text/plain"
+    } else {
+        "application/pdf"
+    };
+    for id in &request.input_artifact_ids {
+        if store.get_artifact(id)?.mime_type != expected_input_mime {
+            return Err(CoreError::new(
+                ErrorCode::InvalidArgument,
+                "O tipo de um artifact de entrada não corresponde à ferramenta.",
+            ));
+        }
+    }
+    let (artifact, operation) = store.create_derived_artifact_from_inputs(
+        &request.document_id,
+        &request.input_artifact_ids,
+        &request.mime_type,
+        &request.bytes,
+        &request.tool_id,
+        request.parameters,
+    )?;
+    Ok(PdfToolResult {
+        artifact,
+        operation,
+    })
+}
+
 pub fn list_documents(request: ListDocumentsRequest) -> CoreResult<Vec<Document>> {
     let project_path = crate::grant_broker::require_granted(&request.project_path)?;
     ProjectStore::open(project_path)?.list_documents()
@@ -88,10 +219,12 @@ pub fn list_artifacts(request: ListArtifactsRequest) -> CoreResult<Vec<Artifact>
 }
 
 pub fn compress_pdf(request: CompressPdfRequest) -> CoreResult<PdfToolResult> {
+    let _ = crate::grant_broker::require_granted(&request.project_path)?;
     crate::pdf_tools::compress_pdf(request)
 }
 
 pub fn organize_pdf(request: OrganizePdfRequest) -> CoreResult<PdfToolResult> {
+    let _ = crate::grant_broker::require_granted(&request.project_path)?;
     crate::pdf_tools::organize_pdf(request)
 }
 

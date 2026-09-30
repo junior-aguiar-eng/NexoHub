@@ -25,6 +25,24 @@ export default defineConfig({
         }
       : undefined,
   },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("pdfjs-dist")) {
+            return "pdfjs";
+          }
+          if (id.includes("pdf-lib")) {
+            return "pdf-lib";
+          }
+          if (id.includes("lucide-react")) {
+            return "lucide";
+          }
+        },
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     setupFiles: "./src/test-setup.ts",

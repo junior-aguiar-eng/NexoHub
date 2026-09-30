@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "build": "tauri build --no-bundle",
-    "bundle": "tauri build --bundles nsis,msi",
     "dev": "tauri dev",
     "tauri": "tauri"
   },

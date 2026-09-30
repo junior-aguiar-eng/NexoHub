@@ -11,27 +11,49 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @floating-ui/dom | 1.8.0 | MIT |
 | JavaScript | @floating-ui/react-dom | 2.1.9 | MIT |
 | JavaScript | @floating-ui/utils | 0.2.12 | MIT |
+| JavaScript | @fontsource-variable/inter | 5.3.0 | OFL-1.1 |
 | JavaScript | @fontsource-variable/playfair-display | 5.2.8 | OFL-1.1 |
 | JavaScript | @fontsource-variable/plus-jakarta-sans | 5.2.8 | OFL-1.1 |
+| JavaScript | @napi-rs/canvas-win32-x64-msvc | 1.0.9 | MIT |
+| JavaScript | @napi-rs/canvas | 1.0.9 | MIT |
+| JavaScript | @pdf-lib/standard-fonts | 1.0.0 | MIT |
+| JavaScript | @pdf-lib/upng | 1.0.1 | MIT |
 | JavaScript | @playwright/test | 1.63.0 | Apache-2.0 |
 | JavaScript | @types/react | 19.2.18 | MIT |
+| JavaScript | bmp-js | 0.1.0 | MIT |
 | JavaScript | class-variance-authority | 0.7.1 | Apache-2.0 |
 | JavaScript | clsx | 2.1.1 | MIT |
 | JavaScript | csstype | 3.2.3 | MIT |
 | JavaScript | framer-motion | 12.43.0 | MIT |
+| JavaScript | idb-keyval | 6.3.0 | Apache-2.0 |
+| JavaScript | is-url | 1.2.4 | MIT |
 | JavaScript | lucide-react | 0.542.0 | ISC |
 | JavaScript | motion-dom | 12.43.0 | MIT |
 | JavaScript | motion-utils | 12.39.0 | MIT |
 | JavaScript | motion | 12.23.24 | MIT |
+| JavaScript | node-fetch | 2.7.0 | MIT |
+| JavaScript | opencollective-postinstall | 2.0.3 | MIT |
+| JavaScript | pako | 1.0.11 | (MIT AND Zlib) |
+| JavaScript | pdf-lib | 1.17.1 | MIT |
+| JavaScript | pdfjs-dist | 6.3.289 | Apache-2.0 |
 | JavaScript | playwright-core | 1.63.0 | Apache-2.0 |
 | JavaScript | playwright | 1.63.0 | Apache-2.0 |
 | JavaScript | react-dom | 19.2.8 | MIT |
 | JavaScript | react | 19.2.8 | MIT |
+| JavaScript | regenerator-runtime | 0.13.11 | MIT |
 | JavaScript | reselect | 5.3.0 | MIT |
 | JavaScript | scheduler | 0.27.0 | MIT |
 | JavaScript | tailwind-merge | 3.3.1 | MIT |
+| JavaScript | tesseract.js-core | 7.0.0 | Apache-2.0 |
+| JavaScript | tesseract.js | 7.0.0 | Apache-2.0 |
+| JavaScript | tr46 | 0.0.3 | MIT |
+| JavaScript | tslib | 1.14.1 | 0BSD |
 | JavaScript | tslib | 2.8.1 | 0BSD |
 | JavaScript | use-sync-external-store | 1.6.0 | MIT |
+| JavaScript | wasm-feature-detect | 1.9.0 | Apache-2.0 |
+| JavaScript | webidl-conversions | 3.0.1 | BSD-2-Clause |
+| JavaScript | whatwg-url | 5.0.0 | MIT |
+| JavaScript | zlibjs | 0.3.1 | MIT |
 | Python | antlr4-python3-runtime | 4.9.3 | BSD |
 | Python | certifi | 2026.7.22 | MPL-2.0 |
 | Python | charset-normalizer | 3.5.1 | MIT |
@@ -95,6 +117,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | bs58 | 0.5.1 | MIT/Apache-2.0 |
 | Rust | bumpalo | 3.20.3 | MIT OR Apache-2.0 |
 | Rust | bytemuck | 1.25.2 | Zlib OR Apache-2.0 OR MIT |
+| Rust | byteorder-lite | 0.1.0 | Unlicense OR MIT |
 | Rust | byteorder | 1.5.0 | Unlicense OR MIT |
 | Rust | bytes | 1.12.1 | MIT |
 | Rust | cairo-rs | 0.18.5 | MIT |
@@ -229,6 +252,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | ident_case | 1.0.1 | MIT/Apache-2.0 |
 | Rust | idna_adapter | 1.2.1 | Apache-2.0 OR MIT |
 | Rust | idna | 1.1.0 | MIT OR Apache-2.0 |
+| Rust | image | 0.25.10 | MIT OR Apache-2.0 |
 | Rust | indexmap | 1.9.3 | Apache-2.0 OR MIT |
 | Rust | indexmap | 2.14.1 | Apache-2.0 OR MIT |
 | Rust | infer | 0.19.0 | MIT |
@@ -264,6 +288,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | miniz_oxide | 0.8.9 | MIT OR Zlib OR Apache-2.0 |
 | Rust | miniz_oxide | 0.9.1 | MIT OR Zlib OR Apache-2.0 |
 | Rust | mio | 1.2.2 | MIT |
+| Rust | moxcms | 0.8.1 | BSD-3-Clause OR Apache-2.0 |
 | Rust | muda | 0.19.3 | Apache-2.0 OR MIT |
 | Rust | ndk-sys | 0.6.0+11769913 | MIT OR Apache-2.0 |
 | Rust | ndk | 0.9.0 | MIT OR Apache-2.0 |
@@ -318,6 +343,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | proc-macro-error-attr | 1.0.4 | MIT OR Apache-2.0 |
 | Rust | proc-macro-error | 1.0.4 | MIT OR Apache-2.0 |
 | Rust | proc-macro2 | 1.0.107 | MIT OR Apache-2.0 |
+| Rust | pxfm | 0.1.30 | BSD-3-Clause OR Apache-2.0 |
 | Rust | quick-xml | 0.38.4 | MIT |
 | Rust | quote | 1.0.47 | MIT OR Apache-2.0 |
 | Rust | r-efi | 5.3.0 | MIT OR Apache-2.0 OR LGPL-2.1-or-later |
@@ -341,7 +367,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | rustc-hash | 2.1.3 | Apache-2.0 OR MIT |
 | Rust | rustls-pki-types | 1.15.1 | MIT OR Apache-2.0 |
 | Rust | rustls-webpki | 0.103.15 | ISC |
-| Rust | rustls | 0.23.44 | Apache-2.0 OR ISC OR MIT |
+| Rust | rustls | 0.23.45 | Apache-2.0 OR ISC OR MIT |
 | Rust | rustversion | 1.0.23 | MIT OR Apache-2.0 |
 | Rust | same-file | 1.0.6 | Unlicense/MIT |
 | Rust | schemars_derive | 0.8.22 | MIT |
@@ -546,6 +572,8 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | zerovec | 0.11.8 | Unicode-3.0 |
 | Rust | zlib-rs | 0.6.7 | Zlib |
 | Rust | zmij | 1.0.23 | MIT |
+| Rust | zune-core | 0.5.3 | MIT OR Apache-2.0 OR Zlib |
+| Rust | zune-jpeg | 0.5.15 | MIT OR Apache-2.0 OR Zlib |
 | Sidecar | Eclipse Temurin JRE | 21.0.12.1+1-LTS | GPL-2.0-only WITH Classpath-exception-2.0 |
 | Sidecar | LanguageTool Community | 6.9-SNAPSHOT-20260901 | LGPL-2.1-or-later |
 

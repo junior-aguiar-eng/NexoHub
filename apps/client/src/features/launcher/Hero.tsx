@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from "motion/react";
+import { translate } from "@/i18n";
 
 export function Hero() {
   const reduceMotion = useReducedMotion();
@@ -12,9 +13,9 @@ export function Hero() {
       aria-labelledby="hero-title"
     >
       <h1 id="hero-title" className="hero__welcome-title">
-        Olá, Boni, o que faremos hoje?
+        {translate("hero.welcomeQuestion")}
       </h1>
-      <p className="hero__clean-subtitle">Use todas as ferramentas de forma gratuita e ilimitada</p>
+      <p className="hero__clean-subtitle">{translate("hero.description")}</p>
     </motion.section>
   );
 }

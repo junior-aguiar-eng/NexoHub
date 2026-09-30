@@ -1,8 +1,12 @@
-use lopdf::{Document as PdfDocument, Object, dictionary};
+use flate2::{Compression, write::ZlibEncoder};
+use image::{ImageBuffer, Rgb};
+use lopdf::{Document as PdfDocument, Object, Stream, dictionary};
 use nexohub_core::anchor_tools::{
     AnchorSelector, CreateAnchorRequest, ListAnchorsRequest, create_anchor, list_anchors,
 };
-use nexohub_core::commands::CreateProjectRequest;
+use nexohub_core::commands::{
+    CreateProjectRequest, RecordLauncherResultRequest, record_launcher_result,
+};
 use nexohub_core::domain::ArtifactKind;
 use nexohub_core::hardening::HardeningLimits;
 use nexohub_core::overlay_tools::{
@@ -14,6 +18,7 @@ use nexohub_core::text_tools::{CreateTextRevisionRequest, create_text_revision};
 use nexohub_core::{ErrorCode, ProjectStore};
 use serde_json::json;
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
@@ -76,6 +81,188 @@ fn synthetic_pdf_with_pages(page_count: usize) -> Vec<u8> {
     pdf.save_to(&mut bytes)
         .expect("fixture PDF deve ser criada");
     bytes
+}
+
+fn synthetic_scanned_pdf() -> Vec<u8> {
+    synthetic_scanned_pdf_with_filter(true)
+}
+
+fn synthetic_scanned_pdf_with_filter(jpeg_filter: bool) -> Vec<u8> {
+    let image = ImageBuffer::from_fn(1800, 1800, |x, y| {
+        let mut value = x.wrapping_mul(0x9e3779b9) ^ y.wrapping_mul(0x85ebca6b);
+        value ^= value >> 16;
+        value = value.wrapping_mul(0x7feb352d);
+        value ^= value >> 15;
+        Rgb([value as u8, (value >> 8) as u8, (value >> 16) as u8])
+    });
+    let mut jpeg = Vec::new();
+    image::codecs::jpeg::JpegEncoder::new_with_quality(&mut jpeg, 95)
+        .encode_image(&image)
+        .expect("JPEG sintético");
+
+    let mut pdf = PdfDocument::with_version("1.5");
+    let pages_id = pdf.new_object_id();
+    let stream_content = if jpeg_filter {
+        jpeg
+    } else {
+        let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+        encoder
+            .write_all(&image.into_raw())
+            .expect("RGB deve comprimir");
+        encoder.finish().expect("stream zlib")
+    };
+    let mut image_stream = Stream::new(
+        dictionary! {
+            "Type" => "XObject", "Subtype" => "Image", "Width" => 1800,
+            "Height" => 1800, "ColorSpace" => "DeviceRGB", "BitsPerComponent" => 8,
+        },
+        stream_content,
+    );
+    if jpeg_filter {
+        image_stream.dict.set("Filter", "DCTDecode");
+    } else {
+        image_stream.dict.set("Filter", "FlateDecode");
+    }
+    let image_id = pdf.add_object(image_stream);
+    let content_id = pdf.add_object(Stream::new(
+        dictionary! {},
+        b"q 595 0 0 842 0 0 cm /Scan Do Q".to_vec(),
+    ));
+    let page_id = pdf.add_object(dictionary! {
+        "Type" => "Page", "Parent" => pages_id,
+        "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+        "Resources" => dictionary! { "XObject" => dictionary! { "Scan" => image_id } },
+        "Contents" => content_id,
+    });
+    pdf.objects.insert(
+        pages_id,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages", "Kids" => vec![Object::Reference(page_id)], "Count" => 1,
+        }),
+    );
+    let catalog_id = pdf.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages_id });
+    pdf.trailer.set("Root", catalog_id);
+    let mut bytes = Vec::new();
+    pdf.save_to(&mut bytes).expect("fixture PDF digitalizado");
+    bytes
+}
+
+#[test]
+fn compression_profiles_change_embedded_jpeg_without_touching_original() {
+    let temporary = TestDirectory::new("compression-profiles");
+    let project_path = temporary.project_path();
+    let original = synthetic_scanned_pdf();
+    let mut store = ProjectStore::create(&project_path, "Perfis").expect("projeto");
+    let imported = store
+        .import_document_bytes(&original, "scan.pdf", "application/pdf")
+        .expect("importação");
+    drop(store);
+
+    let mut outputs = Vec::new();
+    for level in [3, 6, 9] {
+        let result = compress_pdf(CompressPdfRequest {
+            project_path: project_path.to_string_lossy().into_owned(),
+            document_id: imported.document.id.clone(),
+            artifact_id: imported.artifact.id.clone(),
+            compression_level: level,
+        })
+        .expect("compressão");
+        let store = ProjectStore::open(&project_path).expect("projeto");
+        let bytes = store
+            .read_artifact_bytes(&result.artifact.id)
+            .expect("derivado");
+        let pdf = PdfDocument::load_mem(&bytes).expect("PDF válido");
+        let image = pdf
+            .get_page_images(*pdf.get_pages().values().next().expect("página"))
+            .expect("imagem incorporada");
+        assert_eq!(image.len(), 1);
+        outputs.push((bytes.len(), image[0].width, image[0].height));
+    }
+    assert!(
+        outputs[0].0 < original.len(),
+        "alta qualidade deve reduzir JPEG"
+    );
+    assert!(outputs[1].0 < outputs[0].0, "equilibrado deve reduzir mais");
+    assert!(outputs[2].0 < outputs[1].0, "extremo deve reduzir mais");
+    assert_eq!(outputs[0].1, 1800);
+    assert!(outputs[2].1 < 1800 && outputs[2].2 < 1800);
+    assert_eq!(
+        ProjectStore::open(&project_path)
+            .expect("projeto")
+            .read_artifact_bytes(&imported.artifact.id)
+            .expect("original"),
+        original
+    );
+}
+
+#[test]
+fn compression_reencodes_lossless_rgb_image_and_rejects_signed_pdf() {
+    let temporary = TestDirectory::new("compression-flate");
+    let project_path = temporary.project_path();
+    let original = synthetic_scanned_pdf_with_filter(false);
+    let original_pdf = PdfDocument::load_mem(&original).expect("PDF original válido");
+    let original_image = original_pdf
+        .get_page_images(*original_pdf.get_pages().values().next().expect("página"))
+        .expect("imagem");
+    assert_eq!(
+        original_image[0].filters.as_ref().expect("filtro"),
+        &["FlateDecode"]
+    );
+    let decoded = original_pdf
+        .get_object(original_image[0].id)
+        .expect("objeto")
+        .as_stream()
+        .expect("stream")
+        .decompressed_content_with_limit(1800 * 1800 * 3)
+        .expect("RGB descompactado");
+    assert_eq!(decoded.len(), 1800 * 1800 * 3);
+    let mut store = ProjectStore::create(&project_path, "Flate").expect("projeto");
+    let imported = store
+        .import_document_bytes(&original, "scan.pdf", "application/pdf")
+        .expect("importação");
+    drop(store);
+
+    let result = compress_pdf(CompressPdfRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: imported.document.id.clone(),
+        artifact_id: imported.artifact.id.clone(),
+        compression_level: 6,
+    })
+    .expect("compressão");
+    let store = ProjectStore::open(&project_path).expect("projeto");
+    let bytes = store
+        .read_artifact_bytes(&result.artifact.id)
+        .expect("derivado");
+    assert!(
+        bytes.len() < original.len(),
+        "entrada={} saída={}",
+        original.len(),
+        bytes.len()
+    );
+    let pdf = PdfDocument::load_mem(&bytes).expect("PDF válido");
+    let image = pdf
+        .get_page_images(*pdf.get_pages().values().next().expect("página"))
+        .expect("imagem");
+    assert_eq!(image[0].filters.as_ref().expect("filtro"), &["DCTDecode"]);
+
+    let mut signed = PdfDocument::load_mem(&original).expect("PDF original");
+    signed.add_object(dictionary! { "Type" => "Sig", "ByteRange" => vec![0.into(), 1.into(), 2.into(), 3.into()] });
+    let mut signed_bytes = Vec::new();
+    signed.save_to(&mut signed_bytes).expect("fixture assinado");
+    drop(store);
+    let mut store = ProjectStore::open(&project_path).expect("projeto");
+    let imported_signed = store
+        .import_document_bytes(&signed_bytes, "assinado.pdf", "application/pdf")
+        .expect("importação");
+    drop(store);
+    let error = compress_pdf(CompressPdfRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: imported_signed.document.id,
+        artifact_id: imported_signed.artifact.id,
+        compression_level: 9,
+    })
+    .expect_err("PDF assinado deve ser recusado");
+    assert_eq!(error.code, ErrorCode::InvalidArgument);
 }
 
 #[test]
@@ -323,6 +510,94 @@ fn keeps_original_immutable_after_twenty_operations() {
 }
 
 #[test]
+fn persists_merge_with_edges_for_both_originals() {
+    let temporary = TestDirectory::new("merge-lineage");
+    let project_path = temporary.project_path();
+    let mut store = ProjectStore::create(&project_path, "Junção").unwrap();
+    let first_bytes = synthetic_pdf();
+    let second_bytes = synthetic_pdf_with_pages(2);
+    let first = store
+        .import_document_bytes(&first_bytes, "primeiro.pdf", "application/pdf")
+        .unwrap();
+    let second = store
+        .import_document_bytes(&second_bytes, "segundo.pdf", "application/pdf")
+        .unwrap();
+    let output = synthetic_pdf_with_pages(3);
+    let (derived, operation) = store
+        .create_derived_artifact_from_inputs(
+            &first.document.id,
+            &[first.artifact.id.clone(), second.artifact.id.clone()],
+            "application/pdf",
+            &output,
+            "pdf-merge",
+            json!({}),
+        )
+        .unwrap();
+    drop(store);
+
+    let store = ProjectStore::open(&project_path).unwrap();
+    let lineage = store.get_document_lineage(&first.document.id).unwrap();
+    let edges: Vec<_> = lineage
+        .edges
+        .iter()
+        .filter(|edge| edge.operation_id == operation.id)
+        .collect();
+    assert_eq!(edges.len(), 2);
+    assert!(
+        edges
+            .iter()
+            .all(|edge| edge.output_artifact_id == derived.id)
+    );
+    assert_eq!(store.read_artifact_bytes(&derived.id).unwrap(), output);
+    assert_eq!(
+        store.read_artifact_bytes(&first.artifact.id).unwrap(),
+        first_bytes
+    );
+    assert_eq!(
+        store.read_artifact_bytes(&second.artifact.id).unwrap(),
+        second_bytes
+    );
+}
+
+#[test]
+fn launcher_result_command_rejects_invalid_tool_and_records_split_zip() {
+    let temporary = TestDirectory::new("launcher-result");
+    let project_path = temporary.project_path();
+    nexohub_core::grant_broker::grant_path(&temporary.path).unwrap();
+    let mut store = ProjectStore::create(&project_path, "Divisão").unwrap();
+    let original = store
+        .import_document_bytes(&synthetic_pdf(), "entrada.pdf", "application/pdf")
+        .unwrap();
+    drop(store);
+    let zip = b"PK\x03\x04resultado".to_vec();
+    let mut request = RecordLauncherResultRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: original.document.id.clone(),
+        input_artifact_ids: vec![original.artifact.id.clone()],
+        tool_id: "pdf-protect".to_owned(),
+        mime_type: "application/zip".to_owned(),
+        bytes: zip.clone(),
+        parameters: json!({"intervals": [[1, 1]]}),
+    };
+    assert_eq!(
+        record_launcher_result(request.clone()).unwrap_err().code,
+        ErrorCode::InvalidArgument
+    );
+    request.tool_id = "pdf-split".to_owned();
+    let result = record_launcher_result(request).unwrap();
+    let store = ProjectStore::open(&project_path).unwrap();
+    assert_eq!(store.read_artifact_bytes(&result.artifact.id).unwrap(), zip);
+    assert_eq!(
+        store
+            .get_document_lineage(&original.document.id)
+            .unwrap()
+            .edges
+            .len(),
+        1
+    );
+}
+
+#[test]
 fn serializes_ipc_contracts_with_stable_names() {
     let request = CreateProjectRequest {
         project_path: "C:/Projetos/Exemplo.nexohub".to_owned(),
@@ -384,6 +659,49 @@ fn compresses_pdf_as_derived_artifact_without_changing_original() {
         )
         .is_ok()
     );
+}
+
+#[test]
+fn imports_pdf_bytes_and_persists_derived_lineage() {
+    let temporary = TestDirectory::new("pdf-bytes-import");
+    let project_path = temporary.project_path();
+    let bytes = synthetic_pdf();
+    let mut store =
+        ProjectStore::create(&project_path, "Importação IPC").expect("projeto deve ser criado");
+    let imported = store
+        .import_document_bytes(&bytes, "contrato.pdf", "application/pdf")
+        .expect("bytes devem ser importados");
+    drop(store);
+
+    let result = compress_pdf(CompressPdfRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: imported.document.id.clone(),
+        artifact_id: imported.artifact.id.clone(),
+        compression_level: 1,
+    })
+    .expect("compressão deve gerar derivado");
+
+    let reopened = ProjectStore::open(&project_path).expect("projeto deve reabrir");
+    assert_eq!(
+        reopened
+            .read_artifact_bytes(&imported.artifact.id)
+            .expect("original"),
+        bytes,
+    );
+    assert!(
+        PdfDocument::load_mem(
+            &reopened
+                .read_artifact_bytes(&result.artifact.id)
+                .expect("derivado")
+        )
+        .is_ok()
+    );
+    let lineage = reopened
+        .get_document_lineage(&imported.document.id)
+        .expect("linhagem deve persistir");
+    assert_eq!(lineage.edges.len(), 1);
+    assert_eq!(lineage.edges[0].input_artifact_id, imported.artifact.id);
+    assert_eq!(lineage.edges[0].output_artifact_id, result.artifact.id);
 }
 
 #[test]

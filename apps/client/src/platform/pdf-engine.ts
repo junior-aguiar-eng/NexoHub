@@ -1,4 +1,13 @@
-import { degrees, PDFDocument } from "pdf-lib";
+import {
+  decodePDFRawStream,
+  degrees,
+  JpegEmbedder,
+  PDFDict,
+  PDFDocument,
+  PDFName,
+  PDFNumber,
+  PDFRawStream,
+} from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
@@ -34,7 +43,7 @@ export async function renderPdfPageToDataUrl(
 
   try {
     const loadingTask = pdfjsLib.getDocument({
-      data: pdfBytes,
+      data: pdfBytes.slice(),
       useSystemFonts: true,
       standardFontDataUrl: undefined,
     });
@@ -66,12 +75,8 @@ export async function renderPdfPageToDataUrl(
  * Retorna o número real de páginas usando pdf-lib.
  */
 export async function getPdfPageCount(pdfBytes: Uint8Array): Promise<number> {
-  try {
-    const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-    return doc.getPageCount();
-  } catch {
-    return 1;
-  }
+  const doc = await PDFDocument.load(pdfBytes);
+  return doc.getPageCount();
 }
 
 /**
@@ -82,10 +87,19 @@ export async function splitPdfByInterval(
   startPage: number,
   endPage: number,
 ): Promise<Uint8Array> {
-  const srcDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+  const srcDoc = await PDFDocument.load(pdfBytes);
   const total = srcDoc.getPageCount();
-  const validStart = Math.max(1, Math.min(startPage, total));
-  const validEnd = Math.max(validStart, Math.min(endPage, total));
+  if (
+    !Number.isInteger(startPage) ||
+    !Number.isInteger(endPage) ||
+    startPage < 1 ||
+    endPage < startPage ||
+    endPage > total
+  ) {
+    throw new Error("INTERVALO_DE_PAGINAS_INVALIDO");
+  }
+  const validStart = startPage;
+  const validEnd = endPage;
 
   const newDoc = await PDFDocument.create();
   const pageIndices: number[] = [];
@@ -108,13 +122,15 @@ export async function extractPdfSelectedPages(
   pdfBytes: Uint8Array,
   pageNumbers: number[],
 ): Promise<Uint8Array> {
-  const srcDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+  const srcDoc = await PDFDocument.load(pdfBytes);
   const total = srcDoc.getPageCount();
-  const validIndices = pageNumbers.filter((p) => p >= 1 && p <= total).map((p) => p - 1);
-
-  if (validIndices.length === 0) {
-    return pdfBytes;
+  if (
+    pageNumbers.length === 0 ||
+    pageNumbers.some((p) => !Number.isInteger(p) || p < 1 || p > total)
+  ) {
+    throw new Error("SELECAO_DE_PAGINAS_INVALIDA");
   }
+  const validIndices = pageNumbers.map((p) => p - 1);
 
   const newDoc = await PDFDocument.create();
   const copiedPages = await newDoc.copyPages(srcDoc, validIndices);
@@ -133,19 +149,20 @@ export async function mergePdfDocuments(pdfByteArrays: Uint8Array[]): Promise<Ui
     throw new Error("Nenhum arquivo PDF fornecido para junção.");
   }
   if (pdfByteArrays.length === 1) {
+    await PDFDocument.load(pdfByteArrays[0]);
     return pdfByteArrays[0];
   }
 
   const mergedDoc = await PDFDocument.create();
-  for (const bytes of pdfByteArrays) {
+  for (const [index, bytes] of pdfByteArrays.entries()) {
     try {
-      const srcDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+      const srcDoc = await PDFDocument.load(bytes);
       const copiedPages = await mergedDoc.copyPages(srcDoc, srcDoc.getPageIndices());
       for (const page of copiedPages) {
         mergedDoc.addPage(page);
       }
-    } catch (e) {
-      console.warn("Erro ao incorporar PDF na junção:", e);
+    } catch {
+      throw new Error(`PDF_INVALIDO_NA_POSICAO_${index + 1}`);
     }
   }
 
@@ -159,7 +176,7 @@ export async function reorganizePdfDocument(
   pdfBytes: Uint8Array,
   pageOrders: Array<{ originalIndex: number; rotation: number }>,
 ): Promise<Uint8Array> {
-  const srcDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+  const srcDoc = await PDFDocument.load(pdfBytes);
   const newDoc = await PDFDocument.create();
 
   const indices = pageOrders.map((p) => p.originalIndex - 1);
@@ -182,25 +199,131 @@ export async function reorganizePdfDocument(
  */
 export async function compressPdfDocument(
   pdfBytes: Uint8Array,
-  _level: "extreme" | "recommended" | "less" = "recommended",
+  level: "extreme" | "recommended" | "less" = "recommended",
 ): Promise<{ bytes: Uint8Array; savedBytes: number; savedPercent: number }> {
-  const srcDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-  const compressed = await srcDoc.save({
+  const srcDoc = await PDFDocument.load(pdfBytes);
+  const profile = {
+    less: { quality: 0.84, maxDimension: 3200 },
+    recommended: { quality: 0.68, maxDimension: 2200 },
+    extreme: { quality: 0.52, maxDimension: 1400 },
+  }[level];
+  const name = (value: string) => PDFName.of(value);
+
+  for (const [, object] of srcDoc.context.enumerateIndirectObjects()) {
+    const dict = object instanceof PDFRawStream ? object.dict : object;
+    if (dict instanceof PDFDict && dict.has(name("ByteRange"))) {
+      throw new Error("PDF_ASSINADO_NAO_SUPORTADO");
+    }
+  }
+
+  if (typeof createImageBitmap === "function" && typeof document !== "undefined") {
+    for (const [ref, object] of srcDoc.context.enumerateIndirectObjects()) {
+      if (!(object instanceof PDFRawStream)) continue;
+      const dict = object.dict;
+      const subtype = dict.get(name("Subtype"));
+      const filter = dict.get(name("Filter"));
+      const color = dict.get(name("ColorSpace"));
+      const bits = dict.get(name("BitsPerComponent"));
+      const width = dict.get(name("Width"));
+      const height = dict.get(name("Height"));
+      if (
+        !(subtype instanceof PDFName) ||
+        subtype.asString() !== "/Image" ||
+        !(filter instanceof PDFName) ||
+        !["/DCTDecode", "/FlateDecode"].includes(filter.asString()) ||
+        !(color instanceof PDFName) ||
+        color.asString() !== "/DeviceRGB" ||
+        !(bits instanceof PDFNumber) ||
+        bits.asNumber() !== 8 ||
+        !(width instanceof PDFNumber) ||
+        !(height instanceof PDFNumber) ||
+        dict.has(name("SMask")) ||
+        dict.has(name("Mask")) ||
+        dict.has(name("Decode")) ||
+        dict.has(name("DecodeParms"))
+      )
+        continue;
+      const w = width.asNumber();
+      const h = height.asNumber();
+      if (
+        !Number.isSafeInteger(w) ||
+        !Number.isSafeInteger(h) ||
+        w < 64 ||
+        h < 64 ||
+        w * h > 12_000_000 ||
+        object.getContentsSize() > 32 * 1024 * 1024
+      )
+        continue;
+      let bitmap: ImageBitmap | undefined;
+      try {
+        let source: CanvasImageSource;
+        if (filter.asString() === "/DCTDecode") {
+          const header = await JpegEmbedder.for(Uint8Array.from(object.getContents()));
+          if (header.width !== w || header.height !== h || header.colorSpace !== "DeviceRGB")
+            continue;
+          bitmap = await createImageBitmap(
+            new Blob([object.getContents() as BlobPart], { type: "image/jpeg" }),
+          );
+          if (bitmap.width !== w || bitmap.height !== h) continue;
+          source = bitmap;
+        } else {
+          const expected = w * h * 3;
+          const raw = decodePDFRawStream(object).getBytes(expected + 1);
+          if (raw.length !== expected) continue;
+          const rawCanvas = document.createElement("canvas");
+          rawCanvas.width = w;
+          rawCanvas.height = h;
+          const rawContext = rawCanvas.getContext("2d");
+          if (!rawContext) continue;
+          const pixels = rawContext.createImageData(w, h);
+          for (let src = 0, dest = 0; src < raw.length; src += 3, dest += 4) {
+            pixels.data[dest] = raw[src];
+            pixels.data[dest + 1] = raw[src + 1];
+            pixels.data[dest + 2] = raw[src + 2];
+            pixels.data[dest + 3] = 255;
+          }
+          rawContext.putImageData(pixels, 0, 0);
+          source = rawCanvas;
+        }
+        const ratio = Math.min(1, profile.maxDimension / Math.max(w, h));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(w * ratio));
+        canvas.height = Math.max(1, Math.round(h * ratio));
+        const context = canvas.getContext("2d");
+        if (!context) continue;
+        context.drawImage(source, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, "image/jpeg", profile.quality),
+        );
+        if (!blob || blob.size >= object.getContentsSize()) continue;
+        const newDict = dict.clone(srcDoc.context);
+        newDict.set(name("Width"), PDFNumber.of(canvas.width));
+        newDict.set(name("Height"), PDFNumber.of(canvas.height));
+        newDict.set(name("Length"), PDFNumber.of(blob.size));
+        newDict.set(name("Filter"), name("DCTDecode"));
+        srcDoc.context.assign(
+          ref,
+          PDFRawStream.of(newDict, new Uint8Array(await blob.arrayBuffer())),
+        );
+      } catch {
+        // Codificações desconhecidas permanecem intactas.
+      } finally {
+        bitmap?.close();
+      }
+    }
+  }
+
+  const rewritten = await srcDoc.save({
     useObjectStreams: true,
     addDefaultPage: false,
     objectsPerTick: 50,
   });
+  const compressed = rewritten.length < pdfBytes.length ? rewritten : pdfBytes;
 
   const originalSize = pdfBytes.length;
   const compressedSize = compressed.length;
-  let savedBytes = originalSize - compressedSize;
-  let savedPercent = Math.round((savedBytes / originalSize) * 100);
-
-  // Se o PDF já era muito comprimido, calcula taxa real ou mínima
-  if (savedPercent <= 0) {
-    savedPercent = 12;
-    savedBytes = Math.floor(originalSize * 0.12);
-  }
+  const savedBytes = originalSize - compressedSize;
+  const savedPercent = Math.round((savedBytes / originalSize) * 100);
 
   return {
     bytes: compressed,
@@ -216,7 +339,7 @@ export async function rotatePdfDocument(
   pdfBytes: Uint8Array,
   rotationAngle: number,
 ): Promise<Uint8Array> {
-  const srcDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+  const srcDoc = await PDFDocument.load(pdfBytes);
   const total = srcDoc.getPageCount();
   for (let i = 0; i < total; i++) {
     const page = srcDoc.getPage(i);

@@ -2,17 +2,20 @@ import { describe, expect, it } from "vitest";
 import { resolveLauncherTools } from "./data";
 
 describe("Strict Functional Tools Catalog", () => {
-  it("expõe apenas ferramentas 100% implementadas e prontas para execução", () => {
+  it("não oferece conversões e proteção sem executor", () => {
     const tools = resolveLauncherTools();
     const ids = tools.map((t) => t.id);
 
     expect(ids).toContain("pdf-compress");
     expect(ids).toContain("pdf-organize");
-    expect(ids).toContain("pdf-extract-images");
-    expect(ids).toContain("pdf-ocr");
-    expect(ids).toContain("text-review");
+    expect(ids).not.toContain("pdf-extract-images");
     expect(ids).toContain("text-compare");
-    expect(ids).toContain("text-translate");
+    expect(ids).not.toContain("pdf-to-word");
+    expect(ids).not.toContain("word-to-pdf");
+    expect(ids).not.toContain("images-to-pdf");
+    expect(ids).not.toContain("pdf-protect");
+    expect(ids).not.toContain("pdf-ocr");
+    expect(ids).not.toContain("text-translate");
 
     // Ferramenta de inteligência jurídica removida do escopo do produto
     expect(ids).not.toContain("intelligence-extract");

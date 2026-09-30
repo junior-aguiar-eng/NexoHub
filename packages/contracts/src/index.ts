@@ -51,6 +51,33 @@ export interface ImportDocumentRequest {
   readonly mimeType: string;
 }
 
+export interface ImportDocumentBytesRequest {
+  readonly projectPath: string;
+  readonly title: string;
+  readonly mimeType: string;
+  readonly bytes: readonly number[];
+}
+
+export interface ReadArtifactBytesRequest {
+  readonly projectPath: string;
+  readonly artifactId: ArtifactId;
+}
+
+export interface SaveLauncherOutputRequest {
+  readonly fileName: string;
+  readonly bytes: readonly number[];
+}
+
+export interface RecordLauncherResultRequest {
+  readonly projectPath: string;
+  readonly documentId: DocumentId;
+  readonly inputArtifactIds: readonly ArtifactId[];
+  readonly toolId: "pdf-merge" | "pdf-split" | "pdf-rotate" | "text-compare";
+  readonly mimeType: "application/pdf" | "application/zip" | "text/plain";
+  readonly bytes: readonly number[];
+  readonly parameters: Readonly<Record<string, unknown>>;
+}
+
 export interface ListDocumentsRequest {
   readonly projectPath: string;
 }
@@ -450,6 +477,10 @@ export interface UninstallCapabilityResult {
 }
 
 export interface DocumentCoreCommands {
+  readonly save_launcher_output: {
+    readonly request: SaveLauncherOutputRequest;
+    readonly response: string | null;
+  };
   readonly audit_project: {
     readonly request: AuditProjectRequest;
     readonly response: IntegrityAuditReport;
@@ -501,6 +532,18 @@ export interface DocumentCoreCommands {
   readonly import_document: {
     readonly request: ImportDocumentRequest;
     readonly response: ImportedDocument;
+  };
+  readonly import_document_bytes: {
+    readonly request: ImportDocumentBytesRequest;
+    readonly response: ImportedDocument;
+  };
+  readonly read_artifact_bytes: {
+    readonly request: ReadArtifactBytesRequest;
+    readonly response: readonly number[];
+  };
+  readonly record_launcher_result: {
+    readonly request: RecordLauncherResultRequest;
+    readonly response: PdfToolResult;
   };
   readonly list_documents: {
     readonly request: ListDocumentsRequest;

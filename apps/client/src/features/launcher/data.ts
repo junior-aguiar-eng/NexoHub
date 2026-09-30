@@ -1,5 +1,5 @@
 import { coreToolRegistry } from "@nexohub/tool-registry";
-import { resolveToolAvailability, StaticCapabilityProvider } from "@nexohub/tool-sdk";
+import { resolveToolAvailability } from "@nexohub/tool-sdk";
 import {
   BetweenHorizontalStart,
   FileArchive,
@@ -131,23 +131,32 @@ const presentation = {
 import type { CapabilityProvider } from "@nexohub/tool-sdk";
 import type { DocumentCorePort } from "@/platform/document-core";
 
-export function createDynamicCapabilitiesProvider(): CapabilityProvider {
-  return new StaticCapabilityProvider({
-    "documents.read": { available: true },
-    "documents.write": { available: true },
-    "pdf.transform": { available: true },
-    "text.compare": { available: true },
-    "text.review": { available: true },
-    "ocr.execute": { available: true },
-    "translation.execute": { available: true },
-  });
+const browserSupportedToolIds = new Set([
+  "pdf-organize",
+  "pdf-merge",
+  "pdf-split",
+  "pdf-rotate",
+  "pdf-compress",
+  "text-compare",
+]);
+
+export function createDynamicCapabilitiesProvider(
+  supportedToolIds: ReadonlySet<string>,
+  toolId: string,
+): CapabilityProvider {
+  return {
+    get: () => ({
+      available: supportedToolIds.has(toolId),
+      reason: "Ferramenta indisponível nesta plataforma.",
+    }),
+  };
 }
 
 export function resolveLauncherTools(
   _capabilities?: readonly unknown[],
-  _documentCore?: DocumentCorePort,
+  documentCore?: DocumentCorePort,
 ): readonly LauncherTool[] {
-  const provider = createDynamicCapabilitiesProvider();
+  const supportedToolIds = documentCore?.supportedToolIds ?? browserSupportedToolIds;
   return coreToolRegistry
     .list("quick")
     .filter((manifest) => manifest.id in presentation)
@@ -155,7 +164,10 @@ export function resolveLauncherTools(
       ...presentation[manifest.id as keyof typeof presentation],
       id: manifest.id,
       manifest,
-      availability: resolveToolAvailability(manifest, provider),
+      availability: resolveToolAvailability(
+        manifest,
+        createDynamicCapabilitiesProvider(supportedToolIds, manifest.id),
+      ),
     }))
     .filter((tool) => tool.availability.available);
 }

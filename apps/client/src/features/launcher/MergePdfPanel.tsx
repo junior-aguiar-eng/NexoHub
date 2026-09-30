@@ -1,8 +1,20 @@
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
 
+const fileKeys = new WeakMap<File, string>();
+let nextFileKey = 0;
+
+function getFileKey(file: File): string {
+  let key = fileKeys.get(file);
+  if (!key) {
+    key = `merge-file-${++nextFileKey}`;
+    fileKeys.set(file, key);
+  }
+  return key;
+}
+
 type MergePdfPanelProps = {
   files: File[];
-  thumbnails: Record<string, string>;
+  thumbnails: ReadonlyMap<File, string>;
   onRemoveFile: (index: number) => void;
   onMoveFile: (index: number, direction: "left" | "right") => void;
   onAddMoreFiles: () => void;
@@ -27,12 +39,9 @@ export function MergePdfPanel({
       <div className="ilovepdf-merge-preview-area">
         <div className="ilovepdf-merge-cards-grid">
           {files.map((file, idx) => {
-            const thumb = thumbnails[file.name];
+            const thumb = thumbnails.get(file);
             return (
-              <div
-                key={`${file.name}-${file.size}-${file.lastModified}`}
-                className="ilovepdf-merge-file-card"
-              >
+              <div key={getFileKey(file)} className="ilovepdf-merge-file-card">
                 <div className="ilovepdf-merge-card-header">
                   <span className="ilovepdf-merge-card-badge">{idx + 1}</span>
                   <button

@@ -8,14 +8,9 @@ const pythonVersion = expected
   .replace(/-alpha\.(\d+)$/, "a$1")
   .replace(/-beta\.(\d+)$/, "b$1")
   .replace(/-rc\.(\d+)$/, "rc$1");
-const versionMatch = expected.match(/^(\d+)\.(\d+)\.(\d+)(?:-(alpha|beta|rc)\.(\d+))?$/);
-if (!versionMatch) throw new Error(`Versão de release inválida: ${expected}`);
-const [, major, minor, patch, channel, sequence] = versionMatch;
-const channelBase = { alpha: 1000, beta: 2000, rc: 3000 };
-const wixBuild = channel ? channelBase[channel] + Number(sequence) : 4000;
-if (wixBuild > 65_535)
-  throw new Error(`Sequência de pré-release excede o limite do MSI: ${expected}`);
-const expectedWixVersion = `${major}.${minor}.${patch}.${wixBuild}`;
+if (!/^\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?$/.test(expected)) {
+  throw new Error(`Versão de release inválida: ${expected}`);
+}
 
 const manifests = [
   "package.json",
@@ -32,10 +27,8 @@ for (const path of manifests) {
   if (actual !== expected) throw new Error(`${path}: versão ${actual}, esperada ${expected}`);
 }
 const tauri = readJson("apps/desktop/src-tauri/tauri.conf.json");
-if (tauri.bundle?.windows?.wix?.version !== expectedWixVersion) {
-  throw new Error(
-    `tauri.conf.json: versão MSI ${tauri.bundle?.windows?.wix?.version}, esperada ${expectedWixVersion}`,
-  );
+if (tauri.bundle?.active !== false) {
+  throw new Error("tauri.conf.json: o bundle Tauri deve permanecer desativado; use Inno Setup.");
 }
 
 const cargo = readFileSync(resolve(root, "Cargo.lock"), "utf8");

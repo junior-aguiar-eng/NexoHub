@@ -28,6 +28,7 @@ type PdfPageGridPanelProps = {
   onPagesChange?: (pages: PdfPageItem[]) => void;
   onSelectedIndicesChange?: (indices: number[]) => void;
   onRotateAll?: () => void;
+  allowRotation?: boolean;
   onResetOrder?: () => void;
 };
 
@@ -40,6 +41,7 @@ export function PdfPageGridPanel({
   onPagesChange,
   onSelectedIndicesChange,
   onRotateAll,
+  allowRotation = true,
   onResetOrder,
 }: PdfPageGridPanelProps) {
   const [rangeInput, setRangeInput] = useState<string>("");
@@ -165,10 +167,12 @@ export function PdfPageGridPanel({
         <div className="pdf-page-grid-actions">
           {mode === "organize" ? (
             <>
-              <Button variant="ghost" size="compact" onClick={onRotateAll}>
-                <RotateCw size={14} />
-                <span>Girar Todas</span>
-              </Button>
+              {allowRotation && (
+                <Button variant="ghost" size="compact" onClick={onRotateAll}>
+                  <RotateCw size={14} />
+                  <span>Girar Todas</span>
+                </Button>
+              )}
               <Button variant="ghost" size="compact" onClick={onResetOrder}>
                 <ArrowLeftRight size={14} />
                 <span>Restaurar Ordem</span>
@@ -316,17 +320,19 @@ export function PdfPageGridPanel({
                     >
                       <ChevronLeft size={14} />
                     </button>
-                    <button
-                      type="button"
-                      className="pdf-page-tool-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRotate(index);
-                      }}
-                      title="Girar 90°"
-                    >
-                      <RotateCw size={14} />
-                    </button>
+                    {allowRotation && (
+                      <button
+                        type="button"
+                        className="pdf-page-tool-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRotate(index);
+                        }}
+                        title="Girar 90°"
+                      >
+                        <RotateCw size={14} />
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="pdf-page-tool-btn pdf-page-tool-btn--danger"

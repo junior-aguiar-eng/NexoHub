@@ -1,8 +1,9 @@
 use nexohub_core::CoreError;
 use nexohub_core::anchor_tools::{CreateAnchorRequest, ListAnchorsRequest};
 use nexohub_core::commands::{
-    CreateProjectRequest, GetDocumentRequest, ImportDocumentRequest, ListArtifactsRequest,
-    ListDocumentsRequest, OpenProjectRequest,
+    CreateProjectRequest, GetDocumentRequest, ImportDocumentBytesRequest, ImportDocumentRequest,
+    ListArtifactsRequest, ListDocumentsRequest, OpenProjectRequest, ReadArtifactBytesRequest,
+    RecordLauncherResultRequest,
 };
 use nexohub_core::domain::{Anchor, Artifact, Document, ImportedDocument, Overlay, Project};
 use nexohub_core::language_tool::{ReviewTextRequest, ReviewTextResult};
@@ -25,6 +26,97 @@ fn open_project(request: OpenProjectRequest) -> Result<Project, CoreError> {
 #[tauri::command]
 fn import_document(request: ImportDocumentRequest) -> Result<ImportedDocument, CoreError> {
     nexohub_core::commands::import_document(request)
+}
+
+#[tauri::command]
+fn import_document_bytes(
+    request: ImportDocumentBytesRequest,
+) -> Result<ImportedDocument, CoreError> {
+    nexohub_core::commands::import_document_bytes(request)
+}
+
+#[tauri::command]
+fn read_artifact_bytes(request: ReadArtifactBytesRequest) -> Result<Vec<u8>, CoreError> {
+    nexohub_core::commands::read_artifact_bytes(request)
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SaveLauncherOutputRequest {
+    file_name: String,
+    bytes: Vec<u8>,
+}
+
+fn validate_export_name(name: &str) -> Result<&'static str, CoreError> {
+    if name.is_empty()
+        || name.len() > 180
+        || name.chars().any(|ch| ch == '/' || ch == '\\' || ch == '\0')
+    {
+        return Err(CoreError::new(
+            nexohub_core::ErrorCode::InvalidArgument,
+            "Nome de arquivo inválido para exportação.",
+        ));
+    }
+    let lower = name.to_ascii_lowercase();
+    if lower.ends_with(".pdf") {
+        Ok("pdf")
+    } else if lower.ends_with(".zip") {
+        Ok("zip")
+    } else if lower.ends_with(".txt") {
+        Ok("txt")
+    } else {
+        Err(CoreError::new(
+            nexohub_core::ErrorCode::InvalidArgument,
+            "Formato de exportação inválido.",
+        ))
+    }
+}
+
+#[tauri::command]
+fn save_launcher_output(
+    app: tauri::AppHandle,
+    request: SaveLauncherOutputRequest,
+) -> Result<Option<String>, CoreError> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let extension = validate_export_name(&request.file_name)?;
+    if request.bytes.is_empty() || request.bytes.len() > 64 * 1024 * 1024 {
+        return Err(CoreError::new(
+            nexohub_core::ErrorCode::ResourceLimit,
+            "O resultado excede o limite de exportação.",
+        ));
+    }
+    let selected = app
+        .dialog()
+        .file()
+        .set_file_name(&request.file_name)
+        .add_filter("Resultado NexoHub", &[extension])
+        .blocking_save_file();
+    let Some(selected) = selected else {
+        return Ok(None);
+    };
+    let path = selected.as_path().ok_or_else(|| {
+        CoreError::new(
+            nexohub_core::ErrorCode::InvalidArgument,
+            "Caminho de exportação inválido.",
+        )
+    })?;
+    let granted = nexohub_core::grant_broker::grant_path(path)?;
+    let destination = nexohub_core::grant_broker::require_granted(&granted)?;
+    std::fs::write(&destination, request.bytes).map_err(|_| {
+        CoreError::new(
+            nexohub_core::ErrorCode::StorageIo,
+            "Não foi possível salvar o resultado no local escolhido.",
+        )
+    })?;
+    Ok(Some(destination.to_string_lossy().into_owned()))
+}
+
+#[tauri::command]
+fn record_launcher_result(
+    request: RecordLauncherResultRequest,
+) -> Result<PdfToolResult, CoreError> {
+    nexohub_core::commands::record_launcher_result(request)
 }
 
 #[tauri::command]
@@ -373,6 +465,10 @@ pub fn run() {
             create_project,
             open_project,
             import_document,
+            import_document_bytes,
+            read_artifact_bytes,
+            save_launcher_output,
+            record_launcher_result,
             list_documents,
             get_document,
             list_artifacts,
@@ -402,4 +498,19 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("não foi possível executar o shell desktop do NexoHub");
+}
+
+#[cfg(test)]
+mod export_tests {
+    use super::validate_export_name;
+
+    #[test]
+    fn accepts_supported_export_formats_without_path_components() {
+        assert_eq!(validate_export_name("documento.pdf").unwrap(), "pdf");
+        assert_eq!(validate_export_name("partes.zip").unwrap(), "zip");
+        assert_eq!(validate_export_name("comparacao.diff.txt").unwrap(), "txt");
+        assert!(validate_export_name("../documento.pdf").is_err());
+        assert!(validate_export_name("C:\\documento.pdf").is_err());
+        assert!(validate_export_name("documento.exe").is_err());
+    }
 }

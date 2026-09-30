@@ -156,6 +156,7 @@ export function App() {
         {translate("app.skip")}
       </a>
       <Header
+        tools={dynamicTools}
         activeSuite={activeSuite}
         onSelectSuite={(suite) => {
           setActiveSuite(suite);
@@ -176,6 +177,7 @@ export function App() {
       <main id="main-content" className="launcher-content launcher-content--full">
         {activeDedicatedTool ? (
           <DedicatedToolView
+            key={activeDedicatedTool.id}
             tool={activeDedicatedTool}
             documentCore={documentCore}
             initialFiles={initialFilesForTool}
@@ -191,7 +193,11 @@ export function App() {
             <div className="launcher-welcome-container">
               <Hero />
               <div className="launcher-suites-center">
-                <SuiteNavigation activeSuite={activeSuite} onSelect={setActiveSuite} />
+                <SuiteNavigation
+                  activeSuite={activeSuite}
+                  onSelect={setActiveSuite}
+                  tools={dynamicTools}
+                />
               </div>
             </div>
 

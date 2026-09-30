@@ -17,6 +17,7 @@ type DocumentComparePanelProps = {
   showDoc3?: boolean;
   onToggleDoc3?: (show: boolean) => void;
   onDropFiles?: (files: File[]) => void;
+  onExportDiff?: () => void;
 };
 
 export function DocumentComparePanel({
@@ -31,6 +32,7 @@ export function DocumentComparePanel({
   onDoc3TextChange,
   showDoc3 = false,
   onToggleDoc3,
+  onExportDiff,
 }: DocumentComparePanelProps) {
   const [viewMode, setViewMode] = useState<"side-by-side" | "unified">("side-by-side");
   const doc1Id = useId();
@@ -62,20 +64,6 @@ export function DocumentComparePanel({
       };
     }
   }, [doc1Text, doc3Text, showDoc3]);
-
-  function handleExportDiff() {
-    const summary1 = `RELATÓRIO DE COMPARAÇÃO DE DOCUMENTOS\n=====================================\nOriginal: ${doc1Name}\nAlterado: ${doc2Name}\n\nEstatísticas:\n- Adições: +${diffResult1to2.stats.additions}\n- Remoções: -${diffResult1to2.stats.deletions}\n- Inalteradas: ${diffResult1to2.stats.unchanged}\n\nLINHAS DE DIFERENÇA:\n${diffResult1to2.lines.map((l) => `${l.type === "added" ? "[+]" : l.type === "removed" ? "[-]" : "   "} ${l.content}`).join("\n")}`;
-
-    const blob = new Blob([summary1], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `comparacao_${doc1Name.replace(/\.[^/.]+$/, "")}_vs_${doc2Name.replace(/\.[^/.]+$/, "")}.diff.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }
 
   const hasAnyText = Boolean(doc1Text.trim() || doc2Text.trim());
 
@@ -137,8 +125,8 @@ export function DocumentComparePanel({
           <Button
             variant="secondary"
             size="compact"
-            onClick={handleExportDiff}
-            disabled={!hasAnyText}
+            onClick={onExportDiff}
+            disabled={!onExportDiff || !doc1Text.trim() || !doc2Text.trim()}
             title="Exportar relatório de diferenças"
           >
             <Download size={14} />

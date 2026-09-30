@@ -1,11 +1,12 @@
 import { Check, Plus } from "lucide-react";
+import { translate } from "@/i18n";
 
 type CompressPdfPanelProps = {
   fileName: string;
   fileSizeBytes: number;
   thumbnailUrl?: string;
-  compressionLevel: "extreme" | "recommended" | "less";
-  onCompressionLevelChange: (level: "extreme" | "recommended" | "less") => void;
+  compressionLevel: "less" | "recommended" | "extreme";
+  onCompressionLevelChange: (level: "less" | "recommended" | "extreme") => void;
   onAddMoreFiles?: () => void;
 };
 
@@ -59,67 +60,37 @@ export function CompressPdfPanel({
         </div>
       </div>
 
-      {/* Direita: Seleção de Nível de Compressão */}
       <aside className="ilovepdf-compress-options-sidebar">
-        <h3 className="ilovepdf-sidebar-title">Nível de compressão</h3>
+        <h3 className="ilovepdf-sidebar-title">{translate("dedicated.compressionLevel")}</h3>
         <p
           className="ilovepdf-control-hint"
           style={{ margin: 0, fontSize: "0.8rem", color: "#64748b" }}
         >
-          Resultado da Compressão: economia estimada de ~40% a 65% preservando vetores e texto.
+          {translate("compress.profileDescription")}
         </p>
-
         <div className="ilovepdf-compress-levels-list">
-          {/* Extrema Compressão */}
-          <button
-            type="button"
-            className={`ilovepdf-level-card ${compressionLevel === "extreme" ? "ilovepdf-level-card--selected" : ""}`}
-            onClick={() => onCompressionLevelChange("extreme")}
-          >
-            <div className="ilovepdf-level-info">
-              <strong className="ilovepdf-level-name">EXTREMA COMPRESSÃO</strong>
-              <span className="ilovepdf-level-sub">Menos qualidade, alta compressão</span>
-            </div>
-            {compressionLevel === "extreme" && (
-              <div className="ilovepdf-level-check">
-                <Check size={14} />
+          {(["extreme", "recommended", "less"] as const).map((level) => (
+            <button
+              key={level}
+              type="button"
+              className={`ilovepdf-level-card ${compressionLevel === level ? "ilovepdf-level-card--selected" : ""}`}
+              aria-pressed={compressionLevel === level}
+              onClick={() => onCompressionLevelChange(level)}
+            >
+              <div className="ilovepdf-level-info">
+                <strong className="ilovepdf-level-name">
+                  {translate(
+                    `dedicated.compression${level === "extreme" ? "Extreme" : level === "less" ? "Less" : "Recommended"}`,
+                  )}
+                </strong>
               </div>
-            )}
-          </button>
-
-          {/* Compressão Recomendada */}
-          <button
-            type="button"
-            className={`ilovepdf-level-card ${compressionLevel === "recommended" ? "ilovepdf-level-card--selected" : ""}`}
-            onClick={() => onCompressionLevelChange("recommended")}
-          >
-            <div className="ilovepdf-level-info">
-              <strong className="ilovepdf-level-name">COMPRESSÃO RECOMENDADA</strong>
-              <span className="ilovepdf-level-sub">Boa qualidade, boa compressão</span>
-            </div>
-            {compressionLevel === "recommended" && (
-              <div className="ilovepdf-level-check">
-                <Check size={14} />
-              </div>
-            )}
-          </button>
-
-          {/* Baixa Compressão */}
-          <button
-            type="button"
-            className={`ilovepdf-level-card ${compressionLevel === "less" ? "ilovepdf-level-card--selected" : ""}`}
-            onClick={() => onCompressionLevelChange("less")}
-          >
-            <div className="ilovepdf-level-info">
-              <strong className="ilovepdf-level-name">BAIXA COMPRESSÃO</strong>
-              <span className="ilovepdf-level-sub">Alta qualidade, menos compressão</span>
-            </div>
-            {compressionLevel === "less" && (
-              <div className="ilovepdf-level-check">
-                <Check size={14} />
-              </div>
-            )}
-          </button>
+              {compressionLevel === level && (
+                <div className="ilovepdf-level-check">
+                  <Check size={14} />
+                </div>
+              )}
+            </button>
+          ))}
         </div>
       </aside>
     </div>

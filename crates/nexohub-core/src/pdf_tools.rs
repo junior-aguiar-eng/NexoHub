@@ -3,12 +3,143 @@
 use crate::domain::{Artifact, Operation};
 use crate::error::{CoreError, CoreResult, ErrorCode};
 use crate::storage::ProjectStore;
+use image::{DynamicImage, GenericImageView, ImageFormat, ImageReader, imageops::FilterType};
 use lopdf::{Document, LoadOptions, SaveOptions};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::io::Cursor;
 
 const PDF_MIME_TYPE: &str = "application/pdf";
 const MAX_DECOMPRESSED_STREAM_SIZE: usize = 64 * 1024 * 1024;
+const MAX_IMAGE_PIXELS: u64 = 16_000_000;
+
+fn optimize_embedded_images(document: &mut Document, level: u8) {
+    let (quality, max_dimension) = match level {
+        1..=3 => (84, 3200),
+        4..=6 => (68, 2200),
+        _ => (52, 1400),
+    };
+
+    for object in document.objects.values_mut() {
+        let Ok(stream) = object.as_stream_mut() else {
+            continue;
+        };
+        let dict = &stream.dict;
+        let filter = dict.get(b"Filter").and_then(lopdf::Object::as_name).ok();
+        if dict.get(b"Subtype").and_then(lopdf::Object::as_name).ok() != Some(b"Image")
+            || (filter != Some(b"DCTDecode".as_slice())
+                && filter != Some(b"FlateDecode".as_slice()))
+            || dict
+                .get(b"BitsPerComponent")
+                .and_then(lopdf::Object::as_i64)
+                .ok()
+                != Some(8)
+            || dict.has(b"SMask")
+            || dict.has(b"Mask")
+            || dict.has(b"Decode")
+            || dict.has(b"DecodeParms")
+        {
+            continue;
+        }
+        let color = dict
+            .get(b"ColorSpace")
+            .and_then(lopdf::Object::as_name)
+            .ok();
+        if color != Some(b"DeviceRGB".as_slice()) && color != Some(b"DeviceGray".as_slice()) {
+            continue;
+        }
+        let (Some(width), Some(height)) = (
+            dict.get(b"Width").and_then(lopdf::Object::as_i64).ok(),
+            dict.get(b"Height").and_then(lopdf::Object::as_i64).ok(),
+        ) else {
+            continue;
+        };
+        if width < 64
+            || height < 64
+            || (width as u128) * (height as u128) > u128::from(MAX_IMAGE_PIXELS)
+        {
+            continue;
+        }
+
+        let decoded = if filter == Some(b"DCTDecode".as_slice()) {
+            let Ok((jpeg_width, jpeg_height)) =
+                ImageReader::with_format(Cursor::new(&stream.content), ImageFormat::Jpeg)
+                    .into_dimensions()
+            else {
+                continue;
+            };
+            if (jpeg_width, jpeg_height) != (width as u32, height as u32) {
+                continue;
+            }
+            let Ok(image) =
+                ImageReader::with_format(Cursor::new(&stream.content), ImageFormat::Jpeg).decode()
+            else {
+                continue;
+            };
+            image
+        } else {
+            let channels = if color == Some(b"DeviceRGB".as_slice()) {
+                3
+            } else {
+                1
+            };
+            let expected = width as usize * height as usize * channels;
+            let Ok(raw) = stream.decompressed_content_with_limit(expected) else {
+                continue;
+            };
+            if raw.len() != expected {
+                continue;
+            }
+            if channels == 3 {
+                let Some(image) = image::RgbImage::from_raw(width as u32, height as u32, raw)
+                else {
+                    continue;
+                };
+                DynamicImage::ImageRgb8(image)
+            } else {
+                let Some(image) = image::GrayImage::from_raw(width as u32, height as u32, raw)
+                else {
+                    continue;
+                };
+                DynamicImage::ImageLuma8(image)
+            }
+        };
+        if decoded.dimensions() != (width as u32, height as u32) {
+            continue;
+        }
+        let expected_channels = if color == Some(b"DeviceRGB".as_slice()) {
+            3
+        } else {
+            1
+        };
+        if decoded.color().channel_count() != expected_channels {
+            continue;
+        }
+        let longest = width.max(height) as u32;
+        let resized = if longest > max_dimension {
+            let scale = max_dimension as f64 / longest as f64;
+            decoded.resize_exact(
+                (width as f64 * scale).round() as u32,
+                (height as f64 * scale).round() as u32,
+                FilterType::Triangle,
+            )
+        } else {
+            decoded
+        };
+        let mut encoded = Vec::new();
+        if image::codecs::jpeg::JpegEncoder::new_with_quality(&mut encoded, quality)
+            .encode_image(&resized)
+            .is_err()
+            || encoded.len() >= stream.content.len()
+        {
+            continue;
+        }
+        stream.dict.set("Width", i64::from(resized.width()));
+        stream.dict.set("Height", i64::from(resized.height()));
+        stream.dict.set("Filter", "DCTDecode");
+        stream.set_content(encoded);
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -88,6 +219,17 @@ pub fn compress_pdf(request: CompressPdfRequest) -> CoreResult<PdfToolResult> {
             ),
         ));
     }
+    if document.objects.values().any(|object| match object {
+        lopdf::Object::Dictionary(dict) => dict.has(b"ByteRange"),
+        lopdf::Object::Stream(stream) => stream.dict.has(b"ByteRange"),
+        _ => false,
+    }) {
+        return Err(CoreError::new(
+            ErrorCode::InvalidArgument,
+            "PDF assinado não pode ser comprimido sem invalidar a assinatura.",
+        ));
+    }
+    optimize_embedded_images(&mut document, request.compression_level);
     document.compress();
 
     let save_options = SaveOptions::builder()
@@ -99,6 +241,9 @@ pub fn compress_pdf(request: CompressPdfRequest) -> CoreResult<PdfToolResult> {
     document
         .save_with_options(&mut output, save_options)
         .map_err(|_| CoreError::pdf("Não foi possível gerar o PDF comprimido."))?;
+    if output.len() >= source.len() {
+        output = source;
+    }
 
     let (artifact, operation) = store.create_derived_artifact(
         &request.document_id,

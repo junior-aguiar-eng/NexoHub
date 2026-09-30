@@ -17,7 +17,7 @@
 
 Hub de ferramentas de PDF e documentos **open source**, gratuito e **local-first**. O catálogo exibido depende dos executores disponíveis na plataforma. Na web, as operações expostas são organização, junção, divisão, rotação e compressão de PDF e comparação de textos; os arquivos são processados localmente.
 
-> **Estado**: `0.1.0-alpha.1` em preparação e validação contínua. Build automatizado para Windows x64 ativo via GitHub Actions.
+> **Estado**: `0.1.0` em preparação e validação contínua. Build automatizado para Windows x64 ativo via GitHub Actions.
 
 ---
 

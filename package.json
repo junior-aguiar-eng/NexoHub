@@ -1,6 +1,6 @@
 {
   "name": "nexohub",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0",
   "private": true,
   "description": "Estação documental open source e local-first.",
   "license": "MPL-2.0",
@@ -19,6 +19,7 @@
     "licenses:generate": "node scripts/audit-licenses.mjs",
     "licenses:check": "node scripts/audit-licenses.mjs --check",
     "release:verify": "node scripts/verificar-release.mjs",
+    "version:bump": "node scripts/bump-version.mjs",
     "typecheck": "pnpm --recursive --if-present typecheck",
     "test": "pnpm --recursive --if-present test",
     "test:e2e": "pnpm --filter @nexohub/client test:e2e",

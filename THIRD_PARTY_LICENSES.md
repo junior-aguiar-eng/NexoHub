@@ -64,7 +64,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Python | idna | 3.19 | BSD-3-Clause |
 | Python | iniconfig | 2.3.0 | MIT |
 | Python | lxml | 6.1.2 | BSD-3-Clause |
-| Python | nexohub-document-engine | 0.1.0a1 | MPL-2.0 |
+| Python | nexohub-document-engine | 0.1.0 | MPL-2.0 |
 | Python | numpy | 2.5.2 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 |
 | Python | omegaconf | 2.3.1 | BSD-3-Clause |
 | Python | onnxruntime | 1.29.0 | MIT License |
@@ -293,8 +293,8 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | ndk-sys | 0.6.0+11769913 | MIT OR Apache-2.0 |
 | Rust | ndk | 0.9.0 | MIT OR Apache-2.0 |
 | Rust | new_debug_unreachable | 1.0.6 | MIT |
-| Rust | nexohub-core | 0.1.0-alpha.1 | MPL-2.0 |
-| Rust | nexohub-desktop | 0.1.0-alpha.1 | MPL-2.0 |
+| Rust | nexohub-core | 0.1.0 | MPL-2.0 |
+| Rust | nexohub-desktop | 0.1.0 | MPL-2.0 |
 | Rust | nom | 8.0.0 | MIT |
 | Rust | num_enum_derive | 0.7.6 | BSD-3-Clause OR MIT OR Apache-2.0 |
 | Rust | num_enum | 0.7.6 | BSD-3-Clause OR MIT OR Apache-2.0 |

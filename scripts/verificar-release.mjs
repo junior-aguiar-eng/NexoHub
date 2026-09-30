@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const readJson = (path) => JSON.parse(readFileSync(resolve(root, path), "utf8"));
-const expected = process.env.NEXOHUB_RELEASE_VERSION ?? "0.1.0-alpha.1";
+const expected = process.env.NEXOHUB_RELEASE_VERSION ?? "0.1.0";
 const pythonVersion = expected
   .replace(/-alpha\.(\d+)$/, "a$1")
   .replace(/-beta\.(\d+)$/, "b$1")

@@ -3,7 +3,7 @@
 Todas as alterações relevantes serão registradas neste arquivo. O projeto usa versionamento
 semântico e os canais `alpha`, `beta`, `rc` e estável.
 
-## [0.1.0-alpha.1] - 2026-09-30
+## [0.1.0] - 2026-09-30
 
 ### Adicionado
 

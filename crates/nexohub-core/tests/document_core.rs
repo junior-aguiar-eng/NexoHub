@@ -266,6 +266,126 @@ fn compression_reencodes_lossless_rgb_image_and_rejects_signed_pdf() {
 }
 
 #[test]
+fn compression_reencodes_image_with_smask_transparency_and_strips_thumbnails() {
+    let temporary = TestDirectory::new("compression-smask");
+    let project_path = temporary.project_path();
+    let mut original_pdf = PdfDocument::with_version("1.5");
+    let pages_id = original_pdf.new_object_id();
+
+    let image = ImageBuffer::from_fn(1200, 1200, |x, y| {
+        Rgb([(x % 256) as u8, (y % 256) as u8, ((x + y) % 256) as u8])
+    });
+    let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+    encoder.write_all(&image.into_raw()).expect("RGB");
+    let compressed_raw = encoder.finish().expect("zlib");
+
+    let mask = ImageBuffer::from_fn(1200, 1200, |x, _y| image::Luma([(x % 256) as u8]));
+    let mut mask_encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+    mask_encoder.write_all(&mask.into_raw()).expect("Mask");
+    let compressed_mask = mask_encoder.finish().expect("mask zlib");
+
+    let mask_stream = Stream::new(
+        dictionary! {
+            "Type" => "XObject", "Subtype" => "Image", "Width" => 1200,
+            "Height" => 1200, "ColorSpace" => "DeviceGray", "BitsPerComponent" => 8,
+            "Filter" => "FlateDecode",
+        },
+        compressed_mask,
+    );
+    let mask_id = original_pdf.add_object(mask_stream);
+
+    let image_stream = Stream::new(
+        dictionary! {
+            "Type" => "XObject", "Subtype" => "Image", "Width" => 1200,
+            "Height" => 1200, "ColorSpace" => "DeviceRGB", "BitsPerComponent" => 8,
+            "Filter" => "FlateDecode",
+            "SMask" => Object::Reference(mask_id),
+        },
+        compressed_raw,
+    );
+    let image_id = original_pdf.add_object(image_stream);
+
+    let thumb_id = original_pdf.add_object(Stream::new(
+        dictionary! { "Type" => "XObject", "Subtype" => "Image", "Width" => 10, "Height" => 10, "ColorSpace" => "DeviceGray" },
+        vec![0u8; 100],
+    ));
+
+    let content_id = original_pdf.add_object(Stream::new(
+        dictionary! {},
+        b"q 595 0 0 842 0 0 cm /Scan Do Q".to_vec(),
+    ));
+    let page_id = original_pdf.add_object(dictionary! {
+        "Type" => "Page", "Parent" => pages_id,
+        "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+        "Resources" => dictionary! { "XObject" => dictionary! { "Scan" => image_id } },
+        "Contents" => content_id,
+        "Thumb" => Object::Reference(thumb_id),
+    });
+    original_pdf.objects.insert(
+        pages_id,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages", "Kids" => vec![Object::Reference(page_id)], "Count" => 1,
+        }),
+    );
+    let catalog_id = original_pdf.add_object(
+        dictionary! { "Type" => "Catalog", "Pages" => pages_id, "PieceInfo" => dictionary! {} },
+    );
+    original_pdf.trailer.set("Root", catalog_id);
+    let mut original_bytes = Vec::new();
+    original_pdf
+        .save_to(&mut original_bytes)
+        .expect("PDF com SMask");
+
+    let mut store = ProjectStore::create(&project_path, "SMaskTest").expect("projeto");
+    let imported = store
+        .import_document_bytes(&original_bytes, "smask.pdf", "application/pdf")
+        .expect("importação");
+    drop(store);
+
+    let result = compress_pdf(CompressPdfRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: imported.document.id.clone(),
+        artifact_id: imported.artifact.id.clone(),
+        compression_level: 6,
+    })
+    .expect("compressão de PDF com SMask");
+
+    let store = ProjectStore::open(&project_path).expect("projeto");
+    let compressed_bytes = store
+        .read_artifact_bytes(&result.artifact.id)
+        .expect("derivado");
+
+    assert!(
+        compressed_bytes.len() < original_bytes.len(),
+        "deve reduzir significativamente"
+    );
+    let pdf = PdfDocument::load_mem(&compressed_bytes).expect("PDF válido");
+    let page = pdf
+        .get_object(page_id)
+        .expect("página")
+        .as_dict()
+        .expect("página dict");
+    assert!(
+        !page.has(b"Thumb"),
+        "miniatura embutida obsoleta deve ter sido descartada"
+    );
+
+    let img = pdf
+        .get_object(image_id)
+        .expect("imagem")
+        .as_stream()
+        .expect("imagem stream");
+    assert_eq!(
+        img.dict.get(b"Filter").and_then(Object::as_name).ok(),
+        Some(b"DCTDecode".as_slice())
+    );
+    assert!(
+        img.dict.has(b"SMask"),
+        "SMask deve ser preservada na imagem comprimida"
+    );
+}
+
+#[test]
 fn rejects_relative_and_parent_traversal_project_paths() {
     let relative = match ProjectStore::create("Projeto.nexohub", "Inválido") {
         Ok(_) => panic!("caminho relativo deve ser rejeitado"),

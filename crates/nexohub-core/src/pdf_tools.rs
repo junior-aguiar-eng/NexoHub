@@ -15,9 +15,9 @@ const MAX_IMAGE_PIXELS: u64 = 16_000_000;
 
 fn optimize_embedded_images(document: &mut Document, level: u8) {
     let (quality, max_dimension) = match level {
-        1..=3 => (84, 3200),
-        4..=6 => (68, 2200),
-        _ => (52, 1400),
+        1..=3 => (82, 2800),
+        4..=6 => (65, 2000),
+        _ => (48, 1400),
     };
 
     for object in document.objects.values_mut() {
@@ -34,7 +34,6 @@ fn optimize_embedded_images(document: &mut Document, level: u8) {
                 .and_then(lopdf::Object::as_i64)
                 .ok()
                 != Some(8)
-            || dict.has(b"SMask")
             || dict.has(b"Mask")
             || dict.has(b"Decode")
             || dict.has(b"DecodeParms")
@@ -137,6 +136,8 @@ fn optimize_embedded_images(document: &mut Document, level: u8) {
         stream.dict.set("Width", i64::from(resized.width()));
         stream.dict.set("Height", i64::from(resized.height()));
         stream.dict.set("Filter", "DCTDecode");
+        stream.dict.remove(b"DecodeParms");
+        stream.dict.remove(b"Decode");
         stream.set_content(encoded);
     }
 }
@@ -229,7 +230,30 @@ pub fn compress_pdf(request: CompressPdfRequest) -> CoreResult<PdfToolResult> {
             "PDF assinado não pode ser comprimido sem invalidar a assinatura.",
         ));
     }
+
+    // Descarte seguro de metadados privados de aplicativos e miniaturas embutidas de páginas
+    if let Ok(root_ref) = document
+        .trailer
+        .get(b"Root")
+        .and_then(lopdf::Object::as_reference)
+        && let Ok(catalog) = document
+            .get_object_mut(root_ref)
+            .and_then(lopdf::Object::as_dict_mut)
+    {
+        catalog.remove(b"PieceInfo");
+    }
+    for (_, page_id) in document.get_pages() {
+        if let Ok(page_dict) = document
+            .get_object_mut(page_id)
+            .and_then(lopdf::Object::as_dict_mut)
+        {
+            page_dict.remove(b"PieceInfo");
+            page_dict.remove(b"Thumb");
+        }
+    }
+
     optimize_embedded_images(&mut document, request.compression_level);
+    document.prune_objects();
     document.compress();
 
     let save_options = SaveOptions::builder()

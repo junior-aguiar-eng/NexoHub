@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import { translateTextLocally } from "@/platform/browser-translation";
 import type { DocumentCorePort } from "@/platform/document-core";
+import { readDocumentText } from "@/platform/document-reader";
 import { runLauncherTool } from "@/platform/launcher-tool-runner";
 import { getPdfPageCount, renderPdfPageToDataUrl } from "@/platform/pdf-engine";
 import { CompressPdfPanel } from "./CompressPdfPanel";
@@ -236,23 +237,23 @@ export function DedicatedToolView({
   useEffect(() => {
     async function loadCompareTexts() {
       if (tool.id === "text-compare") {
-        if (files.length > 0) {
+        if (files.length > 0 && files[0]) {
           try {
-            const t1 = await files[0].text();
+            const t1 = await readDocumentText(files[0]);
             setDoc1Text(t1);
             setDoc1Name(files[0].name);
           } catch {}
         }
-        if (files.length > 1) {
+        if (files.length > 1 && files[1]) {
           try {
-            const t2 = await files[1].text();
+            const t2 = await readDocumentText(files[1]);
             setDoc2Text(t2);
             setDoc2Name(files[1].name);
           } catch {}
         }
-        if (files.length > 2) {
+        if (files.length > 2 && files[2]) {
           try {
-            const t3 = await files[2].text();
+            const t3 = await readDocumentText(files[2]);
             setDoc3Text(t3);
             setDoc3Name(files[2].name);
             setShowDoc3(true);
@@ -598,12 +599,15 @@ export function DedicatedToolView({
           doc1Text={doc1Text}
           doc1Name={doc1Name}
           onDoc1TextChange={setDoc1Text}
+          onDoc1NameChange={setDoc1Name}
           doc2Text={doc2Text}
           doc2Name={doc2Name}
           onDoc2TextChange={setDoc2Text}
+          onDoc2NameChange={setDoc2Name}
           doc3Text={doc3Text}
           doc3Name={doc3Name}
           onDoc3TextChange={setDoc3Text}
+          onDoc3NameChange={setDoc3Name}
           showDoc3={showDoc3}
           onToggleDoc3={setShowDoc3}
           onExportDiff={() => void handleExecute()}

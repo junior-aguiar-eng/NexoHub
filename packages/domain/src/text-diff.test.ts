@@ -62,4 +62,28 @@ describe("diffText", () => {
     expect(addedFromEmpty.stats.deletions).toBe(0);
     expect(addedFromEmpty.lines[0]?.content).toBe("Novo texto");
   });
+
+  it("calcula realce inline de palavras e taxa de similaridade", () => {
+    const original = "O contrato prevê cláusula de confidencialidade estrita.";
+    const modified = "O contrato prevê cláusula de confidencialidade moderada.";
+    const result = diffText(original, modified);
+
+    expect(result.stats.additions).toBe(1);
+    expect(result.stats.deletions).toBe(1);
+    expect(result.stats.wordsAdded).toBe(1);
+    expect(result.stats.wordsDeleted).toBe(1);
+    expect(result.stats.similarityScore).toBeGreaterThanOrEqual(80);
+
+    const removedLine = result.lines.find((l) => l.type === "removed");
+    const addedLine = result.lines.find((l) => l.type === "added");
+
+    expect(removedLine?.words).toBeDefined();
+    expect(addedLine?.words).toBeDefined();
+
+    const removedWord = removedLine?.words?.find((w) => w.type === "removed");
+    expect(removedWord?.text).toBe("estrita");
+
+    const addedWord = addedLine?.words?.find((w) => w.type === "added");
+    expect(addedWord?.text).toBe("moderada");
+  });
 });

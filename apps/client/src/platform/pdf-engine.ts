@@ -203,9 +203,9 @@ export async function compressPdfDocument(
 ): Promise<{ bytes: Uint8Array; savedBytes: number; savedPercent: number }> {
   const srcDoc = await PDFDocument.load(pdfBytes);
   const profile = {
-    less: { quality: 0.84, maxDimension: 3200 },
-    recommended: { quality: 0.68, maxDimension: 2200 },
-    extreme: { quality: 0.52, maxDimension: 1400 },
+    less: { quality: 0.82, maxDimension: 2800 },
+    recommended: { quality: 0.65, maxDimension: 2000 },
+    extreme: { quality: 0.48, maxDimension: 1400 },
   }[level];
   const name = (value: string) => PDFName.of(value);
 
@@ -216,6 +216,17 @@ export async function compressPdfDocument(
     }
   }
 
+  // Descarte seguro de metadados privados de aplicativos e miniaturas de páginas
+  try {
+    srcDoc.catalog.delete(name("PieceInfo"));
+    for (const page of srcDoc.getPages()) {
+      page.node.delete(name("PieceInfo"));
+      page.node.delete(name("Thumb"));
+    }
+  } catch {
+    // Tolerante a estruturas não convencionais
+  }
+
   if (typeof createImageBitmap === "function" && typeof document !== "undefined") {
     for (const [ref, object] of srcDoc.context.enumerateIndirectObjects()) {
       if (!(object instanceof PDFRawStream)) continue;
@@ -223,6 +234,8 @@ export async function compressPdfDocument(
       const subtype = dict.get(name("Subtype"));
       const filter = dict.get(name("Filter"));
       const color = dict.get(name("ColorSpace"));
+      const isRgb = color instanceof PDFName && color.asString() === "/DeviceRGB";
+      const isGray = color instanceof PDFName && color.asString() === "/DeviceGray";
       const bits = dict.get(name("BitsPerComponent"));
       const width = dict.get(name("Width"));
       const height = dict.get(name("Height"));
@@ -231,13 +244,11 @@ export async function compressPdfDocument(
         subtype.asString() !== "/Image" ||
         !(filter instanceof PDFName) ||
         !["/DCTDecode", "/FlateDecode"].includes(filter.asString()) ||
-        !(color instanceof PDFName) ||
-        color.asString() !== "/DeviceRGB" ||
+        (!isRgb && !isGray) ||
         !(bits instanceof PDFNumber) ||
         bits.asNumber() !== 8 ||
         !(width instanceof PDFNumber) ||
         !(height instanceof PDFNumber) ||
-        dict.has(name("SMask")) ||
         dict.has(name("Mask")) ||
         dict.has(name("Decode")) ||
         dict.has(name("DecodeParms"))
@@ -259,7 +270,11 @@ export async function compressPdfDocument(
         let source: CanvasImageSource;
         if (filter.asString() === "/DCTDecode") {
           const header = await JpegEmbedder.for(Uint8Array.from(object.getContents()));
-          if (header.width !== w || header.height !== h || header.colorSpace !== "DeviceRGB")
+          if (
+            header.width !== w ||
+            header.height !== h ||
+            (header.colorSpace !== "DeviceRGB" && header.colorSpace !== "DeviceGray")
+          )
             continue;
           bitmap = await createImageBitmap(
             new Blob([object.getContents() as BlobPart], { type: "image/jpeg" }),
@@ -267,7 +282,8 @@ export async function compressPdfDocument(
           if (bitmap.width !== w || bitmap.height !== h) continue;
           source = bitmap;
         } else {
-          const expected = w * h * 3;
+          const channels = isGray ? 1 : 3;
+          const expected = w * h * channels;
           const raw = decodePDFRawStream(object).getBytes(expected + 1);
           if (raw.length !== expected) continue;
           const rawCanvas = document.createElement("canvas");
@@ -276,11 +292,21 @@ export async function compressPdfDocument(
           const rawContext = rawCanvas.getContext("2d");
           if (!rawContext) continue;
           const pixels = rawContext.createImageData(w, h);
-          for (let src = 0, dest = 0; src < raw.length; src += 3, dest += 4) {
-            pixels.data[dest] = raw[src];
-            pixels.data[dest + 1] = raw[src + 1];
-            pixels.data[dest + 2] = raw[src + 2];
-            pixels.data[dest + 3] = 255;
+          if (isGray) {
+            for (let src = 0, dest = 0; src < raw.length; src += 1, dest += 4) {
+              const val = raw[src];
+              pixels.data[dest] = val;
+              pixels.data[dest + 1] = val;
+              pixels.data[dest + 2] = val;
+              pixels.data[dest + 3] = 255;
+            }
+          } else {
+            for (let src = 0, dest = 0; src < raw.length; src += 3, dest += 4) {
+              pixels.data[dest] = raw[src];
+              pixels.data[dest + 1] = raw[src + 1];
+              pixels.data[dest + 2] = raw[src + 2];
+              pixels.data[dest + 3] = 255;
+            }
           }
           rawContext.putImageData(pixels, 0, 0);
           source = rawCanvas;
@@ -301,6 +327,9 @@ export async function compressPdfDocument(
         newDict.set(name("Height"), PDFNumber.of(canvas.height));
         newDict.set(name("Length"), PDFNumber.of(blob.size));
         newDict.set(name("Filter"), name("DCTDecode"));
+        newDict.set(name("ColorSpace"), name("DeviceRGB"));
+        newDict.delete(name("DecodeParms"));
+        newDict.delete(name("Decode"));
         srcDoc.context.assign(
           ref,
           PDFRawStream.of(newDict, new Uint8Array(await blob.arrayBuffer())),
@@ -347,4 +376,75 @@ export async function rotatePdfDocument(
     page.setRotation(degrees((currentAngle + rotationAngle) % 360));
   }
   return await srcDoc.save({ useObjectStreams: true });
+}
+
+/**
+ * Extrai texto legível de um documento PDF através do PDF.js com preservação de parágrafos.
+ */
+export async function extractTextFromPdf(pdfBytes: Uint8Array): Promise<string> {
+  const isTestEnv =
+    typeof window === "undefined" ||
+    typeof document === "undefined" ||
+    Boolean(
+      typeof globalThis !== "undefined" &&
+        (globalThis as unknown as { process?: { env?: { NODE_ENV?: string } } }).process?.env
+          ?.NODE_ENV === "test",
+    );
+
+  if (isTestEnv) {
+    return "";
+  }
+
+  try {
+    const loadingTask = pdfjsLib.getDocument({
+      data: pdfBytes.slice(),
+      useSystemFonts: true,
+    });
+    const pdf = await loadingTask.promise;
+    try {
+      const pageTexts: string[] = [];
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        let lastY: number | null = null;
+        let pageText = "";
+
+        for (const item of textContent.items) {
+          if ("str" in item) {
+            const itemY = item.transform ? item.transform[5] : null;
+            if (lastY !== null && itemY !== null && Math.abs(itemY - lastY) > 5) {
+              pageText += "\n";
+            } else if (pageText.length > 0 && !pageText.endsWith("\n") && !pageText.endsWith(" ")) {
+              pageText += " ";
+            }
+            pageText += item.str;
+            if (itemY !== null) {
+              lastY = itemY;
+            }
+            if (item.hasEOL) {
+              pageText += "\n";
+              lastY = null;
+            }
+          }
+        }
+
+        if (pageText.trim()) {
+          pageTexts.push(pageText.trim());
+        }
+      }
+
+      return pageTexts.join("\n\n");
+    } finally {
+      try {
+        pdf.cleanup();
+        await loadingTask.destroy();
+      } catch {
+        // Fallback silencioso
+      }
+    }
+  } catch (err) {
+    console.error("Erro ao extrair texto do PDF:", err);
+    return "";
+  }
 }

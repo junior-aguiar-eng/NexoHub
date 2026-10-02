@@ -46,4 +46,35 @@ describe("DocumentComparePanel - Comparador de 2 a 3 Documentos", () => {
 
     expect(onToggleDoc3).toHaveBeenCalledWith(true);
   });
+
+  it("renderiza linhas alinhadas lado a lado e destaca palavras alteradas", () => {
+    const { container } = render(
+      <DocumentComparePanel
+        doc1Text="Contrato de prestação de serviços de advocacia"
+        doc2Text="Contrato de prestação de serviços de consultoria"
+      />,
+    );
+
+    // Deve estar no modo de visualização de diferenças por padrão quando há textos
+    expect(container.querySelector(".doc-compare-side-diff-board")).toBeInTheDocument();
+    expect(container.querySelector(".doc-compare-side-diff-row")).toBeInTheDocument();
+
+    // Palavras alteradas devem estar marcadas
+    expect(container.querySelector(".doc-word--deleted")).toHaveTextContent("advocacia");
+    expect(container.querySelector(".doc-word--added")).toHaveTextContent("consultoria");
+
+    // Badge de similaridade deve estar presente
+    expect(screen.getByText(/Similaridade/i)).toBeInTheDocument();
+  });
+
+  it("permite alternar para modo de edição de texto", () => {
+    const { container } = render(
+      <DocumentComparePanel doc1Text="Texto inicial" doc2Text="Texto alterado" />,
+    );
+
+    const editBtn = screen.getByRole("button", { name: /Editar \/ Digitar/i });
+    fireEvent.click(editBtn);
+
+    expect(container.querySelector(".doc-compare-textarea")).toBeInTheDocument();
+  });
 });

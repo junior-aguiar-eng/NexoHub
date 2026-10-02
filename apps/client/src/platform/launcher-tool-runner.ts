@@ -11,6 +11,7 @@ import {
 import { translate } from "@/i18n";
 import { createZipArchive } from "./browser-pdf-utils";
 import type { DocumentCorePort } from "./document-core";
+import { readDocumentText } from "./document-reader";
 import {
   compressPdfDocument,
   extractPdfSelectedPages,
@@ -258,8 +259,9 @@ async function executeTool(
       };
     }
     case "text-compare": {
-      const left = input.firstText || (first ? await first.text() : "");
-      const right = input.secondText || (input.files[1] ? await input.files[1].text() : "");
+      const left = input.firstText || (first ? await readDocumentText(first) : "");
+      const right =
+        input.secondText || (input.files[1] ? await readDocumentText(input.files[1]) : "");
       if (!left || !right) {
         throw new ToolRunError("INVALID_INPUT", "Informe os dois textos para comparar.");
       }
@@ -270,7 +272,7 @@ async function executeTool(
             `${line.type === "added" ? "+" : line.type === "removed" ? "-" : " "} ${line.content}`,
         )
         .join("\n");
-      const report = `RELATÓRIO DE COMPARAÇÃO DE TEXTO\n================================\nAdições: +${diff.stats.additions}\nRemoções: -${diff.stats.deletions}\nInalteradas: ${diff.stats.unchanged}\n\n${lines}`;
+      const report = `RELATÓRIO DE COMPARAÇÃO DE TEXTO\n================================\nSimilaridade: ${diff.stats.similarityScore}%\nLinhas adicionadas: +${diff.stats.additions}\nLinhas removidas: -${diff.stats.deletions}\nLinhas inalteradas: ${diff.stats.unchanged}\nPalavras adicionadas: +${diff.stats.wordsAdded}\nPalavras removidas: -${diff.stats.wordsDeleted}\n\n${lines}`;
       return {
         blob: new Blob([report], { type: "text/plain;charset=utf-8" }),
         fileName: `${baseName}_comparacao.diff.txt`,

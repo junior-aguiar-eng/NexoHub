@@ -41,4 +41,19 @@ describe("operações PDF no navegador", () => {
     await expect(extractPdfSelectedPages(source, [3])).rejects.toThrow();
     await expect(splitPdfByInterval(source, 3, 4)).rejects.toThrow();
   });
+
+  it("descarta metadados redundantes e miniaturas na compressão", async () => {
+    const pdf = await PDFDocument.create();
+    const page = pdf.addPage([200, 200]);
+    const { PDFName } = await import("pdf-lib");
+    page.node.set(PDFName.of("Thumb"), pdf.context.obj({ Type: "XObject" }));
+    page.node.set(PDFName.of("PieceInfo"), pdf.context.obj({}));
+    pdf.catalog.set(PDFName.of("PieceInfo"), pdf.context.obj({}));
+    const compressed = await compressPdfDocument(await pdf.save());
+    const reloaded = await PDFDocument.load(compressed.bytes);
+    const reloadedPage = reloaded.getPage(0);
+    expect(reloadedPage.node.has(PDFName.of("Thumb"))).toBe(false);
+    expect(reloadedPage.node.has(PDFName.of("PieceInfo"))).toBe(false);
+    expect(reloaded.catalog.has(PDFName.of("PieceInfo"))).toBe(false);
+  });
 });

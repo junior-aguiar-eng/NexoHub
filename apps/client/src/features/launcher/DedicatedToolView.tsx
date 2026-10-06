@@ -490,14 +490,14 @@ export function DedicatedToolView({
 
   // Título do Botão Principal estilo iLovePDF
   function getActionLabel() {
-    if (tool.id === "pdf-split") return "Dividir PDF";
-    if (tool.id === "pdf-compress") return "Comprimir PDF";
-    if (tool.id === "pdf-merge") return "Juntar PDF";
-    if (tool.id === "pdf-rotate") return "Rotacionar PDF";
-    if (tool.id === "pdf-organize") return "Salvar PDF Organizado";
-    if (tool.id === "pdf-ocr") return "Iniciar Reconhecimento OCR";
-    if (tool.id === "text-compare") return "Comparar Textos";
-    if (tool.id === "text-review") return "Revisar Texto";
+    if (tool.id === "pdf-split") return translate("dedicated.actionSplit");
+    if (tool.id === "pdf-compress") return translate("dedicated.actionCompress");
+    if (tool.id === "pdf-merge") return translate("dedicated.actionMerge");
+    if (tool.id === "pdf-rotate") return translate("dedicated.actionRotate");
+    if (tool.id === "pdf-organize") return translate("dedicated.actionOrganize");
+    if (tool.id === "pdf-ocr") return translate("dedicated.actionOcr");
+    if (tool.id === "text-compare") return translate("dedicated.actionCompare");
+    if (tool.id === "text-review") return translate("dedicated.actionReview");
     return translate("dedicated.actionRun");
   }
 
@@ -640,7 +640,8 @@ export function DedicatedToolView({
           {reviewFindings.length > 0 ? (
             <div className="text-review-findings-list">
               <div className="text-review-findings-count">
-                <strong>{reviewFindings.length}</strong> sugestões encontradas:
+                <strong>{reviewFindings.length}</strong>{" "}
+                {translate("workspace.review.suggestionsFound")}
               </div>
               {reviewFindings.map((finding) => (
                 <div key={finding.id} className="text-review-finding-card">
@@ -654,9 +655,9 @@ export function DedicatedToolView({
                     variant="ghost"
                     size="compact"
                     onClick={() => handleApplySingleReview(finding.id)}
-                    title="Aplicar esta substituição"
+                    title={translate("workspace.review.applyTitle")}
                   >
-                    Aplicar
+                    {translate("workspace.review.apply")}
                   </Button>
                 </div>
               ))}
@@ -707,10 +708,10 @@ export function DedicatedToolView({
                 variant="ghost"
                 size="compact"
                 onClick={handleSwapLanguages}
-                title="Inverter idiomas de origem e destino"
+                title={translate("workspace.translate.swapTitle")}
               >
                 <ArrowRightLeft size={14} />
-                <span>Inverter Idiomas</span>
+                <span>{translate("workspace.translate.swap")}</span>
               </Button>
 
               <Button
@@ -720,7 +721,11 @@ export function DedicatedToolView({
                 disabled={!translatedText}
               >
                 {copiedGeneral ? <Check size={14} /> : <Copy size={14} />}
-                <span>{copiedGeneral ? "Copiado!" : translate("workspace.translate.copy")}</span>
+                <span>
+                  {copiedGeneral
+                    ? translate("workspace.ocr.copied")
+                    : translate("workspace.translate.copy")}
+                </span>
               </Button>
             </div>
           </div>
@@ -744,8 +749,8 @@ export function DedicatedToolView({
       <div className="generic-tool-visual-panel">
         <div className="generic-tool-hero-box">
           <Layers size={36} style={{ color: accent }} />
-          <h3>Espaço de Visualização Documental</h3>
-          <p>Arquivo selecionado e pronto para processamento imediato.</p>
+          <h3>{translate("dedicated.genericVisualTitle")}</h3>
+          <p>{translate("dedicated.genericVisualDesc")}</p>
         </div>
       </div>
     );

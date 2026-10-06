@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { resolveLauncherTools } from "./data";
 
 describe("Strict Functional Tools Catalog", () => {
@@ -26,5 +26,25 @@ describe("Strict Functional Tools Catalog", () => {
     for (const tool of tools) {
       expect(tool.availability.available).toBe(true);
     }
+  });
+
+  it("expande o catálogo de ferramentas no desktop quando documentCore nativo suporta superpoderes", () => {
+    const desktopPort = {
+      supportedToolIds: new Set([
+        "pdf-compress",
+        "pdf-organize",
+        "pdf-ocr",
+        "text-translate",
+        "text-review",
+        "pdf-extract-images",
+      ]),
+      invoke: vi.fn(),
+    };
+    const tools = resolveLauncherTools([], desktopPort);
+    const ids = tools.map((t) => t.id);
+    expect(ids).toContain("pdf-ocr");
+    expect(ids).toContain("text-translate");
+    expect(ids).toContain("text-review");
+    expect(ids).toContain("pdf-extract-images");
   });
 });

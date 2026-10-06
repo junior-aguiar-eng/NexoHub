@@ -251,7 +251,12 @@ export function App() {
       <CommandPalette
         open={commandPaletteOpen}
         onOpenChange={setCommandPaletteOpen}
-        onSelectSuite={setActiveSuite}
+        onSelectSuite={(suite) => {
+          setActiveSuite(suite);
+          selectToolWithUrl(null);
+        }}
+        tools={dynamicTools}
+        onSelectTool={(tool) => selectToolWithUrl(tool)}
       />
     </div>
   );

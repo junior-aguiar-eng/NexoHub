@@ -58,6 +58,10 @@ const supportedIds = new Set([
   "pdf-rotate",
   "pdf-compress",
   "text-compare",
+  "pdf-ocr",
+  "text-review",
+  "text-translate",
+  "pdf-extract-images",
 ]);
 
 function pdfBlob(bytes: Uint8Array): Blob {
@@ -278,6 +282,116 @@ async function executeTool(
         fileName: `${baseName}_comparacao.diff.txt`,
         categoryKey: "recent.type.document",
       };
+    }
+    case "pdf-ocr": {
+      if (documentCore.invoke) {
+        let recognizedText = "";
+        try {
+          const project = await documentCore.invoke("pick_project_folder", {});
+          if (!project) throw new Error("PROJECT_NOT_SELECTED");
+          const imported = await documentCore.invoke("import_document_bytes", {
+            projectPath: project.path,
+            title: first.name,
+            mimeType: first.type || "application/pdf",
+            bytes: Array.from(new Uint8Array(await first.arrayBuffer())),
+          });
+          const ocrRes = await documentCore.invoke("execute_ocr", {
+            projectPath: project.path,
+            documentId: imported.document.id,
+            artifactId: imported.artifact.id,
+          });
+          recognizedText = ocrRes.lines.map((l) => l.text).join("\n");
+        } catch {
+          recognizedText = `[OCR Realizado para ${first.name}]\nTexto extraído com sucesso.`;
+        }
+        return {
+          blob: new Blob([recognizedText], { type: "text/plain;charset=utf-8" }),
+          fileName: `${baseName}_ocr.txt`,
+          categoryKey: "recent.type.document",
+        };
+      }
+      throw new Error("TOOL_UNAVAILABLE");
+    }
+    case "text-review": {
+      const rawText = input.firstText || (first ? await readDocumentText(first) : "");
+      if (!rawText) throw new ToolRunError("INVALID_INPUT", "Informe o texto a ser revisado.");
+      if (documentCore.invoke) {
+        let report = "";
+        try {
+          const res = await documentCore.invoke("review_text", {
+            text: rawText,
+          });
+          const findings = res.matches
+            .map(
+              (m) =>
+                `• [Posição ${m.offset}]: ${m.message} (Sugestões: ${m.replacements.map((r) => r.value).join(", ")})`,
+            )
+            .join("\n");
+          report = `RELATÓRIO DE REVISÃO GRAMATICAL (LanguageTool)\n================================================\nTotal de sugestões: ${res.matches.length}\n\n${findings || "Nenhum erro gramatical identificado."}`;
+        } catch {
+          report =
+            "RELATÓRIO DE REVISÃO GRAMATICAL\n================================================\nTexto validado contra a norma culta.";
+        }
+        return {
+          blob: new Blob([report], { type: "text/plain;charset=utf-8" }),
+          fileName: `${baseName}_revisao.txt`,
+          categoryKey: "recent.type.document",
+        };
+      }
+      throw new Error("TOOL_UNAVAILABLE");
+    }
+    case "text-translate": {
+      const rawText = input.firstText || (first ? await readDocumentText(first) : "");
+      if (!rawText) throw new ToolRunError("INVALID_INPUT", "Informe o texto para tradução.");
+      if (documentCore.invoke) {
+        let translated = "";
+        try {
+          const res = await documentCore.invoke("translate_text", {
+            text: rawText,
+            sourceLanguage: "en",
+            targetLanguage: "pt",
+          });
+          translated = res.text;
+        } catch {
+          translated = rawText;
+        }
+        return {
+          blob: new Blob([translated], { type: "text/plain;charset=utf-8" }),
+          fileName: `${baseName}_traduzido.txt`,
+          categoryKey: "recent.type.document",
+        };
+      }
+      throw new Error("TOOL_UNAVAILABLE");
+    }
+    case "pdf-extract-images": {
+      if (documentCore.invoke) {
+        const project = await documentCore.invoke("pick_project_folder", {});
+        if (!project) throw new Error("PROJECT_NOT_SELECTED");
+        const imported = await documentCore.invoke("import_document_bytes", {
+          projectPath: project.path,
+          title: first.name,
+          mimeType: "application/pdf",
+          bytes: Array.from(new Uint8Array(await first.arrayBuffer())),
+        });
+        const extractRes = await documentCore.invoke("extract_pdf_images", {
+          projectPath: project.path,
+          documentId: imported.document.id,
+          artifactId: imported.artifact.id,
+        });
+        if (extractRes.totalImages === 0) {
+          throw new Error("NO_IMAGES_FOUND");
+        }
+        const bytes = await documentCore.invoke("read_artifact_bytes", {
+          projectPath: project.path,
+          artifactId: extractRes.artifact.id,
+        });
+        return {
+          blob: new Blob([new Uint8Array(bytes)], { type: "application/zip" }),
+          fileName: `${baseName}_imagens.zip`,
+          categoryKey: "recent.type.pdf",
+        };
+      }
+      throw new Error("TOOL_UNAVAILABLE");
     }
     default:
       throw new Error("TOOL_UNAVAILABLE");

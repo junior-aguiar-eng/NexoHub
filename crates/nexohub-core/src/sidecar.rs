@@ -124,6 +124,17 @@ fn output_size(path: &Path) -> u64 {
 }
 
 fn terminate(child: &mut std::process::Child) {
+    #[cfg(windows)]
+    {
+        // No Windows, child.kill() executa TerminateProcess apenas no executável pai.
+        // O taskkill /F /T encerra a árvore inteira de processos de forma síncrona e recursiva.
+        let pid = child.id();
+        let _ = Command::new("taskkill")
+            .args(["/F", "/T", "/PID", &pid.to_string()])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
+    }
     let _ = child.kill();
     let _ = child.wait();
 }
@@ -188,5 +199,32 @@ mod tests {
         .expect_err("saída deve exceder limite");
 
         assert!(matches!(error, SidecarRunError::OutputLimit));
+    }
+
+    #[test]
+    fn terminates_on_timeout() {
+        let workspace = SensitiveTempDir::create().expect("temp");
+        #[cfg(windows)]
+        let mut command = {
+            let mut cmd = Command::new("powershell");
+            cmd.args(["-Command", "Start-Sleep -Milliseconds 3000"]);
+            cmd
+        };
+        #[cfg(not(windows))]
+        let mut command = {
+            let mut cmd = Command::new("sleep");
+            cmd.arg("3");
+            cmd
+        };
+
+        let error = run_command(
+            &mut command,
+            &workspace.path("stdout.txt"),
+            Duration::from_millis(50),
+            1024,
+        )
+        .expect_err("processo deve sofrer timeout");
+
+        assert!(matches!(error, SidecarRunError::Timeout));
     }
 }

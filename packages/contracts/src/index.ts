@@ -55,7 +55,7 @@ export interface ImportDocumentBytesRequest {
   readonly projectPath: string;
   readonly title: string;
   readonly mimeType: string;
-  readonly bytes: readonly number[];
+  readonly bytes: readonly number[] | Uint8Array;
 }
 
 export interface ReadArtifactBytesRequest {
@@ -65,7 +65,7 @@ export interface ReadArtifactBytesRequest {
 
 export interface SaveLauncherOutputRequest {
   readonly fileName: string;
-  readonly bytes: readonly number[];
+  readonly bytes: readonly number[] | Uint8Array;
 }
 
 export interface RecordLauncherResultRequest {
@@ -74,7 +74,7 @@ export interface RecordLauncherResultRequest {
   readonly inputArtifactIds: readonly ArtifactId[];
   readonly toolId: "pdf-merge" | "pdf-split" | "pdf-rotate" | "text-compare";
   readonly mimeType: "application/pdf" | "application/zip" | "text/plain";
-  readonly bytes: readonly number[];
+  readonly bytes: readonly number[] | Uint8Array;
   readonly parameters: Readonly<Record<string, unknown>>;
 }
 
@@ -539,7 +539,7 @@ export interface DocumentCoreCommands {
   };
   readonly read_artifact_bytes: {
     readonly request: ReadArtifactBytesRequest;
-    readonly response: readonly number[];
+    readonly response: readonly number[] | Uint8Array;
   };
   readonly record_launcher_result: {
     readonly request: RecordLauncherResultRequest;

@@ -4,12 +4,14 @@ import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import { launcherTools, suites } from "./data";
-import type { SuiteId } from "./model";
+import type { LauncherTool, SuiteId } from "./model";
 
 type CommandPaletteProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectSuite: (suite: SuiteId) => void;
+  onSelectTool?: (tool: LauncherTool) => void;
+  tools?: readonly LauncherTool[];
 };
 
 function normalize(value: string) {
@@ -19,7 +21,13 @@ function normalize(value: string) {
     .toLocaleLowerCase("pt-BR");
 }
 
-export function CommandPalette({ open, onOpenChange, onSelectSuite }: CommandPaletteProps) {
+export function CommandPalette({
+  open,
+  onOpenChange,
+  onSelectSuite,
+  onSelectTool,
+  tools,
+}: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const normalizedQuery = normalize(query.trim());
@@ -27,10 +35,13 @@ export function CommandPalette({ open, onOpenChange, onSelectSuite }: CommandPal
     () => suites.filter((suite) => normalize(translate(suite.labelKey)).includes(normalizedQuery)),
     [normalizedQuery],
   );
+  const availableTools = tools ?? launcherTools;
   const visibleTools = useMemo(
     () =>
-      launcherTools.filter((tool) => normalize(translate(tool.titleKey)).includes(normalizedQuery)),
-    [normalizedQuery],
+      availableTools.filter((tool) =>
+        normalize(translate(tool.titleKey)).includes(normalizedQuery),
+      ),
+    [availableTools, normalizedQuery],
   );
 
   function closePalette() {
@@ -94,12 +105,41 @@ export function CommandPalette({ open, onOpenChange, onSelectSuite }: CommandPal
               {visibleTools.length > 0 && (
                 <section aria-labelledby="command-tools">
                   <h3 id="command-tools">{translate("command.tools")}</h3>
-                  {visibleTools.map((tool) => (
-                    <div className="command-item command-item--disabled" key={tool.id}>
-                      <span>{translate(tool.titleKey)}</span>
-                      <span className="status-badge">{translate("tools.comingSoon")}</span>
-                    </div>
-                  ))}
+                  {visibleTools.map((tool) =>
+                    tool.availability.available ? (
+                      <Button
+                        key={tool.id}
+                        variant="ghost"
+                        className="command-item"
+                        onClick={() => {
+                          onSelectTool?.(tool);
+                          closePalette();
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          <tool.icon
+                            size={17}
+                            style={{ color: tool.accentColor }}
+                            aria-hidden="true"
+                          />
+                          <span>{translate(tool.titleKey)}</span>
+                        </div>
+                        <ArrowRight size={17} aria-hidden="true" />
+                      </Button>
+                    ) : (
+                      <div className="command-item command-item--disabled" key={tool.id}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          <tool.icon
+                            size={17}
+                            style={{ color: "var(--color-ink-muted)" }}
+                            aria-hidden="true"
+                          />
+                          <span>{translate(tool.titleKey)}</span>
+                        </div>
+                        <span className="status-badge">{translate("tools.comingSoon")}</span>
+                      </div>
+                    ),
+                  )}
                 </section>
               )}
               {visibleSuites.length === 0 && visibleTools.length === 0 && (

@@ -18,6 +18,10 @@ export class TauriDocumentCorePort implements DocumentCorePort {
     "pdf-rotate",
     "pdf-compress",
     "text-compare",
+    "pdf-ocr",
+    "text-review",
+    "text-translate",
+    "pdf-extract-images",
   ]);
   private projectPath: string | null = null;
 
@@ -103,7 +107,7 @@ export class TauriDocumentCorePort implements DocumentCorePort {
       projectPath,
       artifactId: result.artifact.id,
     });
-    return new Blob([Uint8Array.from(bytes)], { type: mimeType });
+    return new Blob([new Uint8Array(bytes)], { type: mimeType });
   }
 
   async executePdfTool(request: {
@@ -148,7 +152,7 @@ export class TauriDocumentCorePort implements DocumentCorePort {
       projectPath,
       artifactId: result.artifact.id,
     });
-    return new Blob([Uint8Array.from(bytes)], { type: "application/pdf" });
+    return new Blob([new Uint8Array(bytes)], { type: "application/pdf" });
   }
   async invoke<Command extends DocumentCoreCommand>(
     command: Command,

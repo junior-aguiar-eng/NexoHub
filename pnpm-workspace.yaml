@@ -8,4 +8,5 @@ onlyBuiltDependencies:
   - tesseract.js
 
 overrides:
+  source-map-js: "^1.2.2"
   undici: "^8.11.2"

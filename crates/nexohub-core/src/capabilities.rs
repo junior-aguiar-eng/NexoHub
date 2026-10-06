@@ -136,7 +136,7 @@ fn is_ocr_installed(root: &Path) -> bool {
 }
 
 fn is_compress_installed(root: &Path) -> bool {
-    let dir = root.join("ghostscript");
+    let dir = root.join("compression");
     dir.exists()
 }
 
@@ -412,7 +412,7 @@ pub fn uninstall_capability(
                 .unwrap_or_else(|| root.join("languagetool"));
             (dir, 188_743_680u64)
         }
-        "pdf.super_compress" => (root.join("ghostscript"), 41_943_040u64),
+        "pdf.super_compress" => (root.join("compression"), 41_943_040u64),
         "ocr.vision" => (root.join("ocr"), 157_286_400u64),
         _ => {
             return Err(CoreError::new(

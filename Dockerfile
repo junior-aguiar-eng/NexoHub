@@ -10,7 +10,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml biome.json ./
 COPY packages ./packages
 COPY apps/client ./apps/client
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 RUN pnpm --filter @nexohub/client build
 
 # ==========================================

@@ -1,5 +1,6 @@
 import { Check, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { translate } from "@/i18n";
 
 export type SplitInterval = {
   id: string;
@@ -77,13 +78,15 @@ export function SplitPdfPanel({
             {intervals.map((interval, idx) => (
               <div key={interval.id} className="ilovepdf-interval-card">
                 <div className="ilovepdf-interval-card-header">
-                  <span className="ilovepdf-interval-card-title">Intervalo {idx + 1}</span>
+                  <span className="ilovepdf-interval-card-title">
+                    {translate("workspace.split.interval")} {idx + 1}
+                  </span>
                   {intervals.length > 1 && (
                     <button
                       type="button"
                       className="ilovepdf-interval-card-delete"
                       onClick={() => handleRemoveInterval(interval.id)}
-                      title="Remover intervalo"
+                      title={translate("workspace.split.removeInterval")}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -173,14 +176,14 @@ export function SplitPdfPanel({
             className={`ilovepdf-split-tab ${splitMode === "interval" ? "ilovepdf-split-tab--active" : ""}`}
             onClick={() => onSplitModeChange("interval")}
           >
-            Intervalo
+            {translate("workspace.split.modeInterval")}
           </button>
           <button
             type="button"
             className={`ilovepdf-split-tab ${splitMode === "pages" ? "ilovepdf-split-tab--active" : ""}`}
             onClick={() => onSplitModeChange("pages")}
           >
-            Páginas
+            {translate("workspace.split.modePages")}
           </button>
         </div>
 
@@ -193,14 +196,14 @@ export function SplitPdfPanel({
                 className={`ilovepdf-toggle-btn ${intervalType === "custom" ? "ilovepdf-toggle-btn--active" : ""}`}
                 onClick={() => setIntervalType("custom")}
               >
-                Personalizado
+                {translate("workspace.split.typeCustom")}
               </button>
               <button
                 type="button"
                 className={`ilovepdf-toggle-btn ${intervalType === "fixed" ? "ilovepdf-toggle-btn--active" : ""}`}
                 onClick={() => setIntervalType("fixed")}
               >
-                Fixo
+                {translate("workspace.split.typeFixed")}
               </button>
             </div>
 
@@ -208,10 +211,14 @@ export function SplitPdfPanel({
               <div className="ilovepdf-interval-inputs-list">
                 {intervals.map((interval, index) => (
                   <div key={interval.id} className="ilovepdf-interval-input-row">
-                    <span className="ilovepdf-interval-row-title">Intervalo {index + 1}</span>
+                    <span className="ilovepdf-interval-row-title">
+                      {translate("workspace.split.interval")} {index + 1}
+                    </span>
                     <div className="ilovepdf-range-input-fields">
                       <div className="ilovepdf-range-field">
-                        <label htmlFor={`split-start-${interval.id}`}>a partir da página</label>
+                        <label htmlFor={`split-start-${interval.id}`}>
+                          {translate("workspace.split.fromPage")}
+                        </label>
                         <input
                           id={`split-start-${interval.id}`}
                           type="number"
@@ -228,7 +235,9 @@ export function SplitPdfPanel({
                         />
                       </div>
                       <div className="ilovepdf-range-field">
-                        <label htmlFor={`split-end-${interval.id}`}>para</label>
+                        <label htmlFor={`split-end-${interval.id}`}>
+                          {translate("workspace.split.toPage")}
+                        </label>
                         <input
                           id={`split-end-${interval.id}`}
                           type="number"
@@ -254,7 +263,7 @@ export function SplitPdfPanel({
                   onClick={handleAddInterval}
                 >
                   <Plus size={16} />
-                  <span>Adicionar Intervalo</span>
+                  <span>{translate("workspace.split.addInterval")}</span>
                 </button>
 
                 <label className="ilovepdf-checkbox-label">
@@ -263,7 +272,7 @@ export function SplitPdfPanel({
                     checked={mergeIntervals}
                     onChange={(e) => onMergeIntervalsChange(e.target.checked)}
                   />
-                  <span>Mesclar todos os intervalos em um arquivo PDF.</span>
+                  <span>{translate("workspace.split.mergeAll")}</span>
                 </label>
               </div>
             ) : (

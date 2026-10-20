@@ -110,6 +110,7 @@ export interface OrganizePdfRequest {
   readonly artifactId: ArtifactId;
   readonly pageOrder: readonly number[];
   readonly rotationDegrees?: number;
+  readonly pageRotations?: readonly number[];
 }
 
 export interface ExtractPdfImagesRequest {

@@ -291,6 +291,8 @@ pub struct OrganizePdfRequest {
     pub artifact_id: String,
     pub page_order: Vec<u32>,
     pub rotation_degrees: Option<i32>,
+    #[serde(default)]
+    pub page_rotations: Option<Vec<i32>>,
 }
 
 pub fn organize_pdf(request: OrganizePdfRequest) -> CoreResult<PdfToolResult> {
@@ -367,27 +369,54 @@ pub fn organize_pdf(request: OrganizePdfRequest) -> CoreResult<PdfToolResult> {
         }
     }
 
-    if let Some(rot) = request.rotation_degrees {
-        if ![0, 90, 180, 270].contains(&rot) {
+    if request
+        .rotation_degrees
+        .is_some_and(|rot| ![0, 90, 180, 270].contains(&rot))
+    {
+        return Err(CoreError::new(
+            ErrorCode::InvalidArgument,
+            "A rotação deve ser 0, 90, 180 ou 270 graus.",
+        ));
+    }
+
+    if let Some(ref rots) = request.page_rotations {
+        if rots.len() != request.page_order.len() {
             return Err(CoreError::new(
                 ErrorCode::InvalidArgument,
-                "A rotação deve ser 0, 90, 180 ou 270 graus.",
+                "A lista de rotações por página deve ter o mesmo tamanho da ordem das páginas.",
             ));
         }
-        if rot != 0 {
-            for &page_num in &request.page_order {
-                let page_id = existing_pages[&page_num];
-                if let Ok(page_dict) = document
-                    .get_object_mut(page_id)
-                    .and_then(|o| o.as_dict_mut())
-                {
-                    let current_rot = page_dict
-                        .get(b"Rotate")
-                        .and_then(|r| r.as_i64())
-                        .unwrap_or(0);
-                    let new_rot = (current_rot + rot as i64).rem_euclid(360);
-                    page_dict.set("Rotate", lopdf::Object::Integer(new_rot));
-                }
+        for &rot in rots {
+            if ![0, 90, 180, 270].contains(&rot.rem_euclid(360)) || rot % 90 != 0 {
+                return Err(CoreError::new(
+                    ErrorCode::InvalidArgument,
+                    "A rotação por página deve ser múltiplo de 90 graus.",
+                ));
+            }
+        }
+    }
+
+    let global_rot = request.rotation_degrees.unwrap_or(0);
+    for (idx, &page_num) in request.page_order.iter().enumerate() {
+        let individual_rot = request
+            .page_rotations
+            .as_ref()
+            .and_then(|r| r.get(idx))
+            .copied()
+            .unwrap_or(0);
+        let additional_rot = (global_rot + individual_rot).rem_euclid(360);
+        if additional_rot != 0 {
+            let page_id = existing_pages[&page_num];
+            if let Ok(page_dict) = document
+                .get_object_mut(page_id)
+                .and_then(|o| o.as_dict_mut())
+            {
+                let current_rot = page_dict
+                    .get(b"Rotate")
+                    .and_then(|r| r.as_i64())
+                    .unwrap_or(0);
+                let new_rot = (current_rot + additional_rot as i64).rem_euclid(360);
+                page_dict.set("Rotate", lopdf::Object::Integer(new_rot));
             }
         }
     }
@@ -406,6 +435,18 @@ pub fn organize_pdf(request: OrganizePdfRequest) -> CoreResult<PdfToolResult> {
         .map_err(|_| CoreError::pdf("Raiz de páginas ausente no catálogo PDF."))?
         .as_reference()
         .map_err(|_| CoreError::pdf("Referência de páginas inválida."))?;
+
+    // ISO 32000-1: Cada página que agora é filha direta da raiz /Pages deve ter seu /Parent atualizado para pages_id.
+    // Isso evita referências órfãs a nós intermediários antigos que seriam descartados em prune_objects.
+    for &page_num in &request.page_order {
+        let page_id = existing_pages[&page_num];
+        if let Ok(page_dict) = document
+            .get_object_mut(page_id)
+            .and_then(|o| o.as_dict_mut())
+        {
+            page_dict.set("Parent", lopdf::Object::Reference(pages_id));
+        }
+    }
 
     let pages_dict = document
         .get_object_mut(pages_id)
@@ -426,16 +467,21 @@ pub fn organize_pdf(request: OrganizePdfRequest) -> CoreResult<PdfToolResult> {
         .save_with_options(&mut output, save_options)
         .map_err(|_| CoreError::pdf("Não foi possível gerar o PDF organizado."))?;
 
+    let mut operation_params = json!({
+        "pageOrder": request.page_order,
+        "rotation": request.rotation_degrees,
+    });
+    if let Some(ref rots) = request.page_rotations {
+        operation_params["pageRotations"] = json!(rots);
+    }
+
     let (artifact, operation) = store.create_derived_artifact(
         &request.document_id,
         &request.artifact_id,
         PDF_MIME_TYPE,
         &output,
         "pdf-organize",
-        json!({
-            "pageOrder": request.page_order,
-            "rotation": request.rotation_degrees,
-        }),
+        operation_params,
     )?;
     Ok(PdfToolResult {
         artifact,

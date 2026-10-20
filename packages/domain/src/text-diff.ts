@@ -184,25 +184,24 @@ export function diffText(original: string, modified: string): TextDiffResult {
     };
   }
 
-  // Algoritmo de Subsequência Comum Mais Longa (LCS) por linhas
+  // Trimming de prefixo comum e sufixo comum (reduz drasticamente o espaço de busca O(N*M))
   const n = originalLines.length;
   const m = modifiedLines.length;
-  const dp: number[][] = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
 
-  for (let i = 0; i < n; i++) {
-    const rowNext = dp[i + 1];
-    const rowCurr = dp[i];
-    if (!rowNext || !rowCurr) continue;
-    for (let j = 0; j < m; j++) {
-      if (originalLines[i] === modifiedLines[j]) {
-        rowNext[j + 1] = (rowCurr[j] ?? 0) + 1;
-      } else {
-        rowNext[j + 1] = Math.max(rowCurr[j + 1] ?? 0, rowNext[j] ?? 0);
-      }
-    }
+  let prefixLen = 0;
+  while (prefixLen < n && prefixLen < m && originalLines[prefixLen] === modifiedLines[prefixLen]) {
+    prefixLen++;
   }
 
-  // Reconstrução do caminho de linhas
+  let suffixLen = 0;
+  while (
+    suffixLen < n - prefixLen &&
+    suffixLen < m - prefixLen &&
+    originalLines[n - 1 - suffixLen] === modifiedLines[m - 1 - suffixLen]
+  ) {
+    suffixLen++;
+  }
+
   const rawDiffLines: {
     id: string;
     type: DiffChangeType;
@@ -211,54 +210,130 @@ export function diffText(original: string, modified: string): TextDiffResult {
     modifiedLineNumber?: number;
   }[] = [];
 
-  let i = n;
-  let j = m;
-
   let additions = 0;
   let deletions = 0;
   let unchanged = 0;
   let sequence = 0;
 
-  while (i > 0 || j > 0) {
+  // 1. Prefixo comum idêntico
+  for (let p = 0; p < prefixLen; p++) {
     sequence += 1;
-    const origLine = originalLines[i - 1] ?? "";
-    const modLine = modifiedLines[j - 1] ?? "";
-    const valLeft = dp[i]?.[j - 1] ?? 0;
-    const valUp = dp[i - 1]?.[j] ?? 0;
-
-    if (i > 0 && j > 0 && origLine === modLine) {
-      rawDiffLines.push({
-        id: `diff-unchanged-${i}-${j}-${sequence}`,
-        type: "unchanged",
-        content: origLine,
-        originalLineNumber: i,
-        modifiedLineNumber: j,
-      });
-      unchanged += 1;
-      i -= 1;
-      j -= 1;
-    } else if (j > 0 && (i === 0 || valLeft >= valUp)) {
-      rawDiffLines.push({
-        id: `diff-added-${j}-${sequence}`,
-        type: "added",
-        content: modLine,
-        modifiedLineNumber: j,
-      });
-      additions += 1;
-      j -= 1;
-    } else if (i > 0) {
-      rawDiffLines.push({
-        id: `diff-removed-${i}-${sequence}`,
-        type: "removed",
-        content: origLine,
-        originalLineNumber: i,
-      });
-      deletions += 1;
-      i -= 1;
-    }
+    rawDiffLines.push({
+      id: `diff-unchanged-${p + 1}-${p + 1}-${sequence}`,
+      type: "unchanged",
+      content: originalLines[p] ?? "",
+      originalLineNumber: p + 1,
+      modifiedLineNumber: p + 1,
+    });
+    unchanged += 1;
   }
 
-  rawDiffLines.reverse();
+  // 2. Miolo divergente
+  const midN = n - prefixLen - suffixLen;
+  const midM = m - prefixLen - suffixLen;
+  const origMid = originalLines.slice(prefixLen, n - suffixLen);
+  const modMid = modifiedLines.slice(prefixLen, m - suffixLen);
+
+  const MAX_MATRIX_CELLS = 4_000_000;
+  if (midN * midM > MAX_MATRIX_CELLS) {
+    // Fallback defensivo O(N+M) para miolos gigantescos, evitando estouro de heap de memória
+    for (let i = 0; i < midN; i++) {
+      sequence += 1;
+      rawDiffLines.push({
+        id: `diff-removed-${prefixLen + i + 1}-${sequence}`,
+        type: "removed",
+        content: origMid[i] ?? "",
+        originalLineNumber: prefixLen + i + 1,
+      });
+      deletions += 1;
+    }
+    for (let j = 0; j < midM; j++) {
+      sequence += 1;
+      rawDiffLines.push({
+        id: `diff-added-${prefixLen + j + 1}-${sequence}`,
+        type: "added",
+        content: modMid[j] ?? "",
+        modifiedLineNumber: prefixLen + j + 1,
+      });
+      additions += 1;
+    }
+  } else if (midN > 0 || midM > 0) {
+    const dp: number[][] = Array.from({ length: midN + 1 }, () => new Array(midM + 1).fill(0));
+
+    for (let i = 0; i < midN; i++) {
+      const rowNext = dp[i + 1];
+      const rowCurr = dp[i];
+      if (!rowNext || !rowCurr) continue;
+      for (let j = 0; j < midM; j++) {
+        if (origMid[i] === modMid[j]) {
+          rowNext[j + 1] = (rowCurr[j] ?? 0) + 1;
+        } else {
+          rowNext[j + 1] = Math.max(rowCurr[j + 1] ?? 0, rowNext[j] ?? 0);
+        }
+      }
+    }
+
+    const midDiffLines: typeof rawDiffLines = [];
+    let i = midN;
+    let j = midM;
+
+    while (i > 0 || j > 0) {
+      sequence += 1;
+      const origLine = origMid[i - 1] ?? "";
+      const modLine = modMid[j - 1] ?? "";
+      const valLeft = dp[i]?.[j - 1] ?? 0;
+      const valUp = dp[i - 1]?.[j] ?? 0;
+
+      if (i > 0 && j > 0 && origLine === modLine) {
+        midDiffLines.push({
+          id: `diff-unchanged-${prefixLen + i}-${prefixLen + j}-${sequence}`,
+          type: "unchanged",
+          content: origLine,
+          originalLineNumber: prefixLen + i,
+          modifiedLineNumber: prefixLen + j,
+        });
+        unchanged += 1;
+        i -= 1;
+        j -= 1;
+      } else if (j > 0 && (i === 0 || valLeft >= valUp)) {
+        midDiffLines.push({
+          id: `diff-added-${prefixLen + j}-${sequence}`,
+          type: "added",
+          content: modLine,
+          modifiedLineNumber: prefixLen + j,
+        });
+        additions += 1;
+        j -= 1;
+      } else if (i > 0) {
+        midDiffLines.push({
+          id: `diff-removed-${prefixLen + i}-${sequence}`,
+          type: "removed",
+          content: origLine,
+          originalLineNumber: prefixLen + i,
+        });
+        deletions += 1;
+        i -= 1;
+      }
+    }
+
+    midDiffLines.reverse();
+    rawDiffLines.push(...midDiffLines);
+  }
+
+  // 3. Sufixo comum idêntico
+  for (let s = 0; s < suffixLen; s++) {
+    sequence += 1;
+    const origLineNum = n - suffixLen + s + 1;
+    const modLineNum = m - suffixLen + s + 1;
+    rawDiffLines.push({
+      id: `diff-unchanged-${origLineNum}-${modLineNum}-${sequence}`,
+      type: "unchanged",
+      content: originalLines[n - suffixLen + s] ?? "",
+      originalLineNumber: origLineNum,
+      modifiedLineNumber: modLineNum,
+    });
+    unchanged += 1;
+  }
 
   // Pareamento de blocos alterados para calcular realce de palavras (inline word diff)
   const finalLines: DiffLine[] = [];

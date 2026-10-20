@@ -114,6 +114,7 @@ export class TauriDocumentCorePort implements DocumentCorePort {
     toolId: "pdf-compress" | "pdf-organize";
     file: File;
     pageOrder?: readonly number[];
+    pageRotations?: readonly number[];
     compressionLevel?: "less" | "recommended" | "extreme";
   }): Promise<Blob> {
     if (request.file.size > 64 * 1024 * 1024) {
@@ -123,11 +124,12 @@ export class TauriDocumentCorePort implements DocumentCorePort {
       );
     }
     const projectPath = await this.ensureProjectPath();
+    const buffer = await request.file.arrayBuffer();
     const imported = await this.invoke("import_document_bytes", {
       projectPath,
       title: request.file.name,
       mimeType: "application/pdf",
-      bytes: Array.from(new Uint8Array(await request.file.arrayBuffer())),
+      bytes: new Uint8Array(buffer),
     });
     const result =
       request.toolId === "pdf-compress"
@@ -147,12 +149,18 @@ export class TauriDocumentCorePort implements DocumentCorePort {
             documentId: imported.document.id,
             artifactId: imported.artifact.id,
             pageOrder: request.pageOrder ?? [],
+            pageRotations: request.pageRotations,
           });
     const bytes = await this.invoke("read_artifact_bytes", {
       projectPath,
       artifactId: result.artifact.id,
     });
-    return new Blob([new Uint8Array(bytes)], { type: "application/pdf" });
+    return new Blob(
+      [(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)) as unknown as BlobPart],
+      {
+        type: "application/pdf",
+      },
+    );
   }
   async invoke<Command extends DocumentCoreCommand>(
     command: Command,

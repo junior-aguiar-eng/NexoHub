@@ -1,4 +1,5 @@
 import { RotateCcw, RotateCw } from "lucide-react";
+import { translate } from "@/i18n";
 
 type RotatePdfPanelProps = {
   fileName: string;
@@ -37,7 +38,7 @@ export function RotatePdfPanel({
               />
             ) : (
               <div className="ilovepdf-rotate-placeholder">
-                <span>Pág. 1</span>
+                <span>{translate("workspace.rotate.page")} 1</span>
               </div>
             )}
           </div>
@@ -45,37 +46,39 @@ export function RotatePdfPanel({
           <span className="ilovepdf-rotate-filename" title={fileName}>
             {fileName}
           </span>
-          <span className="ilovepdf-rotate-pagecount">{totalPages} página(s)</span>
-          <span className="ilovepdf-rotate-angle-badge">Ângulo: {rotation}°</span>
+          <span className="ilovepdf-rotate-pagecount">
+            {totalPages} {translate("workspace.rotate.pagesCount")}
+          </span>
+          <span className="ilovepdf-rotate-angle-badge">
+            {translate("workspace.rotate.angle")} {rotation}°
+          </span>
         </div>
       </div>
 
       {/* Lateral: Controles de Rotação */}
       <aside className="ilovepdf-rotate-options-sidebar">
-        <h3 className="ilovepdf-sidebar-title">Rotacionar PDF</h3>
-        <p className="ilovepdf-sidebar-desc">
-          Gire todas as páginas do seu documento na direção desejada antes de salvar.
-        </p>
+        <h3 className="ilovepdf-sidebar-title">{translate("workspace.rotate.title")}</h3>
+        <p className="ilovepdf-sidebar-desc">{translate("workspace.rotate.desc")}</p>
 
         <div className="ilovepdf-rotate-btn-group">
           <button
             type="button"
             className="ilovepdf-rotate-control-btn"
             onClick={onRotateLeft}
-            title="Girar 90° para a esquerda (anti-horário)"
+            title={translate("workspace.rotate.leftTooltip")}
           >
             <RotateCcw size={20} />
-            <span>Girar Esquerda</span>
+            <span>{translate("workspace.rotate.left")}</span>
           </button>
 
           <button
             type="button"
             className="ilovepdf-rotate-control-btn"
             onClick={onRotateRight}
-            title="Girar 90° para a direita (horário)"
+            title={translate("workspace.rotate.rightTooltip")}
           >
             <RotateCw size={20} />
-            <span>Girar Direita</span>
+            <span>{translate("workspace.rotate.right")}</span>
           </button>
         </div>
       </aside>

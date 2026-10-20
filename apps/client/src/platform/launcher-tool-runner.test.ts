@@ -42,6 +42,29 @@ describe("Tool Runner do Launcher", () => {
       file,
       compressionLevel: "extreme",
       pageOrder: undefined,
+      pageRotations: undefined,
+    });
+  });
+
+  it("encaminha ordem de páginas e rotações individuais ao executor nativo em pdf-organize", async () => {
+    const port = new BrowserDocumentCorePort();
+    const executePdfTool = vi.fn(async () => new Blob(["organizado"], { type: "application/pdf" }));
+    Object.assign(port, { executePdfTool });
+    const file = await fixture();
+    await runLauncherTool(port, "pdf-organize", {
+      ...input([file]),
+      pages: [
+        { originalIndex: 2, rotation: 90, deleted: false },
+        { originalIndex: 1, rotation: 180, deleted: false },
+        { originalIndex: 3, rotation: 0, deleted: true },
+      ],
+    });
+    expect(executePdfTool).toHaveBeenCalledWith({
+      toolId: "pdf-organize",
+      file,
+      compressionLevel: undefined,
+      pageOrder: [2, 1],
+      pageRotations: [90, 180],
     });
   });
   it("empacota todos os intervalos selecionados em um ZIP", async () => {

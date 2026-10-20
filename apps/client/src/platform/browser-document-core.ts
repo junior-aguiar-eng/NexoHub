@@ -435,9 +435,9 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
 
         const newArtId = asArtifactId(`art-org-${Date.now()}`);
         const buffer = new Uint8Array(await parentBlob.arrayBuffer());
-        const pageOrders = req.pageOrder.map((pg) => ({
+        const pageOrders = req.pageOrder.map((pg, idx) => ({
           originalIndex: pg,
-          rotation: req.rotationDegrees ?? 0,
+          rotation: (req.rotationDegrees ?? 0) + (req.pageRotations?.[idx] ?? 0),
         }));
         const organizedBytes = await reorganizePdfDocument(buffer, pageOrders);
         const organizedBlob = new Blob([organizedBytes as unknown as BlobPart], {
@@ -464,7 +464,11 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
           toolId: "pdf-organize",
           status: "SUCCEEDED",
           createdAt: Date.now(),
-          parameters: { pageOrder: req.pageOrder, rotationDegrees: req.rotationDegrees ?? 0 },
+          parameters: {
+            pageOrder: req.pageOrder,
+            rotationDegrees: req.rotationDegrees ?? 0,
+            ...(req.pageRotations ? { pageRotations: req.pageRotations } : {}),
+          },
         };
 
         data.artifacts.push(newArt);

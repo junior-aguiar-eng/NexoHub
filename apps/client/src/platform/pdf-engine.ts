@@ -21,13 +21,14 @@ if (typeof window !== "undefined") {
 }
 
 /**
- * Renderiza uma página específica do PDF em alta qualidade retornando um Data URL (JPEG).
+ * Renderiza miniaturas de múltiplas páginas de um PDF compartilhando a mesma instância
+ * de parsing do documento, evitando re-parsear o arquivo a cada página.
  */
-export async function renderPdfPageToDataUrl(
+export async function renderPdfPagesThumbnails(
   pdfBytes: Uint8Array,
-  pageNumber: number = 1,
+  pageNumbers: readonly number[],
   scale: number = 0.6,
-): Promise<string> {
+): Promise<string[]> {
   const isTestEnv =
     typeof window === "undefined" ||
     typeof document === "undefined" ||
@@ -37,8 +38,8 @@ export async function renderPdfPageToDataUrl(
           ?.NODE_ENV === "test",
     );
 
-  if (isTestEnv) {
-    return "";
+  if (isTestEnv || pageNumbers.length === 0) {
+    return pageNumbers.map(() => "");
   }
 
   try {
@@ -48,27 +49,59 @@ export async function renderPdfPageToDataUrl(
       standardFontDataUrl: undefined,
     });
     const pdf = await loadingTask.promise;
-    const clampedPage = Math.max(1, Math.min(pageNumber, pdf.numPages));
-    const page = await pdf.getPage(clampedPage);
-    const viewport = page.getViewport({ scale });
+    try {
+      const results: string[] = [];
+      for (const pageNumber of pageNumbers) {
+        try {
+          const clampedPage = Math.max(1, Math.min(pageNumber, pdf.numPages));
+          const page = await pdf.getPage(clampedPage);
+          const viewport = page.getViewport({ scale });
 
-    const canvas = document.createElement("canvas");
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return "";
+          const canvas = document.createElement("canvas");
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            results.push("");
+            continue;
+          }
 
-    await page.render({
-      canvasContext: ctx,
-      viewport,
-      canvas,
-    }).promise;
+          await page.render({
+            canvasContext: ctx,
+            viewport,
+            canvas,
+          }).promise;
 
-    return canvas.toDataURL("image/jpeg", 0.85);
+          results.push(canvas.toDataURL("image/jpeg", 0.85));
+        } catch {
+          results.push("");
+        }
+      }
+      return results;
+    } finally {
+      try {
+        pdf.cleanup();
+        await loadingTask.destroy();
+      } catch {
+        // Fallback silencioso
+      }
+    }
   } catch (err) {
-    console.warn("Falha ao renderizar miniatura com PDF.js:", err);
-    return "";
+    console.warn("Falha ao renderizar miniaturas com PDF.js:", err);
+    return pageNumbers.map(() => "");
   }
+}
+
+/**
+ * Renderiza uma página específica do PDF em alta qualidade retornando um Data URL (JPEG).
+ */
+export async function renderPdfPageToDataUrl(
+  pdfBytes: Uint8Array,
+  pageNumber: number = 1,
+  scale: number = 0.6,
+): Promise<string> {
+  const [thumb] = await renderPdfPagesThumbnails(pdfBytes, [pageNumber], scale);
+  return thumb ?? "";
 }
 
 /**

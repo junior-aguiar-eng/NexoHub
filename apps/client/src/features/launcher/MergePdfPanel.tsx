@@ -1,4 +1,5 @@
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
+import { translate } from "@/i18n";
 
 const fileKeys = new WeakMap<File, string>();
 let nextFileKey = 0;
@@ -48,7 +49,7 @@ export function MergePdfPanel({
                     type="button"
                     className="ilovepdf-merge-card-delete"
                     onClick={() => onRemoveFile(idx)}
-                    title="Remover arquivo"
+                    title={translate("workspace.merge.removeFile")}
                   >
                     <Trash2 size={13} />
                   </button>
@@ -73,7 +74,7 @@ export function MergePdfPanel({
                     className="ilovepdf-merge-move-btn"
                     disabled={idx === 0}
                     onClick={() => onMoveFile(idx, "left")}
-                    title="Mover para esquerda"
+                    title={translate("workspace.merge.moveLeft")}
                   >
                     <ArrowLeft size={13} />
                   </button>
@@ -82,7 +83,7 @@ export function MergePdfPanel({
                     className="ilovepdf-merge-move-btn"
                     disabled={idx === files.length - 1}
                     onClick={() => onMoveFile(idx, "right")}
-                    title="Mover para direita"
+                    title={translate("workspace.merge.moveRight")}
                   >
                     <ArrowRight size={13} />
                   </button>
@@ -96,30 +97,27 @@ export function MergePdfPanel({
             type="button"
             className="ilovepdf-merge-add-card"
             onClick={onAddMoreFiles}
-            title="Adicionar mais arquivos"
+            title={translate("workspace.merge.addFiles")}
           >
             <div className="ilovepdf-merge-add-icon">
               <Plus size={24} />
             </div>
-            <span>Adicionar mais arquivos</span>
+            <span>{translate("workspace.merge.addFiles")}</span>
           </button>
         </div>
       </div>
 
       {/* Lateral: Resumo */}
       <aside className="ilovepdf-merge-options-sidebar">
-        <h3 className="ilovepdf-sidebar-title">Juntar PDF</h3>
-        <p className="ilovepdf-sidebar-desc">
-          Para alterar a ordem dos PDFs, utilize as setas nos cartões para organizar a sequência
-          desejada antes de mesclar.
-        </p>
+        <h3 className="ilovepdf-sidebar-title">{translate("workspace.merge.title")}</h3>
+        <p className="ilovepdf-sidebar-desc">{translate("workspace.merge.desc")}</p>
         <div className="ilovepdf-merge-stats-card">
           <div className="ilovepdf-merge-stat-item">
-            <span>Arquivos a juntar:</span>
+            <span>{translate("workspace.merge.filesCount")}</span>
             <strong>{files.length}</strong>
           </div>
           <div className="ilovepdf-merge-stat-item">
-            <span>Tamanho total:</span>
+            <span>{translate("workspace.merge.totalSize")}</span>
             <strong>{formatSize(files.reduce((acc, f) => acc + f.size, 0))}</strong>
           </div>
         </div>

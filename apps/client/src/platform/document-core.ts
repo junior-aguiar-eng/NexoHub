@@ -10,6 +10,7 @@ export interface DocumentCorePort {
     toolId: "pdf-compress" | "pdf-organize";
     file: File;
     pageOrder?: readonly number[];
+    pageRotations?: readonly number[];
     compressionLevel?: "less" | "recommended" | "extreme";
   }): Promise<Blob>;
   persistLauncherResult?(request: {

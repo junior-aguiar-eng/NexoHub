@@ -74,9 +74,16 @@ async function executePdfWithCore(
   file: File,
   pageOrder?: readonly number[],
   compressionLevel?: "less" | "recommended" | "extreme",
+  pageRotations?: readonly number[],
 ): Promise<Blob> {
   if (documentCore.executePdfTool) {
-    return documentCore.executePdfTool({ toolId, file, pageOrder, compressionLevel });
+    return documentCore.executePdfTool({
+      toolId,
+      file,
+      pageOrder,
+      pageRotations,
+      compressionLevel,
+    });
   }
   if (documentCore.registerUploadedFile && documentCore.getArtifactBlob) {
     const project = await documentCore.invoke("pick_project_folder", {});
@@ -102,6 +109,7 @@ async function executePdfWithCore(
             documentId: imported.document.id,
             artifactId: imported.artifact.id,
             pageOrder: pageOrder ?? [],
+            pageRotations,
           });
     const blob = documentCore.getArtifactBlob(result.artifact.id);
     if (!blob) throw new Error("ARTIFACT_NOT_FOUND");
@@ -162,15 +170,15 @@ async function executeTool(
     case "pdf-organize": {
       const pages = input.pages.filter((page) => !page.deleted);
       if (pages.length === 0) throw new Error("INVALID_PAGE_SELECTION");
-      const hasRotations = pages.some((page) => page.rotation !== 0);
-      if (documentCore.executePdfTool && hasRotations) throw new Error("TOOL_UNAVAILABLE");
       const blob =
-        !hasRotations && (documentCore.executePdfTool || documentCore.registerUploadedFile)
+        documentCore.executePdfTool || documentCore.registerUploadedFile
           ? await executePdfWithCore(
               documentCore,
               "pdf-organize",
               first,
               pages.map((page) => page.originalIndex),
+              undefined,
+              pages.map((page) => page.rotation),
             )
           : pdfBlob(await reorganizePdfDocument(new Uint8Array(await first.arrayBuffer()), pages));
       return { blob, fileName: `${baseName}_organizado.pdf`, categoryKey: "recent.type.pdf" };
@@ -285,7 +293,6 @@ async function executeTool(
     }
     case "pdf-ocr": {
       if (documentCore.invoke) {
-        let recognizedText = "";
         try {
           const project = await documentCore.invoke("pick_project_folder", {});
           if (!project) throw new Error("PROJECT_NOT_SELECTED");
@@ -300,15 +307,29 @@ async function executeTool(
             documentId: imported.document.id,
             artifactId: imported.artifact.id,
           });
-          recognizedText = ocrRes.lines.map((l) => l.text).join("\n");
-        } catch {
-          recognizedText = `[OCR Realizado para ${first.name}]\nTexto extraído com sucesso.`;
+          const recognizedText = ocrRes.lines.map((l) => l.text).join("\n");
+          return {
+            blob: new Blob([recognizedText], { type: "text/plain;charset=utf-8" }),
+            fileName: `${baseName}_ocr.txt`,
+            categoryKey: "recent.type.document",
+          };
+        } catch (error) {
+          if (
+            (error instanceof Error &&
+              (error.message === "CAPABILITY_NOT_FOUND" ||
+                error.message === "DOCUMENT_CORE_UNAVAILABLE")) ||
+            (typeof error === "object" &&
+              error !== null &&
+              "code" in error &&
+              (error.code === "RESOURCE_NOT_FOUND" || error.code === "TOOL_UNAVAILABLE"))
+          ) {
+            throw new ToolRunError(
+              "TOOL_UNAVAILABLE",
+              "O motor nativo de OCR requer Tesseract/Sidecar instalado no ambiente desktop.",
+            );
+          }
+          throw error;
         }
-        return {
-          blob: new Blob([recognizedText], { type: "text/plain;charset=utf-8" }),
-          fileName: `${baseName}_ocr.txt`,
-          categoryKey: "recent.type.document",
-        };
       }
       throw new Error("TOOL_UNAVAILABLE");
     }
@@ -316,7 +337,6 @@ async function executeTool(
       const rawText = input.firstText || (first ? await readDocumentText(first) : "");
       if (!rawText) throw new ToolRunError("INVALID_INPUT", "Informe o texto a ser revisado.");
       if (documentCore.invoke) {
-        let report = "";
         try {
           const res = await documentCore.invoke("review_text", {
             text: rawText,
@@ -327,16 +347,29 @@ async function executeTool(
                 `• [Posição ${m.offset}]: ${m.message} (Sugestões: ${m.replacements.map((r) => r.value).join(", ")})`,
             )
             .join("\n");
-          report = `RELATÓRIO DE REVISÃO GRAMATICAL (LanguageTool)\n================================================\nTotal de sugestões: ${res.matches.length}\n\n${findings || "Nenhum erro gramatical identificado."}`;
-        } catch {
-          report =
-            "RELATÓRIO DE REVISÃO GRAMATICAL\n================================================\nTexto validado contra a norma culta.";
+          const report = `RELATÓRIO DE REVISÃO GRAMATICAL (LanguageTool)\n================================================\nTotal de sugestões: ${res.matches.length}\n\n${findings || "Nenhum erro gramatical identificado."}`;
+          return {
+            blob: new Blob([report], { type: "text/plain;charset=utf-8" }),
+            fileName: `${baseName}_revisao.txt`,
+            categoryKey: "recent.type.document",
+          };
+        } catch (error) {
+          if (
+            (error instanceof Error &&
+              (error.message === "CAPABILITY_NOT_FOUND" ||
+                error.message === "DOCUMENT_CORE_UNAVAILABLE")) ||
+            (typeof error === "object" &&
+              error !== null &&
+              "code" in error &&
+              (error.code === "RESOURCE_NOT_FOUND" || error.code === "TOOL_UNAVAILABLE"))
+          ) {
+            throw new ToolRunError(
+              "TOOL_UNAVAILABLE",
+              "A revisão gramatical requer o LanguageTool instalado no ambiente desktop.",
+            );
+          }
+          throw error;
         }
-        return {
-          blob: new Blob([report], { type: "text/plain;charset=utf-8" }),
-          fileName: `${baseName}_revisao.txt`,
-          categoryKey: "recent.type.document",
-        };
       }
       throw new Error("TOOL_UNAVAILABLE");
     }
@@ -344,22 +377,34 @@ async function executeTool(
       const rawText = input.firstText || (first ? await readDocumentText(first) : "");
       if (!rawText) throw new ToolRunError("INVALID_INPUT", "Informe o texto para tradução.");
       if (documentCore.invoke) {
-        let translated = "";
         try {
           const res = await documentCore.invoke("translate_text", {
             text: rawText,
             sourceLanguage: "en",
             targetLanguage: "pt",
           });
-          translated = res.text;
-        } catch {
-          translated = rawText;
+          return {
+            blob: new Blob([res.text], { type: "text/plain;charset=utf-8" }),
+            fileName: `${baseName}_traduzido.txt`,
+            categoryKey: "recent.type.document",
+          };
+        } catch (error) {
+          if (
+            (error instanceof Error &&
+              (error.message === "CAPABILITY_NOT_FOUND" ||
+                error.message === "DOCUMENT_CORE_UNAVAILABLE")) ||
+            (typeof error === "object" &&
+              error !== null &&
+              "code" in error &&
+              error.code === "RESOURCE_NOT_FOUND")
+          ) {
+            throw new ToolRunError(
+              "TOOL_UNAVAILABLE",
+              "A tradução neural offline requer um modelo instalado (ex: OPUS-MT). Nenhum modelo local foi encontrado para este par de idiomas.",
+            );
+          }
+          throw error;
         }
-        return {
-          blob: new Blob([translated], { type: "text/plain;charset=utf-8" }),
-          fileName: `${baseName}_traduzido.txt`,
-          categoryKey: "recent.type.document",
-        };
       }
       throw new Error("TOOL_UNAVAILABLE");
     }

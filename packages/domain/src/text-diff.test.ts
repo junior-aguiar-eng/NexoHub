@@ -86,4 +86,32 @@ describe("diffText", () => {
     const addedWord = addedLine?.words?.find((w) => w.type === "added");
     expect(addedWord?.text).toBe("moderada");
   });
+
+  it("otimiza documentos longos com prefixo e sufixo comum com alta performance", () => {
+    const prefix = Array.from({ length: 3000 }, (_, idx) => `Prefixo linha ${idx + 1}`).join("\n");
+    const suffix = Array.from({ length: 3000 }, (_, idx) => `Sufixo linha ${idx + 1}`).join("\n");
+    const original = `${prefix}\nLinha antiga no meio\n${suffix}`;
+    const modified = `${prefix}\nLinha nova no meio\n${suffix}`;
+
+    const start = Date.now();
+    const result = diffText(original, modified);
+    const duration = Date.now() - start;
+
+    expect(duration).toBeLessThan(500); // Executa instantaneamente graças ao trimming
+    expect(result.stats.additions).toBe(1);
+    expect(result.stats.deletions).toBe(1);
+    expect(result.stats.unchanged).toBe(6000);
+    expect(result.lines).toHaveLength(6002);
+  });
+
+  it("aplica fallback linear seguro sem estourar memória quando o miolo modificado excede 4M células", () => {
+    const original = Array.from({ length: 2500 }, (_, idx) => `Original ${idx}`).join("\n");
+    const modified = Array.from({ length: 2500 }, (_, idx) => `Modificado ${idx}`).join("\n");
+
+    const result = diffText(original, modified);
+    expect(result.stats.deletions).toBe(2500);
+    expect(result.stats.additions).toBe(2500);
+    expect(result.stats.unchanged).toBe(0);
+    expect(result.lines).toHaveLength(5000);
+  });
 });

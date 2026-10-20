@@ -849,6 +849,7 @@ fn organizes_pdf_pages_as_derived_artifact_without_changing_original() {
         artifact_id: imported.artifact.id.clone(),
         page_order: vec![3, 1],
         rotation_degrees: Some(90),
+        page_rotations: None,
     })
     .expect("organização deve gerar artifact derivado");
 
@@ -874,6 +875,71 @@ fn organizes_pdf_pages_as_derived_artifact_without_changing_original() {
         .expect("derivado deve ser legível");
     let derived_pdf = PdfDocument::load_mem(&derived_bytes).expect("derivado deve ser PDF válido");
     assert_eq!(derived_pdf.get_pages().len(), 2);
+}
+
+#[test]
+fn organize_pdf_supports_per_page_rotations_and_updates_parent_tree() {
+    let temporary = TestDirectory::new("organize-per-page-rotations");
+    let project_path = temporary.project_path();
+    let source = write_source(&temporary.path, "sample.pdf", &synthetic_pdf_with_pages(3));
+    let mut store = ProjectStore::create(&project_path, "PDF Rotações Individuais")
+        .expect("projeto deve ser criado");
+    let imported = store
+        .import_document(&source, None, "application/pdf")
+        .expect("PDF deve ser importado");
+    drop(store);
+
+    let result = organize_pdf(OrganizePdfRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: imported.document.id.clone(),
+        artifact_id: imported.artifact.id.clone(),
+        page_order: vec![1, 2],
+        rotation_degrees: None,
+        page_rotations: Some(vec![90, 180]),
+    })
+    .expect("organização com rotações individuais deve suceder");
+
+    let store = ProjectStore::open(&project_path).expect("projeto deve reabrir");
+    assert_eq!(
+        result.operation.parameters,
+        json!({
+            "pageOrder": [1, 2],
+            "rotation": null,
+            "pageRotations": [90, 180]
+        })
+    );
+
+    let derived_bytes = store
+        .read_artifact_bytes(&result.artifact.id)
+        .expect("derivado deve ser legível");
+    let derived_pdf = PdfDocument::load_mem(&derived_bytes).expect("derivado deve ser PDF válido");
+    let pages = derived_pdf.get_pages();
+    assert_eq!(pages.len(), 2);
+
+    let root_pages_id = derived_pdf
+        .catalog()
+        .expect("catálogo")
+        .get(b"Pages")
+        .expect("raiz Pages")
+        .as_reference()
+        .expect("referência Pages");
+
+    for &page_id in pages.values() {
+        let page_dict = derived_pdf
+            .get_object(page_id)
+            .expect("page")
+            .as_dict()
+            .expect("page dict");
+        let parent_ref = page_dict
+            .get(b"Parent")
+            .expect("Parent")
+            .as_reference()
+            .expect("Parent ref");
+        assert_eq!(
+            parent_ref, root_pages_id,
+            "Parent deve apontar para o nó raiz Pages (ISO 32000-1)"
+        );
+    }
 }
 
 #[test]
@@ -1395,6 +1461,7 @@ fn retrieves_complete_document_lineage_graph() {
         artifact_id: compressed.artifact.id.clone(),
         page_order: vec![1],
         rotation_degrees: Some(90),
+        page_rotations: None,
     })
     .expect("organização");
 

@@ -85,8 +85,8 @@ export function OcrScannerPanel({
               {isScanning
                 ? `${translate("workspace.ocr.scanning")} (${progress}%)`
                 : recognizedText
-                  ? "Reconhecimento Concluído com Sucesso"
-                  : "Pronto para Escanear"}
+                  ? translate("workspace.ocr.completed")
+                  : translate("workspace.ocr.ready")}
             </span>
           </div>
 
@@ -106,7 +106,8 @@ export function OcrScannerPanel({
             <h4>{translate("workspace.ocr.resultTitle")}</h4>
             {recognizedText && (
               <span className="ocr-result-metrics">
-                {wordCount} palavras • {charCount} caracteres
+                {wordCount} {translate("workspace.ocr.words")} • {charCount}{" "}
+                {translate("workspace.ocr.chars")}
               </span>
             )}
           </div>
@@ -117,7 +118,7 @@ export function OcrScannerPanel({
               size="compact"
               onClick={handleCopy}
               disabled={!recognizedText || isScanning}
-              title="Copiar texto reconhecido"
+              title={translate("workspace.ocr.copyTooltip")}
             >
               {copied ? (
                 <>
@@ -137,7 +138,7 @@ export function OcrScannerPanel({
               size="compact"
               onClick={handleDownloadTxt}
               disabled={!recognizedText || isScanning}
-              title="Baixar em formato .txt"
+              title={translate("workspace.ocr.downloadTooltip")}
             >
               <Download size={14} />
               <span>{translate("workspace.ocr.downloadTxt")}</span>
@@ -151,8 +152,8 @@ export function OcrScannerPanel({
           onChange={(e) => onTextChange?.(e.target.value)}
           placeholder={
             isScanning
-              ? "Reconhecendo texto do documento..."
-              : "O texto reconhecido aparecerá aqui após o processamento. Você poderá editá-lo diretamente."
+              ? translate("workspace.ocr.scanningPlaceholder")
+              : translate("workspace.ocr.idlePlaceholder")
           }
           readOnly={isScanning}
           rows={10}

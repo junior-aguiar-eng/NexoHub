@@ -18,11 +18,14 @@ import {
 import { type DragEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
-import { translateTextLocally } from "@/platform/browser-translation";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { readDocumentText } from "@/platform/document-reader";
 import { runLauncherTool } from "@/platform/launcher-tool-runner";
-import { getPdfPageCount, renderPdfPageToDataUrl } from "@/platform/pdf-engine";
+import {
+  getPdfPageCount,
+  renderPdfPagesThumbnails,
+  renderPdfPageToDataUrl,
+} from "@/platform/pdf-engine";
 import { CompressPdfPanel } from "./CompressPdfPanel";
 import { DocumentComparePanel } from "./DocumentComparePanel";
 import { MergePdfPanel } from "./MergePdfPanel";
@@ -176,16 +179,37 @@ export function DedicatedToolView({
           setSplitIntervals([{ id: "interval-1", start: 1, end: count }]);
           setSplitSelectedPages([1]);
 
-          // Renderiza miniaturas reais em canvas
-          const thumb1 = await renderPdfPageToDataUrl(buffer, 1, 0.6);
+          // Renderiza miniaturas compartilhando a mesma instância de parsing
+          const isGridTool = tool.id === "pdf-organize" || tool.id === "pdf-extract";
+          const maxGrid = isGridTool ? Math.min(count, 48) : 0;
+          const pageNumbersToRender = isGridTool
+            ? Array.from({ length: maxGrid }, (_, i) => i + 1)
+            : count > 1
+              ? [1, count]
+              : [1];
+
+          const renderedThumbs = await renderPdfPagesThumbnails(
+            buffer,
+            pageNumbersToRender,
+            isGridTool ? 0.4 : 0.6,
+          );
           if (isCancelled) return;
+
+          const thumb1 = renderedThumbs[0] || "";
+          const thumbLast =
+            count > 1
+              ? isGridTool
+                ? renderedThumbs[Math.min(count, maxGrid) - 1] || thumb1
+                : renderedThumbs[1] || thumb1
+              : thumb1;
+
           setFirstPageThumb(thumb1);
-
-          const thumbLast = count > 1 ? await renderPdfPageToDataUrl(buffer, count, 0.6) : thumb1;
-          if (isCancelled) return;
           setLastPageThumb(thumbLast);
-
           setFileThumbnails((prev) => new Map(prev).set(files[0], thumb1));
+
+          if (isGridTool) {
+            setAllPageThumbnails(renderedThumbs);
+          }
 
           if (tool.id === "pdf-merge") {
             for (const file of files.slice(1)) {
@@ -207,20 +231,6 @@ export function DedicatedToolView({
           }));
           setPageItems(items);
           setSelectedPageIndices(items.map((it) => it.originalIndex));
-
-          // Se for organizador, carrega miniaturas reais
-          if (tool.id === "pdf-organize" || tool.id === "pdf-extract") {
-            const thumbs: string[] = [];
-            const max = Math.min(count, 48);
-            for (let i = 1; i <= max; i++) {
-              if (isCancelled) return;
-              const th = await renderPdfPageToDataUrl(buffer, i, 0.4);
-              thumbs.push(th);
-            }
-            if (!isCancelled) {
-              setAllPageThumbnails(thumbs);
-            }
-          }
         } catch (err) {
           console.error("Falha ao analisar PDF:", err);
         }
@@ -371,10 +381,6 @@ export function DedicatedToolView({
     const temp = translationSourceLang;
     setTranslationSourceLang(translationTargetLang);
     setTranslationTargetLang(temp);
-    if (translatedText) {
-      const reTranslated = translateTextLocally(translatedText, translationTargetLang, temp);
-      setTranslatedText(reTranslated);
-    }
   }
 
   async function handleCopyGeneral(text: string) {
@@ -430,6 +436,10 @@ export function DedicatedToolView({
           savedPercent: Math.round(((primaryFile.size - resultSizeBytes) / primaryFile.size) * 100),
         });
       }
+      if (tool.id === "text-translate") {
+        const text = await outputBlob.text();
+        setTranslatedText(text);
+      }
       setProgress(100);
       setOutputFileName(outName);
 
@@ -447,11 +457,16 @@ export function DedicatedToolView({
         categoryKey,
       });
     } catch (err) {
-      if (!(err instanceof ToolRunError && err.code === "INVALID_INPUT")) {
+      if (
+        !(
+          err instanceof ToolRunError &&
+          (err.code === "INVALID_INPUT" || err.code === "TOOL_UNAVAILABLE")
+        )
+      ) {
         console.error("Erro na execução da ferramenta:", err);
       }
       setErrorMessage(
-        err instanceof ToolRunError && err.code === "INVALID_INPUT"
+        err instanceof ToolRunError
           ? err.message
           : err instanceof Error && err.message === "TOOL_UNAVAILABLE"
             ? translate("dedicated.errorUnavailable")
@@ -561,7 +576,7 @@ export function DedicatedToolView({
           realThumbnails={allPageThumbnails}
           onPagesChange={setPageItems}
           onRotateAll={handleRotateAll}
-          allowRotation={!documentCore.executePdfTool}
+          allowRotation={true}
           onResetOrder={handleResetOrder}
         />
       );

@@ -64,7 +64,7 @@ describe("TauriDocumentCorePort", () => {
     expect(calls.find(({ command }) => command === "import_document_bytes")?.request).toMatchObject(
       {
         projectPath: "C:/Projetos/NexoHub.nexohub",
-        bytes: [7, 8, 9],
+        bytes: new Uint8Array([7, 8, 9]),
         title: "contrato.pdf",
       },
     );

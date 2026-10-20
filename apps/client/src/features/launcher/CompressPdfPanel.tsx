@@ -45,8 +45,8 @@ export function CompressPdfPanel({
                 type="button"
                 className="ilovepdf-floating-add-btn"
                 onClick={onAddMoreFiles}
-                title="Adicionar mais ficheiros"
-                aria-label="Adicionar mais ficheiros"
+                title={translate("dedicated.selectMoreFiles")}
+                aria-label={translate("dedicated.selectMoreFiles")}
               >
                 <Plus size={16} />
               </button>

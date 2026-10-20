@@ -21,6 +21,7 @@ WORKDIR /app
 
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
+COPY runtime ./runtime
 COPY apps/desktop/src-tauri ./apps/desktop/src-tauri
 
 RUN cargo build --release --locked -p nexohub-server

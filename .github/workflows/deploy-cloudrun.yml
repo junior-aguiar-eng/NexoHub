@@ -56,8 +56,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-            gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
+            southamerica-east1-docker.pkg.dev/${{ env.PROJECT_ID }}/ratione/nexohub:${{ github.sha }}
+            southamerica-east1-docker.pkg.dev/${{ env.PROJECT_ID }}/ratione/nexohub:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -65,7 +65,7 @@ jobs:
         if: env.PROJECT_ID != ''
         run: |
           gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --image southamerica-east1-docker.pkg.dev/${{ env.PROJECT_ID }}/ratione/nexohub:${{ github.sha }} \
             --platform managed \
             --region ${{ env.REGION }} \
             --allow-unauthenticated \

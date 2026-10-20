@@ -477,13 +477,13 @@ export const ptBR = {
   "workspace.split.interval": "Intervalo",
   "workspace.split.removeInterval": "Remover intervalo",
   "workspace.split.addInterval": "Adicionar Intervalo",
-  "workspace.split.fromPage": "Da página",
-  "workspace.split.toPage": "Até a página",
-  "workspace.split.mergeAll": "Juntar todos os intervalos em um único PDF",
-  "workspace.split.modeInterval": "Dividir por intervalos",
-  "workspace.split.modePages": "Extrair páginas",
-  "workspace.split.typeCustom": "Intervalos personalizados",
-  "workspace.split.typeFixed": "Intervalos fixos",
+  "workspace.split.fromPage": "a partir da página",
+  "workspace.split.toPage": "para",
+  "workspace.split.mergeAll": "Mesclar todos os intervalos em um arquivo PDF.",
+  "workspace.split.modeInterval": "Intervalo",
+  "workspace.split.modePages": "Páginas",
+  "workspace.split.typeCustom": "Personalizado",
+  "workspace.split.typeFixed": "Fixo",
 } as const;
 
 export type MessageKey = keyof typeof ptBR;

@@ -16,11 +16,12 @@ RUN pnpm --filter @nexohub/client build
 # ==========================================
 # Estágio 2: Compilação do Servidor Rust (Axum)
 # ==========================================
-FROM rust:1.85-bookworm AS rust-builder
+FROM rust:bookworm AS rust-builder
 WORKDIR /app
 
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
+COPY apps/desktop/src-tauri ./apps/desktop/src-tauri
 
 RUN cargo build --release --locked -p nexohub-server
 

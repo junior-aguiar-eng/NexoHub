@@ -13,6 +13,8 @@ import { createZipArchive } from "./browser-pdf-utils";
 import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
 import {
+  addPageNumbersToPdfDocument,
+  addWatermarkToPdfDocument,
   compressPdfDocument,
   convertImagesToPdfDocument,
   convertPdfPagesToJpgImages,
@@ -48,6 +50,19 @@ export interface LauncherToolInput {
   readonly imageOrientation?: "portrait" | "landscape" | "auto";
   readonly imageMargin?: "none" | "small" | "big";
   readonly imagePageSize?: "A4" | "fit";
+  readonly watermarkText?: string;
+  readonly watermarkAngle?: number;
+  readonly watermarkOpacity?: number;
+  readonly watermarkColor?: "gray" | "red" | "blue" | "black";
+  readonly pageNumbersPosition?:
+    | "bottom-center"
+    | "bottom-right"
+    | "bottom-left"
+    | "top-center"
+    | "top-right"
+    | "top-left";
+  readonly pageNumbersFormat?: "pageXofY" | "xSlashY" | "onlyX";
+  readonly pageNumbersStartPage?: number;
 }
 
 export interface LauncherToolOutput {
@@ -65,6 +80,8 @@ const supportedIds = new Set([
   "text-compare",
   "images-to-pdf",
   "pdf-to-jpg",
+  "pdf-watermark",
+  "pdf-page-numbers",
   "pdf-ocr",
   "text-review",
   "text-translate",
@@ -495,6 +512,35 @@ async function executeTool(
         categoryKey: "recent.type.document",
       };
     }
+    case "pdf-watermark": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const stampedBytes = await addWatermarkToPdfDocument(pdfBytes, {
+        text: input.watermarkText,
+        angle: input.watermarkAngle,
+        opacity: input.watermarkOpacity,
+        color: input.watermarkColor,
+      });
+      return {
+        blob: pdfBlob(stampedBytes),
+        fileName: `${baseName}_marca_dagua.pdf`,
+        categoryKey: "recent.type.pdf",
+      };
+    }
+    case "pdf-page-numbers": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const numberedBytes = await addPageNumbersToPdfDocument(pdfBytes, {
+        position: input.pageNumbersPosition,
+        format: input.pageNumbersFormat,
+        startPage: input.pageNumbersStartPage,
+      });
+      return {
+        blob: pdfBlob(numberedBytes),
+        fileName: `${baseName}_numerado.pdf`,
+        categoryKey: "recent.type.pdf",
+      };
+    }
     default:
       throw new Error("TOOL_UNAVAILABLE");
   }
@@ -540,6 +586,8 @@ export async function runLauncherTool(
         "text-compare",
         "images-to-pdf",
         "pdf-to-jpg",
+        "pdf-watermark",
+        "pdf-page-numbers",
       ] as string[]
     ).includes(toolId)
   ) {
@@ -578,6 +626,21 @@ export async function runLauncherTool(
           imagePageSize: input.imagePageSize,
         }
       : {}),
+    ...(toolId === "pdf-watermark"
+      ? {
+          watermarkText: input.watermarkText,
+          watermarkAngle: input.watermarkAngle,
+          watermarkOpacity: input.watermarkOpacity,
+          watermarkColor: input.watermarkColor,
+        }
+      : {}),
+    ...(toolId === "pdf-page-numbers"
+      ? {
+          pageNumbersPosition: input.pageNumbersPosition,
+          pageNumbersFormat: input.pageNumbersFormat,
+          pageNumbersStartPage: input.pageNumbersStartPage,
+        }
+      : {}),
   };
   const blob = await documentCore.persistLauncherResult({
     toolId: toolId as
@@ -586,7 +649,9 @@ export async function runLauncherTool(
       | "pdf-rotate"
       | "text-compare"
       | "images-to-pdf"
-      | "pdf-to-jpg",
+      | "pdf-to-jpg"
+      | "pdf-watermark"
+      | "pdf-page-numbers",
     files,
     output: output.blob,
     parameters,

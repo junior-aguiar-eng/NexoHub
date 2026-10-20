@@ -23,7 +23,9 @@ export interface DocumentCorePort {
       | "pdf-rotate"
       | "text-compare"
       | "images-to-pdf"
-      | "pdf-to-jpg";
+      | "pdf-to-jpg"
+      | "pdf-watermark"
+      | "pdf-page-numbers";
     files: readonly File[];
     output: Blob;
     parameters: Readonly<Record<string, unknown>>;

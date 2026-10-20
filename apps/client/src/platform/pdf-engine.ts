@@ -8,6 +8,8 @@ import {
   PDFName,
   PDFNumber,
   PDFRawStream,
+  rgb,
+  StandardFonts,
 } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
@@ -718,4 +720,144 @@ export async function convertPdfPagesToJpgImages(
       // Fallback silencioso
     }
   }
+}
+
+export interface PdfWatermarkOptions {
+  text?: string;
+  angle?: number;
+  opacity?: number;
+  color?: "gray" | "red" | "blue" | "black";
+  fontSize?: number;
+}
+
+/**
+ * Insere estampa de marca d'água de texto nas páginas de um PDF.
+ */
+export async function addWatermarkToPdfDocument(
+  pdfBytes: Uint8Array,
+  options: PdfWatermarkOptions = {},
+): Promise<Uint8Array> {
+  const doc = await PDFDocument.load(pdfBytes);
+  const font = await doc.embedFont(StandardFonts.HelveticaBold);
+  const pages = doc.getPages();
+
+  const colorMap = {
+    gray: rgb(0.5, 0.5, 0.5),
+    red: rgb(0.85, 0.1, 0.1),
+    blue: rgb(0.1, 0.3, 0.85),
+    black: rgb(0.1, 0.1, 0.1),
+  };
+  const chosenColor = colorMap[options.color ?? "gray"] ?? colorMap.gray;
+  const opacity = options.opacity ?? 0.3;
+  const angle = options.angle ?? 45;
+  const text = options.text?.trim() || "CONFIDENCIAL";
+
+  for (const page of pages) {
+    const { width, height } = page.getSize();
+    const fontSize = options.fontSize ?? Math.round(Math.min(width, height) / 9);
+    const textWidth = font.widthOfTextAtSize(text, fontSize);
+    const textHeight = font.heightAtSize(fontSize);
+
+    const rad = (angle * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const textCenterX = textWidth / 2;
+    const textCenterY = textHeight / 4;
+
+    const x = centerX - (textCenterX * cos - textCenterY * sin);
+    const y = centerY - (textCenterX * sin + textCenterY * cos);
+
+    page.drawText(text, {
+      x,
+      y,
+      size: fontSize,
+      font,
+      color: chosenColor,
+      opacity,
+      rotate: degrees(angle),
+    });
+  }
+
+  return await doc.save({ useObjectStreams: true });
+}
+
+export interface PdfPageNumbersOptions {
+  position?:
+    | "bottom-center"
+    | "bottom-right"
+    | "bottom-left"
+    | "top-center"
+    | "top-right"
+    | "top-left";
+  format?: "pageXofY" | "xSlashY" | "onlyX";
+  startPage?: number;
+  fontSize?: number;
+  margin?: number;
+}
+
+/**
+ * Adiciona numeração de página automática e alinhada ao documento PDF.
+ */
+export async function addPageNumbersToPdfDocument(
+  pdfBytes: Uint8Array,
+  options: PdfPageNumbersOptions = {},
+): Promise<Uint8Array> {
+  const doc = await PDFDocument.load(pdfBytes);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const pages = doc.getPages();
+  const total = pages.length;
+  const fontSize = options.fontSize ?? 10;
+  const margin = options.margin ?? 30;
+  const startFrom = options.startPage ?? 1;
+  const position = options.position ?? "bottom-center";
+  const format = options.format ?? "pageXofY";
+
+  for (let i = 0; i < total; i++) {
+    const pageNum = i + 1;
+    if (pageNum < startFrom) continue;
+
+    let label: string;
+    if (format === "xSlashY") {
+      label = `${pageNum} / ${total}`;
+    } else if (format === "onlyX") {
+      label = `${pageNum}`;
+    } else {
+      label = `Página ${pageNum} de ${total}`;
+    }
+
+    const page = pages[i];
+    const { width, height } = page.getSize();
+    const textWidth = font.widthOfTextAtSize(label, fontSize);
+    const textHeight = font.heightAtSize(fontSize);
+
+    let x: number;
+    let y: number;
+
+    if (position.includes("left")) {
+      x = margin;
+    } else if (position.includes("right")) {
+      x = width - margin - textWidth;
+    } else {
+      x = (width - textWidth) / 2;
+    }
+
+    if (position.includes("top")) {
+      y = height - margin - textHeight;
+    } else {
+      y = margin;
+    }
+
+    page.drawText(label, {
+      x,
+      y,
+      size: fontSize,
+      font,
+      color: rgb(0.25, 0.25, 0.25),
+    });
+  }
+
+  return await doc.save({ useObjectStreams: true });
 }

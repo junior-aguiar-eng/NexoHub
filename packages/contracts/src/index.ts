@@ -78,7 +78,9 @@ export interface RecordLauncherResultRequest {
     | "pdf-rotate"
     | "text-compare"
     | "images-to-pdf"
-    | "pdf-to-jpg";
+    | "pdf-to-jpg"
+    | "pdf-watermark"
+    | "pdf-page-numbers";
   readonly mimeType: "application/pdf" | "application/zip" | "text/plain" | "image/jpeg";
   readonly bytes: readonly number[] | Uint8Array;
   readonly parameters: Readonly<Record<string, unknown>>;

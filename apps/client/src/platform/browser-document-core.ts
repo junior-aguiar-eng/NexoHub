@@ -84,6 +84,8 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
     "text-compare",
     "images-to-pdf",
     "pdf-to-jpg",
+    "pdf-watermark",
+    "pdf-page-numbers",
   ]);
   private projectData: Map<string, StoredProjectData> = new Map();
   private pendingFiles: Map<string, File> = new Map();

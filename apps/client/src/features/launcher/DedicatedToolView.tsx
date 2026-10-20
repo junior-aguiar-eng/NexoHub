@@ -32,10 +32,12 @@ import { ImagesToPdfPanel } from "./ImagesToPdfPanel";
 import { MergePdfPanel } from "./MergePdfPanel";
 import type { LauncherTool } from "./model";
 import { OcrScannerPanel } from "./OcrScannerPanel";
+import { PageNumbersPdfPanel } from "./PageNumbersPdfPanel";
 import { PdfPageGridPanel, type PdfPageItem } from "./PdfPageGridPanel";
 import { PdfToJpgPanel } from "./PdfToJpgPanel";
 import { RotatePdfPanel } from "./RotatePdfPanel";
 import { type SplitInterval, SplitPdfPanel } from "./SplitPdfPanel";
+import { WatermarkPdfPanel } from "./WatermarkPdfPanel";
 
 type DedicatedToolViewProps = {
   tool: LauncherTool;
@@ -104,6 +106,17 @@ export function DedicatedToolView({
   );
   const [imageMargin, setImageMargin] = useState<"none" | "small" | "big">("small");
   const [imagePageSize, setImagePageSize] = useState<"A4" | "fit">("A4");
+  const [watermarkText, setWatermarkText] = useState<string>("CONFIDENCIAL");
+  const [watermarkAngle, setWatermarkAngle] = useState<number>(45);
+  const [watermarkOpacity, setWatermarkOpacity] = useState<number>(0.3);
+  const [watermarkColor, setWatermarkColor] = useState<"gray" | "red" | "blue" | "black">("gray");
+  const [pageNumbersPosition, setPageNumbersPosition] = useState<
+    "bottom-center" | "bottom-right" | "bottom-left" | "top-center" | "top-right" | "top-left"
+  >("bottom-center");
+  const [pageNumbersFormat, setPageNumbersFormat] = useState<"pageXofY" | "xSlashY" | "onlyX">(
+    "pageXofY",
+  );
+  const [pageNumbersStartPage, setPageNumbersStartPage] = useState<number>(1);
 
   // Estados de Páginas (Organizador e Extrator)
   const [pdfPageCount, setPdfPageCount] = useState<number>(() =>
@@ -464,6 +477,13 @@ export function DedicatedToolView({
         imageOrientation,
         imageMargin,
         imagePageSize,
+        watermarkText,
+        watermarkAngle,
+        watermarkOpacity,
+        watermarkColor,
+        pageNumbersPosition,
+        pageNumbersFormat,
+        pageNumbersStartPage,
       });
       const outputBlob = output.blob;
       const outName = output.fileName;
@@ -553,6 +573,8 @@ export function DedicatedToolView({
     if (tool.id === "pdf-organize") return translate("dedicated.actionOrganize");
     if (tool.id === "images-to-pdf") return translate("dedicated.actionImagesToPdf");
     if (tool.id === "pdf-to-jpg") return translate("dedicated.actionPdfToJpg");
+    if (tool.id === "pdf-watermark") return translate("dedicated.actionWatermark");
+    if (tool.id === "pdf-page-numbers") return translate("dedicated.actionPageNumbers");
     if (tool.id === "pdf-ocr") return translate("dedicated.actionOcr");
     if (tool.id === "text-compare") return translate("dedicated.actionCompare");
     if (tool.id === "text-review") return translate("dedicated.actionReview");
@@ -666,6 +688,44 @@ export function DedicatedToolView({
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
           thumbnailUrl={firstPageThumb}
+        />
+      );
+    }
+
+    // MARCA D'ÁGUA
+    if (tool.id === "pdf-watermark") {
+      return (
+        <WatermarkPdfPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          totalPages={pdfPageCount}
+          thumbnailUrl={firstPageThumb}
+          watermarkText={watermarkText}
+          watermarkAngle={watermarkAngle}
+          watermarkOpacity={watermarkOpacity}
+          watermarkColor={watermarkColor}
+          onWatermarkTextChange={setWatermarkText}
+          onWatermarkAngleChange={setWatermarkAngle}
+          onWatermarkOpacityChange={setWatermarkOpacity}
+          onWatermarkColorChange={setWatermarkColor}
+        />
+      );
+    }
+
+    // NÚMEROS DE PÁGINA
+    if (tool.id === "pdf-page-numbers") {
+      return (
+        <PageNumbersPdfPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          totalPages={pdfPageCount}
+          thumbnailUrl={firstPageThumb}
+          position={pageNumbersPosition}
+          format={pageNumbersFormat}
+          startPage={pageNumbersStartPage}
+          onPositionChange={setPageNumbersPosition}
+          onFormatChange={setPageNumbersFormat}
+          onStartPageChange={setPageNumbersStartPage}
         />
       );
     }

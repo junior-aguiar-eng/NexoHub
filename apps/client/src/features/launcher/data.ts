@@ -8,6 +8,7 @@ import {
   FileType,
   FolderInput,
   GitCompareArrows,
+  Hash,
   Image,
   Images,
   Languages,
@@ -15,6 +16,7 @@ import {
   RotateCw,
   Scissors,
   SpellCheck2,
+  Stamp,
 } from "lucide-react";
 import type { LauncherTool, Suite } from "./model";
 
@@ -91,6 +93,20 @@ const presentation = {
     icon: Images,
     accentColor: "#EAB308", // Âmbar Dourado
   },
+  "pdf-watermark": {
+    suite: "security" as const,
+    titleKey: "tool.pdfWatermark.title" as const,
+    descriptionKey: "tool.pdfWatermark.description" as const,
+    icon: Stamp,
+    accentColor: "#0284C7", // Azul Oceano
+  },
+  "pdf-page-numbers": {
+    suite: "organize" as const,
+    titleKey: "tool.pdfPageNumbers.title" as const,
+    descriptionKey: "tool.pdfPageNumbers.description" as const,
+    icon: Hash,
+    accentColor: "#6366F1", // Índigo
+  },
   "pdf-protect": {
     suite: "security" as const,
     titleKey: "tool.pdfProtect.title" as const,
@@ -147,6 +163,8 @@ const browserSupportedToolIds = new Set([
   "text-compare",
   "images-to-pdf",
   "pdf-to-jpg",
+  "pdf-watermark",
+  "pdf-page-numbers",
 ]);
 
 export function createDynamicCapabilitiesProvider(

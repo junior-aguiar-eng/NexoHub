@@ -169,4 +169,33 @@ describe("Tool Runner do Launcher", () => {
     expect(archiveText).toContain("contrato_pagina_1.jpg");
     expect(archiveText).toContain("contrato_pagina_2.jpg");
   });
+
+  it("executa inserção de marca d'água no PDF gerando artifact com sufixo", async () => {
+    const file = await fixture();
+    const result = await runLauncherTool(new BrowserDocumentCorePort(), "pdf-watermark", {
+      ...input([file]),
+      watermarkText: "RASCUNHO",
+      watermarkAngle: 45,
+      watermarkOpacity: 0.3,
+      watermarkColor: "gray",
+    });
+    expect(result.fileName).toBe("contrato_marca_dagua.pdf");
+    expect(result.blob.type).toBe("application/pdf");
+    const doc = await PDFDocument.load(await result.blob.arrayBuffer());
+    expect(doc.getPageCount()).toBe(2);
+  });
+
+  it("executa inserção de numeração de páginas gerando artifact com sufixo", async () => {
+    const file = await fixture();
+    const result = await runLauncherTool(new BrowserDocumentCorePort(), "pdf-page-numbers", {
+      ...input([file]),
+      pageNumbersPosition: "bottom-center",
+      pageNumbersFormat: "pageXofY",
+      pageNumbersStartPage: 1,
+    });
+    expect(result.fileName).toBe("contrato_numerado.pdf");
+    expect(result.blob.type).toBe("application/pdf");
+    const doc = await PDFDocument.load(await result.blob.arrayBuffer());
+    expect(doc.getPageCount()).toBe(2);
+  });
 });

@@ -100,4 +100,33 @@ describe("operações PDF no navegador", () => {
     expect(images[0].data[0]).toBe(0xff);
     expect(images[0].data[1]).toBe(0xd8);
   });
+
+  it("aplica estampa de marca d'água de texto no PDF preservando páginas", async () => {
+    const { addWatermarkToPdfDocument } = await import("./pdf-engine");
+    const source = await makePdf(2);
+    const watermarkedBytes = await addWatermarkToPdfDocument(source, {
+      text: "CONFIDENCIAL TESTE",
+      angle: 45,
+      opacity: 0.4,
+      color: "red",
+    });
+
+    const doc = await PDFDocument.load(watermarkedBytes);
+    expect(doc.getPageCount()).toBe(2);
+    expect(watermarkedBytes.length).toBeGreaterThan(source.length);
+  });
+
+  it("insere numeração de páginas alinhada respeitando página inicial", async () => {
+    const { addPageNumbersToPdfDocument } = await import("./pdf-engine");
+    const source = await makePdf(3);
+    const numberedBytes = await addPageNumbersToPdfDocument(source, {
+      position: "bottom-right",
+      format: "pageXofY",
+      startPage: 2,
+    });
+
+    const doc = await PDFDocument.load(numberedBytes);
+    expect(doc.getPageCount()).toBe(3);
+    expect(numberedBytes.length).toBeGreaterThan(source.length);
+  });
 });

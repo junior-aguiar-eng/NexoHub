@@ -135,4 +135,46 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     expect(screen.getByText(/Cada página do seu documento será convertida/i)).toBeInTheDocument();
     expect(screen.getByText(/Alta definição \(150 DPI\)/i)).toBeInTheDocument();
   });
+
+  it("renderiza o painel de Marca d'água com campo de texto e controles de ângulo", async () => {
+    const mockWatermarkTool =
+      launcherTools.find((t) => t.id === "pdf-watermark") ?? mockPdfCompressTool;
+    const pdf = await PDFDocument.create();
+    pdf.addPage([100, 100]);
+    const file = new File([(await pdf.save()) as unknown as BlobPart], "documento.pdf", {
+      type: "application/pdf",
+    });
+    render(
+      <DedicatedToolView
+        tool={mockWatermarkTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[file]}
+      />,
+    );
+    expect(screen.getByLabelText(/Texto da marca d'água/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Diagonal \(45°\)/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Horizontal \(0°\)/i })).toBeInTheDocument();
+  });
+
+  it("renderiza o painel de Números de Página com posições e formatos", async () => {
+    const mockPageNumbersTool =
+      launcherTools.find((t) => t.id === "pdf-page-numbers") ?? mockPdfCompressTool;
+    const pdf = await PDFDocument.create();
+    pdf.addPage([100, 100]);
+    const file = new File([(await pdf.save()) as unknown as BlobPart], "documento.pdf", {
+      type: "application/pdf",
+    });
+    render(
+      <DedicatedToolView
+        tool={mockPageNumbersTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[file]}
+      />,
+    );
+    expect(screen.getByRole("button", { name: /Rodapé Centro/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Página {n} de {total}" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Página 2 \(Pular Capa\)/i })).toBeInTheDocument();
+  });
 });

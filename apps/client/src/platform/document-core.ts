@@ -1,6 +1,9 @@
 import type { CommandRequest, CommandResponse, DocumentCoreCommand } from "@nexohub/contracts";
 import { BrowserDocumentCorePort } from "./browser-document-core";
+import { HttpDocumentCorePort } from "./http-document-core";
 import { TauriDocumentCorePort } from "./tauri-document-core";
+
+export { BrowserDocumentCorePort, HttpDocumentCorePort, TauriDocumentCorePort };
 
 export interface DocumentCorePort {
   readonly supportedToolIds: ReadonlySet<string>;
@@ -40,6 +43,7 @@ export class UnavailableDocumentCorePort implements DocumentCorePort {
 }
 
 let browserPortSingleton: BrowserDocumentCorePort | null = null;
+let httpPortSingleton: HttpDocumentCorePort | null = null;
 
 export function isTauriEnvironment(): boolean {
   return (
@@ -48,9 +52,33 @@ export function isTauriEnvironment(): boolean {
   );
 }
 
-export function createDocumentCorePort(): DocumentCorePort {
-  if (isTauriEnvironment()) {
+export function isHttpBackendConfigured(): boolean {
+  if (typeof window === "undefined") return false;
+  const win = window as unknown as {
+    __NEXOHUB_BACKEND_URL__?: string;
+    __NEXOHUB_WEB_MODE__?: boolean;
+  };
+  return Boolean(win.__NEXOHUB_BACKEND_URL__ || win.__NEXOHUB_WEB_MODE__);
+}
+
+export function createDocumentCorePort(
+  forceMode?: "tauri" | "http" | "browser",
+  httpBaseUrl?: string,
+): DocumentCorePort {
+  if (forceMode === "tauri" || (!forceMode && isTauriEnvironment())) {
     return new TauriDocumentCorePort();
+  }
+  if (forceMode === "http" || (!forceMode && isHttpBackendConfigured())) {
+    if (!httpPortSingleton || httpBaseUrl) {
+      httpPortSingleton = new HttpDocumentCorePort(
+        httpBaseUrl ??
+          (typeof window !== "undefined"
+            ? ((window as unknown as { __NEXOHUB_BACKEND_URL__?: string })
+                .__NEXOHUB_BACKEND_URL__ ?? "")
+            : ""),
+      );
+    }
+    return httpPortSingleton;
   }
   if (!browserPortSingleton) {
     browserPortSingleton = new BrowserDocumentCorePort();

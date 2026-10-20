@@ -1,0 +1,9 @@
+.git
+.github
+node_modules
+target
+dist
+.pytest_cache
+.ruff_cache
+nexohub_run.log
+*.bat

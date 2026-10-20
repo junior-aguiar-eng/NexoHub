@@ -1,0 +1,32 @@
+[package]
+name = "nexohub-server"
+version = "0.1.0"
+description = "Servidor Web HTTP e API de produção do NexoHub para Cloud Run"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "nexohub-server"
+path = "src/main.rs"
+
+[lib]
+name = "nexohub_server"
+path = "src/lib.rs"
+
+[dependencies]
+nexohub-core = { path = "../nexohub-core" }
+axum = { version = "0.8.2", default-features = false, features = ["http1", "json", "tokio"] }
+tokio = { version = "1.44.0", features = ["macros", "rt-multi-thread", "net", "signal"] }
+tower = { version = "0.5.2", default-features = false }
+tower-http = { version = "0.6.2", default-features = false, features = ["fs", "cors", "set-header"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+tempfile = "3.17"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", default-features = false, features = ["fmt", "env-filter"] }
+
+[dev-dependencies]
+tower = { version = "0.5.2", features = ["util"] }
+http-body-util = "0.1.2"
+lopdf = { version = "0.44.0", default-features = false }

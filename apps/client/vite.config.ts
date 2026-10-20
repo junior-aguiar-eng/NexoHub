@@ -48,5 +48,6 @@ export default defineConfig({
     setupFiles: "./src/test-setup.ts",
     include: ["src/**/*.test.{ts,tsx}"],
     testTimeout: 15000,
+    pool: "threads",
   },
 });

@@ -99,6 +99,9 @@ export const ptBR = {
   "tool.imagesToPdf.title": "Imagem para PDF",
   "tool.imagesToPdf.description":
     "Transformar fotos JPG, PNG e WEBP em documentos PDF consolidados.",
+  "tool.pdfToJpg.title": "PDF para JPG",
+  "tool.pdfToJpg.description":
+    "Converter cada página do seu documento PDF em imagens JPG de alta qualidade.",
   "tool.pdfProtect.title": "Proteger PDF",
   "tool.pdfProtect.description": "Adicionar senha e proteger documentos confidenciais.",
   "tool.pdfUnlock.title": "Desbloquear PDF",
@@ -124,6 +127,7 @@ export const ptBR = {
   "footer.tagline": "Simples, rápido e no seu computador.",
   "dedicated.back": "Todas as ferramentas",
   "dedicated.selectFiles": "Selecionar arquivo PDF",
+  "dedicated.selectImages": "Selecionar imagens",
   "dedicated.selectMoreFiles": "Adicionar mais arquivos",
   "dedicated.orDragDrop": "ou arraste e solte seus arquivos aqui",
   "dedicated.optionsTitle": "Opções",
@@ -136,6 +140,8 @@ export const ptBR = {
   "dedicated.actionOcr": "Iniciar Reconhecimento OCR",
   "dedicated.actionCompare": "Comparar Textos",
   "dedicated.actionReview": "Revisar Texto",
+  "dedicated.actionImagesToPdf": "Converter em PDF",
+  "dedicated.actionPdfToJpg": "Converter em JPG",
   "dedicated.genericVisualTitle": "Espaço de Visualização Documental",
   "dedicated.genericVisualDesc": "Arquivo selecionado e pronto para processamento imediato.",
   "dedicated.processing": "Processando arquivo...",
@@ -484,6 +490,37 @@ export const ptBR = {
   "workspace.split.modePages": "Páginas",
   "workspace.split.typeCustom": "Personalizado",
   "workspace.split.typeFixed": "Fixo",
+  "workspace.imagesToPdf.title": "Imagem para PDF",
+  "workspace.imagesToPdf.desc":
+    "Reordene as fotos e escolha a orientação e margem do PDF resultante.",
+  "workspace.imagesToPdf.orientation": "Orientação",
+  "workspace.imagesToPdf.portrait": "Retrato",
+  "workspace.imagesToPdf.landscape": "Paisagem",
+  "workspace.imagesToPdf.auto": "Automática",
+  "workspace.imagesToPdf.margin": "Margens",
+  "workspace.imagesToPdf.marginNone": "Sem margem",
+  "workspace.imagesToPdf.marginSmall": "Margem pequena",
+  "workspace.imagesToPdf.marginBig": "Margem grande",
+  "workspace.imagesToPdf.pageSize": "Tamanho da página",
+  "workspace.imagesToPdf.pageA4": "A4 (210 × 297 mm)",
+  "workspace.imagesToPdf.pageFit": "Ajustar à imagem",
+  "workspace.imagesToPdf.imagesCount": "Imagens a converter:",
+  "workspace.imagesToPdf.totalSize": "Tamanho total:",
+  "workspace.imagesToPdf.removeFile": "Remover imagem",
+  "workspace.imagesToPdf.moveLeft": "Mover para esquerda",
+  "workspace.imagesToPdf.moveRight": "Mover para direita",
+  "workspace.imagesToPdf.addFiles": "Adicionar mais imagens",
+  "workspace.pdfToJpg.title": "PDF para JPG",
+  "workspace.pdfToJpg.desc":
+    "Cada página do seu documento será convertida em uma imagem JPG em alta resolução.",
+  "workspace.pdfToJpg.resolution": "Resolução de extração",
+  "workspace.pdfToJpg.resolutionHigh": "Alta definição (150 DPI)",
+  "workspace.pdfToJpg.singleNotice":
+    "O PDF possui 1 página e será baixado diretamente como arquivo JPG.",
+  "workspace.pdfToJpg.multipleNotice":
+    "O documento possui múltiplas páginas. Todas serão renderizadas e empacotadas em um arquivo ZIP com as imagens JPG.",
+  "workspace.pdfToJpg.pagesCount": "Páginas do documento:",
+  "workspace.pdfToJpg.fileSize": "Tamanho do arquivo:",
 } as const;
 
 export type MessageKey = keyof typeof ptBR;

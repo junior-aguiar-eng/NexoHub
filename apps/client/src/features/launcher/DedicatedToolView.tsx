@@ -28,10 +28,12 @@ import {
 } from "@/platform/pdf-engine";
 import { CompressPdfPanel } from "./CompressPdfPanel";
 import { DocumentComparePanel } from "./DocumentComparePanel";
+import { ImagesToPdfPanel } from "./ImagesToPdfPanel";
 import { MergePdfPanel } from "./MergePdfPanel";
 import type { LauncherTool } from "./model";
 import { OcrScannerPanel } from "./OcrScannerPanel";
 import { PdfPageGridPanel, type PdfPageItem } from "./PdfPageGridPanel";
+import { PdfToJpgPanel } from "./PdfToJpgPanel";
 import { RotatePdfPanel } from "./RotatePdfPanel";
 import { type SplitInterval, SplitPdfPanel } from "./SplitPdfPanel";
 
@@ -97,6 +99,11 @@ export function DedicatedToolView({
   const [translationSourceLang, setTranslationSourceLang] = useState<string>("en");
   const [translationTargetLang, setTranslationTargetLang] = useState<string>("pt");
   const [rotateAngle, setRotateAngle] = useState<number>(0);
+  const [imageOrientation, setImageOrientation] = useState<"portrait" | "landscape" | "auto">(
+    "portrait",
+  );
+  const [imageMargin, setImageMargin] = useState<"none" | "small" | "big">("small");
+  const [imagePageSize, setImagePageSize] = useState<"A4" | "fit">("A4");
 
   // Estados de Páginas (Organizador e Extrator)
   const [pdfPageCount, setPdfPageCount] = useState<number>(() =>
@@ -146,14 +153,26 @@ export function DedicatedToolView({
     [downloadUrl],
   );
 
+  const isImageTool = tool.id === "images-to-pdf";
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const fileInput = (
     <input
       ref={fileInputRef}
       type="file"
       className="visually-hidden"
-      multiple={tool.id === "pdf-organize" || tool.id === "pdf-merge" || tool.id === "text-compare"}
-      accept={tool.suite === "text" ? ".txt,.md,.pdf,.docx" : ".pdf,application/pdf"}
+      multiple={
+        tool.id === "pdf-organize" ||
+        tool.id === "pdf-merge" ||
+        tool.id === "text-compare" ||
+        isImageTool
+      }
+      accept={
+        isImageTool
+          ? ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+          : tool.suite === "text"
+            ? ".txt,.md,.pdf,.docx"
+            : ".pdf,application/pdf"
+      }
       onChange={handleFileInput}
     />
   );
@@ -241,6 +260,25 @@ export function DedicatedToolView({
     return () => {
       isCancelled = true;
     };
+  }, [files, tool.id]);
+
+  // Se a ferramenta for Imagem para PDF, cria miniaturas a partir dos arquivos de imagem
+  useEffect(() => {
+    if (tool.id === "images-to-pdf") {
+      setFileThumbnails((prev) => {
+        const next = new Map(prev);
+        for (const file of files) {
+          if (!next.has(file)) {
+            try {
+              next.set(file, URL.createObjectURL(file));
+            } catch {
+              // Fallback
+            }
+          }
+        }
+        return next;
+      });
+    }
   }, [files, tool.id]);
 
   // Se o usuário carregar arquivos no comparador de texto
@@ -423,6 +461,9 @@ export function DedicatedToolView({
         compressionLevel,
         firstText: doc1Text,
         secondText: doc2Text,
+        imageOrientation,
+        imageMargin,
+        imagePageSize,
       });
       const outputBlob = output.blob;
       const outName = output.fileName;
@@ -510,6 +551,8 @@ export function DedicatedToolView({
     if (tool.id === "pdf-merge") return translate("dedicated.actionMerge");
     if (tool.id === "pdf-rotate") return translate("dedicated.actionRotate");
     if (tool.id === "pdf-organize") return translate("dedicated.actionOrganize");
+    if (tool.id === "images-to-pdf") return translate("dedicated.actionImagesToPdf");
+    if (tool.id === "pdf-to-jpg") return translate("dedicated.actionPdfToJpg");
     if (tool.id === "pdf-ocr") return translate("dedicated.actionOcr");
     if (tool.id === "text-compare") return translate("dedicated.actionCompare");
     if (tool.id === "text-review") return translate("dedicated.actionReview");
@@ -592,6 +635,37 @@ export function DedicatedToolView({
           rotation={rotateAngle}
           onRotateRight={() => setRotateAngle((r) => (r + 90) % 360)}
           onRotateLeft={() => setRotateAngle((r) => (r - 90 + 360) % 360)}
+        />
+      );
+    }
+
+    // IMAGEM PARA PDF
+    if (tool.id === "images-to-pdf") {
+      return (
+        <ImagesToPdfPanel
+          files={files}
+          thumbnails={fileThumbnails}
+          orientation={imageOrientation}
+          margin={imageMargin}
+          pageSize={imagePageSize}
+          onOrientationChange={setImageOrientation}
+          onMarginChange={setImageMargin}
+          onPageSizeChange={setImagePageSize}
+          onRemoveFile={handleRemoveFile}
+          onMoveFile={handleMoveFile}
+          onAddMoreFiles={() => fileInputRef.current?.click()}
+        />
+      );
+    }
+
+    // PDF PARA JPG
+    if (tool.id === "pdf-to-jpg") {
+      return (
+        <PdfToJpgPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          totalPages={pdfPageCount}
+          thumbnailUrl={firstPageThumb}
         />
       );
     }
@@ -921,7 +995,11 @@ export function DedicatedToolView({
           >
             <Upload size={24} />
             <span>
-              {isTextTool ? "Selecionar arquivo de texto" : translate("dedicated.selectFiles")}
+              {isTextTool
+                ? "Selecionar arquivo de texto"
+                : isImageTool
+                  ? translate("dedicated.selectImages")
+                  : translate("dedicated.selectFiles")}
             </span>
           </button>
           <p className="ilovepdf-main-drop-hint">{translate("dedicated.orDragDrop")}</p>

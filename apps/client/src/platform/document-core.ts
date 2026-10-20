@@ -17,7 +17,13 @@ export interface DocumentCorePort {
     compressionLevel?: "less" | "recommended" | "extreme";
   }): Promise<Blob>;
   persistLauncherResult?(request: {
-    toolId: "pdf-merge" | "pdf-split" | "pdf-rotate" | "text-compare";
+    toolId:
+      | "pdf-merge"
+      | "pdf-split"
+      | "pdf-rotate"
+      | "text-compare"
+      | "images-to-pdf"
+      | "pdf-to-jpg";
     files: readonly File[];
     output: Blob;
     parameters: Readonly<Record<string, unknown>>;

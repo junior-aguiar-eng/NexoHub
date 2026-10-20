@@ -82,6 +82,8 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
     "pdf-rotate",
     "pdf-compress",
     "text-compare",
+    "images-to-pdf",
+    "pdf-to-jpg",
   ]);
   private projectData: Map<string, StoredProjectData> = new Map();
   private pendingFiles: Map<string, File> = new Map();

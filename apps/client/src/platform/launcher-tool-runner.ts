@@ -14,6 +14,8 @@ import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
 import {
   compressPdfDocument,
+  convertImagesToPdfDocument,
+  convertPdfPagesToJpgImages,
   extractPdfSelectedPages,
   mergePdfDocuments,
   reorganizePdfDocument,
@@ -43,6 +45,9 @@ export interface LauncherToolInput {
   readonly compressionLevel: "less" | "recommended" | "extreme";
   readonly firstText: string;
   readonly secondText: string;
+  readonly imageOrientation?: "portrait" | "landscape" | "auto";
+  readonly imageMargin?: "none" | "small" | "big";
+  readonly imagePageSize?: "A4" | "fit";
 }
 
 export interface LauncherToolOutput {
@@ -58,6 +63,8 @@ const supportedIds = new Set([
   "pdf-rotate",
   "pdf-compress",
   "text-compare",
+  "images-to-pdf",
+  "pdf-to-jpg",
   "pdf-ocr",
   "text-review",
   "text-translate",
@@ -438,6 +445,56 @@ async function executeTool(
       }
       throw new Error("TOOL_UNAVAILABLE");
     }
+    case "images-to-pdf": {
+      if (!input.files || input.files.length === 0) {
+        throw new ToolRunError("INVALID_INPUT", "Selecione ao menos uma imagem para converter.");
+      }
+      const imageItems = await Promise.all(
+        input.files.map(async (file) => ({
+          bytes: new Uint8Array(await file.arrayBuffer()),
+          mimeType: file.type || "image/jpeg",
+        })),
+      );
+      const pdfBytes = await convertImagesToPdfDocument(imageItems, {
+        orientation: input.imageOrientation ?? "portrait",
+        margin: input.imageMargin ?? "small",
+        pageSize: input.imagePageSize ?? "A4",
+      });
+      return {
+        blob: pdfBlob(pdfBytes),
+        fileName: `${baseName}_imagens.pdf`,
+        categoryKey: "recent.type.pdf",
+      };
+    }
+    case "pdf-to-jpg": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const jpgImages = await convertPdfPagesToJpgImages(pdfBytes, {
+        quality: 0.92,
+        scale: 1.5,
+      });
+      if (jpgImages.length === 0) {
+        throw new ToolRunError("INVALID_INPUT", "Nenhuma página encontrada para converter.");
+      }
+      if (jpgImages.length === 1) {
+        const single = jpgImages[0];
+        return {
+          blob: new Blob([single.data as unknown as BlobPart], { type: "image/jpeg" }),
+          fileName: `${baseName}_pagina_${single.pageNumber}.jpg`,
+          categoryKey: "recent.type.document",
+        };
+      }
+      const zipParts = jpgImages.map((img) => ({
+        name: `${baseName}_pagina_${img.pageNumber}.jpg`,
+        data: img.data,
+      }));
+      const zipBytes = createZipArchive(zipParts);
+      return {
+        blob: new Blob([zipBytes as unknown as BlobPart], { type: "application/zip" }),
+        fileName: `${baseName}_imagens_jpg.zip`,
+        categoryKey: "recent.type.document",
+      };
+    }
     default:
       throw new Error("TOOL_UNAVAILABLE");
   }
@@ -474,7 +531,18 @@ export async function runLauncherTool(
   const output = result.artifacts[0] as LauncherToolOutput | undefined;
   if (!output?.blob || !output.fileName) throw new Error("EXECUTION_FAILED");
   if (!documentCore.persistLauncherResult) return output;
-  if (!(["pdf-merge", "pdf-split", "pdf-rotate", "text-compare"] as string[]).includes(toolId)) {
+  if (
+    !(
+      [
+        "pdf-merge",
+        "pdf-split",
+        "pdf-rotate",
+        "text-compare",
+        "images-to-pdf",
+        "pdf-to-jpg",
+      ] as string[]
+    ).includes(toolId)
+  ) {
     return output;
   }
   const files =
@@ -503,9 +571,22 @@ export async function runLauncherTool(
         }
       : {}),
     ...(toolId === "pdf-rotate" ? { rotateAngle: input.rotateAngle } : {}),
+    ...(toolId === "images-to-pdf"
+      ? {
+          imageOrientation: input.imageOrientation,
+          imageMargin: input.imageMargin,
+          imagePageSize: input.imagePageSize,
+        }
+      : {}),
   };
   const blob = await documentCore.persistLauncherResult({
-    toolId: toolId as "pdf-merge" | "pdf-split" | "pdf-rotate" | "text-compare",
+    toolId: toolId as
+      | "pdf-merge"
+      | "pdf-split"
+      | "pdf-rotate"
+      | "text-compare"
+      | "images-to-pdf"
+      | "pdf-to-jpg",
     files,
     output: output.blob,
     parameters,

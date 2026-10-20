@@ -72,8 +72,14 @@ export interface RecordLauncherResultRequest {
   readonly projectPath: string;
   readonly documentId: DocumentId;
   readonly inputArtifactIds: readonly ArtifactId[];
-  readonly toolId: "pdf-merge" | "pdf-split" | "pdf-rotate" | "text-compare";
-  readonly mimeType: "application/pdf" | "application/zip" | "text/plain";
+  readonly toolId:
+    | "pdf-merge"
+    | "pdf-split"
+    | "pdf-rotate"
+    | "text-compare"
+    | "images-to-pdf"
+    | "pdf-to-jpg";
+  readonly mimeType: "application/pdf" | "application/zip" | "text/plain" | "image/jpeg";
   readonly bytes: readonly number[] | Uint8Array;
   readonly parameters: Readonly<Record<string, unknown>>;
 }

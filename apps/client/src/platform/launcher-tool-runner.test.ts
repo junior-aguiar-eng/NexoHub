@@ -119,4 +119,54 @@ describe("Tool Runner do Launcher", () => {
     );
     expect(result.blob).toBe(persisted);
   });
+
+  it("converte imagens em PDF no launcher", async () => {
+    const minimalPng = new Uint8Array([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+      0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f,
+      0x15, 0xc4, 0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00,
+      0x01, 0x00, 0x00, 0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
+      0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+    ]);
+    const file1 = new File([minimalPng as unknown as BlobPart], "foto1.png", { type: "image/png" });
+    const file2 = new File([minimalPng as unknown as BlobPart], "foto2.png", { type: "image/png" });
+    const result = await runLauncherTool(
+      new BrowserDocumentCorePort(),
+      "images-to-pdf",
+      input([file1, file2]),
+    );
+    expect(result.fileName).toBe("foto1_imagens.pdf");
+    expect(result.blob.type).toBe("application/pdf");
+    const doc = await PDFDocument.load(await result.blob.arrayBuffer());
+    expect(doc.getPageCount()).toBe(2);
+  });
+
+  it("converte PDF de 1 página em JPG direto", async () => {
+    const pdf = await PDFDocument.create();
+    pdf.addPage([200, 200]);
+    const file = new File([(await pdf.save()) as unknown as BlobPart], "documento.pdf", {
+      type: "application/pdf",
+    });
+    const result = await runLauncherTool(
+      new BrowserDocumentCorePort(),
+      "pdf-to-jpg",
+      input([file]),
+    );
+    expect(result.fileName).toBe("documento_pagina_1.jpg");
+    expect(result.blob.type).toBe("image/jpeg");
+  });
+
+  it("converte PDF multipágina em pacote ZIP com imagens JPG", async () => {
+    const result = await runLauncherTool(
+      new BrowserDocumentCorePort(),
+      "pdf-to-jpg",
+      input([await fixture()]),
+    );
+    expect(result.fileName).toBe("contrato_imagens_jpg.zip");
+    expect(result.blob.type).toBe("application/zip");
+    const bytes = new Uint8Array(await result.blob.arrayBuffer());
+    const archiveText = new TextDecoder("latin1").decode(bytes);
+    expect(archiveText).toContain("contrato_pagina_1.jpg");
+    expect(archiveText).toContain("contrato_pagina_2.jpg");
+  });
 });

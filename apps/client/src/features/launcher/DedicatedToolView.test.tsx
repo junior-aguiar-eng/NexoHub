@@ -98,4 +98,41 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     fireEvent.click(screen.getByRole("button", { name: /Revisar Texto/i }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/indisponível/i);
   });
+
+  it("renderiza o conversor de Imagem para PDF com controles de orientação e margem", async () => {
+    const mockImagesToPdfTool =
+      launcherTools.find((t) => t.id === "images-to-pdf") ?? mockPdfCompressTool;
+    const file = new File(["dummy png"], "foto.png", { type: "image/png" });
+    render(
+      <DedicatedToolView
+        tool={mockImagesToPdfTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[file]}
+      />,
+    );
+    expect(screen.getByText(/Reordene as fotos/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Retrato/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Paisagem/i })).toBeInTheDocument();
+  });
+
+  it("renderiza o conversor de PDF para JPG com informações de extração", async () => {
+    const mockPdfToJpgTool =
+      launcherTools.find((t) => t.id === "pdf-to-jpg") ?? mockPdfCompressTool;
+    const pdf = await PDFDocument.create();
+    pdf.addPage([100, 100]);
+    const file = new File([(await pdf.save()) as unknown as BlobPart], "documento.pdf", {
+      type: "application/pdf",
+    });
+    render(
+      <DedicatedToolView
+        tool={mockPdfToJpgTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[file]}
+      />,
+    );
+    expect(screen.getByText(/Cada página do seu documento será convertida/i)).toBeInTheDocument();
+    expect(screen.getByText(/Alta definição \(150 DPI\)/i)).toBeInTheDocument();
+  });
 });

@@ -84,6 +84,13 @@ const presentation = {
     icon: Image,
     accentColor: "#059669", // Verde Jade
   },
+  "pdf-to-jpg": {
+    suite: "convert" as const,
+    titleKey: "tool.pdfToJpg.title" as const,
+    descriptionKey: "tool.pdfToJpg.description" as const,
+    icon: Images,
+    accentColor: "#EAB308", // Âmbar Dourado
+  },
   "pdf-protect": {
     suite: "security" as const,
     titleKey: "tool.pdfProtect.title" as const,
@@ -138,6 +145,8 @@ const browserSupportedToolIds = new Set([
   "pdf-rotate",
   "pdf-compress",
   "text-compare",
+  "images-to-pdf",
+  "pdf-to-jpg",
 ]);
 
 export function createDynamicCapabilitiesProvider(

@@ -8,11 +8,12 @@ describe("Strict Functional Tools Catalog", () => {
 
     expect(ids).toContain("pdf-compress");
     expect(ids).toContain("pdf-organize");
+    expect(ids).toContain("images-to-pdf");
+    expect(ids).toContain("pdf-to-jpg");
     expect(ids).not.toContain("pdf-extract-images");
     expect(ids).toContain("text-compare");
     expect(ids).not.toContain("pdf-to-word");
     expect(ids).not.toContain("word-to-pdf");
-    expect(ids).not.toContain("images-to-pdf");
     expect(ids).not.toContain("pdf-protect");
     expect(ids).not.toContain("pdf-ocr");
     expect(ids).not.toContain("text-translate");

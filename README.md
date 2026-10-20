@@ -10,6 +10,9 @@
   <a href="https://github.com/junior-aguiar-eng/NexoHub/actions/workflows/security.yml">
     <img src="https://github.com/junior-aguiar-eng/NexoHub/actions/workflows/security.yml/badge.svg?branch=main" alt="Segurança e Licenças" />
   </a>
+  <a href="https://github.com/junior-aguiar-eng/NexoHub/actions/workflows/deploy-cloudrun.yml">
+    <img src="https://github.com/junior-aguiar-eng/NexoHub/actions/workflows/deploy-cloudrun.yml/badge.svg?branch=main" alt="Deploy Cloud Run (Web)" />
+  </a>
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/license-MPL--2.0-blue.svg" alt="Licença MPL-2.0" />
   </a>
@@ -17,7 +20,9 @@
 
 Hub de ferramentas de PDF e documentos **open source**, gratuito e **local-first**. O catálogo exibido depende dos executores disponíveis na plataforma. Na web, as operações expostas são organização, junção, divisão, rotação e compressão de PDF e comparação de textos; os arquivos são processados localmente.
 
-> **Estado**: `0.1.0` em preparação e validação contínua. Build automatizado para Windows x64 ativo via GitHub Actions.
+🌐 **Versão Web online:** [nexohub.nexojuris.ia.br](https://nexohub.nexojuris.ia.br) *(espelho direto: [nexohub-moe3oe6lva-rj.a.run.app](https://nexohub-moe3oe6lva-rj.a.run.app))*
+
+> **Estado**: `0.1.0` em preparação e validação contínua. Build automatizado para Windows x64 e Web Cloud Run ativos via GitHub Actions.
 
 ---
 

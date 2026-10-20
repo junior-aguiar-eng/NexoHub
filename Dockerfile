@@ -6,7 +6,7 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json biome.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml biome.json ./
 COPY packages ./packages
 COPY apps/client ./apps/client
 

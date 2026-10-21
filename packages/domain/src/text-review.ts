@@ -5,7 +5,8 @@ export type ReviewRule =
   | "REPEATED_WHITESPACE"
   | "TRAILING_WHITESPACE"
   | "PARONYM_CONTEXT"
-  | "STYLE_SUGGESTION";
+  | "STYLE_SUGGESTION"
+  | "SPELLING";
 
 export type ReviewFinding = {
   readonly id: string;
@@ -16,6 +17,7 @@ export type ReviewFinding = {
   readonly original: string;
   readonly replacement: string;
   readonly message: string;
+  readonly suggestions?: readonly string[];
 };
 
 const MAX_REVIEW_LENGTH = 1_000_000;

@@ -2,6 +2,10 @@ packages:
   - apps/*
   - packages/*
 
+allowBuilds:
+  onnxruntime-node: false
+  protobufjs: true
+
 onlyBuiltDependencies:
   - "@biomejs/biome"
   - esbuild
@@ -10,3 +14,5 @@ onlyBuiltDependencies:
 overrides:
   source-map-js: "^1.2.2"
   undici: "^8.11.2"
+  sharp: "-"
+  "@img/sharp-win32-x64": "-"

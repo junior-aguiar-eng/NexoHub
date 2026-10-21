@@ -22,7 +22,8 @@ const run = (command, args) => {
     cwd: root,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
-    shell: false,
+    shell:
+      process.platform === "win32" && (executable.endsWith(".cmd") || executable.endsWith(".bat")),
   });
   if (result.status !== 0)
     throw new Error(result.stderr || result.error?.message || `${command} falhou`);

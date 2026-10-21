@@ -3,12 +3,8 @@ import { ToolRunError } from "@nexohub/tool-sdk";
 import {
   ArrowLeft,
   ArrowRight,
-  ArrowRightLeft,
-  Check,
   CheckCircle2,
-  Copy,
   Download,
-  Languages,
   Layers,
   Loader2,
   PenTool,
@@ -26,6 +22,7 @@ import {
   renderPdfPagesThumbnails,
   renderPdfPageToDataUrl,
 } from "@/platform/pdf-engine";
+import { addCustomWord, ignoreWordInSession } from "@/platform/user-vocabulary";
 import { CompressPdfPanel } from "./CompressPdfPanel";
 import { DocumentComparePanel } from "./DocumentComparePanel";
 import { ImagesToPdfPanel } from "./ImagesToPdfPanel";
@@ -35,8 +32,10 @@ import { OcrScannerPanel } from "./OcrScannerPanel";
 import { PageNumbersPdfPanel } from "./PageNumbersPdfPanel";
 import { PdfPageGridPanel, type PdfPageItem } from "./PdfPageGridPanel";
 import { PdfToJpgPanel } from "./PdfToJpgPanel";
+import { ReviewDocumentPanel } from "./ReviewDocumentPanel";
 import { RotatePdfPanel } from "./RotatePdfPanel";
 import { type SplitInterval, SplitPdfPanel } from "./SplitPdfPanel";
+import { TranslateDocumentPanel } from "./TranslateDocumentPanel";
 import { WatermarkPdfPanel } from "./WatermarkPdfPanel";
 
 type DedicatedToolViewProps = {
@@ -77,7 +76,7 @@ export function DedicatedToolView({
   const [isDragging, setIsDragging] = useState(false);
   const [status, setStatus] = useState<"idle" | "running" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [_progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [inputTab, setInputTab] = useState<"upload" | "text">("upload");
 
   // Miniaturas Reais Geradas com PDF.js
@@ -100,6 +99,8 @@ export function DedicatedToolView({
   );
   const [translationSourceLang, setTranslationSourceLang] = useState<string>("en");
   const [translationTargetLang, setTranslationTargetLang] = useState<string>("pt");
+  const [translationProgressStatus, setTranslationProgressStatus] = useState<string>("");
+  const [reviewProgressStatus, setReviewProgressStatus] = useState<string>("");
   const [rotateAngle, setRotateAngle] = useState<number>(0);
   const [imageOrientation, setImageOrientation] = useState<"portrait" | "landscape" | "auto">(
     "portrait",
@@ -141,7 +142,6 @@ export function DedicatedToolView({
   const [translatedText, setTranslatedText] = useState<string>("");
   const [reviewFindings, setReviewFindings] = useState<readonly ReviewFinding[]>([]);
   const [reviewedText, setReviewedText] = useState<string>("");
-  const [copiedGeneral, setCopiedGeneral] = useState(false);
 
   // Estados de Comparação de Documentos
   const [doc1Text, setDoc1Text] = useState<string>("");
@@ -407,7 +407,8 @@ export function DedicatedToolView({
 
   function handleApplyAllReview() {
     try {
-      const corrected = applyReviewFindings(reviewedText || directText, reviewFindings);
+      const current = reviewedText || directText;
+      const corrected = applyReviewFindings(current, reviewFindings);
       setReviewedText(corrected);
       setReviewFindings([]);
     } catch (err) {
@@ -420,11 +421,15 @@ export function DedicatedToolView({
     }
   }
 
-  function handleApplySingleReview(findingId: string) {
+  function handleApplySingleReview(findingId: string, customReplacement?: string) {
     try {
       const singleFinding = reviewFindings.find((f) => f.id === findingId);
       if (!singleFinding) return;
-      const corrected = applyReviewFindings(reviewedText || directText, [singleFinding]);
+      const findingToApply = customReplacement
+        ? { ...singleFinding, replacement: customReplacement }
+        : singleFinding;
+      const current = reviewedText || directText;
+      const corrected = applyReviewFindings(current, [findingToApply]);
       setReviewedText(corrected);
       setReviewFindings((prev) => prev.filter((f) => f.id !== findingId));
     } catch (err) {
@@ -432,18 +437,25 @@ export function DedicatedToolView({
     }
   }
 
+  function handleIgnoreFinding(findingId: string) {
+    const finding = reviewFindings.find((f) => f.id === findingId);
+    if (finding) {
+      ignoreWordInSession(finding.original);
+      setReviewFindings((prev) => prev.filter((f) => f.id !== findingId));
+    }
+  }
+
+  function handleAddToDictionary(word: string) {
+    addCustomWord(word);
+    setReviewFindings((prev) =>
+      prev.filter((f) => f.original.toLowerCase() !== word.toLowerCase()),
+    );
+  }
+
   function handleSwapLanguages() {
     const temp = translationSourceLang;
     setTranslationSourceLang(translationTargetLang);
     setTranslationTargetLang(temp);
-  }
-
-  async function handleCopyGeneral(text: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedGeneral(true);
-      setTimeout(() => setCopiedGeneral(false), 2000);
-    } catch {}
   }
 
   // =========================================================================
@@ -498,6 +510,16 @@ export function DedicatedToolView({
         onOcrTextExtracted: (text) => {
           setRecognizedOcrText(text);
         },
+        translationSourceLang: translationSourceLang as "en" | "pt" | "es",
+        translationTargetLang: translationTargetLang as "en" | "pt" | "es",
+        onTranslationProgress: (info) => {
+          setProgress(info.progress);
+          setTranslationProgressStatus(info.message || `${info.progress}%`);
+        },
+        onReviewProgress: (info) => {
+          setProgress(info.progress);
+          setReviewProgressStatus(info.message || `${info.progress}%`);
+        },
       });
       const outputBlob = output.blob;
       const outName = output.fileName;
@@ -514,6 +536,14 @@ export function DedicatedToolView({
       if (tool.id === "text-translate") {
         const text = await outputBlob.text();
         setTranslatedText(text);
+      }
+      if (tool.id === "text-review") {
+        if (output.reviewFindings) {
+          setReviewFindings(output.reviewFindings);
+        }
+        if (output.extractedText) {
+          setReviewedText(output.extractedText);
+        }
       }
       if (tool.id === "pdf-ocr" && output.extractedText) {
         setRecognizedOcrText(output.extractedText);
@@ -751,7 +781,7 @@ export function DedicatedToolView({
       return (
         <OcrScannerPanel
           isScanning={status === "running"}
-          progress={_progress}
+          progress={progress}
           progressStatus={ocrProgressStatus}
           recognizedText={recognizedOcrText}
           onTextChange={setRecognizedOcrText}
@@ -789,136 +819,47 @@ export function DedicatedToolView({
     }
 
     if (tool.id === "text-review") {
+      const baseOutName = files[0]?.name?.replace(/\.[^/.]+$/, "") || "documento";
       return (
-        <div className="text-review-visual-panel">
-          <div className="text-review-header">
-            <div className="text-review-title-group">
-              <PenTool size={18} style={{ color: accent }} />
-              <h4>{translate("workspace.review.title")}</h4>
-            </div>
-
-            {reviewFindings.length > 0 && (
-              <Button
-                variant="primary"
-                size="compact"
-                onClick={handleApplyAllReview}
-                style={{ backgroundColor: accent }}
-              >
-                <Check size={14} />
-                <span>{translate("workspace.review.applyAll")}</span>
-              </Button>
-            )}
-          </div>
-
-          {reviewFindings.length > 0 ? (
-            <div className="text-review-findings-list">
-              <div className="text-review-findings-count">
-                <strong>{reviewFindings.length}</strong>{" "}
-                {translate("workspace.review.suggestionsFound")}
-              </div>
-              {reviewFindings.map((finding) => (
-                <div key={finding.id} className="text-review-finding-card">
-                  <div className="text-review-finding-content">
-                    <span className="text-review-finding-orig">"{finding.original}"</span>
-                    <span className="text-review-finding-arrow">→</span>
-                    <span className="text-review-finding-repl">"{finding.replacement}"</span>
-                    <p className="text-review-finding-msg">{finding.message}</p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="compact"
-                    onClick={() => handleApplySingleReview(finding.id)}
-                    title={translate("workspace.review.applyTitle")}
-                  >
-                    {translate("workspace.review.apply")}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-review-empty-box">
-              <CheckCircle2 size={24} style={{ color: "var(--color-accent-green, #10b981)" }} />
-              <p>{translate("workspace.review.noIssues")}</p>
-            </div>
-          )}
-
-          <div className="text-review-output-box">
-            <div className="text-review-output-header">
-              <span>{translate("workspace.review.reviewedText")}</span>
-              <Button
-                variant="ghost"
-                size="compact"
-                onClick={() => handleCopyGeneral(reviewedText || directText)}
-                disabled={!reviewedText && !directText}
-              >
-                {copiedGeneral ? <Check size={14} /> : <Copy size={14} />}
-                <span>
-                  {copiedGeneral
-                    ? translate("workspace.ocr.copied")
-                    : translate("workspace.review.copy")}
-                </span>
-              </Button>
-            </div>
-            <textarea
-              className="text-review-textarea"
-              value={reviewedText || directText}
-              onChange={(e) => setReviewedText(e.target.value)}
-              placeholder={translate("workspace.review.placeholder")}
-              rows={8}
-            />
-          </div>
-        </div>
+        <ReviewDocumentPanel
+          reviewFindings={reviewFindings}
+          reviewedText={reviewedText || directText}
+          onReviewedTextChange={setReviewedText}
+          onApplySingleReview={handleApplySingleReview}
+          onApplyAllReview={handleApplyAllReview}
+          onIgnoreFinding={handleIgnoreFinding}
+          onAddToDictionary={handleAddToDictionary}
+          isRunning={status === "running"}
+          progressPercent={progress}
+          progressStatusMessage={reviewProgressStatus}
+          accentColor={accent}
+          outputFileName={`${baseOutName}_revisado.txt`}
+          outputBlob={outputBlob ?? undefined}
+        />
       );
     }
 
     if (tool.id === "text-translate") {
+      const baseOutName = files[0]?.name?.replace(/\.[^/.]+$/, "") || "documento";
       return (
-        <div className="text-translate-visual-panel">
-          <div className="text-translate-header">
-            <div className="text-translate-title-group">
-              <Languages size={18} style={{ color: accent }} />
-              <h4>{translate("workspace.translate.title")}</h4>
-            </div>
-
-            <div className="text-translate-actions">
-              <Button
-                variant="ghost"
-                size="compact"
-                onClick={handleSwapLanguages}
-                title={translate("workspace.translate.swapTitle")}
-              >
-                <ArrowRightLeft size={14} />
-                <span>{translate("workspace.translate.swap")}</span>
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="compact"
-                onClick={() => handleCopyGeneral(translatedText)}
-                disabled={!translatedText}
-              >
-                {copiedGeneral ? <Check size={14} /> : <Copy size={14} />}
-                <span>
-                  {copiedGeneral
-                    ? translate("workspace.ocr.copied")
-                    : translate("workspace.translate.copy")}
-                </span>
-              </Button>
-            </div>
-          </div>
-
-          <textarea
-            className="text-translate-output-textarea"
-            value={translatedText}
-            onChange={(e) => setTranslatedText(e.target.value)}
-            placeholder={
-              status === "running"
-                ? translate("workspace.translate.translating")
-                : translate("workspace.translate.outputPlaceholder")
-            }
-            rows={12}
-          />
-        </div>
+        <TranslateDocumentPanel
+          sourceLang={translationSourceLang as "en" | "pt" | "es"}
+          targetLang={translationTargetLang as "en" | "pt" | "es"}
+          onSourceLangChange={(l) => setTranslationSourceLang(l)}
+          onTargetLangChange={(l) => setTranslationTargetLang(l)}
+          onSwapLanguages={handleSwapLanguages}
+          translatedText={translatedText}
+          onTranslatedTextChange={setTranslatedText}
+          isRunning={status === "running"}
+          progressPercent={progress}
+          progressStatusMessage={translationProgressStatus}
+          accentColor={accent}
+          outputFileName={
+            outputFileName ||
+            `${baseOutName}_${translationSourceLang}_para_${translationTargetLang}.txt`
+          }
+          outputBlob={outputBlob ?? undefined}
+        />
       );
     }
 

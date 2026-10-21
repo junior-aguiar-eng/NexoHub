@@ -86,17 +86,21 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     expect(onOperationComplete).not.toHaveBeenCalled();
   });
 
-  it("não executa revisão indisponível no navegador", async () => {
+  it("executa revisão textual no navegador com feedback de sucesso", async () => {
+    const onOperationComplete = vi.fn();
     render(
       <DedicatedToolView
         tool={mockTextReviewTool}
         documentCore={documentCore}
         onBack={vi.fn()}
-        initialFiles={[new File(["Texto inicial"], "texto.txt", { type: "text/plain" })]}
+        initialFiles={[new File(["Texto inicial sem erros."], "texto.txt", { type: "text/plain" })]}
+        onOperationComplete={onOperationComplete}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /Revisar Texto/i }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(/indisponível/i);
+    expect(
+      await screen.findByText(/Nenhum problema ortográfico ou gramatical encontrado/i),
+    ).toBeInTheDocument();
   });
 
   it("renderiza o conversor de Imagem para PDF com controles de orientação e margem", async () => {
@@ -197,5 +201,37 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     expect(screen.getByText(/Português \(Brasil\)/i)).toBeInTheDocument();
     expect(screen.getByText(/PDF Pesquisável/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Iniciar Reconhecimento OCR/i })).toBeInTheDocument();
+  });
+
+  it("renderiza o painel de tradução com seletores de idioma e badge offline", async () => {
+    const mockTranslateTool =
+      launcherTools.find((t) => t.id === "text-translate") ?? mockPdfCompressTool;
+    const file = new File(["Hello world contract"], "contrato.txt", { type: "text/plain" });
+    render(
+      <DedicatedToolView
+        tool={mockTranslateTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[file]}
+      />,
+    );
+    expect(screen.getByText(/Tradutor Inteligente/i)).toBeInTheDocument();
+    expect(screen.getByText(/Modelo Neural 100% Local/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Inverter idiomas/i })).toBeInTheDocument();
+  });
+
+  it("renderiza o painel de revisão com badge de privacidade e corretor Vero pt-BR", async () => {
+    const mockReviewTool = launcherTools.find((t) => t.id === "text-review") ?? mockTextReviewTool;
+    const file = new File(["Texto para analise."], "minuta.txt", { type: "text/plain" });
+    render(
+      <DedicatedToolView
+        tool={mockReviewTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[file]}
+      />,
+    );
+    expect(screen.getByText(/Corretor Ortográfico e Gramatical/i)).toBeInTheDocument();
+    expect(screen.getByText(/Dicionário Vero pt-BR • 100% no navegador/i)).toBeInTheDocument();
   });
 });

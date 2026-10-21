@@ -166,6 +166,8 @@ const browserSupportedToolIds = new Set([
   "pdf-watermark",
   "pdf-page-numbers",
   "pdf-ocr",
+  "text-translate",
+  "text-review",
 ]);
 
 export function createDynamicCapabilitiesProvider(

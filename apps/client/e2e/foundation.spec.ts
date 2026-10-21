@@ -336,11 +336,11 @@ test("digita e compara textos na tela dedicada de Comparação", async ({ page }
   await expect(modifiedInput).toHaveValue("Segunda versão alterada.");
 });
 
-test("não anuncia revisão sem executor web", async ({ page }) => {
+test("anuncia Revisar texto e abre a tela dedicada", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Revisar texto" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Revisar texto" })).toBeVisible();
   await page.goto("/revisar-texto");
-  await expect(page.getByRole("heading", { name: "Revisar texto" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Revisar texto", level: 1 })).toBeVisible();
 });
 
 test("anuncia OCR de PDF e abre a tela dedicada", async ({ page }) => {
@@ -350,12 +350,18 @@ test("anuncia OCR de PDF e abre a tela dedicada", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Reconhecer texto", level: 1 })).toBeVisible();
 });
 
-test("não anuncia conversores, tradução ou proteção sem executor", async ({ page }) => {
+test("anuncia Traduzir Texto e abre a tela dedicada", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Traduzir Texto" })).toBeVisible();
+  await page.goto("/traduzir-texto");
+  await expect(page.getByRole("heading", { name: "Traduzir Texto", level: 1 })).toBeVisible();
+});
+
+test("não anuncia conversores ou proteção sem executor", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "PDF para Word" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Word para PDF" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Proteger PDF" })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Traduzir Texto" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Extrair Imagens" })).toHaveCount(0);
 });
 

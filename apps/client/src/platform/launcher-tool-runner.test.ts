@@ -221,4 +221,65 @@ describe("Tool Runner do Launcher", () => {
     const text = await result.blob.text();
     expect(text).toContain("CONTRATO SOCIAL");
   });
+
+  it("executa tradução neural no navegador gerando arquivo traduzido com progresso", async () => {
+    const port = new BrowserDocumentCorePort();
+    const progressList: number[] = [];
+    const textFile = new File(["This is a legal service agreement."], "agreement.txt", {
+      type: "text/plain",
+    });
+
+    const result = await runLauncherTool(port, "text-translate", {
+      ...input([textFile]),
+      translationSourceLang: "en",
+      translationTargetLang: "pt",
+      onTranslationProgress: (info) => progressList.push(info.progress),
+    });
+
+    expect(result.fileName).toBe("agreement_en_para_pt.txt");
+    expect(result.blob.type).toBe("text/plain;charset=utf-8");
+    const translated = await result.blob.text();
+    expect(translated).toContain("[PT]");
+    expect(translated).toContain("This is a legal service agreement.");
+    expect(progressList.at(-1)).toBe(100);
+  });
+
+  it("rejeita tradução sem texto de entrada", async () => {
+    const port = new BrowserDocumentCorePort();
+    await expect(
+      runLauncherTool(port, "text-translate", {
+        ...input([]),
+        firstText: "",
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("executa revisão textual gerando relatório e achados estruturados", async () => {
+    const port = new BrowserDocumentCorePort();
+    const textFile = new File(["Os prejuízos são vultuosos."], "relatorio.txt", {
+      type: "text/plain",
+    });
+
+    const result = await runLauncherTool(port, "text-review", {
+      ...input([textFile]),
+    });
+
+    expect(result.fileName).toBe("relatorio_revisao.txt");
+    expect(result.blob.type).toBe("text/plain;charset=utf-8");
+    expect(result.reviewFindings).toBeDefined();
+    expect(result.reviewFindings?.length).toBeGreaterThan(0);
+    const content = await result.blob.text();
+    expect(content).toContain("RELATÓRIO DE REVISÃO");
+    expect(content).toContain("vultuosos");
+  });
+
+  it("rejeita revisão sem texto de entrada", async () => {
+    const port = new BrowserDocumentCorePort();
+    await expect(
+      runLauncherTool(port, "text-review", {
+        ...input([]),
+        firstText: "",
+      }),
+    ).rejects.toThrow();
+  });
 });

@@ -39,6 +39,9 @@ export default defineConfig({
           if (id.includes("lucide-react")) {
             return "lucide";
           }
+          if (id.includes("hunspell-asm")) {
+            return "hunspell";
+          }
         },
       },
     },

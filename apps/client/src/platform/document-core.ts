@@ -26,7 +26,9 @@ export interface DocumentCorePort {
       | "pdf-to-jpg"
       | "pdf-watermark"
       | "pdf-page-numbers"
-      | "pdf-ocr";
+      | "pdf-ocr"
+      | "text-translate"
+      | "text-review";
     files: readonly File[];
     output: Blob;
     parameters: Readonly<Record<string, unknown>>;

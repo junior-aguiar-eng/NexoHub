@@ -177,10 +177,10 @@ export const coreToolManifests = [
     name: "Revisar texto",
     category: "text",
     surfaces: ["quick", "studio"],
-    accepts: ["text/plain"],
+    accepts: ["text/plain", "text/markdown", "application/pdf"],
     produces: ["text/plain"],
     capabilities: ["documents.read", "documents.write", "text.review"],
-    executor: "native",
+    executor: "browser",
   },
   {
     id: "text-translate",
@@ -188,10 +188,10 @@ export const coreToolManifests = [
     name: "Traduzir texto",
     category: "text",
     surfaces: ["quick", "studio"],
-    accepts: ["text/plain", "text/markdown"],
-    produces: ["text/plain"],
+    accepts: ["text/plain", "text/markdown", "application/pdf"],
+    produces: ["text/plain", "application/pdf"],
     capabilities: ["documents.read", "documents.write", "translation.execute"],
-    executor: "python",
+    executor: "browser",
   },
 ] as const satisfies readonly ToolManifest[];
 

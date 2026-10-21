@@ -1,4 +1,4 @@
-import { diffText } from "@nexohub/domain";
+import { diffText, type ReviewFinding } from "@nexohub/domain";
 import { coreToolRegistry } from "@nexohub/tool-registry";
 import {
   type ToolExecutor,
@@ -11,6 +11,8 @@ import {
 import { translate } from "@/i18n";
 import { performBrowserOcr } from "./browser-ocr";
 import { createZipArchive } from "./browser-pdf-utils";
+import { performBrowserReview } from "./browser-reviewer";
+import { performBrowserTranslation, type TranslationLanguage } from "./browser-translator";
 import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
 import {
@@ -74,6 +76,14 @@ export interface LauncherToolInput {
     progress: number;
   }) => void;
   readonly onOcrTextExtracted?: (text: string) => void;
+  readonly translationSourceLang?: TranslationLanguage;
+  readonly translationTargetLang?: TranslationLanguage;
+  readonly onTranslationProgress?: (info: {
+    status: string;
+    progress: number;
+    message?: string;
+  }) => void;
+  readonly onReviewProgress?: (info: { progress: number; message: string }) => void;
 }
 
 export interface LauncherToolOutput {
@@ -83,6 +93,7 @@ export interface LauncherToolOutput {
   readonly extractedText?: string;
   readonly secondaryBlob?: Blob;
   readonly secondaryFileName?: string;
+  readonly reviewFindings?: readonly ReviewFinding[];
 }
 
 const supportedIds = new Set([
@@ -419,61 +430,98 @@ async function executeTool(
             blob: new Blob([report], { type: "text/plain;charset=utf-8" }),
             fileName: `${baseName}_revisao.txt`,
             categoryKey: "recent.type.document",
+            extractedText: rawText,
           };
         } catch (error) {
-          if (
+          const isUnavailable =
             (error instanceof Error &&
               (error.message === "CAPABILITY_NOT_FOUND" ||
-                error.message === "DOCUMENT_CORE_UNAVAILABLE")) ||
+                error.message === "DOCUMENT_CORE_UNAVAILABLE" ||
+                error.message === "REVIEW_UNAVAILABLE")) ||
             (typeof error === "object" &&
               error !== null &&
               "code" in error &&
-              (error.code === "RESOURCE_NOT_FOUND" || error.code === "TOOL_UNAVAILABLE"))
-          ) {
-            throw new ToolRunError(
-              "TOOL_UNAVAILABLE",
-              "A revisão gramatical requer o LanguageTool instalado no ambiente desktop.",
-            );
+              (error.code === "RESOURCE_NOT_FOUND" || error.code === "TOOL_UNAVAILABLE"));
+          if (!isUnavailable) {
+            throw error;
           }
-          throw error;
         }
       }
-      throw new Error("TOOL_UNAVAILABLE");
+
+      // Execução no navegador via Hunspell WASM e regras contextuais do domínio
+      const findings = await performBrowserReview({
+        text: rawText,
+        onProgress: (progress, message) => {
+          input.onReviewProgress?.({ progress, message });
+        },
+      });
+
+      const lines = findings
+        .map(
+          (f) =>
+            `• [Posição ${f.start}-${f.end}] [${f.rule}]: "${f.original}" → "${f.replacement}" (${f.message})`,
+        )
+        .join("\n");
+      const report = `RELATÓRIO DE REVISÃO ORTOGRÁFICA E GRAMATICAL (NexoHub Local)\n============================================================\nTotal de sugestões: ${findings.length}\n\n${lines || "Nenhum erro ou desvio identificado. O texto está em conformidade."}`;
+
+      return {
+        blob: new Blob([report], { type: "text/plain;charset=utf-8" }),
+        fileName: `${baseName}_revisao.txt`,
+        categoryKey: "recent.type.document",
+        reviewFindings: findings,
+        extractedText: rawText,
+      };
     }
     case "text-translate": {
       const rawText = input.firstText || (first ? await readDocumentText(first) : "");
       if (!rawText) throw new ToolRunError("INVALID_INPUT", "Informe o texto para tradução.");
+
+      const sourceLang = input.translationSourceLang || "en";
+      const targetLang = input.translationTargetLang || "pt";
+
       if (documentCore.invoke) {
         try {
           const res = await documentCore.invoke("translate_text", {
             text: rawText,
-            sourceLanguage: "en",
-            targetLanguage: "pt",
+            sourceLanguage: sourceLang,
+            targetLanguage: targetLang,
           });
           return {
             blob: new Blob([res.text], { type: "text/plain;charset=utf-8" }),
-            fileName: `${baseName}_traduzido.txt`,
+            fileName: `${baseName}_${sourceLang}_para_${targetLang}.txt`,
             categoryKey: "recent.type.document",
+            extractedText: res.text,
           };
         } catch (error) {
-          if (
+          const isUnavailable =
             (error instanceof Error &&
               (error.message === "CAPABILITY_NOT_FOUND" ||
                 error.message === "DOCUMENT_CORE_UNAVAILABLE")) ||
             (typeof error === "object" &&
               error !== null &&
               "code" in error &&
-              error.code === "RESOURCE_NOT_FOUND")
-          ) {
-            throw new ToolRunError(
-              "TOOL_UNAVAILABLE",
-              "A tradução neural offline requer um modelo instalado (ex: OPUS-MT). Nenhum modelo local foi encontrado para este par de idiomas.",
-            );
+              error.code === "RESOURCE_NOT_FOUND");
+          if (!isUnavailable) {
+            throw error;
           }
-          throw error;
         }
       }
-      throw new Error("TOOL_UNAVAILABLE");
+
+      // Execução pelo motor neural offline no navegador
+      const translationResult = await performBrowserTranslation(rawText, {
+        sourceLang,
+        targetLang,
+        onProgress: (info) => {
+          input.onTranslationProgress?.(info);
+        },
+      });
+
+      return {
+        blob: new Blob([translationResult.translatedText], { type: "text/plain;charset=utf-8" }),
+        fileName: `${baseName}_${sourceLang}_para_${targetLang}.txt`,
+        categoryKey: "recent.type.document",
+        extractedText: translationResult.translatedText,
+      };
     }
     case "pdf-extract-images": {
       if (documentCore.invoke) {
@@ -692,6 +740,12 @@ export async function runLauncherTool(
           ocrOutputMode: input.ocrOutputMode,
         }
       : {}),
+    ...(toolId === "text-translate"
+      ? {
+          sourceLanguage: input.translationSourceLang,
+          targetLanguage: input.translationTargetLang,
+        }
+      : {}),
   };
   const blob = await documentCore.persistLauncherResult({
     toolId: toolId as
@@ -703,7 +757,8 @@ export async function runLauncherTool(
       | "pdf-to-jpg"
       | "pdf-watermark"
       | "pdf-page-numbers"
-      | "pdf-ocr",
+      | "pdf-ocr"
+      | "text-translate",
     files,
     output: output.blob,
     parameters,

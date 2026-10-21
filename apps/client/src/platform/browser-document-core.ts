@@ -87,6 +87,8 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
     "pdf-watermark",
     "pdf-page-numbers",
     "pdf-ocr",
+    "text-translate",
+    "text-review",
   ]);
   private projectData: Map<string, StoredProjectData> = new Map();
   private pendingFiles: Map<string, File> = new Map();

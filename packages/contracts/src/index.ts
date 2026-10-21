@@ -80,7 +80,8 @@ export interface RecordLauncherResultRequest {
     | "images-to-pdf"
     | "pdf-to-jpg"
     | "pdf-watermark"
-    | "pdf-page-numbers";
+    | "pdf-page-numbers"
+    | "pdf-ocr";
   readonly mimeType: "application/pdf" | "application/zip" | "text/plain" | "image/jpeg";
   readonly bytes: readonly number[] | Uint8Array;
   readonly parameters: Readonly<Record<string, unknown>>;

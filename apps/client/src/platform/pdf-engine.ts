@@ -861,3 +861,114 @@ export async function addPageNumbersToPdfDocument(
 
   return await doc.save({ useObjectStreams: true });
 }
+
+export interface OcrPageData {
+  pageNumber: number;
+  text: string;
+  width: number;
+  height: number;
+  lines: Array<{
+    text: string;
+    confidence?: number;
+    bbox?: { x0: number; y0: number; x1: number; y1: number };
+  }>;
+}
+
+/**
+ * Gera um PDF Pesquisável (Searchable PDF) sobrepondo uma camada de texto invisível (opacity: 0)
+ * exatamente nas coordenadas reconhecidas pelo OCR, tornando o documento original selecionável e pesquisável.
+ */
+export async function generateSearchablePdf(
+  sourceBytes: Uint8Array,
+  pagesData: readonly OcrPageData[],
+  sourceMimeType?: string,
+): Promise<Uint8Array> {
+  const isPdf =
+    sourceBytes.length >= 4 &&
+    sourceBytes[0] === 0x25 &&
+    sourceBytes[1] === 0x50 &&
+    sourceBytes[2] === 0x44 &&
+    sourceBytes[3] === 0x46;
+
+  let doc: PDFDocument;
+
+  if (isPdf) {
+    doc = await PDFDocument.load(sourceBytes);
+  } else {
+    doc = await PDFDocument.create();
+    const isPng =
+      sourceBytes.length >= 8 &&
+      sourceBytes[0] === 0x89 &&
+      sourceBytes[1] === 0x50 &&
+      sourceBytes[2] === 0x4e &&
+      sourceBytes[3] === 0x47;
+
+    let embedded: PDFImage;
+    if (isPng) {
+      try {
+        embedded = await doc.embedPng(sourceBytes);
+      } catch {
+        const jpegBytes = await imageBytesToJpeg(sourceBytes, "image/png");
+        embedded = await doc.embedJpg(jpegBytes);
+      }
+    } else {
+      const isJpg = sourceBytes.length >= 2 && sourceBytes[0] === 0xff && sourceBytes[1] === 0xd8;
+      if (isJpg) {
+        try {
+          embedded = await doc.embedJpg(sourceBytes);
+        } catch {
+          const jpegBytes = await imageBytesToJpeg(sourceBytes, sourceMimeType || "image/jpeg");
+          embedded = await doc.embedJpg(jpegBytes);
+        }
+      } else {
+        const jpegBytes = await imageBytesToJpeg(sourceBytes, sourceMimeType || "image/jpeg");
+        embedded = await doc.embedJpg(jpegBytes);
+      }
+    }
+
+    const imgWidth = embedded.width;
+    const imgHeight = embedded.height;
+    const page = doc.addPage([imgWidth, imgHeight]);
+    page.drawImage(embedded, { x: 0, y: 0, width: imgWidth, height: imgHeight });
+  }
+
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const pages = doc.getPages();
+
+  for (let i = 0; i < pages.length; i++) {
+    const pageData = pagesData.find((p) => p.pageNumber === i + 1);
+    if (!pageData) continue;
+    const page = pages[i];
+    const { width, height } = page.getSize();
+    const sourceWidth = pageData.width || width;
+    const sourceHeight = pageData.height || height;
+    const scaleX = width / sourceWidth;
+    const scaleY = height / sourceHeight;
+
+    for (const line of pageData.lines) {
+      if (!line.text || !line.bbox) continue;
+      const { x0, y0, y1 } = line.bbox;
+      const pdfX = x0 * scaleX;
+      const pdfY = height - y1 * scaleY;
+      const lineHeight = Math.max((y1 - y0) * scaleY * 0.85, 6);
+
+      const sanitizedText = line.text.replace(/[\r\n\t]/g, " ").trim();
+      if (!sanitizedText) continue;
+
+      try {
+        page.drawText(sanitizedText, {
+          x: pdfX,
+          y: Math.max(0, pdfY),
+          size: lineHeight,
+          font,
+          color: rgb(0, 0, 0),
+          opacity: 0,
+        });
+      } catch {
+        // Fallback silencioso para glifos especiais
+      }
+    }
+  }
+
+  return await doc.save({ useObjectStreams: true });
+}

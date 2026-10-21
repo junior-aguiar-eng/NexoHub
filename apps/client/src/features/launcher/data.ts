@@ -165,6 +165,7 @@ const browserSupportedToolIds = new Set([
   "pdf-to-jpg",
   "pdf-watermark",
   "pdf-page-numbers",
+  "pdf-ocr",
 ]);
 
 export function createDynamicCapabilitiesProvider(

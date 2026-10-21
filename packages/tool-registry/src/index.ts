@@ -136,7 +136,7 @@ export const coreToolManifests = [
     accepts: ["application/pdf", "image/*"],
     produces: ["text/plain", "application/pdf"],
     capabilities: ["documents.read", "documents.write", "ocr.execute"],
-    executor: "python",
+    executor: "browser",
   },
   {
     id: "pdf-protect",

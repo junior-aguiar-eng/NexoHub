@@ -12,12 +12,12 @@ describe("Strict Functional Tools Catalog", () => {
     expect(ids).toContain("pdf-to-jpg");
     expect(ids).toContain("pdf-watermark");
     expect(ids).toContain("pdf-page-numbers");
+    expect(ids).toContain("pdf-ocr");
     expect(ids).not.toContain("pdf-extract-images");
     expect(ids).toContain("text-compare");
     expect(ids).not.toContain("pdf-to-word");
     expect(ids).not.toContain("word-to-pdf");
     expect(ids).not.toContain("pdf-protect");
-    expect(ids).not.toContain("pdf-ocr");
     expect(ids).not.toContain("text-translate");
 
     // Ferramenta de inteligência jurídica removida do escopo do produto

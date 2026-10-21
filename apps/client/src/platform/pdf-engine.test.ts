@@ -129,4 +129,31 @@ describe("operações PDF no navegador", () => {
     expect(doc.getPageCount()).toBe(3);
     expect(numberedBytes.length).toBeGreaterThan(source.length);
   });
+
+  it("gera PDF pesquisável injetando camada de texto sobre o documento original", async () => {
+    const { generateSearchablePdf } = await import("./pdf-engine");
+    const source = await makePdf(1);
+    const searchablePdf = await generateSearchablePdf(source, [
+      {
+        pageNumber: 1,
+        text: "CONTRATO SOCIAL CLAUSULA PRIMEIRA",
+        width: 200,
+        height: 200,
+        lines: [
+          {
+            text: "CONTRATO SOCIAL",
+            bbox: { x0: 20, y0: 30, x1: 180, y1: 50 },
+          },
+          {
+            text: "CLAUSULA PRIMEIRA",
+            bbox: { x0: 20, y0: 60, x1: 180, y1: 80 },
+          },
+        ],
+      },
+    ]);
+
+    const doc = await PDFDocument.load(searchablePdf);
+    expect(doc.getPageCount()).toBe(1);
+    expect(searchablePdf.length).toBeGreaterThan(source.length);
+  });
 });

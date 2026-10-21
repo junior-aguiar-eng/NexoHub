@@ -198,4 +198,27 @@ describe("Tool Runner do Launcher", () => {
     const doc = await PDFDocument.load(await result.blob.arrayBuffer());
     expect(doc.getPageCount()).toBe(2);
   });
+
+  it("executa OCR gerando texto extraído e artefato de saída", async () => {
+    const port = new BrowserDocumentCorePort();
+    const invoke = vi.fn(async (cmd: string) => {
+      if (cmd === "pick_project_folder") return { path: "/tmp/projeto" };
+      if (cmd === "import_document_bytes") {
+        return { document: { id: "doc-1" }, artifact: { id: "art-1" } };
+      }
+      if (cmd === "execute_ocr") {
+        return {
+          lines: [{ text: "CONTRATO SOCIAL" }, { text: "CLAUSULA 1" }],
+        };
+      }
+      return {};
+    });
+    Object.assign(port, { invoke });
+    const file = await fixture();
+    const result = await runLauncherTool(port, "pdf-ocr", input([file]));
+    expect(result.fileName).toBe("contrato_ocr.txt");
+    expect(result.blob.type).toBe("text/plain;charset=utf-8");
+    const text = await result.blob.text();
+    expect(text).toContain("CONTRATO SOCIAL");
+  });
 });

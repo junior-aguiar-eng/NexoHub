@@ -177,4 +177,25 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     expect(screen.getByRole("button", { name: "Página {n} de {total}" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Página 2 \(Pular Capa\)/i })).toBeInTheDocument();
   });
+
+  it("renderiza o painel de OCR com laser e configurações de idioma", async () => {
+    const mockOcrTool = launcherTools.find((t) => t.id === "pdf-ocr") ?? mockPdfCompressTool;
+    const pdf = await PDFDocument.create();
+    pdf.addPage([100, 100]);
+    const file = new File([(await pdf.save()) as unknown as BlobPart], "documento.pdf", {
+      type: "application/pdf",
+    });
+    render(
+      <DedicatedToolView
+        tool={mockOcrTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[file]}
+      />,
+    );
+    expect(screen.getByText(/Configurações de OCR/i)).toBeInTheDocument();
+    expect(screen.getByText(/Português \(Brasil\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/PDF Pesquisável/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Iniciar Reconhecimento OCR/i })).toBeInTheDocument();
+  });
 });

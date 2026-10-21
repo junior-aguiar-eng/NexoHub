@@ -11,4 +11,20 @@ describe("OCR no navegador", () => {
       Object.defineProperty(globalThis, "Worker", { value: originalWorker, configurable: true });
     }
   });
+
+  it("aplica realce de contraste adaptativo em dados de pixel de canvas", async () => {
+    const { applyContrastEnhancement } = await import("./browser-ocr");
+    const canvas = document.createElement("canvas");
+    canvas.width = 10;
+    canvas.height = 10;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = "#888888";
+      ctx.fillRect(0, 0, 10, 10);
+      applyContrastEnhancement(ctx, 10, 10);
+      const imgData = ctx.getImageData(0, 0, 10, 10);
+      expect(imgData.data.length).toBe(400);
+      expect(imgData.data[3]).toBe(255); // Alpha preservado
+    }
+  });
 });

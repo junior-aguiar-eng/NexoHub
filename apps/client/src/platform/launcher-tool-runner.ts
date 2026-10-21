@@ -9,6 +9,7 @@ import {
   type ToolRunRequest,
 } from "@nexohub/tool-sdk";
 import { translate } from "@/i18n";
+import { performBrowserOcr } from "./browser-ocr";
 import { createZipArchive } from "./browser-pdf-utils";
 import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
@@ -63,12 +64,25 @@ export interface LauncherToolInput {
     | "top-left";
   readonly pageNumbersFormat?: "pageXofY" | "xSlashY" | "onlyX";
   readonly pageNumbersStartPage?: number;
+  readonly ocrLanguage?: "por" | "eng" | "spa";
+  readonly ocrEnhanceContrast?: boolean;
+  readonly ocrOutputMode?: "searchable-pdf" | "text";
+  readonly onOcrProgress?: (info: {
+    status: string;
+    page: number;
+    totalPages: number;
+    progress: number;
+  }) => void;
+  readonly onOcrTextExtracted?: (text: string) => void;
 }
 
 export interface LauncherToolOutput {
   readonly blob: Blob;
   readonly fileName: string;
   readonly categoryKey: "recent.type.pdf" | "recent.type.document";
+  readonly extractedText?: string;
+  readonly secondaryBlob?: Blob;
+  readonly secondaryFileName?: string;
 }
 
 const supportedIds = new Set([
@@ -316,6 +330,11 @@ async function executeTool(
       };
     }
     case "pdf-ocr": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF ou imagem.");
+
+      let recognizedText = "";
+      let searchablePdfBytes: Uint8Array | undefined;
+
       if (documentCore.invoke) {
         try {
           const project = await documentCore.invoke("pick_project_folder", {});
@@ -331,31 +350,55 @@ async function executeTool(
             documentId: imported.document.id,
             artifactId: imported.artifact.id,
           });
-          const recognizedText = ocrRes.lines.map((l) => l.text).join("\n");
-          return {
-            blob: new Blob([recognizedText], { type: "text/plain;charset=utf-8" }),
-            fileName: `${baseName}_ocr.txt`,
-            categoryKey: "recent.type.document",
-          };
+          recognizedText = ocrRes.lines.map((l) => l.text).join("\n");
+        } catch {
+          // Fallback para o motor WebAssembly
+        }
+      }
+
+      if (!recognizedText) {
+        try {
+          const outcome = await performBrowserOcr(first, {
+            language: input.ocrLanguage ?? "por",
+            enhanceContrast: input.ocrEnhanceContrast ?? true,
+            onProgress: input.onOcrProgress,
+          });
+          recognizedText = outcome.text;
+          searchablePdfBytes = outcome.searchablePdfBytes;
         } catch (error) {
-          if (
-            (error instanceof Error &&
-              (error.message === "CAPABILITY_NOT_FOUND" ||
-                error.message === "DOCUMENT_CORE_UNAVAILABLE")) ||
-            (typeof error === "object" &&
-              error !== null &&
-              "code" in error &&
-              (error.code === "RESOURCE_NOT_FOUND" || error.code === "TOOL_UNAVAILABLE"))
-          ) {
-            throw new ToolRunError(
-              "TOOL_UNAVAILABLE",
-              "O motor nativo de OCR requer Tesseract/Sidecar instalado no ambiente desktop.",
-            );
+          if (error instanceof Error && error.message === "OCR_NO_TEXT_FOUND") {
+            throw new ToolRunError("INVALID_INPUT", translate("workspace.ocr.noTextFound"));
           }
           throw error;
         }
       }
-      throw new Error("TOOL_UNAVAILABLE");
+
+      if (input.onOcrTextExtracted) {
+        input.onOcrTextExtracted(recognizedText);
+      }
+
+      const txtBlob = new Blob([recognizedText], { type: "text/plain;charset=utf-8" });
+      const txtFileName = `${baseName}_ocr.txt`;
+
+      if (input.ocrOutputMode === "searchable-pdf" && searchablePdfBytes) {
+        return {
+          blob: pdfBlob(searchablePdfBytes),
+          fileName: `${baseName}_ocr_pesquisavel.pdf`,
+          categoryKey: "recent.type.pdf",
+          extractedText: recognizedText,
+          secondaryBlob: txtBlob,
+          secondaryFileName: txtFileName,
+        };
+      }
+
+      return {
+        blob: txtBlob,
+        fileName: txtFileName,
+        categoryKey: "recent.type.document",
+        extractedText: recognizedText,
+        secondaryBlob: searchablePdfBytes ? pdfBlob(searchablePdfBytes) : undefined,
+        secondaryFileName: searchablePdfBytes ? `${baseName}_ocr_pesquisavel.pdf` : undefined,
+      };
     }
     case "text-review": {
       const rawText = input.firstText || (first ? await readDocumentText(first) : "");
@@ -641,6 +684,13 @@ export async function runLauncherTool(
           pageNumbersStartPage: input.pageNumbersStartPage,
         }
       : {}),
+    ...(toolId === "pdf-ocr"
+      ? {
+          ocrLanguage: input.ocrLanguage,
+          ocrEnhanceContrast: input.ocrEnhanceContrast,
+          ocrOutputMode: input.ocrOutputMode,
+        }
+      : {}),
   };
   const blob = await documentCore.persistLauncherResult({
     toolId: toolId as
@@ -651,7 +701,8 @@ export async function runLauncherTool(
       | "images-to-pdf"
       | "pdf-to-jpg"
       | "pdf-watermark"
-      | "pdf-page-numbers",
+      | "pdf-page-numbers"
+      | "pdf-ocr",
     files,
     output: output.blob,
     parameters,

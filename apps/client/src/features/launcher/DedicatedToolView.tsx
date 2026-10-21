@@ -117,6 +117,10 @@ export function DedicatedToolView({
     "pageXofY",
   );
   const [pageNumbersStartPage, setPageNumbersStartPage] = useState<number>(1);
+  const [ocrLanguage, setOcrLanguage] = useState<"por" | "eng" | "spa">("por");
+  const [ocrOutputMode, setOcrOutputMode] = useState<"searchable-pdf" | "text">("searchable-pdf");
+  const [ocrEnhanceContrast, setOcrEnhanceContrast] = useState<boolean>(true);
+  const [ocrProgressStatus, setOcrProgressStatus] = useState<string>("");
 
   // Estados de Páginas (Organizador e Extrator)
   const [pdfPageCount, setPdfPageCount] = useState<number>(() =>
@@ -180,8 +184,8 @@ export function DedicatedToolView({
         isImageTool
       }
       accept={
-        isImageTool
-          ? ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+        isImageTool || tool.id === "pdf-ocr"
+          ? ".pdf,application/pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
           : tool.suite === "text"
             ? ".txt,.md,.pdf,.docx"
             : ".pdf,application/pdf"
@@ -484,6 +488,16 @@ export function DedicatedToolView({
         pageNumbersPosition,
         pageNumbersFormat,
         pageNumbersStartPage,
+        ocrLanguage,
+        ocrEnhanceContrast,
+        ocrOutputMode,
+        onOcrProgress: (info) => {
+          setProgress(info.progress);
+          setOcrProgressStatus(`Pág. ${info.page}/${info.totalPages} - ${info.status}`);
+        },
+        onOcrTextExtracted: (text) => {
+          setRecognizedOcrText(text);
+        },
       });
       const outputBlob = output.blob;
       const outName = output.fileName;
@@ -500,6 +514,9 @@ export function DedicatedToolView({
       if (tool.id === "text-translate") {
         const text = await outputBlob.text();
         setTranslatedText(text);
+      }
+      if (tool.id === "pdf-ocr" && output.extractedText) {
+        setRecognizedOcrText(output.extractedText);
       }
       setProgress(100);
       setOutputFileName(outName);
@@ -735,9 +752,16 @@ export function DedicatedToolView({
         <OcrScannerPanel
           isScanning={status === "running"}
           progress={_progress}
+          progressStatus={ocrProgressStatus}
           recognizedText={recognizedOcrText}
           onTextChange={setRecognizedOcrText}
           fileName={files[0]?.name || "documento_ocr.pdf"}
+          language={ocrLanguage}
+          onLanguageChange={setOcrLanguage}
+          outputMode={ocrOutputMode}
+          onOutputModeChange={setOcrOutputMode}
+          enhanceContrast={ocrEnhanceContrast}
+          onEnhanceContrastChange={setOcrEnhanceContrast}
         />
       );
     }

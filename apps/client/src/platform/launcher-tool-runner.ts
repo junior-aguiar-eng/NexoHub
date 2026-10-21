@@ -631,6 +631,7 @@ export async function runLauncherTool(
         "pdf-to-jpg",
         "pdf-watermark",
         "pdf-page-numbers",
+        "pdf-ocr",
       ] as string[]
     ).includes(toolId)
   ) {

@@ -136,12 +136,16 @@ pub fn record_launcher_result(request: RecordLauncherResultRequest) -> CoreResul
         ));
     }
     let valid_type = match request.tool_id.as_str() {
-        "pdf-merge" | "pdf-rotate" => request.mime_type == "application/pdf",
+        "pdf-merge" | "pdf-rotate" | "pdf-watermark" | "pdf-page-numbers" | "images-to-pdf" => {
+            request.mime_type == "application/pdf"
+        }
         "pdf-split" => matches!(
             request.mime_type.as_str(),
             "application/pdf" | "application/zip"
         ),
+        "pdf-to-jpg" => matches!(request.mime_type.as_str(), "image/jpeg" | "application/zip"),
         "text-compare" => request.mime_type == "text/plain",
+        "pdf-ocr" => matches!(request.mime_type.as_str(), "application/pdf" | "text/plain"),
         _ => false,
     };
     if !valid_type {
@@ -152,7 +156,9 @@ pub fn record_launcher_result(request: RecordLauncherResultRequest) -> CoreResul
     }
     let valid_input_count = match request.tool_id.as_str() {
         "pdf-merge" => (2..=32).contains(&request.input_artifact_ids.len()),
-        "pdf-split" | "pdf-rotate" => request.input_artifact_ids.len() == 1,
+        "images-to-pdf" => (1..=32).contains(&request.input_artifact_ids.len()),
+        "pdf-split" | "pdf-rotate" | "pdf-watermark" | "pdf-page-numbers" | "pdf-to-jpg"
+        | "pdf-ocr" => request.input_artifact_ids.len() == 1,
         "text-compare" => request.input_artifact_ids.len() == 2,
         _ => false,
     };
@@ -166,6 +172,7 @@ pub fn record_launcher_result(request: RecordLauncherResultRequest) -> CoreResul
         "application/pdf" => request.bytes.starts_with(b"%PDF-"),
         "application/zip" => request.bytes.starts_with(b"PK\x03\x04"),
         "text/plain" => std::str::from_utf8(&request.bytes).is_ok(),
+        "image/jpeg" => request.bytes.starts_with(b"\xFF\xD8\xFF"),
         _ => false,
     };
     if !valid_content {
@@ -176,13 +183,15 @@ pub fn record_launcher_result(request: RecordLauncherResultRequest) -> CoreResul
     }
     let project_path = crate::grant_broker::require_granted(&request.project_path)?;
     let mut store = ProjectStore::open(project_path)?;
-    let expected_input_mime = if request.tool_id == "text-compare" {
-        "text/plain"
-    } else {
-        "application/pdf"
-    };
     for id in &request.input_artifact_ids {
-        if store.get_artifact(id)?.mime_type != expected_input_mime {
+        let mime = &store.get_artifact(id)?.mime_type;
+        let valid_input_mime = match request.tool_id.as_str() {
+            "text-compare" => mime == "text/plain",
+            "images-to-pdf" => mime.starts_with("image/"),
+            "pdf-ocr" => mime == "application/pdf" || mime.starts_with("image/"),
+            _ => mime == "application/pdf",
+        };
+        if !valid_input_mime {
             return Err(CoreError::new(
                 ErrorCode::InvalidArgument,
                 "O tipo de um artifact de entrada não corresponde à ferramenta.",

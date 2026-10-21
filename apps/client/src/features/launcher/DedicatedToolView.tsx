@@ -844,7 +844,7 @@ export function DedicatedToolView({
 
           <div className="text-review-output-box">
             <div className="text-review-output-header">
-              <span>Texto Revisado</span>
+              <span>{translate("workspace.review.reviewedText")}</span>
               <Button
                 variant="ghost"
                 size="compact"
@@ -852,14 +852,18 @@ export function DedicatedToolView({
                 disabled={!reviewedText && !directText}
               >
                 {copiedGeneral ? <Check size={14} /> : <Copy size={14} />}
-                <span>{copiedGeneral ? "Copiado!" : translate("workspace.review.copy")}</span>
+                <span>
+                  {copiedGeneral
+                    ? translate("workspace.ocr.copied")
+                    : translate("workspace.review.copy")}
+                </span>
               </Button>
             </div>
             <textarea
               className="text-review-textarea"
               value={reviewedText || directText}
               onChange={(e) => setReviewedText(e.target.value)}
-              placeholder="O texto corrigido será atualizado em tempo real aqui..."
+              placeholder={translate("workspace.review.placeholder")}
               rows={8}
             />
           </div>
@@ -946,7 +950,7 @@ export function DedicatedToolView({
 
           <h1 className="ilovepdf-success-title">{translate("dedicated.successTitle")}</h1>
           <p className="ilovepdf-success-subtitle">
-            <strong>{outputFileName}</strong> foi processado com sucesso e está pronto.
+            <strong>{outputFileName}</strong> {translate("dedicated.successSubtitle")}
           </p>
 
           {compressionResult && (

@@ -343,15 +343,20 @@ test("não anuncia revisão sem executor web", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Revisar texto" })).toHaveCount(0);
 });
 
-test("não anuncia OCR de PDF sem renderização validada", async ({ page }) => {
+test("anuncia OCR de PDF e abre a tela dedicada", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Reconhecer texto" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Reconhecer texto" })).toBeVisible();
+  await page.goto("/ocr-pdf");
+  await expect(page.getByRole("heading", { name: "Reconhecer texto", level: 1 })).toBeVisible();
 });
 
-test("não anuncia conversores ou proteção sem executor", async ({ page }) => {
+test("não anuncia conversores, tradução ou proteção sem executor", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "PDF para Word" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Word para PDF" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Proteger PDF" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Traduzir Texto" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Extrair Imagens" })).toHaveCount(0);
 });
 
 test("comprime PDF real e disponibiliza PDF válido", async ({ page }) => {

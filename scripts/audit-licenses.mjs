@@ -5,12 +5,19 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const checkOnly = process.argv.includes("--check");
 const run = (command, args) => {
-  const pnpmCli = command === "pnpm" ? process.env.npm_execpath : undefined;
-  if (command === "pnpm" && !pnpmCli) {
-    throw new Error("Execute este auditor por `pnpm licenses:generate` ou `pnpm licenses:check`.");
+  let executable = command;
+  let commandArgs = args;
+
+  if (command === "pnpm") {
+    const isPnpmExec = process.env.npm_execpath?.toLowerCase().includes("pnpm");
+    if (isPnpmExec) {
+      executable = process.execPath;
+      commandArgs = [process.env.npm_execpath, ...args];
+    } else {
+      executable = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+    }
   }
-  const executable = pnpmCli ? process.execPath : command;
-  const commandArgs = pnpmCli ? [pnpmCli, ...args] : args;
+
   const result = spawnSync(executable, commandArgs, {
     cwd: root,
     encoding: "utf8",

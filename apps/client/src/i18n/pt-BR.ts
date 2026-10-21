@@ -154,6 +154,7 @@ export const ptBR = {
   "dedicated.genericVisualDesc": "Arquivo selecionado e pronto para processamento imediato.",
   "dedicated.processing": "Processando arquivo...",
   "dedicated.successTitle": "Pronto! Arquivo processado",
+  "dedicated.successSubtitle": "foi processado com sucesso e está pronto.",
   "dedicated.errorUnavailable": "Esta ferramenta está indisponível nesta plataforma.",
   "dedicated.noImagesFound": "Nenhuma imagem incorporada foi encontrada neste PDF.",
   "dedicated.errorProcessing":
@@ -440,6 +441,8 @@ export const ptBR = {
   "workspace.review.applyTitle": "Aplicar esta substituição",
   "workspace.review.noIssues": "Nenhum problema ortográfico ou gramatical encontrado!",
   "workspace.review.copy": "Copiar Texto Corrigido",
+  "workspace.review.reviewedText": "Texto Revisado",
+  "workspace.review.placeholder": "O texto corrigido será atualizado em tempo real aqui...",
   "workspace.translate.title": "Tradutor Inteligente",
   "workspace.translate.swap": "Inverter Idiomas",
   "workspace.translate.swapTitle": "Inverter idiomas de origem e destino",

@@ -188,7 +188,16 @@ export class HttpDocumentCorePort implements DocumentCorePort {
   }
 
   async persistLauncherResult(request: {
-    toolId: "pdf-merge" | "pdf-split" | "pdf-rotate" | "text-compare";
+    toolId:
+      | "pdf-merge"
+      | "pdf-split"
+      | "pdf-rotate"
+      | "text-compare"
+      | "images-to-pdf"
+      | "pdf-to-jpg"
+      | "pdf-watermark"
+      | "pdf-page-numbers"
+      | "pdf-ocr";
     files: readonly File[];
     output: Blob;
     parameters: Readonly<Record<string, unknown>>;
@@ -197,10 +206,17 @@ export class HttpDocumentCorePort implements DocumentCorePort {
     const importedList: ImportedDocument[] = [];
     for (const file of request.files) {
       const buffer = await file.arrayBuffer();
+      const mimeType =
+        file.type ||
+        (request.toolId === "text-compare"
+          ? "text/plain"
+          : request.toolId === "images-to-pdf"
+            ? "image/jpeg"
+            : "application/pdf");
       const imported = (await this.invoke("import_document_bytes", {
         projectPath: project.path,
         title: file.name,
-        mimeType: request.toolId === "text-compare" ? "text/plain" : "application/pdf",
+        mimeType,
         bytes: Array.from(new Uint8Array(buffer)),
       })) as ImportedDocument;
       importedList.push(imported);
@@ -211,7 +227,11 @@ export class HttpDocumentCorePort implements DocumentCorePort {
         ? "text/plain"
         : request.output.type === "application/zip"
           ? "application/zip"
-          : "application/pdf";
+          : request.output.type === "image/jpeg"
+            ? "image/jpeg"
+            : request.output.type === "text/plain"
+              ? "text/plain"
+              : "application/pdf";
 
     const outBytes = Array.from(new Uint8Array(await request.output.arrayBuffer()));
     const result = (await this.invoke("record_launcher_result", {

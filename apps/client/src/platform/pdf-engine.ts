@@ -952,7 +952,14 @@ export async function generateSearchablePdf(
       const pdfY = height - y1 * scaleY;
       const lineHeight = Math.max((y1 - y0) * scaleY * 0.85, 6);
 
-      const sanitizedText = line.text.replace(/[\r\n\t]/g, " ").trim();
+      const sanitizedText = line.text
+        .replace(/[\r\n\t]/g, " ")
+        .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+        .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+        .replace(/[\u2013\u2014\u2015]/g, "-")
+        .replace(/\u2026/g, "...")
+        .replace(/\u00A0/g, " ")
+        .trim();
       if (!sanitizedText) continue;
 
       try {
@@ -965,7 +972,7 @@ export async function generateSearchablePdf(
           opacity: 0,
         });
       } catch {
-        // Fallback silencioso para glifos especiais
+        // Fallback silencioso para glifos especiais não codificáveis
       }
     }
   }

@@ -718,6 +718,74 @@ fn launcher_result_command_rejects_invalid_tool_and_records_split_zip() {
 }
 
 #[test]
+fn launcher_result_records_watermark_and_jpg_and_ocr() {
+    let temporary = TestDirectory::new("launcher-extended");
+    let project_path = temporary.project_path();
+    nexohub_core::grant_broker::grant_path(&temporary.path).unwrap();
+    let mut store = ProjectStore::create(&project_path, "Launcher").unwrap();
+    let original = store
+        .import_document_bytes(&synthetic_pdf(), "entrada.pdf", "application/pdf")
+        .unwrap();
+    drop(store);
+
+    // 1. pdf-watermark
+    let watermark_pdf = b"%PDF-1.4 watermark".to_vec();
+    let wm_req = RecordLauncherResultRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: original.document.id.clone(),
+        input_artifact_ids: vec![original.artifact.id.clone()],
+        tool_id: "pdf-watermark".to_owned(),
+        mime_type: "application/pdf".to_owned(),
+        bytes: watermark_pdf.clone(),
+        parameters: json!({"watermarkText": "CONFIDENCIAL"}),
+    };
+    let wm_res = record_launcher_result(wm_req).unwrap();
+    assert_eq!(wm_res.artifact.mime_type, "application/pdf");
+
+    // 2. pdf-to-jpg
+    let jpg_bytes = b"\xFF\xD8\xFF\xE0dummy_jpg".to_vec();
+    let jpg_req = RecordLauncherResultRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: original.document.id.clone(),
+        input_artifact_ids: vec![original.artifact.id.clone()],
+        tool_id: "pdf-to-jpg".to_owned(),
+        mime_type: "image/jpeg".to_owned(),
+        bytes: jpg_bytes.clone(),
+        parameters: json!({}),
+    };
+    let jpg_res = record_launcher_result(jpg_req).unwrap();
+    assert_eq!(jpg_res.artifact.mime_type, "image/jpeg");
+
+    // 3. pdf-ocr
+    let ocr_text = b"Texto reconhecido com OCR".to_vec();
+    let ocr_req = RecordLauncherResultRequest {
+        project_path: project_path.to_string_lossy().into_owned(),
+        document_id: original.document.id.clone(),
+        input_artifact_ids: vec![original.artifact.id.clone()],
+        tool_id: "pdf-ocr".to_owned(),
+        mime_type: "text/plain".to_owned(),
+        bytes: ocr_text.clone(),
+        parameters: json!({"ocrLanguage": "por"}),
+    };
+    let ocr_res = record_launcher_result(ocr_req).unwrap();
+    assert_eq!(ocr_res.artifact.mime_type, "text/plain");
+
+    let store = ProjectStore::open(&project_path).unwrap();
+    assert_eq!(
+        store.read_artifact_bytes(&wm_res.artifact.id).unwrap(),
+        watermark_pdf
+    );
+    assert_eq!(
+        store.read_artifact_bytes(&jpg_res.artifact.id).unwrap(),
+        jpg_bytes
+    );
+    assert_eq!(
+        store.read_artifact_bytes(&ocr_res.artifact.id).unwrap(),
+        ocr_text
+    );
+}
+
+#[test]
 fn serializes_ipc_contracts_with_stable_names() {
     let request = CreateProjectRequest {
         project_path: "C:/Projetos/Exemplo.nexohub".to_owned(),

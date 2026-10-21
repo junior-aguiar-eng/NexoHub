@@ -16,6 +16,12 @@ let cachedBuffers: { aff: Uint8Array; dic: Uint8Array } | null = null;
 let isInitializing = false;
 let initPromise: Promise<HunspellInstance> | null = null;
 
+export function setCachedDictionaryBuffers(
+  buffers: { aff: Uint8Array; dic: Uint8Array } | null,
+): void {
+  cachedBuffers = buffers;
+}
+
 function matchCase(source: string, target: string): string {
   if (!source || !target) return target;
   if (source === source.toUpperCase()) return target.toUpperCase();
@@ -112,32 +118,22 @@ export async function getHunspellInstance(
         }
 
         if (!affData || !dicData) {
-          // Ambiente Node / Vitest / Test runner
-          const fs = await import("node:fs");
-          const path = await import("node:path");
+          // Permite injeção de teste via globalThis.__nexohub_dict_loader__
+          const testLoader = (
+            globalThis as unknown as {
+              __nexohub_dict_loader__?: () => Promise<{ aff: Uint8Array; dic: Uint8Array }>;
+            }
+          ).__nexohub_dict_loader__;
 
-          const candidateAffPaths = [
-            path.resolve(process.cwd(), "public/dictionaries/pt-BR/pt_BR.aff"),
-            path.resolve(process.cwd(), "apps/client/public/dictionaries/pt-BR/pt_BR.aff"),
-            path.resolve(process.cwd(), "node_modules/dictionary-pt/index.aff"),
-            path.resolve(process.cwd(), "apps/client/node_modules/dictionary-pt/index.aff"),
-          ];
-          const candidateDicPaths = [
-            path.resolve(process.cwd(), "public/dictionaries/pt-BR/pt_BR.dic"),
-            path.resolve(process.cwd(), "apps/client/public/dictionaries/pt-BR/pt_BR.dic"),
-            path.resolve(process.cwd(), "node_modules/dictionary-pt/index.dic"),
-            path.resolve(process.cwd(), "apps/client/node_modules/dictionary-pt/index.dic"),
-          ];
-
-          const affResolved = candidateAffPaths.find((p) => fs.existsSync(p));
-          const dicResolved = candidateDicPaths.find((p) => fs.existsSync(p));
-
-          if (!affResolved || !dicResolved) {
-            throw new Error("Não foi possível localizar os arquivos de dicionário pt-BR.");
+          if (testLoader) {
+            const loaded = await testLoader();
+            affData = loaded.aff;
+            dicData = loaded.dic;
           }
+        }
 
-          affData = new Uint8Array(fs.readFileSync(affResolved));
-          dicData = new Uint8Array(fs.readFileSync(dicResolved));
+        if (!affData || !dicData) {
+          throw new Error("Não foi possível carregar os arquivos de dicionário pt-BR.");
         }
 
         cachedBuffers = { aff: affData, dic: dicData };

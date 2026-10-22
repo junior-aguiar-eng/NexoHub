@@ -474,8 +474,7 @@ export const ptBR = {
   "workspace.translate.lang.en": "Inglês",
   "workspace.translate.lang.pt": "Português (Brasil)",
   "workspace.translate.lang.es": "Espanhol",
-  "workspace.translate.offlineBadge":
-    "Modelo Neural 100% Local (NLLB-200) • Zero Envio para Nuvem",
+  "workspace.translate.offlineBadge": "Modelo Neural 100% Local (NLLB-200) • Zero Envio para Nuvem",
   "workspace.translate.downloadNotice":
     "Download inicial sob demanda (Meta NLLB-200 Q8) — após o download no cache local do navegador, funciona 100% offline.",
   "workspace.compress.title": "Resultado da Compressão",

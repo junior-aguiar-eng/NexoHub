@@ -23,6 +23,11 @@ if (typeof window !== "undefined") {
   }
 }
 
+const STANDARD_FONT_DATA_URL =
+  typeof window !== "undefined" && window.location?.origin
+    ? `${window.location.origin}/standard_fonts/`
+    : undefined;
+
 /**
  * Renderiza miniaturas de múltiplas páginas de um PDF compartilhando a mesma instância
  * de parsing do documento, evitando re-parsear o arquivo a cada página.
@@ -49,7 +54,7 @@ export async function renderPdfPagesThumbnails(
     const loadingTask = pdfjsLib.getDocument({
       data: pdfBytes.slice(),
       useSystemFonts: true,
-      standardFontDataUrl: undefined,
+      standardFontDataUrl: STANDARD_FONT_DATA_URL,
     });
     const pdf = await loadingTask.promise;
     try {
@@ -435,6 +440,7 @@ export async function extractTextFromPdf(pdfBytes: Uint8Array): Promise<string> 
     const loadingTask = pdfjsLib.getDocument({
       data: pdfBytes.slice(),
       useSystemFonts: true,
+      standardFontDataUrl: STANDARD_FONT_DATA_URL,
     });
     const pdf = await loadingTask.promise;
     try {
@@ -667,6 +673,7 @@ export async function convertPdfPagesToJpgImages(
   const loadingTask = pdfjsLib.getDocument({
     data: pdfBytes.slice(),
     useSystemFonts: true,
+    standardFontDataUrl: STANDARD_FONT_DATA_URL,
   });
   const pdf = await loadingTask.promise;
   try {

@@ -161,7 +161,11 @@ test("perfis de compressão reduzem imagem incorporada e preservam texto", async
       ) as PDFRawStream;
     widths.push((image.dict.get(PDFName.of("Width")) as PDFNumber).asNumber());
     const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-    const loadingTask = pdfjs.getDocument({ data: new Uint8Array(bytes) });
+    const loadingTask = pdfjs.getDocument({
+      data: new Uint8Array(bytes),
+      useSystemFonts: true,
+      verbosity: 0,
+    });
     const rendered = await loadingTask.promise;
     const content = await (await rendered.getPage(1)).getTextContent();
     expect(

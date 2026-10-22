@@ -186,6 +186,10 @@ export async function performBrowserOcr(
         const loadingTask = pdfjsLib.getDocument({
           data: rawBytes.slice(),
           useSystemFonts: true,
+          standardFontDataUrl:
+            typeof window !== "undefined" && window.location?.origin
+              ? `${window.location.origin}/standard_fonts/`
+              : undefined,
         });
         const pdfDoc = await loadingTask.promise;
         totalWorkerPages = pdfDoc.numPages;

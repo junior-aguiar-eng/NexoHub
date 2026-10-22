@@ -14,8 +14,8 @@ export default defineConfig({
       transform(code, id) {
         if (id.includes("hunspell-asm") || id.includes("emscripten-wasm-loader")) {
           return code.replace(
-            /import\s+\*\s+as\s+nanoid\s+from\s+['"]nanoid['"];?/g,
-            "import nanoidPkg from 'nanoid'; const nanoid = typeof nanoidPkg === 'function' ? nanoidPkg : (nanoidPkg?.nanoid || nanoidPkg?.default || ((len = 21) => Array.from({length: len}, () => Math.floor(Math.random() * 36).toString(36)).join('')));",
+            /import\s+.*?\s+from\s+['"]nanoid['"];?/g,
+            "import { nanoid as nanoidFn } from 'nanoid'; const nanoid = nanoidFn || ((len = 21) => Array.from({length: len}, () => Math.floor(Math.random() * 36).toString(36)).join(''));",
           );
         }
       },
@@ -24,6 +24,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "./src"),
+      nanoid: path.resolve(import.meta.dirname, "./src/shims/nanoid.ts"),
     },
   },
   clearScreen: false,

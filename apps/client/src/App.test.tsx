@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 
 describe("App", () => {
@@ -83,5 +83,34 @@ describe("App", () => {
       screen.queryByRole("heading", { name: /Pronto! Arquivo processado/i }),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Juntar PDF" })).toBeInTheDocument();
+  });
+
+  it("renderiza o plano de fundo parallax com nomes reais e o rodapé uniformizado", () => {
+    const { container } = render(<App />);
+
+    // Parallax backdrop existe e contém rótulos reais de ferramentas
+    const backdrop = container.querySelector(".parallax-backdrop");
+    expect(backdrop).toBeInTheDocument();
+    expect(backdrop?.textContent).toContain("Organizar PDF");
+    expect(backdrop?.textContent).toContain("Juntar PDF");
+
+    // Rodapé está uniformizado com a logo oficial e o novo layout
+    const footer = container.querySelector(".app-footer");
+    expect(footer).toBeInTheDocument();
+    expect(within(footer as HTMLElement).getByText("HUB")).toBeInTheDocument();
+    expect(within(footer as HTMLElement).getByText("NEXO")).toBeInTheDocument();
+  });
+
+  it("executa reset de rolagem da janela ao selecionar uma ferramenta", () => {
+    const scrollToSpy = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    render(<App />);
+
+    const card = screen.getByRole("heading", { name: "Comprimir PDF" }).closest("article");
+    if (!card) throw new Error("card da ferramenta não encontrado");
+
+    fireEvent.click(card);
+    expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, left: 0, behavior: "instant" });
+
+    scrollToSpy.mockRestore();
   });
 });

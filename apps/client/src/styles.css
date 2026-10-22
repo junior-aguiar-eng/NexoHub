@@ -566,6 +566,8 @@ button {
   width: min(86rem, calc(100% - 2.5rem));
   margin: 0 auto;
   padding: clamp(1.25rem, 2.5vw, 2.25rem) 0 var(--space-12);
+  position: relative;
+  z-index: 1;
 }
 
 .launcher-split {
@@ -1391,31 +1393,28 @@ button {
   justify-content: space-between;
   gap: 1.5rem;
   padding: 1.75rem clamp(1rem, 4vw, 3rem);
-  color: var(--color-ink-muted);
+  color: #64748b;
   font-size: 0.78rem;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid #e2e8f0;
   margin-top: 3.5rem;
-  background: var(--color-surface-raised);
+  background: #ffffff;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
 .app-footer__brand {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.75rem;
 }
 
-.app-footer__logo-mark {
-  display: grid;
-  place-items: center;
-  width: 1.65rem;
-  height: 1.65rem;
-  border-radius: 0.4rem;
-  background: var(--color-brand);
-  color: #04261b;
-  font-size: 0.95rem;
-  font-weight: 800;
-  font-family: var(--font-sans);
+.app-footer__logo-img {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 7px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .app-footer__brand-text {
@@ -1424,41 +1423,55 @@ button {
   line-height: 1.2;
 }
 
-.app-footer__brand-text strong {
-  font-size: 0.88rem;
-  color: var(--color-ink);
-  font-weight: 800;
+.app-footer__brand-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
 }
 
 .app-footer__brand-text small {
-  font-size: 0.7rem;
-  color: var(--color-ink-muted);
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 500;
 }
 
 .app-footer__pillars {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.75rem;
   flex-wrap: wrap;
 }
 
 .app-footer__pillar-item {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: #4b5350;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  transition: color 0.15s ease;
 }
 
 .app-footer__pillar-item svg {
-  color: #00382b;
+  color: #64748b;
+  transition: color 0.15s ease;
+}
+
+.app-footer__pillar-item:hover {
+  color: #0f172a;
+}
+
+.app-footer__pillar-item:hover svg {
+  color: #e11d48;
 }
 
 .app-footer__signature {
-  font-style: italic;
+  font-style: normal;
   font-size: 0.75rem;
-  color: #8c661d;
+  color: #64748b;
   font-weight: 500;
 }
 
@@ -7763,20 +7776,46 @@ button.capability-btn-danger:hover {
    ILOVEPDF ULTRA-CLEAN DESIGN SYSTEM
    ========================================================================== */
 
+/* Plano de Fundo Parallax Elegante & Dinâmico */
+.parallax-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  user-select: none;
+}
+
+.parallax-backdrop__item {
+  position: absolute;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  pointer-events: none;
+  will-change: transform;
+  letter-spacing: -0.01em;
+  transition: opacity 0.3s ease;
+}
+
 /* Fundo suave e layout global */
 body,
 .app-shell {
   background-color: #f8fafc;
   color: #0f172a;
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* Header Estilo iLovePDF */
+/* Header Estilo iLovePDF - Levemente ampliado para ergonomia e conforto */
 .app-header--ilovepdf {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
-  padding: 0 2rem;
+  height: 74px;
+  padding: 0 2.25rem;
   background-color: #ffffff;
   border-bottom: 1px solid #e2e8f0;
   position: sticky;
@@ -7788,7 +7827,7 @@ body,
 .ilovepdf-brand {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -7797,14 +7836,14 @@ body,
 }
 
 .brand-app-icon {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   flex: none;
-  border-radius: 7px;
+  border-radius: 8px;
 }
 
 .brand-logo-text {
-  font-size: 1.45rem;
+  font-size: 1.55rem;
   font-weight: 900;
   letter-spacing: -0.03em;
   color: #0f172a;
@@ -7827,13 +7866,13 @@ body,
 .nav-link-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.5rem 0.85rem;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
   background: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   color: #1e293b;
-  font-size: 0.8125rem;
+  font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -8048,8 +8087,8 @@ body,
 
 .tool-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 1.5rem;
 }
 
 .tool-card {
@@ -8057,8 +8096,8 @@ body,
   flex-direction: column;
   background-color: #ffffff;
   border: 1px solid #eef2f6;
-  border-radius: 14px;
-  padding: 1.5rem;
+  border-radius: 16px;
+  padding: 1.75rem;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
@@ -8072,28 +8111,29 @@ body,
   border-color: #cbd5e1;
 }
 
-.tool-card__icon-wrapper {
+.tool-card__icon-wrapper,
+.tool-card__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  margin-bottom: 1.1rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
 }
 
 .tool-card__title {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #0f172a;
-  margin: 0 0 0.4rem 0;
+  margin: 0 0 0.5rem 0;
   line-height: 1.3;
 }
 
 .tool-card__desc {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   color: #64748b;
-  line-height: 1.45;
+  line-height: 1.5;
   margin: 0;
 }
 

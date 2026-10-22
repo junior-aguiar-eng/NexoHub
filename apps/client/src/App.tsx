@@ -1,5 +1,7 @@
 import { Database, FileCheck, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import nexohubIcon from "@/assets/nexohub-icon.png";
+import { ParallaxBackground } from "@/components/ParallaxBackground";
 import { CommandPalette } from "@/features/launcher/CommandPalette";
 import { DedicatedToolView } from "@/features/launcher/DedicatedToolView";
 import { resolveLauncherTools } from "@/features/launcher/data";
@@ -103,6 +105,9 @@ export function App() {
   // Sincroniza a URL do navegador com a ferramenta ativa
   useEffect(() => {
     function handlePopState() {
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      }
       const pathname = window.location.pathname.replace(/\/$/, "");
       const matchedToolId = ROUTE_TOOL_MAP[pathname];
       if (matchedToolId) {
@@ -122,6 +127,9 @@ export function App() {
   const selectToolWithUrl = (tool: LauncherTool | null, files?: File[]) => {
     setInitialFilesForTool(files || []);
     setActiveDedicatedTool(tool);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
     if (tool) {
       const targetRoute = TOOL_ROUTE_MAP[tool.id] || `/${tool.id}`;
       if (window.location.pathname !== targetRoute) {
@@ -166,6 +174,7 @@ export function App() {
 
   return (
     <div className="app-shell">
+      <ParallaxBackground tools={dynamicTools} />
       <a className="skip-link" href="#main-content">
         {translate("app.skip")}
       </a>
@@ -229,11 +238,12 @@ export function App() {
 
       <footer className="app-footer">
         <div className="app-footer__brand">
-          <span className="app-footer__logo-mark" aria-hidden="true">
-            N
-          </span>
+          <img className="app-footer__logo-img" src={nexohubIcon} alt="" aria-hidden="true" />
           <div className="app-footer__brand-text">
-            <strong>NexoHub</strong>
+            <span className="app-footer__brand-title">
+              <strong>NEXO</strong>
+              <span className="brand-logo-accent">HUB</span>
+            </span>
             <small>{translate("brand.footerTagline")}</small>
           </div>
         </div>

@@ -15,14 +15,20 @@ offline no computador do usuário.
 
 ## Experiência do Produto
 
-- **Hub de Ferramentas (Home):** catálogo de ferramentas práticas organizado por categorias.
-  Só são anunciadas como executáveis as combinações de ferramenta e plataforma com executor
-  disponível; os demais comandos podem existir no core sem aparecer na vitrine.
-- **Tela Dedicada por Ferramenta:** experiência sem fricção ao estilo iLovePDF:
+- **Hub de Ferramentas (Home):** catálogo de ferramentas práticas organizado em 5 categorias ergonômicas:
+  - **Organizar PDF:** Organizar páginas, Juntar múltiplos PDFs, Dividir intervalos, Rotacionar páginas e Numeração automática de páginas.
+  - **Otimizar PDF:** Comprimir PDF com perfis reais de compactação estrutural e imagens.
+  - **Converter PDF:** Imagens (JPG/PNG/WebP) para PDF e PDF para imagens JPG de alta resolução (ZIP).
+  - **Texto e OCR:** Reconhecimento óptico de caracteres (OCR) local, Comparação semântica de textos, Revisão ortográfica/morfológica contextual e Tradução rápida offline.
+  - **Segurança:** Inserção de Marca d'água com carimbo textual configurável.
+  
+  *Critério estrito de vitrine:* Somente são anunciadas como executáveis as ferramentas com executor disponível e funcional na plataforma atual (13 ferramentas ativas). Ferramentas em fase de homologação técnica (como conversores complexos de/para Word, proteção com senha ou extração bruta de imagens) permanecem ocultas da vitrine até sua integração completa.
+
+- **Tela Dedicada por Ferramenta (`DedicatedToolView`):** experiência sem fricção ao estilo iLovePDF:
   1. O usuário clica na ferramenta desejada.
-  2. Acessa uma tela focada com botão amplo de seleção/arraste de arquivo PDF.
+  2. Acessa uma tela focada com botão amplo de seleção/arraste de arquivo PDF ou texto.
   3. Ajusta as opções efetivamente usadas pelo executor.
-  4. Executa a tarefa localmente e baixa o arquivo resultante.
+  4. Executa a tarefa localmente (na memória do navegador ou no core Rust) e baixa o arquivo resultante instantaneamente.
 
 ## Garantias do produto
 

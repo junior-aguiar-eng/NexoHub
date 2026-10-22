@@ -55,19 +55,21 @@ O **NexoHub** combina a agilidade, elegância e foco operacional do **iLovePDF**
 
 | Ferramenta | Descrição | Web | Windows Desktop | Motor / Executor |
 | :--- | :--- | :---: | :---: | :--- |
-| **Organizar PDF** | Reordenar, girar e excluir páginas visualmente | ✅ Em memória | ✅ Nativo (Rust Core) | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
-| **Juntar PDF** | Combinar múltiplos documentos em um só | ✅ Em memória | ✅ Nativo (Rust Core) | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
-| **Dividir PDF** | Extrair páginas específicas ou separar intervalos | ✅ Em memória | ✅ Nativo (Rust Core) | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
-| **Rotacionar PDF** | Girar páginas em 90°, 180° ou 270° | ✅ Em memória | ✅ Nativo (Rust Core) | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
-| **Comprimir PDF** | Reduzir tamanho com perfis reais de compressão | ✅ Em memória | ✅ Nativo (Rust Core) | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
-| **Comparar Textos** | Identificar adições, remoções e diff semântico | ✅ Em memória | ✅ Nativo (Rust Core) | Motor semântico TypeScript / Rust Core |
-| **Imagem para PDF** | Consolidar imagens JPG, PNG e WEBP em PDF | 🔄 Em breve | 🔄 Próxima fase | Motor de imagens nativo |
-| **PDF para JPG** | Converter páginas de PDF em imagens de alta definição | 🔄 Em breve | 🔄 Próxima fase | Motor de renderização nativo |
-| **Marca d'Água** | Carimbo de texto personalizável, opacidade e rotação | 🔄 Em breve | 🔄 Próxima fase | `pdf-lib` / Motor Rust |
-| **Número de Páginas** | Numeração automática de rodapé e cabeçalho | 🔄 Em breve | 🔄 Próxima fase | `pdf-lib` / Motor Rust |
-| **Reconhecer Texto (OCR)** | Converter digitalizações em texto pesquisável | 🔄 Em breve | 🔄 Sidecar Python | Tesseract OCR / Sidecar isolado |
-| **Revisar Texto** | Revisão ortográfica e sugestões morfológicas | 🔄 Em breve | 🔄 Sidecar Local | Motor contextual / Hunspell / LanguageTool |
-| **Traduzir Texto** | Tradução rápida entre idiomas de forma offline | 🔄 Em breve | 🔄 Sidecar Local | Modelos locais quantizados |
+| **Organizar PDF** | Reordenar, girar e excluir páginas visualmente | ✅ Disponível | ✅ Instalado | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
+| **Juntar PDF** | Combinar múltiplos documentos em um só | ✅ Disponível | ✅ Instalado | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
+| **Dividir PDF** | Extrair páginas específicas ou separar intervalos | ✅ Disponível | ✅ Instalado | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
+| **Rotacionar PDF** | Girar páginas em 90°, 180° ou 270° | ✅ Disponível | ✅ Instalado | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
+| **Comprimir PDF** | Reduzir tamanho com perfis reais de compressão | ✅ Disponível | ✅ Instalado | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
+| **Imagem para PDF** | Consolidar fotos JPG, PNG e WebP em documento PDF | ✅ Disponível | ✅ Instalado | `pdf-lib` / Canvas local |
+| **PDF para JPG** | Converter páginas de PDF em imagens JPG de alta qualidade | ✅ Disponível (ZIP) | ✅ Instalado | PDF.js + ZIP em memória |
+| **Inserir Marca d'Água** | Carimbo de texto customizável com ângulo e opacidade | ✅ Disponível | ✅ Instalado | `pdf-lib` / Motor Rust |
+| **Número de Páginas** | Numeração automática de rodapé e cabeçalho | ✅ Disponível | ✅ Instalado | `pdf-lib` / Motor Rust |
+| **Reconhecer Texto (OCR)** | Converter digitalizações e PDFs em texto pesquisável | ✅ Disponível | ✅ Instalado | Tesseract.js (Web) / RapidOCR (Desktop) |
+| **Comparar Textos** | Identificar adições, remoções e diff semântico | ✅ Disponível | ✅ Instalado | Motor semântico TypeScript / Rust Core |
+| **Revisar Texto** | Revisão ortográfica e sugestões morfológicas | ✅ Disponível | ✅ Instalado | Motor contextual / Hunspell / LanguageTool |
+| **Traduzir Texto** | Tradução rápida de textos de forma offline | ✅ Disponível | ✅ Instalado | Motor léxico / CTranslate2 |
+
+> 💡 **Todas as 13 ferramentas acima estão 100% operacionais, integradas à interface e prontas para uso.** Apenas ferramentas de conversão pesada de/para Word (`pdf-to-word`, `word-to-pdf`), proteção com senha (`pdf-protect`) e extração de imagens embutidas (`pdf-extract-images`) estão em homologação técnica e permanecem deliberadamente ocultas da vitrine até sua conclusão.
 
 ---
 

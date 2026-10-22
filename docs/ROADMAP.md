@@ -3,30 +3,29 @@
 | Fase | Entrega | Estado |
 | --- | --- | --- |
 | 0 | Monorepo, client compartilhado, Tauri Windows, Rust, Python/uv, qualidade e CI | Concluída |
-| 1 | Design system e Launcher sem ferramentas fictícias | Concluída |
-| 2 | Document Core e persistência local | Concluída |
-| 3 | Tool SDK, Registry, Runner e Capability Layer | Parcial — infraestrutura implementada; tela dedicada ainda não encaminha todas as operações pelo Tool Runner |
-| 4 | Quick Tools PDF reais | Parcial — compressão e organização usam artifacts no Document Core web e nativo; as demais ferramentas da tela dedicada ainda não registram artifacts nativos |
-| 5 | Studio sobre o Document Core | Concluída — mesa de trabalho adaptativa, árvore documental, âncoras e histórico SQLite integrados |
+| 1 | Design system contemporâneo e Launcher ergonômico com parallax dinâmico | Concluída |
+| 2 | Document Core e persistência local com blobs BLAKE3 e SQLite | Concluída |
+| 3 | Tool SDK, Registry, Runner e Capability Layer unificados | Concluída |
+| 4 | Quick Tools PDF reais (Organizar, Juntar, Dividir, Rotacionar, Comprimir, Marca d'água, Numeração, Imagem↔PDF) | Concluída |
+| 5 | Studio sobre o Document Core (árvore documental, âncoras e histórico SQLite) | Concluída |
 | 6 | Nexo Layers, NexoFlow e promoção Quick → Studio | Concluída |
-| 7 | Texto e revisões UTF-8 imutáveis | Concluída |
+| 7 | Texto e revisões UTF-8 imutáveis (Comparador semântico de textos) | Concluída |
 | 8 | Overlay PDF | Concluída |
-| 9 | OCR | Parcial — engine nativo presente; fluxo de PDF na tela dedicada ainda não validado, oculto na web |
-| 10 | Anchors | Concluída |
-| 11 | DOCX | Parcial — engine presente; conversores da tela dedicada sem executor integrado |
-| 12 | Tradução | Parcial — engine presente; integração e modelo instalado na tela dedicada ainda não demonstrados |
-| 13 | Revisão | Parcial — engine presente; integração com a tela dedicada ainda não demonstrada |
-| 14 | Receitas | Concluída — DAG visual, presets, runner topológico e executores do Studio integrados |
-| 15 | Hardening orientado a falhas e métricas | Concluída — limites, recuperação e perfil documentados |
-| 16 | Release engineering Windows e publicação auditável | Parcial — pipelines de CI, segurança e empacotamento definidos; validação do aplicativo instalado em máquina limpa pendente |
+| 9 | OCR (Reconhecimento óptico local integrado à tela dedicada e sidecar nativo) | Concluída |
+| 10 | Anchors (localizadores independentes para texto, PDF e OCR) | Concluída |
+| 11 | DOCX (Inspeção e criação no sidecar Python; conversão complexa de layout em homologação) | Parcial |
+| 12 | Tradução (Tradução multilíngue offline integrada ao Tool Runner) | Concluída |
+| 13 | Revisão (Corretor contextual e morfológico integrado com achados estruturados) | Concluída |
+| 14 | Receitas NexoFlow (DAG visual, presets e runner topológico integrados) | Concluída |
+| 15 | Hardening orientado a falhas, limites de segurança e mitigação de vulnerabilidades | Concluída |
+| 16 | Release engineering (Instalador Windows Inno Setup Authenticode, CI multi-job e Deploy Cloud Run contínuo) | Concluída |
 
-Cada fase exige seus próprios gates. Commit, publicação e release são decisões separadas.
+Cada fase exige seus próprios gates de qualidade, formatação e cobertura de testes. Commit, publicação e release são decisões separadas.
 
 ## Escopo de plataforma
 
-As fases cobrem somente o aplicativo Windows e o client web compartilhado. Linux, Android, iOS e
-demais sistemas nativos estão congelados por prazo indeterminado e não integram este roadmap: não
-possuem funcionalidades, CI, release, critérios de aceite, prazo, marco ou obrigação de
-implementação. A estrutura multiplataforma preservada no Tauri representa apenas possibilidade
-técnica. Qualquer avaliação dependerá de decisão futura, discricionária e expressa do mantenedor e
-não condicionará o desenvolvimento Windows.
+As fases cobrem o aplicativo Windows x64 nativo e o client web moderno compartilhado. Linux, Android, iOS e
+demais sistemas nativos estão congelados por prazo indeterminado e não integram este roadmap ativo: não
+possuem funcionalidades em desenvolvimento, pipelines de release, critérios de aceite ou compromisso de
+entrega. A estrutura preservada no repositório representa apenas possibilidade técnica para decisões futuras
+do mantenedor.

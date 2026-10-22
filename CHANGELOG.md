@@ -3,6 +3,20 @@
 Todas as alterações relevantes serão registradas neste arquivo. O projeto usa versionamento
 semântico e os canais `alpha`, `beta`, `rc` e estável.
 
+## [0.1.1] - 2026-10-22
+
+### Adicionado
+
+- **Catálogo Expandido com 13 Ferramentas Reais**: Ativação e consolidação de executores no client e no core para Imagem para PDF (`images-to-pdf`), PDF para JPG (`pdf-to-jpg`), Marca d'Água (`pdf-watermark`), Numeração de Páginas (`pdf-page-numbers`), Reconhecimento Óptico de Caracteres (`pdf-ocr`), Revisão Textual (`text-review`) e Tradução Rápida Offline (`text-translate`).
+- **Plano de Fundo Parallax Elegante (`ParallaxBackground`)**: Tipografia flutuante discreta com nomes reais das ferramentas em 3 camadas de profundidade, suavizada por interpolação LERP em `requestAnimationFrame` e com respeito a `prefers-reduced-motion`.
+- **Reset de Rolagem Ergonômico**: Posicionamento automático da viewport no topo da tela (`window.scrollTo`) ao selecionar ferramentas da grade ou navegar pelo histórico do navegador.
+
+### Modificado
+
+- **Uniformização Visual & Design System**: Alinhamento estético entre cabeçalho e rodapé com a identidade oficial do NexoHub (preto/coral `#e11d48`), eliminando resquícios de paletas legadas.
+- **Ergonomia Ampliada**: Cabeçalho elevado para 74px e blocos de ferramentas ampliados para largura mínima de 270px, padding de 1.75rem e ícones destacados de 48px.
+- **Sincronização Integral da Documentação**: Atualização profunda de `README.md`, `docs/PRODUCT.md`, `docs/DESIGN-SYSTEM.md`, `docs/ROADMAP.md`, `docs/ARCHITECTURE.md` e `docs/TOOL-SPEC.md`, eliminando status obsoletos e refletindo fielmente a capacidade operacional real da plataforma.
+
 ## [0.1.0] - 2026-09-30
 
 ### Adicionado

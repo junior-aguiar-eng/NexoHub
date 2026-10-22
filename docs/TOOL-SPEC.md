@@ -31,25 +31,28 @@ são canceláveis por `AbortSignal`; sucesso devolve artifacts derivados para pe
 Quick e Studio reutilizam o mesmo manifesto e executor; indisponibilidade é consultada pela
 Capability Layer antes da execução.
 
-Os manifestos das ferramentas planejadas já estão registrados para permitir descoberta e
-indisponibilidade explícita. Eles não implementam comportamento documental: os executores reais
-começam na Fase 4.
+Os manifestos das ferramentas descrevem entradas, saídas, parâmetros e capacidades exigidas. No
+Launcher e no Studio, 13 ferramentas possuem executores consolidados no client (`pdf-engine`,
+`browser-ocr`, `browser-reviewer`, `browser-translator`) e no core nativo.
 
-## Fase 4 — executores PDF
+## Executores Documentais PDF
 
-`pdf-compress` é o primeiro executor real. Recebe `projectPath`, `documentId`, `artifactId` e
-`compressionLevel` entre 1 e 9. A entrada deve ser um artifact `application/pdf` pertencente ao
-documento. O resultado contém o artifact derivado e a operação `pdf-compress` persistida no grafo.
-PDF inválido retorna `PDF_PROCESSING`; caminhos, IDs e tipos incompatíveis usam os códigos estáveis
-do Document Core.
-
-Os três perfis da interface mapeiam para os níveis nativos 3 (baixa), 6 (recomendada) e 9
-(extrema). Além da recompressão estrutural, o executor reencoda imagens `DCTDecode` e
-`FlateDecode` elegíveis, com qualidade JPEG e dimensão máxima distintas por perfil. Imagens com
-máscara, espaços de cor complexos ou parâmetros de decodificação não são alteradas. O navegador
-aplica os mesmos perfis a imagens RGB elegíveis. Se a regravação não reduzir o arquivo, o
-derivado preserva os bytes de entrada; o original importado permanece imutável. PDFs com
-assinatura digital são recusados, pois a regravação invalidaria a assinatura.
+- **`pdf-compress`**: Recebe o PDF e aplica perfis de compressão estrutural e reencodagem de imagens
+  (baixa, recomendada e extrema). O core Rust e o navegador preservam o original caso a recompressão
+  não reduza o tamanho. PDFs com assinatura digital são preservados intactos.
+- **`pdf-organize`**: Permite reordenar, girar e excluir páginas visualmente. Gera um novo artifact PDF
+  com as páginas preservadas na sequência definida.
+- **`pdf-merge`**: Combina dois ou mais arquivos PDF em uma única saída consolidada.
+- **`pdf-split`**: Extrai páginas selecionadas ou intervalos definidos (`start-end`), gerando arquivos
+  individuais ou múltiplos artifacts.
+- **`pdf-rotate`**: Aplica rotação uniforme ou específica de 90°, 180° ou 270° nas páginas.
+- **`images-to-pdf`**: Converte e consolida sequências de imagens JPG, PNG ou WebP em um novo documento PDF
+  com orientação e margens configuráveis.
+- **`pdf-to-jpg`**: Renderiza cada página do documento PDF em imagens JPG de alta resolução, empacotadas
+  em arquivo ZIP para download ou exportação.
+- **`pdf-watermark`**: Aplica carimbo textual personalizado com controle de ângulo, opacidade, cor e escala.
+- **`pdf-page-numbers`**: Insere numeração tipográfica com formatações variadas (`Página X de Y`, `X/Y`, `X`)
+  em posições pré-definidas no cabeçalho ou rodapé.
 
 ## Fase 7 — texto
 

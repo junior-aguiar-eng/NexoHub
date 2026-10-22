@@ -61,13 +61,14 @@ O Tool Registry descreve ferramentas, superfícies, entradas, saídas, capacidad
 Capability Layer escolhe adapters de navegador, nativos ou Python sem vazar detalhes para a UI.
 O `@nexohub/tool-registry` é o catálogo canônico consumido pelas superfícies; o
 `@nexohub/tool-sdk` valida manifestos, antecipa indisponibilidade e encaminha execuções canceláveis
-ao adapter declarado. O registro dos manifestos não implica que seus executores já estejam
-implementados.
+ao adapter declarado.
 
-O primeiro executor da Fase 4 é `pdf-compress`, implementado no core Rust e exposto pelo comando
-Tauri `compress_pdf`. O executor lê o blob do artifact informado, limita a descompressão de streams
-durante o parsing, gera um novo PDF e persiste o resultado como artifact derivado ligado à operação.
-O original e o caminho externo de importação não são alterados.
+O ecossistema conta com 13 ferramentas plenamente integradas e executáveis na vitrine do Launcher:
+- **Manipulação documental de PDF:** `pdf-organize`, `pdf-merge`, `pdf-split`, `pdf-rotate`, `pdf-compress`,
+  `images-to-pdf`, `pdf-to-jpg`, `pdf-watermark` e `pdf-page-numbers` (executores em `pdf-lib` no
+  navegador e motor nativo Rust no desktop com persistência e controle de integridade).
+- **Análise e inteligência textual:** `text-compare` (diff semântico), `text-review` (revisão ortográfica e
+  morfológica contextual), `pdf-ocr` (extração óptica local de texto) e `text-translate` (tradução offline entre múltiplos idiomas).
 
 O Studio inicia como uma superfície do mesmo client, composta por árvore documental, abas, canvas e
 Inspector. O client depende de `DocumentCorePort`, tipada pelos contratos compartilhados; adapters

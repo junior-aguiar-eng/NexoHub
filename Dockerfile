@@ -36,12 +36,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     libssl3 \
-    python3 \
-    python3-pip \
-    python3-venv \
     libgl1 \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
+
+# Copia binário oficial do uv para gerenciar hermeticamente o runtime Python
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # Cria usuário não-root por segurança
 RUN useradd -m -u 1000 -s /bin/bash appuser
@@ -53,15 +53,16 @@ COPY --from=frontend-builder /app/apps/client/dist /app/dist
 COPY --from=rust-builder /app/target/release/nexohub-server /app/nexohub-server
 COPY engines/python /app/engines/python
 
-# Configura ambiente virtual Python com dependências do sidecar
-RUN python3 -m venv /app/.venv && \
-    /app/.venv/bin/pip install --no-cache-dir /app/engines/python
+# Configura ambiente virtual Python com a versão exata do uv.lock
+ENV UV_PYTHON_INSTALL_DIR=/opt/python
+RUN uv sync --locked --project /app/engines/python
 
-RUN chown -R appuser:appuser /app
+RUN chown -R appuser:appuser /app /opt/python 2>/dev/null || chown -R appuser:appuser /app
 
 USER appuser
 
-ENV PATH="/app/.venv/bin:$PATH"
+ENV PATH="/app/engines/python/.venv/bin:$PATH"
+ENV NEXOHUB_PYTHON_EXECUTABLE="/app/engines/python/.venv/bin/python"
 ENV HOST=0.0.0.0
 ENV PORT=8080
 ENV STATIC_DIR=/app/dist

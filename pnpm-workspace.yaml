@@ -16,3 +16,5 @@ overrides:
   undici: "^8.11.2"
   sharp: "-"
   "@img/sharp-win32-x64": "-"
+  nanoid: ">=3.3.18"
+  vite: "^8.2.4"

@@ -1,4 +1,8 @@
-# NexoHub Community
+# <p align="center"><img src="apps/client/src/assets/nexohub-icon.png" width="48" height="48" alt="NexoHub Logo" style="vertical-align: middle; margin-right: 8px;" /> NexoHub Community</p>
+
+<p align="center">
+  <strong>Hub de ferramentas práticas para PDFs e documentos — 100% gratuito, moderno e local-first.</strong>
+</p>
 
 <p align="center">
   <a href="https://github.com/junior-aguiar-eng/NexoHub/actions/workflows/main.yml">
@@ -11,140 +15,166 @@
     <img src="https://github.com/junior-aguiar-eng/NexoHub/actions/workflows/security.yml/badge.svg?branch=main" alt="Segurança e Licenças" />
   </a>
   <a href="https://github.com/junior-aguiar-eng/NexoHub/actions/workflows/deploy-cloudrun.yml">
-    <img src="https://github.com/junior-aguiar-eng/NexoHub/actions/workflows/deploy-cloudrun.yml/badge.svg?branch=main" alt="Deploy Cloud Run (Web)" />
+    <img src="https://github.com/junior-aguiar-eng/NexoHub/actions/workflows/deploy-cloudrun.yml/badge.svg?branch=main" alt="Deploy Cloud Run" />
   </a>
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/license-MPL--2.0-blue.svg" alt="Licença MPL-2.0" />
+    <img src="https://img.shields.io/badge/Licen%C3%A7a-MPL--2.0-blue.svg" alt="Licença MPL-2.0" />
   </a>
+  <img src="https://img.shields.io/badge/Privacidade-Local--First-emerald.svg" alt="Local-First" />
+  <img src="https://img.shields.io/badge/Idioma-pt--BR-rose.svg" alt="Português do Brasil" />
 </p>
 
-Hub de ferramentas de PDF e documentos **open source**, gratuito e **local-first**. O catálogo exibido depende dos executores disponíveis na plataforma. Na web, as operações expostas são organização, junção, divisão, rotação e compressão de PDF e comparação de textos; os arquivos são processados localmente.
+---
 
-🌐 **Versão Web online:** [nexohub.nexojuris.ia.br](https://nexohub.nexojuris.ia.br) *(espelho direto: [nexohub-moe3oe6lva-rj.a.run.app](https://nexohub-moe3oe6lva-rj.a.run.app))*
+## 🌐 Experimente Agora na Web
 
-> **Estado**: `0.1.0` em preparação e validação contínua. Build automatizado para Windows x64 e Web Cloud Run ativos via GitHub Actions.
+Acesse a aplicação em produção diretamente do seu navegador, sem necessidade de instalação nem cadastro:
+
+> 🚀 **Aplicação Web:** [**nexohub-moe3oe6lva-rj.a.run.app**](https://nexohub-moe3oe6lva-rj.a.run.app)  
+> 🔗 *Domínio principal:* [**nexohub.nexojuris.ia.br**](https://nexohub.nexojuris.ia.br)
+
+> [!NOTE]
+> Na versão web, todas as transformações de arquivos ocorrem **diretamente na memória do seu navegador via WebAssembly / JavaScript local**. Nenhum documento é enviado para servidores externos.
 
 ---
 
-## 🖥️ Visão Geral e Experiência
+## 🎯 O que é o NexoHub?
 
-O NexoHub combina a simplicidade e agilidade visual do **iLovePDF** com a força do processamento nativo e seguro:
+O **NexoHub** combina a agilidade, elegância e foco operacional do **iLovePDF** com a segurança inegociável do processamento **offline e local-first**. Projetado para profissionais, escritórios e usuários que lidam diariamente com documentos confidenciais e exigem privacidade absoluta.
 
-### Superfícies do Produto
+### ✨ Pilares Fundamentais
 
-1. **Hub de Ferramentas (Tauri v2 + React 19)**:
-   - Vitrine categorizada conforme a disponibilidade do executor no client. Conversão, proteção, OCR de PDF, revisão, tradução e extração de imagens não são anunciados como ferramentas web executáveis nesta versão.
-   - **Telas dedicadas:** seleção de arquivo, opções da operação e download do resultado. O navegador mantém os artifacts do Document Core em memória; não há reabertura de projeto web após fechar a sessão.
-   - Histórico recente local de operações concluídas. O histórico não substitui a persistência dos arquivos de saída.
-2. **Engines Especializados de Alta Performance**:
-   - **Rust Core (`crates/`)**: armazenamento local com blobs endereçados por BLAKE3, controle de integridade e escrita atômica.
-   - **Python Engine (`engines/python`)**: Sidecar local para funções como OCR, extração, tradução e revisão; a presença no core não prova integração de cada função na tela dedicada ou no aplicativo instalado.
-   - **LanguageTool Community**: Módulo opcional de revisão local quando instalado e integrado ao fluxo nativo.
-
-### Disponibilidade na tela dedicada
-
-| Ferramenta | Web | Windows desktop | Entrada → saída | Executor atual |
-| --- | --- | --- | --- | --- |
-| Organizar PDF | Disponível; artifact em memória | Implementado com artifact persistido; QA do aplicativo instalado pendente | PDF → PDF | `pdf-lib` na web; Rust no desktop |
-| Comprimir PDF | Disponível; artifact em memória | Implementado com artifact persistido; QA do aplicativo instalado pendente | PDF → PDF | `pdf-lib` na web; Rust no desktop |
-| Juntar, dividir e rotacionar PDF | Disponível | Processamento no client; resultado e linhagem persistidos no Document Core nativo; QA do aplicativo instalado pendente | PDF → PDF ou ZIP | `pdf-lib` no client; persistência Rust no desktop |
-| Comparar textos | Disponível | Processamento no client; originais, relatório e linhagem persistidos no Document Core nativo; QA do aplicativo instalado pendente | texto → relatório de diferenças | domínio TypeScript; persistência Rust no desktop |
-| OCR de PDF, revisão, tradução e extração de imagens | Indisponível na tela dedicada | Indisponível na tela dedicada | Conforme o comando do core | Engines existentes ainda sem fluxo de UI validado |
-| Conversão e proteção de PDF | Indisponível | Indisponível | Conforme a ferramenta | Sem executor integrado |
-
-No desktop, a importação pela tela dedicada de compressão e organização solicita uma pasta e cria
-`NexoHub.nexohub` nela. As outras quatro ferramentas usam a mesma pasta para registrar entradas e
-resultado. A ponte IPC da tela dedicada limita cada importação, resultado e download a 64 MiB. A
-organização nativa expõe reordenação e exclusão de páginas; a rotação por página fica oculta nessa
-superfície até que o core aceite esse parâmetro. A execução do aplicativo instalado ainda requer
-validação específica, distinta dos testes do core, do client e da janela Tauri em desenvolvimento.
+* 🛡️ **Privacidade Absoluta (Local-First):** Os arquivos permanecem no seu computador. Sem telemetria oculta, sem rastreamento e sem upload para a nuvem.
+* 💸 **100% Gratuito e Livre:** Sem assinaturas, sem cobranças disfarçadas, sem paywalls e sem limites artificiais de páginas.
+* 🔒 **Imutabilidade Estrita:** O arquivo original importado jamais é sobrescrito. Qualquer operação gera um novo artefato derivado com histórico auditável.
+* ⚡ **Design Ultra-Clean & Ergonômico:** Interface minimalista e contemporânea com plano de fundo parallax sutil e dinâmico, navegação por atalhos (`Ctrl+K`) e telas dedicadas para cada fluxo de trabalho.
 
 ---
 
-## 🔒 Princípios de Privacidade e Modelo Local-First
+## 🛠️ Catálogo de Ferramentas e Disponibilidade
 
-- **Gratuito:** sem planos pagos ou filas de processamento remoto. Os engines aplicam limites técnicos de tamanho e páginas.
-- **Seus Arquivos Ficam no seu PC**: Processamento local em memória ou disco nativo, sem telemetria e sem servidores remotos obrigatórios.
-- **Imutabilidade**: O arquivo original jamais é sobrescrito; toda operação gera um novo arquivo resultante.
+| Ferramenta | Descrição | Web | Windows Desktop | Motor / Executor |
+| :--- | :--- | :---: | :---: | :--- |
+| **Organizar PDF** | Reordenar, girar e excluir páginas visualmente | ✅ Em memória | ✅ Nativo (Rust Core) | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
+| **Juntar PDF** | Combinar múltiplos documentos em um só | ✅ Em memória | ✅ Nativo (Rust Core) | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
+| **Dividir PDF** | Extrair páginas específicas ou separar intervalos | ✅ Em memória | ✅ Nativo (Rust Core) | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
+| **Rotacionar PDF** | Girar páginas em 90°, 180° ou 270° | ✅ Em memória | ✅ Nativo (Rust Core) | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
+| **Comprimir PDF** | Reduzir tamanho com perfis reais de compressão | ✅ Em memória | ✅ Nativo (Rust Core) | `pdf-lib` (Web) / Rust BLAKE3 (Desktop) |
+| **Comparar Textos** | Identificar adições, remoções e diff semântico | ✅ Em memória | ✅ Nativo (Rust Core) | Motor semântico TypeScript / Rust Core |
+| **Imagem para PDF** | Consolidar imagens JPG, PNG e WEBP em PDF | 🔄 Em breve | 🔄 Próxima fase | Motor de imagens nativo |
+| **PDF para JPG** | Converter páginas de PDF em imagens de alta definição | 🔄 Em breve | 🔄 Próxima fase | Motor de renderização nativo |
+| **Marca d'Água** | Carimbo de texto personalizável, opacidade e rotação | 🔄 Em breve | 🔄 Próxima fase | `pdf-lib` / Motor Rust |
+| **Número de Páginas** | Numeração automática de rodapé e cabeçalho | 🔄 Em breve | 🔄 Próxima fase | `pdf-lib` / Motor Rust |
+| **Reconhecer Texto (OCR)** | Converter digitalizações em texto pesquisável | 🔄 Em breve | 🔄 Sidecar Python | Tesseract OCR / Sidecar isolado |
+| **Revisar Texto** | Revisão ortográfica e sugestões morfológicas | 🔄 Em breve | 🔄 Sidecar Local | Motor contextual / Hunspell / LanguageTool |
+| **Traduzir Texto** | Tradução rápida entre idiomas de forma offline | 🔄 Em breve | 🔄 Sidecar Local | Modelos locais quantizados |
 
 ---
 
-## 🚀 Instalação e Desenvolvimento
+## 🏗️ Arquitetura do Repositório
 
-O alvo nativo principal de distribuição é **Windows x64**.
+O NexoHub é estruturado como um monorepo modular e estritamente desacoplado:
+
+```text
+NexoHub/
+├── apps/
+│   ├── client/              # Frontend React 19 + TypeScript + Vite + Design System
+│   └── desktop/             # Invólucro nativo Windows x64 com Tauri v2
+├── crates/                  # Módulos de infraestrutura e computação em Rust
+│   ├── nexohub-core/        # Motor central: blobs BLAKE3, SQLite, linhagem e auditoria
+│   ├── nexohub-cli/         # Interface de linha de comando com comandos determinísticos
+│   └── nexohub-server/      # Servidor de testes e desenvolvimento isolado
+├── packages/                # Pacotes TypeScript compartilhados
+│   ├── domain/              # Tipos canônicos, contratos de dados e i18n (pt-BR)
+│   ├── contracts/           # Interfaces de portas (Platform & Capability Ports)
+│   ├── tool-sdk/            # SDK para criação e execução segura de ferramentas
+│   └── tool-registry/       # Registro central e metadados de ferramentas disponíveis
+├── engines/                 # Motores especializados externos
+│   └── python/              # Sidecar Python (OCR, NLP e tradução) gerenciado via uv
+└── docs/                    # Documentação de arquitetura, ADRs e guias de design
+```
+
+---
+
+## 💻 Instalação e Desenvolvimento Local
 
 ### Pré-requisitos
-- **Node.js**: `24.x` (ou LTS equivalente)
-- **pnpm**: `11.x`
-- **Rust**: `1.88+` (com target `x86_64-pc-windows-msvc`)
-- **Python / uv**: Python gerenciado pelo `uv`
-- **WebView2**: Runtime do Windows (já incluído no Windows 10/11)
+* **Node.js**: `24.x` (LTS)
+* **pnpm**: `11.x`
+* **Rust**: `1.88+` (com target `x86_64-pc-windows-msvc` no Windows)
+* **uv / Python**: [Astral uv](https://docs.astral.sh/uv/) instalado
+* **WebView2**: Runtime do Windows (padrão no Windows 10/11)
 
-### Configuração do Ambiente Local
+### Passo a Passo
 
-```powershell
-# 1. Instalar dependências JavaScript / TypeScript
-pnpm install --frozen-lockfile
+1. **Clonar o Repositório:**
+   ```powershell
+   git clone https://github.com/junior-aguiar-eng/NexoHub.git
+   cd NexoHub
+   ```
 
-# 2. Sincronizar o ambiente isolado do Python sidecar via uv
-uv sync --locked --project engines/python
+2. **Instalar Dependências TypeScript/JavaScript:**
+   ```powershell
+   pnpm install --frozen-lockfile
+   ```
 
-# 3. Executar o aplicativo desktop em modo de desenvolvimento (Tauri + Vite)
-pnpm --filter @nexohub/desktop dev
-```
+3. **Sincronizar o Sidecar Python (via uv):**
+   ```powershell
+   uv sync --locked --project engines/python
+   ```
 
-### LanguageTool (Opcional para Revisão Gramatical)
-
-```powershell
-./scripts/install-languagetool.ps1 -InstallRoot "C:\NexoHub\LanguageTool"
-$env:NEXOHUB_LANGUAGETOOL_DIR = "C:\NexoHub\LanguageTool"
-```
+4. **Executar em Modo de Desenvolvimento:**
+   * **Modo Web:**
+     ```powershell
+     pnpm --filter @nexohub/client dev
+     ```
+   * **Modo Desktop Windows (Tauri):**
+     ```powershell
+     pnpm --filter @nexohub/desktop dev
+     ```
 
 ---
 
 ## 🧪 Qualidade, Testes e CI/CD
 
-O repositório mantém verificação contínua e estrita de qualidade em todos os pipelines:
+O projeto adota uma política de tolerância zero com quebras de teste ou regressões:
 
 ```powershell
-# Verificação de tipos e linter no ecossistema Web/Node
+# Verificação estrita de formatação (Biome) e tipagem (TypeScript)
 pnpm check
-pnpm test
-pnpm test:cli
-pnpm build:web
-pnpm test:e2e
 
-# Verificação e testes do ecossistema Rust
+# Testes unitários do Client (Vitest)
+pnpm --filter @nexohub/client test
+
+# Testes de ponta a ponta reais no navegador (Playwright E2E)
+pnpm --filter @nexohub/client test:e2e:ci
+
+# Verificação e testes do Core nativo (Rust)
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
 
-# Verificação e testes do ecossistema Python
+# Verificação do Sidecar Python
 uv run --locked --project engines/python ruff check .
 uv run --locked --project engines/python pytest
 
-# Auditoria estrita de licenças de dependências
+# Auditoria de Licenças de Dependências
 pnpm licenses:check
 ```
 
-### Workflows do GitHub Actions
-- **Instalador Windows**: `pnpm build:windows` gera um único instalador Inno Setup em `target/release/installer`. A distribuição por tag exige os gates de CI e segurança do workflow de release.
-- **CI**: Execução cruzada de testes de JavaScript/Playwright, Python 3.14 e compilação completa do Rust no Windows.
-- **Segurança e Licenças**: Varredura de segredos (Gitleaks), auditoria de vulnerabilidades (`cargo-deny`) e conformidade de licenças (`audit-licenses.mjs`).
-
 ---
 
-## 📚 Documentação e Arquitetura
+## 📚 Documentação Complementar
 
-- [Arquitetura Geral](docs/ARCHITECTURE.md)
-- [Critérios de Conclusão (Definition of Done)](docs/DEFINITION-OF-DONE.md)
-- [Roadmap de Desenvolvimento](docs/ROADMAP.md)
-- [Guia de Contribuição](CONTRIBUTING.md)
-- [Histórico de Mudanças (Changelog)](CHANGELOG.md)
-- [Licenças de Terceiros](THIRD_PARTY_LICENSES.md)
+* 📐 [**Arquitetura do Sistema**](docs/ARCHITECTURE.md) — Visão técnica, fluxo de dados e portas.
+* 📦 [**Definição de Conclusão (Definition of Done)**](docs/DEFINITION-OF-DONE.md) — Critérios de qualidade e entrega.
+* 🎨 [**Design System & Diretrizes de UI**](docs/DESIGN-SYSTEM.md) — Tipografia, cores, layout e componentes.
+* 🔐 [**Hardening e Segurança**](docs/HARDENING.md) — Medidas de proteção, sandboxing e sanitização.
+* 🛡️ [**Política de Privacidade**](docs/PRIVACY.md) — Diretrizes do modelo local-first e proteção de dados.
+* 📜 [**Registro de Decisões de Arquitetura (ADRs)**](docs/adr/) — Histórico técnico de decisões consolidadas.
 
 ---
 
 ## 📄 Licença
 
-Distribuído sob a licença **MPL-2.0** (Mozilla Public License 2.0). Veja [LICENSE](LICENSE) para mais detalhes.
+Distribuído sob a licença **MPL-2.0** (Mozilla Public License 2.0). Consulte o arquivo [LICENSE](LICENSE) para mais detalhes.

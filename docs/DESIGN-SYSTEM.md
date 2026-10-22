@@ -1,40 +1,38 @@
 # Nexo Design System
 
-O Nexo Design System define a identidade visual e os contratos de interação compartilhados pelo
-Launcher e, futuramente, pelo Studio. Português brasileiro é a fonte de verdade dos textos; os
-componentes consomem chaves do catálogo `pt-BR`.
+O Nexo Design System define a identidade visual, a ergonomia e os contratos de interação compartilhados pelo
+Hub de Ferramentas (Launcher) e pela suíte de documentos NexoHub. O português brasileiro (`pt-BR`) é a fonte
+de verdade dos textos; todos os componentes consomem chaves do catálogo de internacionalização.
 
-## Fundamentos
+## Fundamentos Visuais
 
-- **Cor:** verde profundo como marca e ação, superfícies claras de baixo contraste e dourado apenas
-  como acento editorial. Tokens escuros já existem sob `[data-theme="dark"]`.
-- **Tipografia:** Plus Jakarta Sans para interface e Playfair Display para acentos editoriais. As
-  fontes são empacotadas localmente, sem CDN.
-- **Espaçamento:** escala de 4 a 64 px, exposta por `--space-*`.
-- **Forma:** raios de 10, 16 e 24 px; o raio cápsula é reservado a navegação, botões e estados.
-- **Elevação e vidro:** sombras verdes de baixa opacidade e `backdrop-filter` somente em superfícies
-  que representam sobreposição ou persistência espacial.
-- **Movimento:** durações rápidas e padrão; `prefers-reduced-motion` elimina deslocamentos e reduz
-  transições. Motion também consulta a preferência no React.
-- **Camadas:** cabeçalho e diálogos usam tokens explícitos de `z-index`.
+- **Cores & Harmonia:**
+  - **Fundo & Superfícies:** `#f8fafc` para background geral e `#ffffff` com bordas sutis `#e2e8f0` para painéis e cards.
+  - **Tipografia & Contraste:** Ardósia profundo (`#0f172a`) para títulos e legibilidade primária; ardósia médio (`#64748b` e `#475569`) para metadados, descrições e estados secundários.
+  - **Acento de Ação:** Coral característico (`#e11d48` / `rgb(225, 29, 72)`) para o destaque de marca **NEXO**<span style="color:#e11d48">HUB</span>, estados ativos e hovers de interação.
+- **Tipografia:** Tipografia moderna, legível e empacotada localmente (sem CDNs externas), garantindo funcionamento 100% offline.
+- **Espaçamento e Ergonomia:**
+  - **Cabeçalho:** 74px de altura (`app-header--ilovepdf`), proporcionando respiro visual e conforto para navegação e busca.
+  - **Grade de Ferramentas:** Layout fluido com largura mínima de 270px (`minmax(270px, 1fr)`) e espaçamento de `1.5rem`.
+  - **Cards de Ferramentas:** Padding generoso de `1.75rem`, cantos arredondados de `16px` e container de ícones ampliado para `48px`.
+- **Movimento e Microinterações:**
+  - **Plano de Fundo Parallax Dinâmico:** Tipografia flutuante sutil com os nomes reais das ferramentas em 3 camadas de profundidade, suavizada por interpolação contínua (LERP) em `requestAnimationFrame`.
+  - **Acessibilidade:** Suporte estrito a `prefers-reduced-motion` (via `useReducedMotion()`), desativando o parallax e atenuando transições para usuários sensíveis a movimento.
+- **Camadas & Empilhamento:**
+  - Fundo Parallax: `z-index: 0` com `pointer-events: none` e `aria-hidden="true"`.
+  - Conteúdo Principal e Rodapé: `position: relative; z-index: 1`.
+  - Cabeçalho Fixo: `position: sticky; z-index: 100`.
+  - Modais e Paleta de Comandos: `z-index: 1000+`.
 
-Os tokens vivem em `apps/client/src/styles.css`. Variáveis semânticas devem ser preferidas a valores
-de cor repetidos nos componentes.
+## Componentes e Padrões de Interação
 
-## Componentes e estados
+- **Header Integrado:** Logo oficial do NexoHub, atalhos rápidos das ferramentas mais usadas, menu expansível de categorias e gatilho da Paleta de Comandos (`Ctrl+K`).
+- **Cards de Ferramenta (`ToolCard`):** Área de clique integral, suporte a arraste e solte de arquivos (`drag and drop`), estados de hover responsivos e foco visível acessível por teclado.
+- **Tela Dedicada (`DedicatedToolView`):** Fluxo focado em 2 colunas no estilo iLovePDF, com zona ampla de upload, visualização de miniaturas, controles específicos e download instantâneo do artefato gerado.
+- **Rodapé Monocromático Unificado:** Apresentação limpa com logo oficial, selos de privacidade/segurança em tom neutro e sem poluição visual.
 
-`Button` usa variantes tipadas com CVA. `CommandPalette` usa o Dialog do Base UI para foco preso,
-fechamento por Escape e semântica acessível. `SuiteNavigation` implementa setas, Home e End. Cards
-de ferramenta são derivados de dados tipados; enquanto não houver executor real, permanecem
-informativos, com estado visível **Em breve** e sem handler de execução.
+## Acessibilidade e Contratos
 
-Estados obrigatórios para novos componentes interativos: padrão, hover, foco visível, ativo quando
-aplicável e desabilitado. Componentes devem manter alvo mínimo próximo de 44 px, contraste legível e
-nome acessível. Textos novos entram primeiro no catálogo `pt-BR`.
-
-## Padrões do Launcher
-
-O Launcher organiza a descoberta em: cabeçalho persistente, navegação de suítes, hero, busca local,
-grade de ferramentas, continuidade e chamada do Studio. A lista atual é uma projeção de apresentação
-da Fase 1; não substitui o Tool Registry previsto para a Fase 3. Projetos recentes não usam dados
-fictícios e exibem estado vazio até existir persistência real.
+- **Navegação por Teclado:** Foco visível em todos os controles interativos, suporte a setas e fechamento de modais via `Escape`.
+- **Área Mínima de Toque:** Elementos clicáveis mantêm dimensões ergonômicas (mínimo de 44px).
+- **Sem Dados Fictícios:** Todos os textos, nomes de ferramentas e contadores refletem fielmente o estado real do `ToolRegistry` e do Document Core.

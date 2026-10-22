@@ -27,7 +27,6 @@ type ReviewDocumentPanelProps = {
   progressStatusMessage?: string;
   accentColor?: string;
   outputFileName?: string;
-  outputBlob?: Blob;
 };
 
 export function ReviewDocumentPanel({
@@ -43,7 +42,6 @@ export function ReviewDocumentPanel({
   progressStatusMessage,
   accentColor = "#6366f1",
   outputFileName = "documento_revisado.txt",
-  outputBlob,
 }: ReviewDocumentPanelProps) {
   const [copied, setCopied] = useState(false);
 
@@ -58,7 +56,7 @@ export function ReviewDocumentPanel({
 
   function handleDownload() {
     if (!reviewedText) return;
-    const blob = outputBlob || new Blob([reviewedText], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([reviewedText], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;

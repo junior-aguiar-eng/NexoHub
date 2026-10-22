@@ -422,10 +422,10 @@ async function executeTool(
           const findings = res.matches
             .map(
               (m) =>
-                `• [Posição ${m.offset}]: ${m.message} (Sugestões: ${m.replacements.map((r) => r.value).join(", ")})`,
+                `• "${m.replacements[0]?.value || ""}" (Sugestões: ${m.replacements.map((r) => r.value).join(", ")}) - ${m.message}`,
             )
             .join("\n");
-          const report = `RELATÓRIO DE REVISÃO GRAMATICAL (LanguageTool)\n================================================\nTotal de sugestões: ${res.matches.length}\n\n${findings || "Nenhum erro gramatical identificado."}`;
+          const report = `RELATÓRIO DE REVISÃO\n====================\nTotal de observações: ${res.matches.length}\n\n${findings || "Nenhum erro identificado."}`;
           return {
             blob: new Blob([report], { type: "text/plain;charset=utf-8" }),
             fileName: `${baseName}_revisao.txt`,
@@ -448,7 +448,7 @@ async function executeTool(
         }
       }
 
-      // Execução no navegador via Hunspell WASM e regras contextuais do domínio
+      // Execução no navegador com regras contextuais e verificação ortográfica
       const findings = await performBrowserReview({
         text: rawText,
         onProgress: (progress, message) => {
@@ -457,12 +457,9 @@ async function executeTool(
       });
 
       const lines = findings
-        .map(
-          (f) =>
-            `• [Posição ${f.start}-${f.end}] [${f.rule}]: "${f.original}" → "${f.replacement}" (${f.message})`,
-        )
+        .map((f) => `• "${f.original}" → "${f.replacement}" (${f.message})`)
         .join("\n");
-      const report = `RELATÓRIO DE REVISÃO ORTOGRÁFICA E GRAMATICAL (NexoHub Local)\n============================================================\nTotal de sugestões: ${findings.length}\n\n${lines || "Nenhum erro ou desvio identificado. O texto está em conformidade."}`;
+      const report = `RELATÓRIO DE REVISÃO\n====================\nTotal de observações: ${findings.length}\n\n${lines || "Nenhum desvio identificado. O texto está em conformidade."}`;
 
       return {
         blob: new Blob([report], { type: "text/plain;charset=utf-8" }),

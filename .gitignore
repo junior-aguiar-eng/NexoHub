@@ -28,4 +28,5 @@ runtime/models/
 runtime/tessdata/*
 !runtime/tessdata/.gitkeep
 *.log
-
+*.nexojuris-checkpoint/
+images/

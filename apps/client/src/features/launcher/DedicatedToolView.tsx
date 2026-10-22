@@ -488,7 +488,7 @@ export function DedicatedToolView({
         pages: pageItems,
         rotateAngle,
         compressionLevel,
-        firstText: doc1Text,
+        firstText: inputTab === "text" ? directText : doc1Text,
         secondText: doc2Text,
         imageOrientation,
         imageMargin,
@@ -542,7 +542,16 @@ export function DedicatedToolView({
           setReviewFindings(output.reviewFindings);
         }
         if (output.extractedText) {
-          setReviewedText(output.extractedText);
+          const textToReview = output.extractedText;
+          if (output.reviewFindings && output.reviewFindings.length > 0) {
+            try {
+              setReviewedText(applyReviewFindings(textToReview, output.reviewFindings));
+            } catch {
+              setReviewedText(textToReview);
+            }
+          } else {
+            setReviewedText(textToReview);
+          }
         }
       }
       if (tool.id === "pdf-ocr" && output.extractedText) {
@@ -554,7 +563,15 @@ export function DedicatedToolView({
       const url = URL.createObjectURL(outputBlob);
       setDownloadUrl(url);
       setOutputBlob(outputBlob);
-      setStatus("success");
+
+      const shouldStayInWorkspace =
+        tool.id === "text-translate" || (tool.id === "text-review" && inputTab === "text");
+
+      if (shouldStayInWorkspace) {
+        setStatus("idle");
+      } else {
+        setStatus("success");
+      }
 
       onOperationComplete?.({
         documentName: primaryFile.name,
@@ -834,7 +851,6 @@ export function DedicatedToolView({
           progressStatusMessage={reviewProgressStatus}
           accentColor={accent}
           outputFileName={`${baseOutName}_revisado.txt`}
-          outputBlob={outputBlob ?? undefined}
         />
       );
     }

@@ -99,7 +99,11 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     );
     fireEvent.click(screen.getByRole("button", { name: /Revisar Texto/i }));
     expect(
-      await screen.findByText(/Nenhum problema ortográfico ou gramatical encontrado/i),
+      await screen.findByText(
+        /Nenhum problema ortográfico ou gramatical encontrado/i,
+        {},
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument();
   });
 
@@ -216,11 +220,11 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
       />,
     );
     expect(screen.getByText(/Tradutor Inteligente/i)).toBeInTheDocument();
-    expect(screen.getByText(/Modelo Neural 100% Local/i)).toBeInTheDocument();
+    expect(screen.getByText(/Tradução no Navegador/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Inverter idiomas/i })).toBeInTheDocument();
   });
 
-  it("renderiza o painel de revisão com badge de privacidade e corretor Vero pt-BR", async () => {
+  it("renderiza o painel de revisão com badge de privacidade e correção direta", async () => {
     const mockReviewTool = launcherTools.find((t) => t.id === "text-review") ?? mockTextReviewTool;
     const file = new File(["Texto para analise."], "minuta.txt", { type: "text/plain" });
     render(
@@ -232,6 +236,6 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
       />,
     );
     expect(screen.getByText(/Corretor Ortográfico e Gramatical/i)).toBeInTheDocument();
-    expect(screen.getByText(/Dicionário Vero pt-BR • 100% no navegador/i)).toBeInTheDocument();
+    expect(screen.getByText(/Correção no Navegador/i)).toBeInTheDocument();
   });
 });

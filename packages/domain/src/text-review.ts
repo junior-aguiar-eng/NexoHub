@@ -689,35 +689,228 @@ const rules: readonly RuleDefinition[] = [
   {
     rule: "GRAMMAR_AGREEMENT",
     severity: "warning",
-    pattern: /\b(nós|nos)\s+(vai|foi|faria|iria)\b/giu,
-    replacement: (match) =>
-      matchCase(match[0], match[2]?.toLowerCase() === "foi" ? "nós fomos" : "nós vamos"),
-    suggestions: (match) => [
-      matchCase(match[0], match[2]?.toLowerCase() === "foi" ? "nós fomos" : "nós vamos"),
-    ],
+    pattern:
+      /\b(nós|nos)\s+(vai|foi|faz|fez|faria|iria|era|é|tem|tinha|está|tá|estava|tava|sabe|soube|quer|quis|pode|pôde|viu|falou|disse|chegou|saiu)\b/giu,
+    replacement: (match) => {
+      const v = match[2]?.toLowerCase() ?? "";
+      let repl = "vamos";
+      if (v === "foi") repl = "fomos";
+      else if (v === "faz") repl = "fazemos";
+      else if (v === "fez") repl = "fizemos";
+      else if (v === "faria") repl = "faríamos";
+      else if (v === "iria") repl = "iríamos";
+      else if (v === "era") repl = "éramos";
+      else if (v === "é") repl = "somos";
+      else if (v === "tem") repl = "temos";
+      else if (v === "tinha") repl = "tínhamos";
+      else if (v === "está" || v === "tá") repl = "estamos";
+      else if (v === "estava" || v === "tava") repl = "estávamos";
+      else if (v === "sabe") repl = "sabemos";
+      else if (v === "soube") repl = "soubemos";
+      else if (v === "quer") repl = "queremos";
+      else if (v === "quis") repl = "quisemos";
+      else if (v === "pode") repl = "podemos";
+      else if (v === "pôde") repl = "pudemos";
+      else if (v === "viu") repl = "vimos";
+      else if (v === "falou") repl = "falamos";
+      else if (v === "disse") repl = "dissemos";
+      else if (v === "chegou") repl = "chegamos";
+      else if (v === "saiu") repl = "saímos";
+      return matchCase(match[0], `nós ${repl}`);
+    },
+    suggestions: (match) => {
+      const v = match[2]?.toLowerCase() ?? "";
+      let repl = "vamos";
+      if (v === "foi") repl = "fomos";
+      else if (v === "faz") repl = "fazemos";
+      else if (v === "fez") repl = "fizemos";
+      else if (v === "faria") repl = "faríamos";
+      else if (v === "iria") repl = "iríamos";
+      else if (v === "era") repl = "éramos";
+      else if (v === "é") repl = "somos";
+      else if (v === "tem") repl = "temos";
+      else if (v === "tinha") repl = "tínhamos";
+      else if (v === "está" || v === "tá") repl = "estamos";
+      else if (v === "estava" || v === "tava") repl = "estávamos";
+      else if (v === "sabe") repl = "sabemos";
+      else if (v === "soube") repl = "soubemos";
+      else if (v === "quer") repl = "queremos";
+      else if (v === "quis") repl = "quisemos";
+      else if (v === "pode") repl = "podemos";
+      else if (v === "pôde") repl = "pudemos";
+      else if (v === "viu") repl = "vimos";
+      else if (v === "falou") repl = "falamos";
+      else if (v === "disse") repl = "dissemos";
+      else if (v === "chegou") repl = "chegamos";
+      else if (v === "saiu") repl = "saímos";
+      return [matchCase(match[0], `nós ${repl}`)];
+    },
     message: "Concordância incorreta entre o pronome 'nós' e o verbo no singular.",
   },
   {
     rule: "GRAMMAR_AGREEMENT",
     severity: "warning",
-    pattern: /\ba\s+gente\s+(fomos|vamos|faremos|iremos|fizeram)\b/giu,
-    replacement: (match) =>
-      matchCase(
-        match[0],
-        match[1]?.toLowerCase().startsWith("f") && match[1]?.toLowerCase() !== "faremos"
-          ? "a gente foi"
-          : "a gente vai",
-      ),
-    suggestions: (match) => [
-      matchCase(
-        match[0],
-        match[1]?.toLowerCase().startsWith("f") && match[1]?.toLowerCase() !== "faremos"
-          ? "a gente foi"
-          : "a gente vai",
-      ),
-    ],
+    pattern:
+      /\b(a\s+gente|agente)\s+(fomos|vamos|faremos|iremos|fizeram|fizemos|éramos|estamos|estivemos|tínhamos|sabemos|queremos|podemos|dissemos|vimos|chegamos)\b/giu,
+    replacement: (match) => {
+      const verb = match[2]?.toLowerCase() ?? "";
+      let singularVerb = "vai";
+      if (verb === "fomos") singularVerb = "foi";
+      else if (verb === "fizeram" || verb === "fizemos" || verb === "faremos") singularVerb = "fez";
+      else if (verb === "vamos" || verb === "iremos") singularVerb = "vai";
+      else if (verb === "éramos") singularVerb = "era";
+      else if (verb === "estamos") singularVerb = "está";
+      else if (verb === "estivemos") singularVerb = "esteve";
+      else if (verb === "tínhamos") singularVerb = "tinha";
+      else if (verb === "sabemos") singularVerb = "sabe";
+      else if (verb === "queremos") singularVerb = "quer";
+      else if (verb === "podemos") singularVerb = "pode";
+      else if (verb === "dissemos") singularVerb = "disse";
+      else if (verb === "vimos") singularVerb = "viu";
+      else if (verb === "chegamos") singularVerb = "chegou";
+      return matchCase(match[0], `a gente ${singularVerb}`);
+    },
+    suggestions: (match) => {
+      const verb = match[2]?.toLowerCase() ?? "";
+      let singularVerb = "vai";
+      let pluralOption = "nós fomos";
+      if (verb === "fomos") {
+        singularVerb = "foi";
+        pluralOption = "nós fomos";
+      } else if (verb === "fizeram" || verb === "fizemos" || verb === "faremos") {
+        singularVerb = "fez";
+        pluralOption = "nós fizemos";
+      } else if (verb === "vamos" || verb === "iremos") {
+        singularVerb = "vai";
+        pluralOption = "nós vamos";
+      } else if (verb === "éramos") {
+        singularVerb = "era";
+        pluralOption = "nós éramos";
+      } else if (verb === "estamos") {
+        singularVerb = "está";
+        pluralOption = "nós estamos";
+      } else if (verb === "estivemos") {
+        singularVerb = "esteve";
+        pluralOption = "nós estivemos";
+      } else if (verb === "tínhamos") {
+        singularVerb = "tinha";
+        pluralOption = "nós tínhamos";
+      } else if (verb === "sabemos") {
+        singularVerb = "sabe";
+        pluralOption = "nós sabemos";
+      } else if (verb === "queremos") {
+        singularVerb = "quer";
+        pluralOption = "nós queremos";
+      } else if (verb === "podemos") {
+        singularVerb = "pode";
+        pluralOption = "nós podemos";
+      } else if (verb === "dissemos") {
+        singularVerb = "disse";
+        pluralOption = "nós dissemos";
+      } else if (verb === "vimos") {
+        singularVerb = "viu";
+        pluralOption = "nós vimos";
+      } else if (verb === "chegamos") {
+        singularVerb = "chegou";
+        pluralOption = "nós chegamos";
+      }
+      return [matchCase(match[0], `a gente ${singularVerb}`), matchCase(match[0], pluralOption)];
+    },
     message:
-      "A locução 'a gente' equivale semanticamente a nós, mas exige gramaticalmente verbo na 3ª pessoa do singular.",
+      "A locução 'a gente' equivale semanticamente a nós, mas exige gramaticalmente verbo na 3ª pessoa do singular ('a gente foi') ou use 'nós fomos'.",
+  },
+  {
+    rule: "PARONYM_CONTEXT",
+    severity: "warning",
+    pattern:
+      /\bagente\s+(foi|vai|faz|fez|disse|diz|falou|fala|quer|quis|pode|pôde|tem|tinha|está|estava|tá|tava|sabe|soube|saiu|sai|chegou|chega|viu|vê|pensou|pensa|achou|acha|gostou|gosta|ficou|fica|precisa|precisou|consegue|conseguiu|entende|entendeu)\b/giu,
+    replacement: (match) => matchCase(match[0], `a gente ${match[1]}`),
+    suggestions: (match) => [matchCase(match[0], `a gente ${match[1]}`)],
+    message:
+      "'Agente' (junto) refere-se a profissão ou função (agente público). Quando o sentido for 'nós', grafe separado: 'a gente'.",
+  },
+  {
+    rule: "GRAMMAR_AGREEMENT",
+    severity: "warning",
+    pattern:
+      /\b(eles|elas)\s+(vai|foi|faz|fez|era|é|está|tá|estava|tava|sabe|soube|quer|quis|pode|pôde|viu|falou|disse|chegou|saiu)\b/giu,
+    replacement: (match) => {
+      const pron = match[1]?.toLowerCase() ?? "eles";
+      const v = match[2]?.toLowerCase() ?? "";
+      let repl = "vão";
+      if (v === "foi") repl = "foram";
+      else if (v === "faz") repl = "fazem";
+      else if (v === "fez") repl = "fizeram";
+      else if (v === "era") repl = "eram";
+      else if (v === "é") repl = "são";
+      else if (v === "está" || v === "tá") repl = "estão";
+      else if (v === "estava" || v === "tava") repl = "estavam";
+      else if (v === "sabe") repl = "sabem";
+      else if (v === "soube") repl = "souberam";
+      else if (v === "quer") repl = "querem";
+      else if (v === "quis") repl = "quiseram";
+      else if (v === "pode") repl = "podem";
+      else if (v === "pôde") repl = "puderam";
+      else if (v === "viu") repl = "viram";
+      else if (v === "falou") repl = "falaram";
+      else if (v === "disse") repl = "disseram";
+      else if (v === "chegou") repl = "chegaram";
+      else if (v === "saiu") repl = "saíram";
+      return matchCase(match[0], `${pron} ${repl}`);
+    },
+    suggestions: (match) => {
+      const pron = match[1]?.toLowerCase() ?? "eles";
+      const v = match[2]?.toLowerCase() ?? "";
+      let repl = "vão";
+      if (v === "foi") repl = "foram";
+      else if (v === "faz") repl = "fazem";
+      else if (v === "fez") repl = "fizeram";
+      else if (v === "era") repl = "eram";
+      else if (v === "é") repl = "são";
+      else if (v === "está" || v === "tá") repl = "estão";
+      else if (v === "estava" || v === "tava") repl = "estavam";
+      else if (v === "sabe") repl = "sabem";
+      else if (v === "soube") repl = "souberam";
+      else if (v === "quer") repl = "querem";
+      else if (v === "quis") repl = "quiseram";
+      else if (v === "pode") repl = "podem";
+      else if (v === "pôde") repl = "puderam";
+      else if (v === "viu") repl = "viram";
+      else if (v === "falou") repl = "falaram";
+      else if (v === "disse") repl = "disseram";
+      else if (v === "chegou") repl = "chegaram";
+      else if (v === "saiu") repl = "saíram";
+      return [matchCase(match[0], `${pron} ${repl}`)];
+    },
+    message:
+      "Concordância verbal: o pronome no plural ('eles/elas') exige o verbo flexionado no plural.",
+  },
+  {
+    rule: "GRAMMAR_AGREEMENT",
+    severity: "warning",
+    pattern:
+      /\b(os|as|esses|essas|estes|estas|aqueles|aquelas|meus|minhas|seus|suas|nossos|nossas)\s+(cara|pessoa|homem|mulher|menino|menina|garoto|garota|criança|amigo|amiga|documento|arquivo|foto|imagem|dia|mês|ano|problema|caso|fato|ponto|livro|carro|coisa|casa|conta|texto|item|produto)\b/giu,
+    replacement: (match) => {
+      const det = match[1] ?? "";
+      const noun = match[2]?.toLowerCase() ?? "";
+      let pluralNoun = `${noun}s`;
+      if (noun === "homem") pluralNoun = "homens";
+      else if (noun === "mulher") pluralNoun = "mulheres";
+      else if (noun === "mês") pluralNoun = "meses";
+      else if (noun === "item") pluralNoun = "itens";
+      return matchCase(match[0], `${det} ${pluralNoun}`);
+    },
+    suggestions: (match) => {
+      const det = match[1] ?? "";
+      const noun = match[2]?.toLowerCase() ?? "";
+      let pluralNoun = `${noun}s`;
+      if (noun === "homem") pluralNoun = "homens";
+      else if (noun === "mulher") pluralNoun = "mulheres";
+      else if (noun === "mês") pluralNoun = "meses";
+      else if (noun === "item") pluralNoun = "itens";
+      return [matchCase(match[0], `${det} ${pluralNoun}`)];
+    },
+    message: "Concordância nominal: o substantivo deve acompanhar o determinante no plural.",
   },
   {
     rule: "GRAMMAR_AGREEMENT",

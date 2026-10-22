@@ -88,12 +88,12 @@ export async function getHunspellInstance(
   isInitializing = true;
   initPromise = (async () => {
     try {
-      onProgress?.(10, "Iniciando motor ortográfico WASM...");
+      onProgress?.(10, "Iniciando corretor ortográfico...");
       const { loadModule } = await import("hunspell-asm");
       const factory = await loadModule();
 
       if (!cachedBuffers) {
-        onProgress?.(25, "Carregando regras morfológicas pt-BR...");
+        onProgress?.(25, "Carregando regras de português...");
         let affData: Uint8Array | null = null;
         let dicData: Uint8Array | null = null;
 
@@ -105,10 +105,10 @@ export async function getHunspellInstance(
         ) {
           try {
             const aff = await fetchDictionaryBuffer("/dictionaries/pt-BR/pt_BR.aff", (r) => {
-              onProgress?.(25 + Math.round(r * 25), "Baixando afixos pt-BR...");
+              onProgress?.(25 + Math.round(r * 25), "Carregando dicionário...");
             });
             const dic = await fetchDictionaryBuffer("/dictionaries/pt-BR/pt_BR.dic", (r) => {
-              onProgress?.(50 + Math.round(r * 40), "Baixando vocabulário pt-BR...");
+              onProgress?.(50 + Math.round(r * 40), "Carregando vocabulário...");
             });
             affData = aff;
             dicData = dic;
@@ -139,7 +139,7 @@ export async function getHunspellInstance(
         cachedBuffers = { aff: affData, dic: dicData };
       }
 
-      onProgress?.(92, "Compilando léxico no runtime Hunspell...");
+      onProgress?.(92, "Preparando revisão...");
       const affMounted = factory.mountBuffer(cachedBuffers.aff, "pt_BR.aff");
       const dicMounted = factory.mountBuffer(cachedBuffers.dic, "pt_BR.dic");
       const instance = factory.create(affMounted, dicMounted);

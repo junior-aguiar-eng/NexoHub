@@ -124,4 +124,54 @@ describe("revisão textual determinística", () => {
     const merged = mergeReviewFindings(primary, secondary);
     expect(merged.map((f) => f.id)).toEqual(["LT:0:5", "SEC:15:24", "LT:30:35"]);
   });
+
+  it("detecta e corrige 'agente fomos ontem' com sugestão imediata de concordância", () => {
+    const text = "agente fomos ontem";
+    const findings = reviewText(text);
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.rule).toBe("GRAMMAR_AGREEMENT");
+    expect(findings[0]?.original).toBe("agente fomos");
+    expect(findings[0]?.replacement).toBe("a gente foi");
+    expect(findings[0]?.suggestions).toContain("a gente foi");
+    expect(findings[0]?.suggestions).toContain("nós fomos");
+
+    const corrected = applyReviewFindings(text, findings);
+    expect(corrected).toBe("a gente foi ontem");
+  });
+
+  it("detecta 'agente vai' aglutinado e sugere 'a gente vai'", () => {
+    const text = "agente vai amanhã";
+    const findings = reviewText(text);
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.rule).toBe("PARONYM_CONTEXT");
+    expect(findings[0]?.replacement).toBe("a gente vai");
+
+    const corrected = applyReviewFindings(text, findings);
+    expect(corrected).toBe("a gente vai amanhã");
+  });
+
+  it("detecta desvios de concordância em 'nós foi' e 'eles foi'", () => {
+    const text = "nós foi ontem e eles foi hoje";
+    const findings = reviewText(text);
+
+    expect(findings.length).toBeGreaterThanOrEqual(2);
+    const corrected = applyReviewFindings(text, findings);
+    expect(corrected).toBe("nós fomos ontem e eles foram hoje");
+  });
+
+  it("detecta falta de plural nominal em 'os documento comprova'", () => {
+    const text = "os documento comprova tudo";
+    const findings = reviewText(text);
+
+    expect(findings.length).toBeGreaterThanOrEqual(1);
+    expect(findings.some((f) => f.original === "os documento")).toBe(true);
+  });
+
+  it("verifica texto inicial sem erros", () => {
+    const text = "Texto inicial sem erros.";
+    const findings = reviewText(text);
+    expect(findings).toEqual([]);
+  });
 });

@@ -443,9 +443,9 @@ export const ptBR = {
   "workspace.review.addToDictionaryTitle": "Salvar palavra no dicionário pessoal do usuário",
   "workspace.review.ignore": "Ignorar",
   "workspace.review.ignoreTitle": "Ignorar esta palavra durante a sessão atual",
-  "workspace.review.offlineBadge": "Dicionário Vero pt-BR • 100% no navegador • Sem envio de dados",
+  "workspace.review.offlineBadge": "Correção no Navegador • Total Privacidade",
   "workspace.review.downloadNotice":
-    "Carregando regras morfológicas e vocabulário pt-BR — funcionamento 100% offline.",
+    "Carregando regras de português — processamento seguro no seu dispositivo.",
   "workspace.review.noIssues": "Nenhum problema ortográfico ou gramatical encontrado!",
   "workspace.review.copy": "Copiar Texto Corrigido",
   "workspace.review.downloadTxt": "Baixar Arquivo .txt",
@@ -474,9 +474,9 @@ export const ptBR = {
   "workspace.translate.lang.en": "Inglês",
   "workspace.translate.lang.pt": "Português (Brasil)",
   "workspace.translate.lang.es": "Espanhol",
-  "workspace.translate.offlineBadge": "Modelo Neural 100% Local (NLLB-200) • Zero Envio para Nuvem",
+  "workspace.translate.offlineBadge": "Tradução no Navegador • Total Privacidade",
   "workspace.translate.downloadNotice":
-    "Download inicial sob demanda (Meta NLLB-200 Q8) — após o download no cache local do navegador, funciona 100% offline.",
+    "Preparando tradução direta — processamento seguro no seu dispositivo.",
   "workspace.compress.title": "Resultado da Compressão",
   "workspace.compress.savings": "de economia alcançada",
   "compress.methodTitle": "Otimização da estrutura",

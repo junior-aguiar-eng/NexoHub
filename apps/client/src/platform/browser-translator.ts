@@ -139,7 +139,7 @@ async function getOrCreatePipeline(
     onProgress?.({
       status: "downloading",
       progress: 5,
-      message: "Inicializando motor neural offline...",
+      message: "Preparando tradução...",
     });
 
     const { pipeline, env } = await import("@huggingface/transformers");
@@ -165,7 +165,7 @@ async function getOrCreatePipeline(
           progress: Math.max(5, Math.min(percent, 95)),
           loadedBytes: p.loaded,
           totalBytes: p.total,
-          message: `Baixando modelo neural NLLB-200: ${percent}%`,
+          message: `Preparando recursos para tradução: ${percent}%`,
         });
       }
     };

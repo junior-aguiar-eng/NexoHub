@@ -6,7 +6,21 @@ import { defineConfig } from "vitest/config";
 const tauriHost = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    {
+      name: "fix-hunspell-asm-nanoid",
+      transform(code, id) {
+        if (id.includes("hunspell-asm") || id.includes("emscripten-wasm-loader")) {
+          return code.replace(
+            /import\s+\*\s+as\s+nanoid\s+from\s+['"]nanoid['"];?/g,
+            "import nanoidPkg from 'nanoid'; const nanoid = typeof nanoidPkg === 'function' ? nanoidPkg : (nanoidPkg?.nanoid || nanoidPkg?.default || ((len = 21) => Array.from({length: len}, () => Math.floor(Math.random() * 36).toString(36)).join('')));",
+          );
+        }
+      },
+    },
+  ],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "./src"),

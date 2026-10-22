@@ -205,37 +205,49 @@ export async function performBrowserReview(options: {
   // 1. Executa as regras contextuais e sintáticas do domínio
   const contextualFindings = reviewText(text);
 
-  // 2. Inicializa o motor Hunspell WASM
-  const hunspell = hunspellOverride ?? (await getHunspellInstance(onProgress));
+  // 2. Inicializa o motor Hunspell WASM com fallback seguro
+  let hunspell: HunspellInstance | null = null;
+  try {
+    hunspell = hunspellOverride ?? (await getHunspellInstance(onProgress));
+  } catch (err) {
+    console.warn(
+      "Motor morfológico Hunspell indisponível no ambiente atual; utilizando motor contextual avançado do domínio:",
+      err,
+    );
+    onProgress?.(100, "Revisão concluída via motor de regras do domínio.");
+  }
 
-  // 3. Varre palavras do texto identificando possíveis erros ortográficos
+  // 3. Varre palavras do texto identificando possíveis erros ortográficos se Hunspell estiver ativo
   const spellingFindings: ReviewFinding[] = [];
-  WORD_TOKEN_REGEX.lastIndex = 0;
 
-  for (const match of text.matchAll(WORD_TOKEN_REGEX)) {
-    const word = match[0];
-    const start = match.index;
-    const end = start + word.length;
+  if (hunspell) {
+    WORD_TOKEN_REGEX.lastIndex = 0;
 
-    // Se houver achado contextual que já cobre essa posição, ignora
-    if (contextualFindings.some((cf) => start < cf.end && end > cf.start)) {
-      continue;
-    }
+    for (const match of text.matchAll(WORD_TOKEN_REGEX)) {
+      const word = match[0];
+      const start = match.index;
+      const end = start + word.length;
 
-    const { isCorrect, suggestions } = checkWordSpelling(word, hunspell);
-    if (!isCorrect) {
-      const topReplacement = suggestions[0] ?? word;
-      spellingFindings.push({
-        id: `SPELLING:${start}:${end}`,
-        rule: "SPELLING",
-        severity: "warning",
-        start,
-        end,
-        original: word,
-        replacement: topReplacement,
-        suggestions,
-        message: `Possível erro de ortografia: "${word}".`,
-      });
+      // Se houver achado contextual que já cobre essa posição, ignora
+      if (contextualFindings.some((cf) => start < cf.end && end > cf.start)) {
+        continue;
+      }
+
+      const { isCorrect, suggestions } = checkWordSpelling(word, hunspell);
+      if (!isCorrect) {
+        const topReplacement = suggestions[0] ?? word;
+        spellingFindings.push({
+          id: `SPELLING:${start}:${end}`,
+          rule: "SPELLING",
+          severity: "warning",
+          start,
+          end,
+          original: word,
+          replacement: topReplacement,
+          suggestions,
+          message: `Possível erro de ortografia: "${word}".`,
+        });
+      }
     }
   }
 

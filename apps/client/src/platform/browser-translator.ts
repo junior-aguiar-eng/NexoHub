@@ -1,7 +1,8 @@
 /**
  * Motor de Tradução Neural no Navegador (Client-side & Offline-first)
- * Utiliza Transformers.js v3 com modelos OPUS-MT (MarianMT) do Helsinki-NLP.
- * Processamento 100% local via WebGPU com fallback para WebAssembly SIMD.
+ * Utiliza Transformers.js v3 com o modelo NLLB-200 (No Language Left Behind) quantizado (Meta AI).
+ * Suporte bidirecional de alta precisão para Português (pt-BR), Inglês e Espanhol.
+ * Execução 100% local via WebGPU com fallback automático para WebAssembly SIMD.
  */
 
 export type TranslationLanguage = "en" | "pt" | "es";
@@ -27,31 +28,42 @@ export interface BrowserTranslationResult {
   translatedText: string;
   sourceLang: TranslationLanguage;
   targetLang: TranslationLanguage;
-  engine: "transformers.js-opus-mt";
+  engine: "transformers.js-nllb-200";
 }
 
-// Mapeamento dos modelos pré-treinados OPUS-MT quantizados (Helsinki-NLP)
-const MODEL_MAPPING: Record<string, string> = {
-  "en-pt": "Xenova/opus-mt-en-pt",
-  "pt-en": "Xenova/opus-mt-pt-en",
-  "es-pt": "Xenova/opus-mt-es-pt",
-  "pt-es": "Xenova/opus-mt-pt-es",
-  "en-es": "Xenova/opus-mt-en-es",
-  "es-en": "Xenova/opus-mt-es-en",
+// Mapeamento dos códigos de idioma BCP-47 para códigos NLLB Flores-200
+const NLLB_LANG_CODES: Record<TranslationLanguage, string> = {
+  en: "eng_Latn",
+  pt: "por_Latn",
+  es: "spa_Latn",
 };
 
-// Cache em memória de instâncias de pipelines para evitar recarregar pesos já instanciados
+export const NLLB_MODEL_ID = "Xenova/nllb-200-distilled-600M";
+
+// Interface tipada do executor de pipeline de tradução
 type PipelineFunction = (
   text: string,
-  options?: { max_new_tokens?: number },
+  options?: {
+    src_lang?: string;
+    tgt_lang?: string;
+    max_new_tokens?: number;
+  },
 ) => Promise<Array<{ translation_text: string }>>;
 
-const pipelineCache = new Map<string, PipelineFunction>();
+let cachedPipeline: PipelineFunction | null = null;
+let pipelineLoadingPromise: Promise<PipelineFunction> | null = null;
+
+/**
+ * Reseta o cache de instâncias (útil para testes ou recarga)
+ */
+export function resetTranslatorCache(): void {
+  cachedPipeline = null;
+  pipelineLoadingPromise = null;
+}
 
 /**
  * Divide textos longos em parágrafos e sentenças seguras (< 400 caracteres)
- * para respeitar a janela de contexto máxima do MarianMT (512 tokens)
- * sem truncar o conteúdo de documentos extensos.
+ * para respeitar a janela de contexto do modelo NLLB sem truncar o conteúdo.
  */
 export function segmentTextForTranslation(text: string, maxChunkLength: number = 400): string[] {
   if (!text.trim()) return [];
@@ -85,7 +97,7 @@ export function segmentTextForTranslation(text: string, maxChunkLength: number =
         if (sentence.trim().length <= maxChunkLength) {
           currentChunk = sentence.trim();
         } else {
-          // Sentença extrema: divide por vírgula ou espaço
+          // Sentença extrema: divide por palavras
           const words = sentence.trim().split(/\s+/);
           let wordChunk = "";
           for (const word of words) {
@@ -109,7 +121,89 @@ export function segmentTextForTranslation(text: string, maxChunkLength: number =
 }
 
 /**
- * Traduz texto utilizando modelo neural offline no navegador via Transformers.js.
+ * Inicializa ou recupera o pipeline NLLB no navegador
+ */
+async function getOrCreatePipeline(
+  onProgress?: (info: TranslationProgressInfo) => void,
+  signal?: AbortSignal,
+): Promise<PipelineFunction> {
+  if (cachedPipeline) {
+    return cachedPipeline;
+  }
+
+  if (pipelineLoadingPromise) {
+    return pipelineLoadingPromise;
+  }
+
+  pipelineLoadingPromise = (async () => {
+    onProgress?.({
+      status: "downloading",
+      progress: 5,
+      message: "Inicializando motor neural offline...",
+    });
+
+    const { pipeline, env } = await import("@huggingface/transformers");
+
+    // Configura Transformers.js para cache local permanente no navegador (Cache API / IndexedDB)
+    env.allowLocalModels = false;
+    env.useBrowserCache = true;
+
+    interface TransformersProgressCallback {
+      status?: string;
+      loaded?: number;
+      total?: number;
+      progress?: number;
+      file?: string;
+    }
+
+    const progressCallback = (p: TransformersProgressCallback) => {
+      if (signal?.aborted) return;
+      if (p.status === "progress" && typeof p.loaded === "number" && typeof p.total === "number") {
+        const percent = Math.min(Math.round((p.loaded / p.total) * 100), 100);
+        onProgress?.({
+          status: "downloading",
+          progress: Math.max(5, Math.min(percent, 95)),
+          loadedBytes: p.loaded,
+          totalBytes: p.total,
+          message: `Baixando modelo neural NLLB-200: ${percent}%`,
+        });
+      }
+    };
+
+    let pipe: unknown;
+    try {
+      // Tenta aceleração por hardware WebGPU primeiro
+      pipe = await pipeline("translation", NLLB_MODEL_ID, {
+        progress_callback: progressCallback,
+        dtype: "q8",
+        device: "webgpu",
+      });
+    } catch (gpuError) {
+      console.warn(
+        "WebGPU indisponível para tradução neural, utilizando CPU WebAssembly:",
+        gpuError,
+      );
+      pipe = await pipeline("translation", NLLB_MODEL_ID, {
+        progress_callback: progressCallback,
+        dtype: "q8",
+        device: "wasm",
+      });
+    }
+
+    const fn = pipe as unknown as PipelineFunction;
+    cachedPipeline = fn;
+    return fn;
+  })();
+
+  try {
+    return await pipelineLoadingPromise;
+  } finally {
+    pipelineLoadingPromise = null;
+  }
+}
+
+/**
+ * Traduz texto utilizando modelo neural offline NLLB-200 no navegador via Transformers.js.
  */
 export async function performBrowserTranslation(
   text: string,
@@ -122,14 +216,14 @@ export async function performBrowserTranslation(
       translatedText: text,
       sourceLang,
       targetLang,
-      engine: "transformers.js-opus-mt",
+      engine: "transformers.js-nllb-200",
     };
   }
 
-  const pairKey = `${sourceLang}-${targetLang}`;
-  const modelId = MODEL_MAPPING[pairKey];
+  const srcNllb = NLLB_LANG_CODES[sourceLang];
+  const tgtNllb = NLLB_LANG_CODES[targetLang];
 
-  if (!modelId) {
+  if (!srcNllb || !tgtNllb) {
     throw new Error(`PAR_DE_IDIOMAS_NAO_SUPORTADO: ${sourceLang} para ${targetLang}`);
   }
 
@@ -156,7 +250,7 @@ export async function performBrowserTranslation(
       translatedText: `[${targetLang.toUpperCase()}] ${text}`,
       sourceLang,
       targetLang,
-      engine: "transformers.js-opus-mt",
+      engine: "transformers.js-nllb-200",
     };
   }
 
@@ -167,56 +261,11 @@ export async function performBrowserTranslation(
       translatedText: "",
       sourceLang,
       targetLang,
-      engine: "transformers.js-opus-mt",
+      engine: "transformers.js-nllb-200",
     };
   }
 
-  // Inicializa ou recupera o pipeline de tradução
-  let translator = pipelineCache.get(pairKey);
-
-  if (!translator) {
-    onProgress?.({
-      status: "downloading",
-      progress: 5,
-      message: "Inicializando motor neural...",
-    });
-
-    const { pipeline, env } = await import("@huggingface/transformers");
-
-    // Configura Transformers.js para cache local permanente no navegador
-    env.allowLocalModels = false;
-    env.useBrowserCache = true;
-
-    interface TransformersProgressCallback {
-      status?: string;
-      loaded?: number;
-      total?: number;
-      progress?: number;
-      file?: string;
-    }
-
-    const progressCallback = (p: TransformersProgressCallback) => {
-      if (signal?.aborted) return;
-      if (p.status === "progress" && typeof p.loaded === "number" && typeof p.total === "number") {
-        const percent = Math.min(Math.round((p.loaded / p.total) * 100), 100);
-        onProgress?.({
-          status: "downloading",
-          progress: Math.max(5, Math.min(percent, 95)),
-          loadedBytes: p.loaded,
-          totalBytes: p.total,
-          message: `Baixando modelo neural offline: ${percent}%`,
-        });
-      }
-    };
-
-    const pipe = await pipeline("translation", modelId, {
-      progress_callback: progressCallback,
-      device: "webgpu", // Transformers.js v3 faz fallback automático para wasm/cpu se WebGPU não estiver presente
-    });
-
-    translator = pipe as unknown as PipelineFunction;
-    pipelineCache.set(pairKey, translator);
-  }
+  const translator = await getOrCreatePipeline(onProgress, signal);
 
   if (signal?.aborted) {
     throw new Error("OPERACAO_CANCELADA");
@@ -239,7 +288,11 @@ export async function performBrowserTranslation(
       continue;
     }
 
-    const res = await translator(chunk, { max_new_tokens: 512 });
+    const res = await translator(chunk, {
+      src_lang: srcNllb,
+      tgt_lang: tgtNllb,
+      max_new_tokens: 512,
+    });
     const outputPart = res?.[0]?.translation_text || chunk;
     translatedChunks.push(outputPart);
 
@@ -282,6 +335,6 @@ export async function performBrowserTranslation(
     translatedText: assembled.trim(),
     sourceLang,
     targetLang,
-    engine: "transformers.js-opus-mt",
+    engine: "transformers.js-nllb-200",
   };
 }

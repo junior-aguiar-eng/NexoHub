@@ -122,6 +122,34 @@ export function ReviewDocumentPanel({
           color: "#334155",
           border: "rgba(100, 116, 139, 0.3)",
         };
+      case "GRAMMAR_AGREEMENT":
+        return {
+          label: translate("workspace.review.rule.GRAMMAR_AGREEMENT"),
+          bg: "rgba(239, 68, 68, 0.1)",
+          color: "#b91c1c",
+          border: "rgba(239, 68, 68, 0.3)",
+        };
+      case "CRASE_USAGE":
+        return {
+          label: translate("workspace.review.rule.CRASE_USAGE"),
+          bg: "rgba(147, 51, 234, 0.1)",
+          color: "#7e22ce",
+          border: "rgba(147, 51, 234, 0.3)",
+        };
+      case "ACCENTUATION":
+        return {
+          label: translate("workspace.review.rule.ACCENTUATION"),
+          bg: "rgba(249, 115, 22, 0.1)",
+          color: "#c2410c",
+          border: "rgba(249, 115, 22, 0.3)",
+        };
+      case "PLEONASM_REDUNDANCY":
+        return {
+          label: translate("workspace.review.rule.PLEONASM_REDUNDANCY"),
+          bg: "rgba(217, 70, 239, 0.1)",
+          color: "#a21caf",
+          border: "rgba(217, 70, 239, 0.3)",
+        };
       default:
         return {
           label: translate("workspace.review.rule.LANGUAGE_TOOL"),

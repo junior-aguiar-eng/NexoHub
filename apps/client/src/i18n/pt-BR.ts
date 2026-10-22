@@ -459,6 +459,10 @@ export const ptBR = {
   "workspace.review.rule.REPEATED_WHITESPACE": "Espaçamento",
   "workspace.review.rule.TRAILING_WHITESPACE": "Espaçamento",
   "workspace.review.rule.LANGUAGE_TOOL": "Gramática",
+  "workspace.review.rule.GRAMMAR_AGREEMENT": "Concordância",
+  "workspace.review.rule.CRASE_USAGE": "Crase",
+  "workspace.review.rule.ACCENTUATION": "Acentuação",
+  "workspace.review.rule.PLEONASM_REDUNDANCY": "Pleonasmo",
   "workspace.translate.title": "Tradutor Inteligente",
   "workspace.translate.swap": "Inverter Idiomas",
   "workspace.translate.swapTitle": "Inverter idiomas de origem e destino",
@@ -470,9 +474,10 @@ export const ptBR = {
   "workspace.translate.lang.en": "Inglês",
   "workspace.translate.lang.pt": "Português (Brasil)",
   "workspace.translate.lang.es": "Espanhol",
-  "workspace.translate.offlineBadge": "Modelo Neural 100% Local • Zero Envio para Nuvem",
+  "workspace.translate.offlineBadge":
+    "Modelo Neural 100% Local (NLLB-200) • Zero Envio para Nuvem",
   "workspace.translate.downloadNotice":
-    "Download inicial sob demanda (~38 MB) — após o download, funciona 100% offline.",
+    "Download inicial sob demanda (Meta NLLB-200 Q8) — após o download no cache local do navegador, funciona 100% offline.",
   "workspace.compress.title": "Resultado da Compressão",
   "workspace.compress.savings": "de economia alcançada",
   "compress.methodTitle": "Otimização da estrutura",

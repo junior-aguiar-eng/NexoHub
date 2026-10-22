@@ -72,7 +72,7 @@ describe("browser-translator", () => {
       });
 
       expect(result.translatedText).toBe("[EN] Contrato de prestação de serviços");
-      expect(result.engine).toBe("transformers.js-opus-mt");
+      expect(result.engine).toBe("transformers.js-nllb-200");
       expect(progressList.length).toBeGreaterThan(0);
       expect(progressList.at(-1)?.status).toBe("ready");
       expect(progressList.at(-1)?.progress).toBe(100);

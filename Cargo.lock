@@ -2176,6 +2176,7 @@ name = "nexohub-server"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "dunce",
  "http-body-util",
  "lopdf",
  "nexohub-core",

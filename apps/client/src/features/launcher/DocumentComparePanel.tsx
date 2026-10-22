@@ -87,15 +87,15 @@ function alignDiffLines(lines: readonly DiffLine[]): AlignedDiffRow[] {
 
 export function DocumentComparePanel({
   doc1Text,
-  doc1Name = "Documento 1 (Original)",
+  doc1Name = translate("workspace.compare.defaultDoc1Name"),
   onDoc1TextChange,
   onDoc1NameChange,
   doc2Text,
-  doc2Name = "Documento 2 (Alterado)",
+  doc2Name = translate("workspace.compare.defaultDoc2Name"),
   onDoc2TextChange,
   onDoc2NameChange,
   doc3Text = "",
-  doc3Name = "Documento 3 (Versão B)",
+  doc3Name = translate("workspace.compare.defaultDoc3Name"),
   onDoc3TextChange,
   onDoc3NameChange,
   showDoc3 = false,
@@ -275,7 +275,7 @@ export function DocumentComparePanel({
             variant={displayStyle === "diff" ? "primary" : "ghost"}
             size="compact"
             onClick={() => setDisplayStyle("diff")}
-            title="Visualizar diferenças com destaque de palavras e linhas"
+            title={translate("workspace.compare.titleViewDiff")}
           >
             <Eye size={14} />
             <span>{translate("workspace.compare.viewDiff")}</span>
@@ -285,7 +285,7 @@ export function DocumentComparePanel({
             variant={displayStyle === "edit" ? "primary" : "ghost"}
             size="compact"
             onClick={() => setDisplayStyle("edit")}
-            title="Editar ou colar textos diretamente"
+            title={translate("workspace.compare.titleEditContent")}
           >
             <PenLine size={14} />
             <span>{translate("workspace.compare.editContent")}</span>
@@ -304,7 +304,7 @@ export function DocumentComparePanel({
             variant={viewMode === "side-by-side" ? "secondary" : "ghost"}
             size="compact"
             onClick={() => setViewMode("side-by-side")}
-            title="Visualização lado a lado em colunas alinhadas"
+            title={translate("workspace.compare.titleSideBySide")}
           >
             <Columns size={14} />
             <span>{translate("compare.viewSideBySide")}</span>
@@ -314,7 +314,7 @@ export function DocumentComparePanel({
             variant={viewMode === "unified" ? "secondary" : "ghost"}
             size="compact"
             onClick={() => setViewMode("unified")}
-            title="Visualização unificada de linhas"
+            title={translate("workspace.compare.titleUnified")}
           >
             <ArrowLeftRight size={14} />
             <span>{translate("compare.viewUnified")}</span>
@@ -325,7 +325,7 @@ export function DocumentComparePanel({
               variant="secondary"
               size="compact"
               onClick={() => onToggleDoc3?.(true)}
-              title="Comparar com um 3º arquivo ou versão"
+              title={translate("workspace.compare.titleAddDoc3")}
             >
               <Plus size={14} />
               <span>{translate("workspace.compare.addDocument")}</span>
@@ -335,10 +335,10 @@ export function DocumentComparePanel({
               variant="ghost"
               size="compact"
               onClick={() => onToggleDoc3?.(false)}
-              title="Remover 3º documento"
+              title={translate("workspace.compare.titleRemoveDoc3")}
             >
               <Trash2 size={14} />
-              <span>Remover 3º Doc</span>
+              <span>{translate("workspace.compare.removeDoc3")}</span>
             </Button>
           )}
 
@@ -348,7 +348,7 @@ export function DocumentComparePanel({
                 variant={activeDiffPair === "1-2" ? "primary" : "ghost"}
                 size="compact"
                 onClick={() => setActiveDiffPair("1-2")}
-                title="Comparar Documento 1 com Documento 2"
+                title={translate("workspace.compare.titleCompare12")}
               >
                 <span>Doc 1 × 2</span>
               </Button>
@@ -356,7 +356,7 @@ export function DocumentComparePanel({
                 variant={activeDiffPair === "1-3" ? "primary" : "ghost"}
                 size="compact"
                 onClick={() => setActiveDiffPair("1-3")}
-                title="Comparar Documento 1 com Documento 3"
+                title={translate("workspace.compare.titleCompare13")}
               >
                 <span>Doc 1 × 3</span>
               </Button>
@@ -368,10 +368,10 @@ export function DocumentComparePanel({
             size="compact"
             onClick={onExportDiff}
             disabled={!onExportDiff || !doc1Text.trim() || !doc2Text.trim()}
-            title="Exportar relatório de diferenças completo"
+            title={translate("workspace.compare.titleExportDiff")}
           >
             <Download size={14} />
-            <span>Exportar .diff</span>
+            <span>{translate("workspace.compare.exportDiff")}</span>
           </Button>
         </div>
       </div>
@@ -509,7 +509,7 @@ export function DocumentComparePanel({
                       type="button"
                       className="doc-compare-upload-btn"
                       onClick={() => onDoc1TextChange?.("")}
-                      title="Limpar texto"
+                      title={translate("workspace.compare.titleClearText")}
                     >
                       {translate("workspace.compare.clear")}
                     </button>
@@ -522,7 +522,7 @@ export function DocumentComparePanel({
                 className="doc-compare-textarea"
                 value={doc1Text}
                 onChange={(e) => onDoc1TextChange?.(e.target.value)}
-                placeholder="Cole ou digite o texto do Documento 1 (Original)..."
+                placeholder={translate("workspace.compare.placeholderDoc1")}
                 rows={16}
               />
             </section>
@@ -548,7 +548,7 @@ export function DocumentComparePanel({
                     type="button"
                     className="doc-compare-upload-btn"
                     onClick={() => fileInputRef2.current?.click()}
-                    title="Carregar arquivo PDF ou texto"
+                    title={translate("workspace.compare.titleLoadFile")}
                   >
                     {isExtractingDoc2 ? (
                       <Loader2 size={13} className="animate-spin" />
@@ -566,7 +566,7 @@ export function DocumentComparePanel({
                       type="button"
                       className="doc-compare-upload-btn"
                       onClick={() => onDoc2TextChange?.("")}
-                      title="Limpar texto"
+                      title={translate("workspace.compare.titleClearText")}
                     >
                       {translate("workspace.compare.clear")}
                     </button>
@@ -579,7 +579,7 @@ export function DocumentComparePanel({
                 className="doc-compare-textarea"
                 value={doc2Text}
                 onChange={(e) => onDoc2TextChange?.(e.target.value)}
-                placeholder="Cole ou digite o texto do Documento 2 (Alterado)..."
+                placeholder={translate("workspace.compare.placeholderDoc2")}
                 rows={16}
               />
             </section>
@@ -606,7 +606,7 @@ export function DocumentComparePanel({
                       type="button"
                       className="doc-compare-upload-btn"
                       onClick={() => fileInputRef3.current?.click()}
-                      title="Carregar arquivo PDF ou texto"
+                      title={translate("workspace.compare.titleLoadFile")}
                     >
                       {isExtractingDoc3 ? (
                         <Loader2 size={13} className="animate-spin" />
@@ -624,7 +624,7 @@ export function DocumentComparePanel({
                         type="button"
                         className="doc-compare-upload-btn"
                         onClick={() => onDoc3TextChange?.("")}
-                        title="Limpar texto"
+                        title={translate("workspace.compare.titleClearText")}
                       >
                         {translate("workspace.compare.clear")}
                       </button>
@@ -637,7 +637,7 @@ export function DocumentComparePanel({
                   className="doc-compare-textarea"
                   value={doc3Text}
                   onChange={(e) => onDoc3TextChange?.(e.target.value)}
-                  placeholder="Cole ou digite o texto do Documento 3 (Versão B)..."
+                  placeholder={translate("workspace.compare.placeholderDoc3")}
                   rows={16}
                 />
               </section>
@@ -655,7 +655,7 @@ export function DocumentComparePanel({
                   type="button"
                   className="doc-compare-upload-btn"
                   onClick={() => fileInputRef1.current?.click()}
-                  title="Trocar arquivo"
+                  title={translate("workspace.compare.titleChangeFile")}
                 >
                   <Upload size={12} />
                   <span>{translate("workspace.compare.loadFile")}</span>
@@ -669,7 +669,7 @@ export function DocumentComparePanel({
                   type="button"
                   className="doc-compare-upload-btn"
                   onClick={() => activeRightInputRef.current?.click()}
-                  title="Trocar arquivo"
+                  title={translate("workspace.compare.titleChangeFile")}
                 >
                   <Upload size={12} />
                   <span>{translate("workspace.compare.loadFile")}</span>
@@ -680,7 +680,7 @@ export function DocumentComparePanel({
             <div className="doc-compare-side-diff-rows-container">
               {activeAlignedRows.length === 0 ? (
                 <div className="doc-compare-empty-lines">
-                  Carregue os dois documentos para visualizar o quadro comparativo alinhado.
+                  {translate("workspace.compare.emptySideDiff")}
                 </div>
               ) : (
                 activeAlignedRows.map((row) => (
@@ -732,7 +732,7 @@ export function DocumentComparePanel({
           <div className="doc-compare-lines-list">
             {activeDiff.lines.length === 0 ? (
               <div className="doc-compare-empty-lines">
-                Digite ou carregue os textos para ver o comparativo linha por linha.
+                {translate("workspace.compare.emptyUnifiedDiff")}
               </div>
             ) : (
               activeDiff.lines.map((line) => (

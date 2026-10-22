@@ -139,23 +139,27 @@ const MIGRATIONS: &[Migration] = &[
 ];
 
 pub(crate) fn apply(connection: &mut Connection, applied_at: i64) -> CoreResult<()> {
-    connection
-        .execute_batch(
-            "PRAGMA foreign_keys = ON;
-             CREATE TABLE IF NOT EXISTS schema_migrations (
-                 version INTEGER PRIMARY KEY NOT NULL,
-                 name TEXT NOT NULL,
-                 applied_at INTEGER NOT NULL
-             );",
-        )
-        .map_err(|_| migration_error())?;
-
-    let current = connection
+    let current: i64 = connection
         .query_row(
             "SELECT COALESCE(MAX(version), 0) FROM schema_migrations",
             [],
-            |row| row.get::<_, i64>(0),
+            |row| row.get(0),
         )
+        .or_else(|_| {
+            connection.execute_batch(
+                "PRAGMA foreign_keys = ON;
+                 CREATE TABLE IF NOT EXISTS schema_migrations (
+                     version INTEGER PRIMARY KEY NOT NULL,
+                     name TEXT NOT NULL,
+                     applied_at INTEGER NOT NULL
+                 );",
+            )?;
+            connection.query_row(
+                "SELECT COALESCE(MAX(version), 0) FROM schema_migrations",
+                [],
+                |row| row.get(0),
+            )
+        })
         .map_err(|_| migration_error())?;
 
     if current > CURRENT_SCHEMA_VERSION {
@@ -165,10 +169,12 @@ pub(crate) fn apply(connection: &mut Connection, applied_at: i64) -> CoreResult<
         ));
     }
 
-    for migration in MIGRATIONS.iter().filter(|item| item.version > current) {
-        let transaction = connection.transaction().map_err(|_| migration_error())?;
-        apply_one(&transaction, migration, applied_at)?;
-        transaction.commit().map_err(|_| migration_error())?;
+    if current < CURRENT_SCHEMA_VERSION {
+        for migration in MIGRATIONS.iter().filter(|item| item.version > current) {
+            let transaction = connection.transaction().map_err(|_| migration_error())?;
+            apply_one(&transaction, migration, applied_at)?;
+            transaction.commit().map_err(|_| migration_error())?;
+        }
     }
 
     Ok(())

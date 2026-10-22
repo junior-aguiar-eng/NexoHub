@@ -158,20 +158,30 @@ fn is_protected_system_directory(canonical: &Path) -> bool {
         }
     }
 
-    let path_str = canonical.to_string_lossy().to_lowercase();
-    if path_str.starts_with("c:\\windows")
-        || path_str.starts_with("c:\\program files")
-        || path_str.starts_with("c:\\program files (x86)")
-        || path_str.starts_with("c:\\programdata")
-        || path_str.starts_with("/bin")
-        || path_str.starts_with("/sbin")
-        || path_str.starts_with("/usr")
-        || path_str.starts_with("/etc")
-        || path_str.starts_with("/sys")
-        || path_str.starts_with("/proc")
-        || path_str.starts_with("/dev")
-    {
-        return true;
+    // Normalização em minúsculas para comparação por componentes de caminho (evita falso-positivo em pastas como /etc_backup)
+    let lower_str = canonical.to_string_lossy().to_lowercase();
+    let lower_path = Path::new(&lower_str);
+
+    let protected_prefixes = [
+        "c:\\windows",
+        "c:\\program files",
+        "c:\\program files (x86)",
+        "c:\\programdata",
+        "/bin",
+        "/sbin",
+        "/usr",
+        "/etc",
+        "/sys",
+        "/proc",
+        "/dev",
+        "/root",
+        "/boot",
+    ];
+
+    for prefix in protected_prefixes {
+        if lower_path.starts_with(Path::new(prefix)) {
+            return true;
+        }
     }
 
     false
@@ -235,5 +245,19 @@ mod tests {
             let err = grant_path("/").expect_err("/ deve ser bloqueado");
             assert_eq!(err.code, ErrorCode::PermissionDenied);
         }
+    }
+
+    #[test]
+    fn does_not_false_positive_on_prefix_names() {
+        assert!(!is_protected_system_directory(Path::new(
+            "/etc_backup/data"
+        )));
+        assert!(!is_protected_system_directory(Path::new(
+            "C:\\WindowsFake\\test"
+        )));
+        assert!(is_protected_system_directory(Path::new("/etc/passwd")));
+        assert!(is_protected_system_directory(Path::new(
+            "C:\\Windows\\System32"
+        )));
     }
 }

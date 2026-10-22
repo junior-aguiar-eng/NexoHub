@@ -241,3 +241,65 @@ async fn test_invoke_pick_project_folder_and_import_bytes() {
     assert_eq!(import_json["document"]["title"], "contrato_web.pdf");
     assert_eq!(import_json["artifact"]["kind"], "ORIGINAL");
 }
+
+#[tokio::test]
+async fn test_import_document_is_forbidden_on_server() {
+    let app = create_app(None);
+
+    let res = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/invoke/import_document")
+                .method("POST")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    json!({
+                        "projectPath": "/tmp/session.nexohub",
+                        "sourcePath": "/etc/passwd",
+                        "mimeType": "text/plain"
+                    })
+                    .to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(res.status(), StatusCode::FORBIDDEN);
+    let body = res.into_body().collect().await.unwrap().to_bytes();
+    let json: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["code"], "PERMISSION_DENIED");
+}
+
+#[tokio::test]
+async fn test_create_project_outside_sandbox_is_forbidden() {
+    let app = create_app(None);
+
+    #[cfg(windows)]
+    let illegal_path = "C:\\Windows\\system32\\evil.nexohub";
+    #[cfg(not(windows))]
+    let illegal_path = "/etc/evil.nexohub";
+
+    let res = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/invoke/create_project")
+                .method("POST")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    json!({
+                        "projectPath": illegal_path,
+                        "name": "Evil Project"
+                    })
+                    .to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(res.status(), StatusCode::FORBIDDEN);
+    let body = res.into_body().collect().await.unwrap().to_bytes();
+    let json: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["code"], "PERMISSION_DENIED");
+}

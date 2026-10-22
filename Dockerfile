@@ -4,7 +4,7 @@
 FROM node:22-bookworm-slim AS frontend-builder
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.19.0 --activate
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml biome.json ./
 COPY packages ./packages
@@ -31,14 +31,14 @@ RUN cargo build --release --locked -p nexohub-server
 # ==========================================
 FROM debian:bookworm-slim AS runner
 
-# Instala dependências de runtime e OCR (Tesseract com suporte a português e inglês)
+# Instala runtime Python 3 e dependências nativas para OCR e processamento documental
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     libssl3 \
-    tesseract-ocr \
-    tesseract-ocr-por \
-    tesseract-ocr-eng \
+    python3 \
+    python3-pip \
+    python3-venv \
     libgl1 \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
@@ -48,14 +48,20 @@ RUN useradd -m -u 1000 -s /bin/bash appuser
 
 WORKDIR /app
 
-# Copia os arquivos estáticos compilados do frontend e o binário Rust
+# Copia os arquivos estáticos compilados do frontend, o binário Rust e o sidecar Python
 COPY --from=frontend-builder /app/apps/client/dist /app/dist
 COPY --from=rust-builder /app/target/release/nexohub-server /app/nexohub-server
+COPY engines/python /app/engines/python
+
+# Configura ambiente virtual Python com dependências do sidecar
+RUN python3 -m venv /app/.venv && \
+    /app/.venv/bin/pip install --no-cache-dir /app/engines/python
 
 RUN chown -R appuser:appuser /app
 
 USER appuser
 
+ENV PATH="/app/.venv/bin:$PATH"
 ENV HOST=0.0.0.0
 ENV PORT=8080
 ENV STATIC_DIR=/app/dist

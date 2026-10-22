@@ -238,22 +238,27 @@ pub fn organize_pdf(request: OrganizePdfRequest) -> CoreResult<PdfToolResult> {
 }
 
 pub fn create_text_revision(request: CreateTextRevisionRequest) -> CoreResult<TextToolResult> {
+    let _ = crate::grant_broker::require_granted(&request.project_path)?;
     crate::text_tools::create_text_revision(request)
 }
 
 pub fn create_pdf_overlay(request: CreatePdfOverlayRequest) -> CoreResult<Overlay> {
+    let _ = crate::grant_broker::require_granted(&request.project_path)?;
     crate::overlay_tools::create_pdf_overlay(request)
 }
 
 pub fn list_pdf_overlays(request: ListPdfOverlaysRequest) -> CoreResult<Vec<Overlay>> {
+    let _ = crate::grant_broker::require_granted(&request.project_path)?;
     crate::overlay_tools::list_pdf_overlays(request)
 }
 
 pub fn create_anchor(request: CreateAnchorRequest) -> CoreResult<Anchor> {
+    let _ = crate::grant_broker::require_granted(&request.project_path)?;
     crate::anchor_tools::create_anchor(request)
 }
 
 pub fn list_anchors(request: ListAnchorsRequest) -> CoreResult<Vec<Anchor>> {
+    let _ = crate::grant_broker::require_granted(&request.project_path)?;
     crate::anchor_tools::list_anchors(request)
 }
 

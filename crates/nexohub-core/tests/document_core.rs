@@ -1290,6 +1290,7 @@ fn rejects_anchor_selector_incompatible_with_artifact() {
 }
 
 #[test]
+#[ignore = "requer ambiente Python com sidecar instalado"]
 fn creates_and_inspects_docx_via_sidecar() {
     let temporary = TestDirectory::new("docx-sidecar");
     let project_path = temporary.project_path();
@@ -1346,6 +1347,7 @@ fn creates_and_inspects_docx_via_sidecar() {
 }
 
 #[test]
+#[ignore = "requer ambiente Python com sidecar instalado"]
 fn executes_ocr_as_derived_artifact_without_changing_original() {
     let temporary = TestDirectory::new("ocr-derived");
     let project_path = temporary.project_path();
@@ -1709,4 +1711,61 @@ fn extracts_pdf_images_as_derived_zip_artifact() {
         assert_eq!(res.artifact.mime_type, "application/zip");
         assert_eq!(res.artifact.document_id, imported.document.id);
     }
+}
+
+#[test]
+fn enforces_grant_checks_on_all_desktop_commands() {
+    let temporary = TestDirectory::new("grants-enforcement");
+    let project_path_str = temporary.project_path().to_string_lossy().into_owned();
+
+    // 1. create_text_revision sem grant deve falhar com PermissionDenied
+    let err = nexohub_core::commands::create_text_revision(CreateTextRevisionRequest {
+        project_path: project_path_str.clone(),
+        document_id: "doc-1".to_string(),
+        artifact_id: "art-1".to_string(),
+        content: "novo texto".to_string(),
+    })
+    .expect_err("create_text_revision sem grant deve falhar");
+    assert_eq!(err.code, ErrorCode::PermissionDenied);
+
+    // 2. create_pdf_overlay sem grant deve falhar com PermissionDenied
+    let err = nexohub_core::commands::create_pdf_overlay(CreatePdfOverlayRequest {
+        project_path: project_path_str.clone(),
+        artifact_id: "art-1".to_string(),
+        kind: PdfOverlayKind::Highlight,
+        page_number: 1,
+        x: 0.1,
+        y: 0.1,
+        width: 0.5,
+        height: 0.2,
+        payload: serde_json::json!({ "color": "#ffff00" }),
+    })
+    .expect_err("create_pdf_overlay sem grant deve falhar");
+    assert_eq!(err.code, ErrorCode::PermissionDenied);
+
+    // 3. list_pdf_overlays sem grant deve falhar com PermissionDenied
+    let err = nexohub_core::commands::list_pdf_overlays(ListPdfOverlaysRequest {
+        project_path: project_path_str.clone(),
+        artifact_id: "art-1".to_string(),
+    })
+    .expect_err("list_pdf_overlays sem grant deve falhar");
+    assert_eq!(err.code, ErrorCode::PermissionDenied);
+
+    // 4. create_anchor sem grant deve falhar com PermissionDenied
+    let err = nexohub_core::commands::create_anchor(CreateAnchorRequest {
+        project_path: project_path_str.clone(),
+        artifact_id: "art-1".to_string(),
+        selector: AnchorSelector::TextRange { start: 0, end: 5 },
+        quote: None,
+    })
+    .expect_err("create_anchor sem grant deve falhar");
+    assert_eq!(err.code, ErrorCode::PermissionDenied);
+
+    // 5. list_anchors sem grant deve falhar com PermissionDenied
+    let err = nexohub_core::commands::list_anchors(ListAnchorsRequest {
+        project_path: project_path_str,
+        artifact_id: "art-1".to_string(),
+    })
+    .expect_err("list_anchors sem grant deve falhar");
+    assert_eq!(err.code, ErrorCode::PermissionDenied);
 }

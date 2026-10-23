@@ -243,6 +243,7 @@ export function DedicatedToolView({
 
   // Estados de Remoção e Extração de Páginas
   const [removePagesSelection, setRemovePagesSelection] = useState<number[]>([]);
+  const [pageRangeValid, setPageRangeValid] = useState(true);
   const [extractPagesSelection, setExtractPagesSelection] = useState<number[]>([1]);
   const [extractPagesMode, setExtractPagesMode] = useState<"single-pdf" | "zip-split">(
     "single-pdf",
@@ -550,6 +551,9 @@ export function DedicatedToolView({
   // biome-ignore lint/correctness/useExhaustiveDependencies: troca de arquivo/ferramenta invalida os resultados associados.
   useEffect(() => {
     setMarkdownResult("");
+    setRemovePagesSelection([]);
+    setExtractPagesSelection([1]);
+    setPageRangeValid(true);
     setPreviewEpoch((epoch) => epoch + 1);
     setRedactionAreas([]);
     setProtectPassword("");
@@ -1085,6 +1089,11 @@ export function DedicatedToolView({
   }
 
   function handleReset() {
+    setHtmlCodeContent("");
+    setScannedPages([]);
+    setRemovePagesSelection([]);
+    setExtractPagesSelection([1]);
+    setPageRangeValid(true);
     setFiles([]);
     setStatus("idle");
     setErrorMessage(null);
@@ -1478,6 +1487,8 @@ export function DedicatedToolView({
     if (tool.id === "pdf-remove-pages") {
       return (
         <RemovePagesPanel
+          key={previewEpoch}
+          onRangeValidityChange={setPageRangeValid}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
@@ -1492,6 +1503,8 @@ export function DedicatedToolView({
     if (tool.id === "pdf-extract-pages") {
       return (
         <ExtractPagesPanel
+          key={previewEpoch}
+          onRangeValidityChange={setPageRangeValid}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
@@ -1945,6 +1958,7 @@ export function DedicatedToolView({
             className="ilovepdf-action-red-btn"
             disabled={
               status === "running" ||
+              !pageRangeValid ||
               (!hasFilesOrText && tool.id !== "text-compare") ||
               (tool.id === "pdf-protect" && protectionStatus.isProtected) ||
               (tool.id === "pdf-redact" && redactionAreas.length === 0) ||

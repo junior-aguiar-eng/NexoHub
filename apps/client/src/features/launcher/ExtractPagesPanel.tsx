@@ -3,8 +3,10 @@ import { type ChangeEvent, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import { createSvgPageThumbnail } from "@/platform/browser-pdf-utils";
+import { parsePageRange } from "./page-range-input";
 
 export interface ExtractPagesPanelProps {
+  readonly onRangeValidityChange?: (valid: boolean) => void;
   readonly fileName: string;
   readonly fileSizeBytes: number;
   readonly totalPages: number;
@@ -15,21 +17,8 @@ export interface ExtractPagesPanelProps {
   readonly onModeChange: (mode: "single-pdf" | "zip-split") => void;
 }
 
-function parseRanges(input: string, maxPages: number): number[] {
-  const pages = new Set<number>();
-  if (!input.trim() || !Number.isSafeInteger(maxPages) || maxPages < 1) return [];
-  for (const part of input.split(",").map((value) => value.trim())) {
-    if (!/^\d+(?:\s*-\s*\d+)?$/.test(part)) continue;
-    const [first, last = first] = part.split("-").map(Number);
-    if (![first, last].every((p) => Number.isSafeInteger(p) && p >= 1 && p <= maxPages)) continue;
-    for (let p = Math.min(first, last); p <= Math.max(first, last); p++) {
-      pages.add(p);
-    }
-  }
-  return Array.from(pages).sort((a, b) => a - b);
-}
-
 export function ExtractPagesPanel({
+  onRangeValidityChange,
   fileName,
   fileSizeBytes,
   totalPages,
@@ -40,45 +29,52 @@ export function ExtractPagesPanel({
   onModeChange,
 }: ExtractPagesPanelProps) {
   const [rangeInput, setRangeInput] = useState("");
+  const [rangeValid, setRangeValid] = useState(true);
+  function selectPages(pages: number[]) {
+    setRangeInput("");
+    setRangeValid(true);
+    onRangeValidityChange?.(true);
+    onSelectedPagesChange(pages);
+  }
   const selectedSet = useMemo(() => new Set(selectedPages), [selectedPages]);
 
   function togglePage(pageNum: number) {
     if (selectedSet.has(pageNum)) {
-      onSelectedPagesChange(selectedPages.filter((p) => p !== pageNum));
+      selectPages(selectedPages.filter((p) => p !== pageNum));
     } else {
-      onSelectedPagesChange([...selectedPages, pageNum].sort((a, b) => a - b));
+      selectPages([...selectedPages, pageNum].sort((a, b) => a - b));
     }
   }
 
   function handleRangeChange(e: ChangeEvent<HTMLInputElement>) {
     const val = e.target.value;
     setRangeInput(val);
-    const parsed = parseRanges(val, totalPages);
-    if (parsed.length > 0) {
-      onSelectedPagesChange(parsed);
-    }
+    const parsed = parsePageRange(val, totalPages);
+    setRangeValid(parsed.valid);
+    onRangeValidityChange?.(parsed.valid);
+    onSelectedPagesChange(parsed.pages);
   }
 
   function handleSelectAll() {
     const all = Array.from({ length: totalPages }, (_, i) => i + 1);
-    onSelectedPagesChange(all);
+    selectPages(all);
   }
 
   function handleDeselectAll() {
     setRangeInput("");
-    onSelectedPagesChange([]);
+    selectPages([]);
   }
 
   function handleSelectEven() {
     const evens: number[] = [];
     for (let i = 2; i <= totalPages; i += 2) evens.push(i);
-    onSelectedPagesChange(evens);
+    selectPages(evens);
   }
 
   function handleSelectOdd() {
     const odds: number[] = [];
     for (let i = 1; i <= totalPages; i += 2) odds.push(i);
-    onSelectedPagesChange(odds);
+    selectPages(odds);
   }
 
   return (
@@ -94,6 +90,11 @@ export function ExtractPagesPanel({
           </div>
           <div>
             <h2 className="text-lg font-semibold text-text-primary">{fileName}</h2>
+            {!rangeValid && (
+              <p id="page-range-error" role="alert">
+                {translate("pages.invalidRange")}
+              </p>
+            )}
             <p className="text-xs text-text-tertiary">
               {totalPages} {totalPages === 1 ? "página" : "páginas"} •{" "}
               {(fileSizeBytes / (1024 * 1024)).toFixed(2)} MB
@@ -193,6 +194,8 @@ export function ExtractPagesPanel({
           </label>
           <input
             id="quick-extract-range"
+            aria-invalid={!rangeValid}
+            aria-describedby={!rangeValid ? "page-range-error" : undefined}
             type="text"
             className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-tertiary focus:outline-hidden focus:ring-2 focus:ring-orange-500/40"
             placeholder={translate("extractPages.quickRangePlaceholder")}
@@ -258,6 +261,7 @@ export function ExtractPagesPanel({
             <button
               type="button"
               key={`extract-page-${pageNum}`}
+              aria-pressed={isSelected}
               data-testid={`extract-page-${pageNum}`}
               onClick={() => togglePage(pageNum)}
               className={`group relative flex flex-col items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer select-none text-left w-full ${

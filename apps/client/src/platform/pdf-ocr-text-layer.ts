@@ -4,6 +4,7 @@ import {
   type PDFDocument,
   PDFHexString,
   type PDFOperator,
+  type PDFRef,
   PDFString,
   popGraphicsState,
   pushGraphicsState,
@@ -15,6 +16,8 @@ import {
 } from "pdf-lib";
 import type { OcrPageData } from "./pdf-engine";
 import { getVisiblePageGeometry } from "./pdf-page-geometry";
+
+const fontDescriptors = new WeakMap<PDFDocument, PDFRef>();
 
 const segmenter = new Intl.Segmenter("und", { granularity: "grapheme" });
 
@@ -55,33 +58,39 @@ function utf16Hex(text: string): string {
 export async function addOcrTextLayer(
   doc: PDFDocument,
   pagesData: readonly OcrPageData[],
+  options: { preserveDrawingOrder?: boolean } = {},
 ): Promise<void> {
   const populatedPages = pagesData.filter((data) => data.lines.some((line) => line.text.trim()));
   if (!populatedPages.length) return;
 
-  const response = await fetch(
-    `${import.meta.env.BASE_URL}standard_fonts/LiberationSans-Regular.ttf`,
-  );
-  if (!response.ok) throw new Error("OCR_FONT_UNAVAILABLE");
-  const fontBytes = new Uint8Array(await response.arrayBuffer());
-  if (!fontBytes.length) throw new Error("OCR_FONT_UNAVAILABLE");
-  const fontFile = doc.context.register(
-    doc.context.flateStream(fontBytes, { Length1: fontBytes.length }),
-  );
-  const descriptor = doc.context.register(
-    doc.context.obj({
-      Type: "FontDescriptor",
-      FontName: "LiberationSans",
-      Flags: 32,
-      FontBBox: [-1000, -1000, 3000, 3000],
-      ItalicAngle: 0,
-      Ascent: 1000,
-      Descent: -200,
-      CapHeight: 700,
-      StemV: 80,
-      FontFile2: fontFile,
-    }),
-  );
+  let descriptor = fontDescriptors.get(doc);
+  if (!descriptor) {
+    const response = await fetch(
+      `${import.meta.env.BASE_URL}standard_fonts/LiberationSans-Regular.ttf`,
+    );
+    if (!response.ok) throw new Error("OCR_FONT_UNAVAILABLE");
+    const fontBytes = new Uint8Array(await response.arrayBuffer());
+    if (!fontBytes.length) throw new Error("OCR_FONT_UNAVAILABLE");
+    const fontFile = doc.context.register(
+      doc.context.flateStream(fontBytes, { Length1: fontBytes.length }),
+    );
+    descriptor = doc.context.register(
+      doc.context.obj({
+        Type: "FontDescriptor",
+        FontName: "LiberationSans",
+        Flags: 32,
+        FontBBox: [-1000, -1000, 3000, 3000],
+        ItalicAngle: 0,
+        Ascent: 1000,
+        Descent: -200,
+        CapHeight: 700,
+        StemV: 80,
+        FontFile2: fontFile,
+      }),
+    );
+
+    fontDescriptors.set(doc, descriptor);
+  }
 
   const pages = doc.getPages();
   for (const data of populatedPages) {
@@ -192,7 +201,14 @@ export async function addOcrTextLayer(
       );
     }
     if (operators.length) {
-      page.node.addContentStream(doc.context.register(doc.context.contentStream(operators)));
+      if (options.preserveDrawingOrder) {
+        // Composição de documento novo: intercala o texto com os desenhos da linha.
+        for (let i = 0; i < operators.length; i += 4096)
+          page.pushOperators(...operators.slice(i, i + 4096));
+      } else {
+        // Documentos já serializados podem ter o stream anterior em cache.
+        page.node.addContentStream(doc.context.register(doc.context.contentStream(operators)));
+      }
     }
   }
 }

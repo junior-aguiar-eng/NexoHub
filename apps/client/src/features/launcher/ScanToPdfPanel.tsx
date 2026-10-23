@@ -40,68 +40,78 @@ export function ScanToPdfPanel({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+  const requestId = useRef(0);
+  const mounted = useRef(true);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Iniciar câmera
-  async function startCamera() {
+  const stopCamera = useCallback(() => {
+    requestId.current++;
+    for (const track of streamRef.current?.getTracks() ?? []) track.stop();
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setIsCameraActive(false);
+    setIsStarting(false);
+  }, []);
+
+  async function startCamera(mode: "environment" | "user" = facingMode) {
+    stopCamera();
+    const request = ++requestId.current;
     setCameraError(null);
     if (!navigator.mediaDevices?.getUserMedia) {
       setCameraError(translate("scanToPdf.cameraUnavailable"));
       return;
     }
-
+    setIsStarting(true);
+    let acquired: MediaStream | undefined;
     try {
-      if (streamRef.current) {
-        for (const track of streamRef.current.getTracks()) track.stop();
-      }
-      const stream = await navigator.mediaDevices.getUserMedia({
+      acquired = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: { ideal: facingMode },
+          facingMode: { ideal: mode },
           width: { ideal: 1920 },
           height: { ideal: 1080 },
         },
       });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+      if (!mounted.current || request !== requestId.current) {
+        for (const track of acquired.getTracks()) track.stop();
+        return;
       }
-      setIsCameraActive(true);
+      const video = videoRef.current;
+      if (!video) throw new Error("VIDEO_UNAVAILABLE");
+      streamRef.current = acquired;
+      video.srcObject = acquired;
+      await video.play();
+      if (mounted.current && request === requestId.current) setIsCameraActive(true);
     } catch {
-      setCameraError(translate("scanToPdf.cameraUnavailable"));
-      setIsCameraActive(false);
+      if (request === requestId.current && mounted.current) {
+        for (const track of acquired?.getTracks() ?? []) track.stop();
+        streamRef.current = null;
+        if (videoRef.current) videoRef.current.srcObject = null;
+        setCameraError(translate("scanToPdf.cameraUnavailable"));
+        setIsCameraActive(false);
+      }
+    } finally {
+      if (request === requestId.current && mounted.current) setIsStarting(false);
     }
   }
-
-  const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      for (const track of streamRef.current.getTracks()) track.stop();
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setIsCameraActive(false);
-  }, []);
 
   function handleSwitchCamera() {
     const nextFacing = facingMode === "environment" ? "user" : "environment";
     setFacingMode(nextFacing);
-    if (isCameraActive) {
-      stopCamera();
-      setTimeout(() => {
-        startCamera();
-      }, 100);
-    }
+    void startCamera(nextFacing);
   }
 
   useEffect(() => {
+    mounted.current = true;
     return () => {
-      stopCamera();
+      mounted.current = false;
+      requestId.current++;
+      for (const track of streamRef.current?.getTracks() ?? []) track.stop();
+      streamRef.current = null;
     };
-  }, [stopCamera]);
+  }, []);
 
   // Capturar frame da câmera
   async function handleCaptureFrame() {
@@ -137,6 +147,22 @@ export function ScanToPdfPanel({
       setTimeout(() => setIsCapturing(false), 200);
     }
   }
+
+  const [previewUrls, setPreviewUrls] = useState(new Map<string, string>());
+  useEffect(() => {
+    const urls = new Map(
+      pages.map((item) => [
+        item.id,
+        URL.createObjectURL(
+          new Blob([item.imageBytes as BlobPart], { type: item.mimeType || "image/jpeg" }),
+        ),
+      ]),
+    );
+    setPreviewUrls(urls);
+    return () => {
+      for (const url of urls.values()) URL.revokeObjectURL(url);
+    };
+  }, [pages]);
 
   // Upload alternativo de imagens
   async function handleImageUpload(e: ChangeEvent<HTMLInputElement>) {
@@ -207,7 +233,8 @@ export function ScanToPdfPanel({
               type="button"
               variant="secondary"
               size="compact"
-              onClick={startCamera}
+              onClick={() => void startCamera()}
+              disabled={isStarting}
               className="text-xs h-9"
             >
               <Camera className="w-4 h-4 mr-1.5" />
@@ -314,8 +341,11 @@ export function ScanToPdfPanel({
       )}
 
       {/* Live Camera Viewfinder (if active) */}
-      {isCameraActive && (
-        <div className="relative w-full aspect-video max-h-96 rounded-2xl overflow-hidden bg-black border border-border shadow-md flex items-center justify-center">
+      {
+        <div
+          style={{ display: isCameraActive ? undefined : "none" }}
+          className="relative w-full aspect-video max-h-96 rounded-2xl overflow-hidden bg-black border border-border shadow-md flex items-center justify-center"
+        >
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
 
           {/* Framing Guide Overlay */}
@@ -340,7 +370,7 @@ export function ScanToPdfPanel({
             </button>
           </div>
         </div>
-      )}
+      }
 
       {/* Captured Pages Gallery */}
       {pages.length === 0 && !isCameraActive ? (
@@ -357,7 +387,8 @@ export function ScanToPdfPanel({
             type="button"
             variant="secondary"
             size="compact"
-            onClick={startCamera}
+            onClick={() => void startCamera()}
+            disabled={isStarting}
             className="text-xs"
           >
             <Camera className="w-4 h-4 mr-1.5" />
@@ -372,12 +403,6 @@ export function ScanToPdfPanel({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {pages.map((item, idx) => {
-              const blobUrl = URL.createObjectURL(
-                new Blob([item.imageBytes as unknown as BlobPart], {
-                  type: item.mimeType || "image/jpeg",
-                }),
-              );
-
               return (
                 <div
                   key={item.id}
@@ -431,7 +456,7 @@ export function ScanToPdfPanel({
                   {/* Thumbnail Image */}
                   <div className="relative w-full aspect-[1/1.414] rounded-lg overflow-hidden border border-border bg-black/5 flex items-center justify-center">
                     <img
-                      src={blobUrl}
+                      src={previewUrls.get(item.id)}
                       alt={`Página digitalizada ${idx + 1}`}
                       style={{
                         transform: `rotate(${item.rotation || 0}deg)`,

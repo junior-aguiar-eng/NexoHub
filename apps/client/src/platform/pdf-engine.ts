@@ -9,6 +9,9 @@ import {
   type PDFImage,
   PDFName,
   PDFNumber,
+  PDFObjectCopier,
+  PDFPage,
+  PDFPageLeaf,
   PDFRawStream,
   popGraphicsState,
   pushGraphicsState,
@@ -207,6 +210,46 @@ export async function extractPdfSelectedPages(
  * Remove páginas específicas de um PDF preservando as restantes.
  * Garante que ao menos 1 página permaneça no documento.
  */
+async function copyPageSubsetWithForms(
+  srcDoc: PDFDocument,
+  indices: number[],
+): Promise<Uint8Array> {
+  const pages = srcDoc.getPages();
+  const keptAnnotations = new Set<PDFDict>();
+  for (const index of indices) {
+    const annots = pages[index].node.Annots();
+    if (annots)
+      for (let i = 0; i < annots.size(); i++) {
+        const annotation = annots.lookup(i);
+        if (annotation instanceof PDFDict) keptAnnotations.add(annotation);
+      }
+  }
+  const acroForm = srcDoc.catalog.lookupMaybe(PDFName.of("AcroForm"), PDFDict);
+  if (acroForm) {
+    const form = srcDoc.getForm();
+    for (const field of form.getFields()) {
+      const widgets = field.acroField.getWidgets();
+      for (let i = widgets.length - 1; i >= 0; i--) {
+        if (!keptAnnotations.has(widgets[i].dict)) field.acroField.removeWidget(i);
+      }
+      if (field.acroField.getWidgets().length === 0) form.acroForm.removeField(field.acroField);
+    }
+    // A ordem de cálculo pode referenciar campos de páginas descartadas.
+    acroForm.delete(PDFName.of("CO"));
+  }
+  await srcDoc.flush();
+  const out = await PDFDocument.create();
+  const copier = PDFObjectCopier.for(srcDoc.context, out.context);
+  for (const index of indices) {
+    const ref = copier.copy(pages[index].ref);
+    const node = out.context.lookup(ref);
+    if (!(node instanceof PDFPageLeaf)) throw new Error("PAGINA_PDF_INVALIDA");
+    out.addPage(PDFPage.of(node, ref, out));
+  }
+  if (acroForm) out.catalog.set(PDFName.of("AcroForm"), copier.copy(acroForm));
+  return out.save({ useObjectStreams: true });
+}
+
 export async function removePdfPages(
   pdfBytes: Uint8Array,
   pagesToRemove: number[],
@@ -237,13 +280,7 @@ export async function removePdfPages(
     }
   }
 
-  const newDoc = await PDFDocument.create();
-  const copiedPages = await newDoc.copyPages(srcDoc, remainingIndices);
-  for (const page of copiedPages) {
-    newDoc.addPage(page);
-  }
-
-  return await newDoc.save({ useObjectStreams: true });
+  return copyPageSubsetWithForms(srcDoc, remainingIndices);
 }
 
 export interface ExtractPagesResult {
@@ -279,28 +316,20 @@ export async function extractPdfPagesToZipOrCombined(
   }
 
   if (options.mode === "single-pdf") {
-    const newDoc = await PDFDocument.create();
     const indices = options.pages.map((p) => p - 1);
-    const copiedPages = await newDoc.copyPages(srcDoc, indices);
-    for (const page of copiedPages) {
-      newDoc.addPage(page);
-    }
-    const bytes = await newDoc.save({ useObjectStreams: true });
+    const bytes = await copyPageSubsetWithForms(srcDoc, indices);
     return {
       bytes,
       fileName: `${base}_paginas_extraidas.pdf`,
       mimeType: "application/pdf",
       isZip: false,
-      pageCount: copiedPages.length,
+      pageCount: indices.length,
     };
   }
 
   const zipParts: Array<{ name: string; data: Uint8Array }> = [];
   for (const p of options.pages) {
-    const singleDoc = await PDFDocument.create();
-    const [page] = await singleDoc.copyPages(srcDoc, [p - 1]);
-    singleDoc.addPage(page);
-    const pageBytes = await singleDoc.save({ useObjectStreams: true });
+    const pageBytes = await copyPageSubsetWithForms(await PDFDocument.load(pdfBytes), [p - 1]);
     zipParts.push({
       name: `${base}_pagina_${p}.pdf`,
       data: pageBytes,

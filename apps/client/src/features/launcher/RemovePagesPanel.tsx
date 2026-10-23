@@ -3,8 +3,10 @@ import { type ChangeEvent, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import { createSvgPageThumbnail } from "@/platform/browser-pdf-utils";
+import { parsePageRange } from "./page-range-input";
 
 export interface RemovePagesPanelProps {
+  readonly onRangeValidityChange?: (valid: boolean) => void;
   readonly fileName: string;
   readonly fileSizeBytes: number;
   readonly totalPages: number;
@@ -13,21 +15,8 @@ export interface RemovePagesPanelProps {
   readonly onPagesToRemoveChange: (pages: number[]) => void;
 }
 
-function parseRanges(input: string, maxPages: number): number[] {
-  const pages = new Set<number>();
-  if (!input.trim() || !Number.isSafeInteger(maxPages) || maxPages < 1) return [];
-  for (const part of input.split(",").map((value) => value.trim())) {
-    if (!/^\d+(?:\s*-\s*\d+)?$/.test(part)) continue;
-    const [first, last = first] = part.split("-").map(Number);
-    if (![first, last].every((p) => Number.isSafeInteger(p) && p >= 1 && p <= maxPages)) continue;
-    for (let p = Math.min(first, last); p <= Math.max(first, last); p++) {
-      pages.add(p);
-    }
-  }
-  return Array.from(pages).sort((a, b) => a - b);
-}
-
 export function RemovePagesPanel({
+  onRangeValidityChange,
   fileName,
   fileSizeBytes,
   totalPages,
@@ -36,37 +25,44 @@ export function RemovePagesPanel({
   onPagesToRemoveChange,
 }: RemovePagesPanelProps) {
   const [rangeInput, setRangeInput] = useState("");
+  const [rangeValid, setRangeValid] = useState(true);
+  function selectPages(pages: number[]) {
+    setRangeInput("");
+    setRangeValid(true);
+    onRangeValidityChange?.(true);
+    onPagesToRemoveChange(pages);
+  }
   const removeSet = useMemo(() => new Set(pagesToRemove), [pagesToRemove]);
   const remainingCount = Math.max(0, totalPages - removeSet.size);
   const isAllSelected = totalPages > 0 && removeSet.size >= totalPages;
 
   function togglePage(pageNum: number) {
     if (removeSet.has(pageNum)) {
-      onPagesToRemoveChange(pagesToRemove.filter((p) => p !== pageNum));
+      selectPages(pagesToRemove.filter((p) => p !== pageNum));
     } else {
-      onPagesToRemoveChange([...pagesToRemove, pageNum].sort((a, b) => a - b));
+      selectPages([...pagesToRemove, pageNum].sort((a, b) => a - b));
     }
   }
 
   function handleRangeChange(e: ChangeEvent<HTMLInputElement>) {
     const val = e.target.value;
     setRangeInput(val);
-    const parsed = parseRanges(val, totalPages);
-    if (parsed.length > 0) {
-      onPagesToRemoveChange(parsed);
-    }
+    const parsed = parsePageRange(val, totalPages);
+    setRangeValid(parsed.valid);
+    onRangeValidityChange?.(parsed.valid);
+    onPagesToRemoveChange(parsed.pages);
   }
 
   function handleSelectEven() {
     const evens: number[] = [];
     for (let i = 2; i <= totalPages; i += 2) evens.push(i);
-    onPagesToRemoveChange(evens);
+    selectPages(evens);
   }
 
   function handleSelectOdd() {
     const odds: number[] = [];
     for (let i = 1; i <= totalPages; i += 2) odds.push(i);
-    onPagesToRemoveChange(odds);
+    selectPages(odds);
   }
 
   function handleInvert() {
@@ -74,12 +70,12 @@ export function RemovePagesPanel({
     for (let i = 1; i <= totalPages; i++) {
       if (!removeSet.has(i)) inverted.push(i);
     }
-    onPagesToRemoveChange(inverted);
+    selectPages(inverted);
   }
 
   function handleClear() {
     setRangeInput("");
-    onPagesToRemoveChange([]);
+    selectPages([]);
   }
 
   return (
@@ -95,6 +91,11 @@ export function RemovePagesPanel({
           </div>
           <div>
             <h2 className="text-lg font-semibold text-text-primary">{fileName}</h2>
+            {!rangeValid && (
+              <p id="page-range-error" role="alert">
+                {translate("pages.invalidRange")}
+              </p>
+            )}
             <p className="text-xs text-text-tertiary">
               {totalPages} {totalPages === 1 ? "página" : "páginas"} •{" "}
               {(fileSizeBytes / (1024 * 1024)).toFixed(2)} MB
@@ -140,6 +141,8 @@ export function RemovePagesPanel({
           </label>
           <input
             id="quick-remove-range"
+            aria-invalid={!rangeValid}
+            aria-describedby={!rangeValid ? "page-range-error" : undefined}
             type="text"
             className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-tertiary focus:outline-hidden focus:ring-2 focus:ring-red-500/40"
             placeholder={translate("removePages.quickRangePlaceholder")}
@@ -206,6 +209,7 @@ export function RemovePagesPanel({
             <button
               type="button"
               key={`page-card-${pageNum}`}
+              aria-pressed={isMarked}
               data-testid={`page-card-${pageNum}`}
               onClick={() => togglePage(pageNum)}
               className={`group relative flex flex-col items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer select-none text-left w-full ${

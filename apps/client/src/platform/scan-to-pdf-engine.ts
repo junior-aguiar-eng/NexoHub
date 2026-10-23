@@ -27,6 +27,27 @@ const MARGIN_VALUES: Record<"none" | "small" | "normal", number> = {
   normal: 36,
 };
 
+async function normalizeWebp(bytes: Uint8Array): Promise<Uint8Array> {
+  const bitmap = await createImageBitmap(new Blob([bytes as BlobPart], { type: "image/webp" }));
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("SCAN_CANVAS_UNAVAILABLE");
+    context.drawImage(bitmap, 0, 0);
+    const blob = await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob(
+        (value) => (value ? resolve(value) : reject(new Error("SCAN_IMAGE_CONVERSION_FAILED"))),
+        "image/png",
+      ),
+    );
+    return new Uint8Array(await blob.arrayBuffer());
+  } finally {
+    bitmap.close();
+  }
+}
+
 /**
  * Aplica processamento de imagem nos pixels para emular scanner de documentos real:
  * - "grayscale": conversão balanceada para luminância monocromática.
@@ -55,9 +76,13 @@ export async function applyScanFilter(
     canvas.height = imgBitmap.height;
 
     const ctx = canvas.getContext("2d");
-    if (!ctx) return imageBytes;
+    if (!ctx) {
+      imgBitmap.close();
+      return imageBytes;
+    }
 
     ctx.drawImage(imgBitmap, 0, 0);
+    imgBitmap.close();
     const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imgData.data;
     const len = data.length;
@@ -143,11 +168,19 @@ export async function compileScannedPagesToPdf(
 
   for (const pageItem of pages) {
     let processedBytes = pageItem.imageBytes;
+    const isWebp =
+      processedBytes[0] === 0x52 &&
+      processedBytes[1] === 0x49 &&
+      processedBytes[8] === 0x57 &&
+      processedBytes[9] === 0x45 &&
+      processedBytes[10] === 0x42 &&
+      processedBytes[11] === 0x50;
+    if (isWebp) processedBytes = await normalizeWebp(processedBytes);
     if (pageItem.filter && pageItem.filter !== "original") {
       processedBytes = await applyScanFilter(
-        pageItem.imageBytes,
+        processedBytes,
         pageItem.filter,
-        pageItem.mimeType || "image/jpeg",
+        isWebp ? "image/png" : pageItem.mimeType || "image/jpeg",
       );
     }
 

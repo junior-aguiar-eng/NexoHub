@@ -22,6 +22,14 @@ function normalize(value: string) {
 }
 
 const ROUTE_TOOL_MAP: Record<string, string> = {
+  "/remover-paginas": "pdf-remove-pages",
+  "/pdf-remove-pages": "pdf-remove-pages",
+  "/extrair-paginas": "pdf-extract-pages",
+  "/pdf-extract-pages": "pdf-extract-pages",
+  "/html-para-pdf": "html-to-pdf",
+  "/html-to-pdf": "html-to-pdf",
+  "/digitalizar-pdf": "scan-to-pdf",
+  "/scan-to-pdf": "scan-to-pdf",
   "/editar-pdf": "pdf-edit",
   "/edit-pdf": "pdf-edit",
   "/comparar-pdf": "pdf-compare",
@@ -84,6 +92,10 @@ const ROUTE_TOOL_MAP: Record<string, string> = {
 };
 
 const TOOL_ROUTE_MAP: Record<string, string> = {
+  "pdf-remove-pages": "/remover-paginas",
+  "pdf-extract-pages": "/extrair-paginas",
+  "html-to-pdf": "/html-para-pdf",
+  "scan-to-pdf": "/digitalizar-pdf",
   "pdf-edit": "/editar-pdf",
   "pdf-compare": "/comparar-pdf",
   "pdf-merge": "/juntar-pdf",

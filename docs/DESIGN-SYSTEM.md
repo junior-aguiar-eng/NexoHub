@@ -78,6 +78,13 @@ web de ferramentas. O catálogo `pt-BR` é a fonte de verdade dos textos da inte
   devem permanecer acessíveis.
 - Nomes, disponibilidade e contadores refletem o Tool Registry e o Document Core. O refinamento
   visual não introduz estatísticas, serviços externos ou mudanças no processamento documental.
+- HTML para PDF mostra uma prévia isolada, com scripts, navegação e recursos remotos bloqueados.
+  A interface informa que a saída usa um layout documental próprio, preservando textos, listas e
+  tabelas, sem reproduzir CSS ou incluir imagens. Linhas Unicode fora da fonte padrão usam a
+  renderização do navegador e uma camada selecionável na mesma ordem do conteúdo.
+- Remover e extrair páginas validam o intervalo inteiro, limpam a seleção vazia e reiniciam o
+  estado ao trocar o arquivo. Os campos AcroForm das páginas mantidas permanecem editáveis.
+  O scanner aceita JPEG, PNG e WebP; encerra a câmera ao sair e libera as URLs das miniaturas.
 
 ## Validação
 

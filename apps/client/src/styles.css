@@ -9530,6 +9530,17 @@ body,
 }
 
 /* Mesas de ferramentas: documento em escala de leitura e controles compactos. */
+[data-testid="remove-pages-panel"],
+[data-testid="extract-pages-panel"],
+[data-testid="scan-to-pdf-panel"],
+[data-testid="html-to-pdf-panel"] {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+:is([data-testid="remove-pages-panel"], [data-testid="extract-pages-panel"]) input {
+  min-width: 0;
+  width: 100%;
+}
 .app-shell:not(.app-shell--catalog) {
   --workspace-page-width: 860px;
   --workspace-sidebar-width: 320px;

@@ -1,6 +1,7 @@
 import { Code, FileCode, Globe, Layout, UploadCloud } from "lucide-react";
 import { type ChangeEvent, useState } from "react";
 import { translate } from "@/i18n";
+import { localHtmlPreview } from "@/platform/html-local-document";
 
 export interface HtmlToPdfPanelProps {
   readonly fileName?: string;
@@ -30,7 +31,7 @@ const DEFAULT_SAMPLE_HTML = `<!DOCTYPE html>
 </head>
 <body>
   <h1>Relatório de Desempenho</h1>
-  <p>Este documento foi gerado a partir de código HTML local com renderização precisa.</p>
+  <p>${translate("htmlToPdf.sampleDescription")}</p>
   <table>
     <thead>
       <tr>
@@ -197,6 +198,7 @@ export function HtmlToPdfPanel({
       </div>
 
       {/* Editor & Preview Area */}
+      <p className="text-sm text-text-secondary">{translate("htmlToPdf.layoutNotice")}</p>
       {activeTab === "upload" && !htmlContent ? (
         <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-border rounded-2xl bg-surface text-center hover:border-amber-500/50 transition-colors">
           <UploadCloud className="w-12 h-12 text-amber-500 mb-4" />
@@ -260,11 +262,11 @@ export function HtmlToPdfPanel({
             <div className="w-full h-96 rounded-2xl border border-border bg-white overflow-hidden shadow-xs">
               <iframe
                 title="Pré-visualização HTML"
-                srcDoc={
+                srcDoc={localHtmlPreview(
                   htmlContent ||
-                  "<p style='color:#94a3b8;padding:20px;font-family:sans-serif;'>Nenhum código HTML para pré-visualizar.</p>"
-                }
-                sandbox="allow-same-origin"
+                    "<p style='color:#94a3b8;padding:20px;font-family:sans-serif;'>Nenhum código HTML para pré-visualizar.</p>",
+                )}
+                sandbox=""
                 className="w-full h-full border-none"
               />
             </div>

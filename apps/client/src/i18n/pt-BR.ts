@@ -1184,6 +1184,8 @@ export const ptBR = {
 
   // REMOVER PÁGINAS
   "removePages.title": "Remover Páginas",
+  "pages.invalidRange":
+    "Informe páginas válidas do documento, separadas por vírgulas ou intervalos.",
   "removePages.instruction": "Clique nas miniaturas das páginas que deseja excluir do documento.",
   "removePages.selectedCount": "{count} página(s) selecionada(s) para remoção",
   "removePages.remainingCount": "Restarão {count} página(s)",
@@ -1215,6 +1217,10 @@ export const ptBR = {
 
   // HTML PARA PDF
   "htmlToPdf.title": "HTML para PDF",
+  "htmlToPdf.layoutNotice":
+    "O PDF usa um layout próprio para textos, listas e tabelas. Estilos CSS, imagens e recursos externos não são incluídos. A prévia mostra o HTML de origem com acesso à rede bloqueado.",
+  "htmlToPdf.sampleDescription":
+    "Este documento foi gerado a partir de HTML local em um layout documental paginado.",
   "htmlToPdf.tabUpload": "Carregar Arquivo .html",
   "htmlToPdf.tabCode": "Digitar / Colar Código HTML",
   "htmlToPdf.codePlaceholder":

@@ -16,6 +16,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .env
+gha-creds-*.json
 .env.*
 !.env.example
 *.key

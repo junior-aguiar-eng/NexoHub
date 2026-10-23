@@ -6,6 +6,7 @@ import { defineConfig } from "vitest/config";
 const tauriHost = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
+  base: process.env.NEXOHUB_BASE_PATH || "/",
   plugins: [
     react(),
     tailwindcss(),

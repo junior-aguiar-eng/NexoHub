@@ -1,0 +1,13 @@
+# Build candidato isolado; não publica serviço nem altera o balanceador.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --build-arg
+      - NEXOHUB_BASE_PATH=/hub/
+      - --tag
+      - ${_IMAGE_URI}:${_SOURCE_SHA}-hub
+      - .
+images:
+  - ${_IMAGE_URI}:${_SOURCE_SHA}-hub
+timeout: 1800s

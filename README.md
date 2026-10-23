@@ -34,7 +34,7 @@
 Sem cadastro, sem filas e sem limites artificiais de páginas:
 
 <p align="center">
-  <a href="https://nexohub.nexojuris.ia.br">
+  <a href="https://nexojuris.ia.br/hub/">
     <img src="https://img.shields.io/badge/🌐%20Acessar%20NexoHub%20Online-nexohub.nexojuris.ia.br-e11d48?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Acessar NexoHub Web" />
   </a>
 </p>

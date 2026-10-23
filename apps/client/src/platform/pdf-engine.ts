@@ -20,6 +20,7 @@ import {
 } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
+import { withAppBase } from "./app-paths";
 import { createZipArchive } from "./browser-pdf-utils";
 import { addOcrTextLayer } from "./pdf-ocr-text-layer";
 import { getVisiblePageGeometry } from "./pdf-page-geometry";
@@ -43,7 +44,7 @@ if (typeof window !== "undefined" && !isTestEnv) {
 
 const STANDARD_FONT_DATA_URL =
   typeof window !== "undefined" && window.location?.origin
-    ? `${window.location.origin}/standard_fonts/`
+    ? new URL(withAppBase("standard_fonts/"), window.location.origin).href
     : undefined;
 
 /**

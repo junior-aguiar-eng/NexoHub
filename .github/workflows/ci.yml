@@ -31,9 +31,17 @@ jobs:
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm check
       - run: pnpm test
+      - run: node --test scripts/deploy/*.test.mjs
+      - run: python3 -m unittest discover -s scripts/deploy -p '*_test.py'
       - run: pnpm build:web
       - run: pnpm --filter @nexohub/client install:e2e
       - run: pnpm test:e2e:ci
+      - name: Build do website em /hub/
+        run: pnpm build:web
+        env:
+          NEXOHUB_BASE_PATH: /hub/
+      - name: E2E do website em /hub/
+        run: node apps/client/e2e/executar-subpasta.mjs
 
   rust-windows:
     name: Rust no Windows

@@ -2,6 +2,7 @@ import type { OcrLineResult } from "@nexohub/contracts";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { Page as TesseractPage } from "tesseract.js";
+import { withAppBase } from "./app-paths";
 import { generateSearchablePdf, type OcrPageData } from "./pdf-engine";
 
 if (typeof window !== "undefined") {
@@ -201,7 +202,7 @@ export async function performBrowserOcr(
           useSystemFonts: true,
           standardFontDataUrl:
             typeof window !== "undefined" && window.location?.origin
-              ? `${window.location.origin}/standard_fonts/`
+              ? new URL(withAppBase("standard_fonts/"), window.location.origin).href
               : undefined,
         });
         const pdfDoc = await loadingTask.promise;

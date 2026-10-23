@@ -12,6 +12,7 @@ import type { WorkZone } from "@/features/launcher/SegmentedZoneToggle";
 import { SuiteNavigation } from "@/features/launcher/SuiteNavigation";
 import { useRecentOperations } from "@/features/launcher/useRecentOperations";
 import { translate } from "@/i18n";
+import { withAppBase, withoutAppBase } from "@/platform/app-paths";
 import { createDocumentCorePort } from "@/platform/document-core";
 import { allowToolNavigation } from "@/platform/tool-navigation-guard";
 
@@ -152,7 +153,7 @@ export function App() {
   // Estado da zona de trabalho: "pdf" | "img"
   const [workZone, setWorkZone] = useState<WorkZone>(() => {
     if (typeof window !== "undefined") {
-      const pathname = window.location.pathname.replace(/\/$/, "");
+      const pathname = withoutAppBase(window.location.pathname).replace(/\/$/, "");
       if (pathname === "/img" || pathname.startsWith("/img/")) {
         return "img";
       }
@@ -175,7 +176,7 @@ export function App() {
 
   const [activeDedicatedTool, setActiveDedicatedTool] = useState<LauncherTool | null>(() => {
     if (typeof window !== "undefined") {
-      const pathname = window.location.pathname.replace(/\/$/, "");
+      const pathname = withoutAppBase(window.location.pathname).replace(/\/$/, "");
       const matchedToolId = ROUTE_TOOL_MAP[pathname];
       if (matchedToolId) {
         return dynamicTools.find((t) => t.id === matchedToolId) || null;
@@ -191,12 +192,12 @@ export function App() {
 
   useEffect(() => {
     const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-    if (icon) icon.href = `/favicon-${workZone}.svg`;
+    if (icon) icon.href = withAppBase(`favicon-${workZone}.svg`);
   }, [workZone]);
 
   useEffect(() => {
-    if (window.location.pathname === "/") {
-      const route = workZone === "img" ? "/img" : "/pdf";
+    if (withoutAppBase(window.location.pathname) === "/") {
+      const route = withAppBase(workZone === "img" ? "/img" : "/pdf");
       window.history.replaceState({ zone: workZone }, "", route);
       activePath.current = route;
     }
@@ -205,7 +206,7 @@ export function App() {
   // Sincroniza a URL do navegador com a zona ativa e ferramenta
   useEffect(() => {
     function handlePopState() {
-      const destination = window.location.pathname.replace(/\/$/, "");
+      const destination = withoutAppBase(window.location.pathname).replace(/\/$/, "");
       const destinationTool = dynamicTools.find((tool) => tool.id === ROUTE_TOOL_MAP[destination]);
       const nextZone =
         destination === "/img" ||
@@ -225,7 +226,7 @@ export function App() {
       if (typeof window !== "undefined") {
         window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       }
-      const pathname = window.location.pathname.replace(/\/$/, "");
+      const pathname = withoutAppBase(window.location.pathname).replace(/\/$/, "");
 
       if (pathname === "/img" || pathname.startsWith("/img/")) {
         setWorkZone("img");
@@ -271,7 +272,7 @@ export function App() {
       } catch {
         // Ignora erros
       }
-      const targetRoute = nextZone === "img" ? "/img" : "/pdf";
+      const targetRoute = withAppBase(nextZone === "img" ? "/img" : "/pdf");
       if (window.location.pathname !== targetRoute) {
         window.history.pushState({ zone: nextZone }, "", targetRoute);
         activePath.current = targetRoute;
@@ -293,13 +294,16 @@ export function App() {
       } else {
         setWorkZone("pdf");
       }
-      const targetRoute = TOOL_ROUTE_MAP[tool.id] || `/${tool.id}`;
+      const targetRoute = withAppBase(TOOL_ROUTE_MAP[tool.id] || `/${tool.id}`);
       if (window.location.pathname !== targetRoute) {
         window.history.pushState({ toolId: tool.id }, "", targetRoute);
       }
     } else {
-      const defaultRoute = workZone === "img" ? "/img" : "/pdf";
-      if (window.location.pathname !== defaultRoute && window.location.pathname !== "/") {
+      const defaultRoute = withAppBase(workZone === "img" ? "/img" : "/pdf");
+      if (
+        window.location.pathname !== defaultRoute &&
+        window.location.pathname !== withAppBase("/")
+      ) {
         window.history.pushState({}, "", defaultRoute);
       }
     }

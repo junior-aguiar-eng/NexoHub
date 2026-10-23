@@ -11,6 +11,25 @@ describe("HttpDocumentCorePort", () => {
     port = new HttpDocumentCorePort(baseUrl);
   });
 
+  it("usa a subpasta no backend HTTP padrão sem atingir a API da raiz", async () => {
+    vi.stubEnv("BASE_URL", "/hub/");
+    try {
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ path: "/tmp/sessao.nexohub", name: "Sessão" }), {
+          status: 200,
+          headers: { "X-NexoHub-Session": "credencial-temporaria" },
+        }),
+      );
+      await new HttpDocumentCorePort().invoke("pick_project_folder", {});
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/hub/api/v1/invoke/pick_project_folder",
+        expect.any(Object),
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("preserva MIME textual com charset ao registrar resultado OCR", async () => {
     const bytes = [...new TextEncoder().encode("Ação reconhecida")];
     const invoke = vi.fn(async (command: string) => {

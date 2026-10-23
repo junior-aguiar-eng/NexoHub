@@ -1,87 +1,113 @@
 name: Deploy Cloud Run (Web)
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write
+
+concurrency:
+  group: deploy-hub-production
+  cancel-in-progress: false
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  PROJECT_ID: project-bbbe1209-c295-4720-867
   REGION: southamerica-east1
-  SERVICE_NAME: nexohub
-  IMAGE_NAME: nexohub-web
+  SERVICE_NAME: nexohub-hub
+  IMAGE_URI: southamerica-east1-docker.pkg.dev/project-bbbe1209-c295-4720-867/forgelex-prod/nexohub-hub
 
 jobs:
   deploy:
-    name: Build & Deploy to Cloud Run
+    name: Publicar website em /hub/
     runs-on: ubuntu-latest
-    if: github.repository == 'junior-aguiar-eng/NexoHub'
-    timeout-minutes: 30
-
+    if: >-
+      github.repository == 'junior-aguiar-eng/NexoHub' &&
+      ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    timeout-minutes: 35
     steps:
-      - name: Checkout do Código
+      - name: Checkout da revisão validada
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Autenticação Google Cloud (Workload Identity ou Service Account Key)
-        id: auth
-        if: env.PROJECT_ID != ''
+      - name: Conferir revisão atual e credencial configurada
+        env:
+          HAS_CREDENTIAL: ${{ secrets.GCP_HUB_SA_KEY != '' || secrets.GCP_SA_KEY != '' }}
+        run: |
+          test "$HAS_CREDENTIAL" = true || { echo 'Configure GCP_HUB_SA_KEY para publicar no projeto do Hub.'; exit 1; }
+          test "$(git rev-parse HEAD)" = "$(git ls-remote origin refs/heads/main | cut -f1)" || {
+            echo 'A revisão validada foi substituída em main; publicação interrompida.'; exit 1;
+          }
+
+      - name: Autenticar no Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_HUB_SA_KEY || secrets.GCP_SA_KEY }}
 
-      - name: Configurar gcloud CLI
-        if: env.PROJECT_ID != ''
+      - name: Configurar gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Autenticar Docker no Google Artifact Registry / GCR
-        if: env.PROJECT_ID != ''
+      - name: Conferir acesso ao destino e registrar tráfego anterior
         run: |
-          gcloud auth configure-docker --quiet
-          gcloud auth configure-docker southamerica-east1-docker.pkg.dev --quiet || true
+          gcloud artifacts repositories describe forgelex-prod --location="$REGION" --project="$PROJECT_ID" --format='value(name)'
+          gcloud run services describe "$SERVICE_NAME" --region="$REGION" --project="$PROJECT_ID" --format=json > "$RUNNER_TEMP/hub-before.json"
+          python3 - <<'PY'
+          import json, os
+          with open(os.path.join(os.environ['RUNNER_TEMP'], 'hub-before.json')) as f:
+              service = json.load(f)
+          traffic = {}
+          for entry in service['status']['traffic']:
+              if entry.get('percent', 0):
+                  revision = entry['revisionName']
+                  traffic[revision] = traffic.get(revision, 0) + entry['percent']
+          assert sum(traffic.values()) == 100
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write('PREVIOUS_TRAFFIC=' + ','.join(f'{rev}={pct}' for rev, pct in traffic.items()) + '\n')
+          PY
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
 
-      - name: Configurar Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Build e Push da Imagem de Produção
-        if: env.PROJECT_ID != ''
+      - name: Construir e publicar imagem com base /hub/
+        id: image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: |
-            southamerica-east1-docker.pkg.dev/${{ env.PROJECT_ID }}/ratione/nexohub:${{ github.sha }}
-            southamerica-east1-docker.pkg.dev/${{ env.PROJECT_ID }}/ratione/nexohub:latest
+          build-args: NEXOHUB_BASE_PATH=/hub/
+          tags: ${{ env.IMAGE_URI }}:${{ github.event.workflow_run.head_sha || github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Deploy no Google Cloud Run
-        if: env.PROJECT_ID != ''
+      - name: Publicar no serviço existente por digest
+        id: publish
         run: |
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image southamerica-east1-docker.pkg.dev/${{ env.PROJECT_ID }}/ratione/nexohub:${{ github.sha }} \
-            --platform managed \
-            --region ${{ env.REGION }} \
-            --allow-unauthenticated \
-            --port 8080 \
-            --memory 1Gi \
-            --cpu 1 \
-            --min-instances 0 \
-            --max-instances 10 \
-            --set-env-vars "HOST=0.0.0.0,STATIC_DIR=/app/dist,RUST_LOG=info"
+          gcloud run deploy "$SERVICE_NAME" \
+            --project="$PROJECT_ID" --region="$REGION" --platform=managed \
+            --image="$IMAGE_URI@${{ steps.image.outputs.digest }}" \
+            --port=8080 --memory=1Gi --cpu=1 --min-instances=0 --max-instances=2 \
+            --set-env-vars='HOST=0.0.0.0,STATIC_DIR=/app/dist,RUST_LOG=info' --quiet
 
-      - name: Exibir URL do Serviço Cloud Run
-        if: env.PROJECT_ID != ''
+      - name: Conferir website, API, raiz e redirecionamentos públicos
+        id: public
+        run: python3 scripts/deploy/verify-hub-public.py --attempts=30 --delay=10
+
+      - name: Restaurar tráfego anterior se a conferência pública falhar
+        if: failure() && steps.publish.outcome == 'success' && steps.public.outcome == 'failure'
         run: |
-          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)')
-          echo "================================================="
-          echo "🚀 NexoHub Web implantado com sucesso!"
-          echo "URL direta Cloud Run: $SERVICE_URL"
-          echo "Domínio configurado: https://nexohub.nexojuris.ia.br"
-          echo "================================================="
+          gcloud run services update-traffic "$SERVICE_NAME" \
+            --project="$PROJECT_ID" --region="$REGION" \
+            --to-revisions="$PREVIOUS_TRAFFIC" --quiet
+
+      - name: Registrar publicação confirmada
+        run: |
+          printf 'Website: https://nexojuris.ia.br/hub/\nImagem: %s@%s\n' "$IMAGE_URI" '${{ steps.image.outputs.digest }}' >> "$GITHUB_STEP_SUMMARY"

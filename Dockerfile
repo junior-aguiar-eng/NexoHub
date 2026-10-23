@@ -11,7 +11,8 @@ COPY packages ./packages
 COPY apps/client ./apps/client
 
 RUN pnpm install --frozen-lockfile --ignore-scripts
-RUN pnpm --filter @nexohub/client build
+ARG NEXOHUB_BASE_PATH=/
+RUN NEXOHUB_BASE_PATH="$NEXOHUB_BASE_PATH" pnpm --filter @nexohub/client build
 
 # ==========================================
 # Estágio 2: Compilação do Servidor Rust (Axum)

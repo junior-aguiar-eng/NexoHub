@@ -7,6 +7,9 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 
 ### Modificado
 
+- Website publicado em `/hub/`, com base configurável no build, navegação e recursos compatíveis com subpasta e testes nos dois modos de publicação. O subdomínio antigo redireciona com 301, preservando caminhos e parâmetros.
+- Deploy do website direcionado ao serviço `nexohub-hub` no projeto do balanceador, com build `/hub/`, publicação por digest após a CI e conferência automática do website, API e redirecionamentos. Falha na conferência restaura o tráfego anterior.
+
 - **Fonte Única de Disponibilidade (`tool-availability.ts`)**: Eliminação de duplicações de listas de ferramentas entre Runner, Launcher e adaptadores de Document Core (Browser, Tauri e HTTP), garantindo consistência estrita e paridade funcional completa de 34 ferramentas operacionais.
 - **Saneamento de Contratos de Ferramentas**:
   - Rebaixamento de `word-to-pdf` e `pdf-to-word` do registro ativo para `plannedToolManifests`, aguardando ADR formal de motor de renderização Office.

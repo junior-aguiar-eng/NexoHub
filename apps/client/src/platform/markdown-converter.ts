@@ -1,5 +1,6 @@
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
+import { withAppBase } from "./app-paths";
 
 const isTestEnv =
   typeof window === "undefined" ||
@@ -19,7 +20,7 @@ if (typeof window !== "undefined" && !isTestEnv) {
 
 const STANDARD_FONT_DATA_URL =
   typeof window !== "undefined" && window.location?.origin
-    ? `${window.location.origin}/standard_fonts/`
+    ? new URL(withAppBase("standard_fonts/"), window.location.origin).href
     : undefined;
 
 export interface MarkdownConversionOptions {

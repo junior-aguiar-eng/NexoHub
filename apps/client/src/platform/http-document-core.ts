@@ -6,8 +6,8 @@ import type {
 } from "@nexohub/contracts";
 import type { ImportedDocument } from "@nexohub/domain";
 import { ToolRunError } from "@nexohub/tool-sdk";
+import { withAppBase } from "./app-paths";
 import type { DocumentCorePort } from "./document-core";
-
 import { httpSupportedToolIds } from "./tool-availability";
 
 export class HttpDocumentCorePort implements DocumentCorePort {
@@ -26,7 +26,7 @@ export class HttpDocumentCorePort implements DocumentCorePort {
   private blobUrlAccessQueue: string[] = [];
   private static readonly MAX_ACTIVE_BLOB_URLS = 35;
 
-  constructor(private readonly baseUrl: string = "") {}
+  constructor(private readonly baseUrl: string = withAppBase("").replace(/\/$/, "")) {}
 
   async saveOutputFile(request: { blob: Blob; fileName: string }): Promise<boolean> {
     if (typeof document === "undefined") {

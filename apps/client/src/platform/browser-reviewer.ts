@@ -1,4 +1,5 @@
 import { mergeReviewFindings, type ReviewFinding, reviewText } from "@nexohub/domain";
+import { withAppBase } from "./app-paths";
 import { isWordIgnoredOrCustom } from "./user-vocabulary";
 
 export type ReviewProgressCallback = (progress: number, message: string) => void;
@@ -101,12 +102,18 @@ export async function getHunspellInstance(
           window.location.origin.startsWith("http")
         ) {
           try {
-            const aff = await fetchDictionaryBuffer("/dictionaries/pt-BR/pt_BR.aff", (r) => {
-              onProgress?.(25 + Math.round(r * 25), "Carregando dicionário...");
-            });
-            const dic = await fetchDictionaryBuffer("/dictionaries/pt-BR/pt_BR.dic", (r) => {
-              onProgress?.(50 + Math.round(r * 40), "Carregando vocabulário...");
-            });
+            const aff = await fetchDictionaryBuffer(
+              withAppBase("dictionaries/pt-BR/pt_BR.aff"),
+              (r) => {
+                onProgress?.(25 + Math.round(r * 25), "Carregando dicionário...");
+              },
+            );
+            const dic = await fetchDictionaryBuffer(
+              withAppBase("dictionaries/pt-BR/pt_BR.dic"),
+              (r) => {
+                onProgress?.(50 + Math.round(r * 40), "Carregando vocabulário...");
+              },
+            );
             affData = aff;
             dicData = dic;
           } catch {

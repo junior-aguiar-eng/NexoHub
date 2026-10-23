@@ -1,4 +1,5 @@
 import type { CommandRequest, CommandResponse, DocumentCoreCommand } from "@nexohub/contracts";
+import { withAppBase } from "./app-paths";
 import { BrowserDocumentCorePort } from "./browser-document-core";
 import { HttpDocumentCorePort } from "./http-document-core";
 import { TauriDocumentCorePort } from "./tauri-document-core";
@@ -88,8 +89,8 @@ export function createDocumentCorePort(
         httpBaseUrl ??
           (typeof window !== "undefined"
             ? ((window as unknown as { __NEXOHUB_BACKEND_URL__?: string })
-                .__NEXOHUB_BACKEND_URL__ ?? "")
-            : ""),
+                .__NEXOHUB_BACKEND_URL__ ?? withAppBase("").replace(/\/$/, ""))
+            : withAppBase("").replace(/\/$/, "")),
       );
     }
     return httpPortSingleton;

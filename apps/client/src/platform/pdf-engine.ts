@@ -17,6 +17,7 @@ import {
 } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
+import { createZipArchive } from "./browser-pdf-utils";
 import { addOcrTextLayer } from "./pdf-ocr-text-layer";
 import { getVisiblePageGeometry } from "./pdf-page-geometry";
 
@@ -194,6 +195,120 @@ export async function extractPdfSelectedPages(
   }
 
   return await newDoc.save({ useObjectStreams: true });
+}
+
+/**
+ * Remove páginas específicas de um PDF preservando as restantes.
+ * Garante que ao menos 1 página permaneça no documento.
+ */
+export async function removePdfPages(
+  pdfBytes: Uint8Array,
+  pagesToRemove: number[],
+): Promise<Uint8Array> {
+  const srcDoc = await PDFDocument.load(pdfBytes);
+  const total = srcDoc.getPageCount();
+  if (total === 0) {
+    throw new Error("DOCUMENTO_SEM_PAGINAS");
+  }
+  if (!pagesToRemove || pagesToRemove.length === 0) {
+    throw new Error("NENHUMA_PAGINA_SELECIONADA");
+  }
+  for (const p of pagesToRemove) {
+    if (!Number.isInteger(p) || p < 1 || p > total) {
+      throw new Error("SELECAO_DE_PAGINAS_INVALIDA");
+    }
+  }
+
+  const removeSet = new Set(pagesToRemove);
+  if (removeSet.size >= total) {
+    throw new Error("NAO_E_POSSIVEL_REMOVER_TODAS_AS_PAGINAS");
+  }
+
+  const remainingIndices: number[] = [];
+  for (let i = 1; i <= total; i++) {
+    if (!removeSet.has(i)) {
+      remainingIndices.push(i - 1);
+    }
+  }
+
+  const newDoc = await PDFDocument.create();
+  const copiedPages = await newDoc.copyPages(srcDoc, remainingIndices);
+  for (const page of copiedPages) {
+    newDoc.addPage(page);
+  }
+
+  return await newDoc.save({ useObjectStreams: true });
+}
+
+export interface ExtractPagesResult {
+  readonly bytes: Uint8Array;
+  readonly fileName: string;
+  readonly mimeType: string;
+  readonly isZip: boolean;
+  readonly pageCount: number;
+}
+
+/**
+ * Extrai páginas de um PDF em um único PDF combinado ou em PDFs individuais dentro de um ZIP.
+ */
+export async function extractPdfPagesToZipOrCombined(
+  pdfBytes: Uint8Array,
+  options: {
+    pages: number[];
+    mode: "single-pdf" | "zip-split";
+    baseName?: string;
+  },
+): Promise<ExtractPagesResult> {
+  const srcDoc = await PDFDocument.load(pdfBytes);
+  const total = srcDoc.getPageCount();
+  const base = options.baseName || "documento";
+
+  if (!options.pages || options.pages.length === 0) {
+    throw new Error("SELECAO_DE_PAGINAS_INVALIDA");
+  }
+  for (const p of options.pages) {
+    if (!Number.isInteger(p) || p < 1 || p > total) {
+      throw new Error("SELECAO_DE_PAGINAS_INVALIDA");
+    }
+  }
+
+  if (options.mode === "single-pdf") {
+    const newDoc = await PDFDocument.create();
+    const indices = options.pages.map((p) => p - 1);
+    const copiedPages = await newDoc.copyPages(srcDoc, indices);
+    for (const page of copiedPages) {
+      newDoc.addPage(page);
+    }
+    const bytes = await newDoc.save({ useObjectStreams: true });
+    return {
+      bytes,
+      fileName: `${base}_paginas_extraidas.pdf`,
+      mimeType: "application/pdf",
+      isZip: false,
+      pageCount: copiedPages.length,
+    };
+  }
+
+  const zipParts: Array<{ name: string; data: Uint8Array }> = [];
+  for (const p of options.pages) {
+    const singleDoc = await PDFDocument.create();
+    const [page] = await singleDoc.copyPages(srcDoc, [p - 1]);
+    singleDoc.addPage(page);
+    const pageBytes = await singleDoc.save({ useObjectStreams: true });
+    zipParts.push({
+      name: `${base}_pagina_${p}.pdf`,
+      data: pageBytes,
+    });
+  }
+
+  const zipBytes = createZipArchive(zipParts);
+  return {
+    bytes: zipBytes,
+    fileName: `${base}_paginas_extraidas.zip`,
+    mimeType: "application/zip",
+    isZip: true,
+    pageCount: options.pages.length,
+  };
 }
 
 /**

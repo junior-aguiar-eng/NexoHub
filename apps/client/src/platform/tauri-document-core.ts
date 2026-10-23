@@ -30,6 +30,10 @@ export class TauriDocumentCorePort implements DocumentCorePort {
     "pdf-protect",
     "pdf-redact",
     "pdf-to-excel",
+    "pdf-remove-pages",
+    "pdf-extract-pages",
+    "html-to-pdf",
+    "scan-to-pdf",
   ]);
   private projectPath: string | null = null;
 

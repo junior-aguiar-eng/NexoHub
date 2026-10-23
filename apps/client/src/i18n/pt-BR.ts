@@ -183,6 +183,18 @@ export const ptBR = {
   "tool.pdfToExcel.description":
     "Extrair tabelas e dados tabulares do PDF diretamente para planilhas Excel (.xlsx) ou CSV.",
   "tool.pdfSign.tagline": "Sua assinatura, no lugar certo.",
+  "tool.pdfRemovePages.title": "Remover Páginas",
+  "tool.pdfRemovePages.description":
+    "Remova páginas indesejadas do documento PDF de forma rápida e visual.",
+  "tool.pdfExtractPages.title": "Extrair Páginas",
+  "tool.pdfExtractPages.description":
+    "Extraia páginas selecionadas para um novo PDF ou gere arquivos individuais em ZIP.",
+  "tool.htmlToPdf.title": "HTML para PDF",
+  "tool.htmlToPdf.description":
+    "Converta código HTML ou páginas salvas em arquivos PDF elegantes e paginados.",
+  "tool.scanToPdf.title": "Digitalizar para PDF",
+  "tool.scanToPdf.description":
+    "Capture documentos com a câmera ou fotos do dispositivo, aplique filtros P&B e salve em PDF.",
   "tool.pdfSign.title": "Assinar PDF",
   "tool.pdfSign.description":
     "Adicionar assinatura visual desenhada, digitada ou imagem com data e posicionamento livre.",
@@ -967,6 +979,78 @@ export const ptBR = {
   "excel.emptyTable": "Nenhum dado tabular detectado no documento.",
   "excel.loadingPreview": "Analisando estrutura tabular do documento...",
   "excel.actionSubmit": "Converter para Excel",
+
+  // REMOVER PÁGINAS
+  "removePages.title": "Remover Páginas",
+  "removePages.instruction": "Clique nas miniaturas das páginas que deseja excluir do documento.",
+  "removePages.selectedCount": "{count} página(s) selecionada(s) para remoção",
+  "removePages.remainingCount": "Restarão {count} página(s)",
+  "removePages.quickRangePlaceholder": "Ex: 1, 3, 5-8",
+  "removePages.quickRangeLabel": "Digitar páginas a remover",
+  "removePages.clearSelection": "Limpar Seleção",
+  "removePages.invertSelection": "Inverter Seleção",
+  "removePages.evenPages": "Páginas Pares",
+  "removePages.oddPages": "Páginas Ímpares",
+  "removePages.confirmButton": "Remover Páginas",
+  "removePages.cannotRemoveAll":
+    "Não é possível remover todas as páginas. O PDF deve conter ao menos uma página restante.",
+  "removePages.noSelection": "Selecione ao menos uma página para remover.",
+
+  // EXTRAIR PÁGINAS
+  "extractPages.title": "Extrair Páginas",
+  "extractPages.instruction": "Selecione as páginas que deseja extrair deste documento.",
+  "extractPages.modeSingle": "Extrair em um único PDF",
+  "extractPages.modeZip": "Extrair páginas em PDFs separados (ZIP)",
+  "extractPages.selectedCount": "{count} página(s) selecionada(s)",
+  "extractPages.quickRangePlaceholder": "Ex: 1, 3, 5-8",
+  "extractPages.quickRangeLabel": "Intervalos de extração",
+  "extractPages.selectAll": "Selecionar Todas",
+  "extractPages.deselectAll": "Desmarcar Todas",
+  "extractPages.evenPages": "Apenas Pares",
+  "extractPages.oddPages": "Apenas Ímpares",
+  "extractPages.confirmButton": "Extrair Páginas",
+  "extractPages.noSelection": "Selecione ao menos uma página para extrair.",
+
+  // HTML PARA PDF
+  "htmlToPdf.title": "HTML para PDF",
+  "htmlToPdf.tabUpload": "Carregar Arquivo .html",
+  "htmlToPdf.tabCode": "Digitar / Colar Código HTML",
+  "htmlToPdf.codePlaceholder":
+    "Cole seu código HTML aqui... Ex: <h1>Relatório</h1><p>Conteúdo formatado...</p>",
+  "htmlToPdf.pageSize": "Tamanho da Página",
+  "htmlToPdf.orientation": "Orientação",
+  "htmlToPdf.orientationPortrait": "Retrato",
+  "htmlToPdf.orientationLandscape": "Paisagem",
+  "htmlToPdf.margins": "Margens",
+  "htmlToPdf.marginsNone": "Sem Margem",
+  "htmlToPdf.marginsSmall": "Pequena (5mm)",
+  "htmlToPdf.marginsNormal": "Padrão (15mm)",
+  "htmlToPdf.marginsWide": "Ampla (25mm)",
+  "htmlToPdf.preview": "Pré-visualização do Documento",
+  "htmlToPdf.confirmButton": "Converter HTML para PDF",
+  "htmlToPdf.emptyHtml": "Insira ou carregue um conteúdo HTML válido para conversão.",
+
+  // DIGITALIZAR PARA PDF
+  "scanToPdf.title": "Digitalizar para PDF",
+  "scanToPdf.startCamera": "Iniciar Câmera",
+  "scanToPdf.stopCamera": "Parar Câmera",
+  "scanToPdf.switchCamera": "Alternar Câmera",
+  "scanToPdf.capture": "Capturar Página",
+  "scanToPdf.uploadFiles": "Carregar Fotos do Dispositivo",
+  "scanToPdf.cameraUnavailable":
+    "Câmera indisponível ou permissão não concedida. Você pode carregar fotos de documentos pelo botão abaixo.",
+  "scanToPdf.filter": "Filtro de Imagem",
+  "scanToPdf.filterOriginal": "Original",
+  "scanToPdf.filterBw": "Documento P&B",
+  "scanToPdf.filterGrayscale": "Tons de Cinza",
+  "scanToPdf.filterContrast": "Alto Contraste",
+  "scanToPdf.rotatePage": "Girar 90°",
+  "scanToPdf.removePage": "Remover",
+  "scanToPdf.moveLeft": "Mover para Esquerda",
+  "scanToPdf.moveRight": "Mover para Direita",
+  "scanToPdf.capturedPages": "Páginas Digitalizadas ({count})",
+  "scanToPdf.confirmButton": "Gerar PDF Digitalizado",
+  "scanToPdf.noPages": "Capture ou carregue ao menos uma página para gerar o PDF.",
 } as const;
 
 export type MessageKey = keyof typeof ptBR;

@@ -19,6 +19,7 @@ import {
 } from "./browser-translator";
 import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
+import { convertHtmlToPdfDocument } from "./html-to-pdf-converter";
 import {
   addPageNumbersToPdfDocument,
   addWatermarkToPdfDocument,
@@ -31,6 +32,7 @@ import {
   cropPdfDocument,
   type ExtractedImage,
   extractImagesFromPdf,
+  extractPdfPagesToZipOrCombined,
   extractPdfSelectedPages,
   type FormFieldValue,
   fillPdfForm,
@@ -38,6 +40,7 @@ import {
   protectPdfDocument,
   type RedactionArea,
   redactPdfDocument,
+  removePdfPages,
   reorganizePdfDocument,
   rotatePdfDocument,
   type SignaturePlacement,
@@ -45,6 +48,7 @@ import {
   splitPdfByInterval,
   unlockPdfDocument,
 } from "./pdf-engine";
+import { compileScannedPagesToPdf, type ScannedPageItem } from "./scan-to-pdf-engine";
 
 export interface LauncherPage {
   readonly originalIndex: number;
@@ -130,6 +134,17 @@ export interface LauncherToolInput {
   readonly excelSheetMode?: "per-page" | "single-sheet";
   readonly excelCsvDelimiter?: "," | ";" | "\t";
   readonly excelDetectTablesOnly?: boolean;
+  readonly pagesToRemove?: readonly number[];
+  readonly extractPagesMode?: "single-pdf" | "zip-split";
+  readonly pagesToExtract?: readonly number[];
+  readonly htmlContent?: string;
+  readonly htmlPageSize?: "A4" | "Letter" | "A3";
+  readonly htmlOrientation?: "portrait" | "landscape";
+  readonly htmlMargin?: "none" | "small" | "normal" | "wide";
+  readonly scannedPages?: readonly ScannedPageItem[];
+  readonly scanPageSize?: "A4" | "Letter" | "fit";
+  readonly scanOrientation?: "portrait" | "landscape" | "auto";
+  readonly scanMargin?: "none" | "small" | "normal";
 }
 
 export interface LauncherToolOutput {
@@ -166,6 +181,10 @@ const supportedIds = new Set([
   "pdf-protect",
   "pdf-redact",
   "pdf-to-excel",
+  "pdf-remove-pages",
+  "pdf-extract-pages",
+  "html-to-pdf",
+  "scan-to-pdf",
 ]);
 
 function pdfBlob(bytes: Uint8Array): Blob {
@@ -228,7 +247,13 @@ async function executeTool(
 ): Promise<LauncherToolOutput> {
   const input = request.input as LauncherToolInput;
   const first = input.files[0];
-  if (!first && request.toolId !== "text-compare") throw new Error("INVALID_INPUT");
+  const isDoclessTool =
+    request.toolId === "text-compare" ||
+    request.toolId === "html-to-pdf" ||
+    request.toolId === "scan-to-pdf";
+  if (!first && !isDoclessTool && !input.htmlContent && !input.scannedPages?.length) {
+    throw new Error("INVALID_INPUT");
+  }
   const baseName = first?.name.replace(/\.[^/.]+$/, "") ?? "documento_digitado";
 
   switch (request.toolId) {
@@ -869,6 +894,99 @@ async function executeTool(
         blob: new Blob([result.data as unknown as BlobPart], { type: result.mimeType }),
         fileName: `${baseName}.${format}`,
         categoryKey: "recent.type.document",
+      };
+    }
+    case "pdf-remove-pages": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const pagesToRemove = input.pagesToRemove ?? [];
+      if (pagesToRemove.length === 0) {
+        throw new ToolRunError("INVALID_INPUT", translate("removePages.noSelection"));
+      }
+      let removedBytes: Uint8Array;
+      try {
+        removedBytes = await removePdfPages(pdfBytes, [...pagesToRemove]);
+      } catch (err) {
+        if (err instanceof Error && err.message === "NAO_E_POSSIVEL_REMOVER_TODAS_AS_PAGINAS") {
+          throw new ToolRunError("INVALID_INPUT", translate("removePages.cannotRemoveAll"));
+        }
+        throw err;
+      }
+      return {
+        blob: pdfBlob(removedBytes),
+        fileName: `${baseName}_paginas_removidas.pdf`,
+        categoryKey: "recent.type.pdf",
+      };
+    }
+    case "pdf-extract-pages": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const pagesToExtract = input.pagesToExtract ?? [];
+      if (pagesToExtract.length === 0) {
+        throw new ToolRunError("INVALID_INPUT", translate("extractPages.noSelection"));
+      }
+      const mode = input.extractPagesMode ?? "single-pdf";
+      const result = await extractPdfPagesToZipOrCombined(pdfBytes, {
+        pages: [...pagesToExtract],
+        mode,
+        baseName,
+      });
+      return {
+        blob: new Blob([result.bytes as unknown as BlobPart], { type: result.mimeType }),
+        fileName: result.fileName,
+        categoryKey: result.isZip ? "recent.type.document" : "recent.type.pdf",
+      };
+    }
+    case "html-to-pdf": {
+      let htmlContent = input.htmlContent;
+      if (!htmlContent && first) {
+        htmlContent = await first.text();
+      }
+      if (!htmlContent?.trim()) {
+        throw new ToolRunError("INVALID_INPUT", translate("htmlToPdf.emptyHtml"));
+      }
+      const result = await convertHtmlToPdfDocument(htmlContent, {
+        pageSize: input.htmlPageSize ?? "A4",
+        orientation: input.htmlOrientation ?? "portrait",
+        margin: input.htmlMargin ?? "normal",
+        baseTitle: first ? baseName : undefined,
+      });
+      const resolvedName = first
+        ? baseName
+        : result.title && result.title !== "Documento"
+          ? result.title.replace(/\s+/g, "_")
+          : "documento";
+      return {
+        blob: pdfBlob(result.bytes),
+        fileName: `${resolvedName}.pdf`,
+        categoryKey: "recent.type.pdf",
+      };
+    }
+    case "scan-to-pdf": {
+      let scannedItems = input.scannedPages ?? [];
+      if (scannedItems.length === 0 && input.files && input.files.length > 0) {
+        scannedItems = await Promise.all(
+          input.files.map(async (file, idx) => ({
+            id: `upload-${idx + 1}`,
+            imageBytes: new Uint8Array(await file.arrayBuffer()),
+            mimeType: file.type || "image/jpeg",
+            filter: "original" as const,
+          })),
+        );
+      }
+      if (scannedItems.length === 0) {
+        throw new ToolRunError("INVALID_INPUT", translate("scanToPdf.noPages"));
+      }
+      const resultBytes = await compileScannedPagesToPdf([...scannedItems], {
+        pageSize: input.scanPageSize ?? "A4",
+        orientation: input.scanOrientation ?? "auto",
+        margin: input.scanMargin ?? "small",
+      });
+      const resolvedName = first ? `${baseName}_digitalizado` : "documento_digitalizado";
+      return {
+        blob: pdfBlob(resultBytes),
+        fileName: `${resolvedName}.pdf`,
+        categoryKey: "recent.type.pdf",
       };
     }
     default:

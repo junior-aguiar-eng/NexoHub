@@ -478,7 +478,8 @@ test("não anuncia conversores ou proteção sem executor", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "PDF para Word" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Word para PDF" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Proteger PDF" })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Extrair Imagens" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "PDF para Excel" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Extrair Imagens" })).toBeVisible();
 });
 
 test("comprime PDF real e disponibiliza PDF válido", async ({ page }) => {

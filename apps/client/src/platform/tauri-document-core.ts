@@ -16,12 +16,17 @@ export class TauriDocumentCorePort implements DocumentCorePort {
     "pdf-merge",
     "pdf-split",
     "pdf-rotate",
+    "pdf-crop",
+    "pdf-sign",
     "pdf-compress",
     "text-compare",
     "pdf-ocr",
     "text-review",
     "text-translate",
     "pdf-extract-images",
+    "pdf-to-markdown",
+    "pdf-form-fill",
+    "pdf-unlock",
   ]);
   private projectPath: string | null = null;
 

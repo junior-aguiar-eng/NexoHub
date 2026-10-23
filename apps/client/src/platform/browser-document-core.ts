@@ -81,6 +81,8 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
     "pdf-merge",
     "pdf-split",
     "pdf-rotate",
+    "pdf-crop",
+    "pdf-sign",
     "pdf-compress",
     "text-compare",
     "images-to-pdf",
@@ -90,6 +92,10 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
     "pdf-ocr",
     "text-translate",
     "text-review",
+    "pdf-extract-images",
+    "pdf-to-markdown",
+    "pdf-form-fill",
+    "pdf-unlock",
   ]);
   private projectData: Map<string, StoredProjectData> = new Map();
   private pendingFiles: Map<string, File> = new Map();

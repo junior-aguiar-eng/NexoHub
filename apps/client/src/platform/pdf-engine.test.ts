@@ -162,6 +162,302 @@ describe("operações PDF no navegador", () => {
     expect(searchablePdf.length).toBeGreaterThan(source.length);
     fontFetch.mockRestore();
   });
+
+  it("recorta as margens de todas as páginas ajustando CropBox e MediaBox", async () => {
+    const { cropPdfDocument } = await import("./pdf-engine");
+    const source = await makePdf(2);
+    const croppedBytes = await cropPdfDocument(source, {
+      margins: { top: 10, bottom: 10, left: 10, right: 10 },
+      scope: "all",
+    });
+
+    const doc = await PDFDocument.load(croppedBytes);
+    expect(doc.getPageCount()).toBe(2);
+    const page1 = doc.getPage(0);
+    const mediaBox = page1.getMediaBox();
+    expect(mediaBox.width).toBeCloseTo(160, 1);
+    expect(mediaBox.height).toBeCloseTo(160, 1);
+    expect(mediaBox.x).toBeCloseTo(20, 1);
+    expect(mediaBox.y).toBeCloseTo(20, 1);
+  });
+
+  it("recorta apenas as páginas selecionadas no escopo selected", async () => {
+    const { cropPdfDocument } = await import("./pdf-engine");
+    const source = await makePdf(2);
+    const croppedBytes = await cropPdfDocument(source, {
+      margins: { top: 10, bottom: 0, left: 0, right: 0 },
+      scope: "selected",
+      selectedPages: [1],
+    });
+
+    const doc = await PDFDocument.load(croppedBytes);
+    const page1 = doc.getPage(0);
+    const page2 = doc.getPage(1);
+    expect(page1.getMediaBox().height).toBeCloseTo(180, 1);
+    expect(page2.getMediaBox().height).toBeCloseTo(200, 1);
+  });
+
+  it("rejeita margens negativas ou excessivas", async () => {
+    const { cropPdfDocument } = await import("./pdf-engine");
+    const source = await makePdf(1);
+    await expect(
+      cropPdfDocument(source, {
+        margins: { top: 96, bottom: 0, left: 0, right: 0 },
+      }),
+    ).rejects.toThrow("RECORTE_MUITO_GRANDE");
+
+    await expect(
+      cropPdfDocument(source, {
+        margins: { top: -5, bottom: 0, left: 0, right: 0 },
+      }),
+    ).rejects.toThrow("MARGEM_INVALIDA");
+  });
+
+  it("assina PDF inserindo imagem e metadados de signatário e data", async () => {
+    const { signPdfDocument } = await import("./pdf-engine");
+    const source = await makePdf(2);
+    const minimalPng = new Uint8Array([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+      0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f,
+      0x15, 0xc4, 0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00,
+      0x01, 0x00, 0x00, 0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
+      0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+    ]);
+
+    const signedBytes = await signPdfDocument(source, {
+      signatureImageBytes: minimalPng,
+      signerName: "Dr. Roberto Silva",
+      includeDate: true,
+      placement: {
+        page: "last",
+        xPercent: 60,
+        yPercent: 10,
+        widthPercent: 30,
+        heightPercent: 15,
+      },
+    });
+
+    const doc = await PDFDocument.load(signedBytes);
+    expect(doc.getPageCount()).toBe(2);
+    expect(signedBytes.length).toBeGreaterThan(source.length);
+  });
+
+  it("assina PDF em todas as páginas e valida erro com entrada vazia", async () => {
+    const { signPdfDocument } = await import("./pdf-engine");
+    const source = await makePdf(2);
+    const minimalPng = new Uint8Array([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+      0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f,
+      0x15, 0xc4, 0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00,
+      0x01, 0x00, 0x00, 0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
+      0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+    ]);
+
+    const signedAll = await signPdfDocument(source, {
+      signatureImageBytes: minimalPng,
+      signerName: "Dra. Maria Clara",
+      includeDate: false,
+      placement: {
+        page: "all",
+        xPercent: 50,
+        yPercent: 5,
+        widthPercent: 25,
+        heightPercent: 10,
+      },
+    });
+
+    const doc = await PDFDocument.load(signedAll);
+    expect(doc.getPageCount()).toBe(2);
+
+    await expect(
+      signPdfDocument(new Uint8Array(0), {
+        signatureImageBytes: minimalPng,
+        placement: { xPercent: 0, yPercent: 0, widthPercent: 20, heightPercent: 10 },
+      }),
+    ).rejects.toThrow("DOCUMENTO_VAZIO");
+
+    await expect(
+      signPdfDocument(source, {
+        placement: { xPercent: 0, yPercent: 0, widthPercent: 20, heightPercent: 10 },
+      }),
+    ).rejects.toThrow("ASSINATURA_VAZIA");
+  });
+
+  it("extrai imagens embutidas em documento PDF descartando miniaturas decorativas", async () => {
+    const { extractImagesFromPdf } = await import("./pdf-engine");
+    const source = await makePdf(2);
+    const images = await extractImagesFromPdf(source, {
+      minWidth: 16,
+      minHeight: 16,
+    });
+
+    expect(images.length).toBeGreaterThan(0);
+    const firstImg = images[0];
+    expect(firstImg).toBeDefined();
+    expect(firstImg?.width).toBeGreaterThanOrEqual(16);
+    expect(firstImg?.height).toBeGreaterThanOrEqual(16);
+    expect(["jpeg", "png"]).toContain(firstImg?.format);
+
+    await expect(extractImagesFromPdf(new Uint8Array(0))).rejects.toThrow("DOCUMENTO_VAZIO");
+  });
+
+  it("inspeciona campos de formulário PDF interativo (AcroForms)", async () => {
+    const { inspectPdfFormFields } = await import("./pdf-engine");
+
+    // Teste com documento vazio ou sem campos
+    expect(await inspectPdfFormFields(new Uint8Array(0))).toEqual([]);
+    const blankPdf = await makePdf(1);
+    expect(await inspectPdfFormFields(blankPdf)).toEqual([]);
+
+    // Cria documento com campos de formulário reais
+    const pdf = await PDFDocument.create();
+    const page = pdf.addPage([400, 400]);
+    const form = pdf.getForm();
+
+    const tf = form.createTextField("nomeCliente");
+    tf.setText("Ana Souza");
+    tf.addToPage(page, { x: 50, y: 300, width: 200, height: 30 });
+
+    const cb = form.createCheckBox("concordo");
+    cb.check();
+    cb.addToPage(page, { x: 50, y: 250, width: 20, height: 20 });
+
+    const dd = form.createDropdown("cidade");
+    dd.addOptions(["São Paulo", "Rio de Janeiro", "Curitiba"]);
+    dd.select("Curitiba");
+    dd.addToPage(page, { x: 50, y: 200, width: 150, height: 25 });
+
+    const rg = form.createRadioGroup("tipoConta");
+    rg.addOptionToPage("PF", page, { x: 50, y: 150, width: 20, height: 20 });
+    rg.addOptionToPage("PJ", page, { x: 100, y: 150, width: 20, height: 20 });
+    rg.select("PJ");
+
+    const formPdf = await pdf.save();
+    const fields = await inspectPdfFormFields(formPdf);
+
+    expect(fields.length).toBe(4);
+    const textField = fields.find((f) => f.name === "nomeCliente");
+    expect(textField).toBeDefined();
+    expect(textField?.type).toBe("text");
+    expect(textField?.currentValue).toBe("Ana Souza");
+
+    const checkField = fields.find((f) => f.name === "concordo");
+    expect(checkField).toBeDefined();
+    expect(checkField?.type).toBe("checkbox");
+    expect(checkField?.currentValue).toBe(true);
+
+    const dropField = fields.find((f) => f.name === "cidade");
+    expect(dropField).toBeDefined();
+    expect(dropField?.type).toBe("dropdown");
+    expect(dropField?.currentValue).toBe("Curitiba");
+    expect(dropField?.options).toContain("São Paulo");
+
+    const radioField = fields.find((f) => f.name === "tipoConta");
+    expect(radioField).toBeDefined();
+    expect(radioField?.type).toBe("radio");
+    expect(radioField?.currentValue).toBe("PJ");
+  });
+
+  it("preenche campos de formulário e aplica achatamento (flatten)", async () => {
+    const { fillPdfForm, inspectPdfFormFields } = await import("./pdf-engine");
+
+    const pdf = await PDFDocument.create();
+    const page = pdf.addPage([400, 400]);
+    const form = pdf.getForm();
+
+    const tf = form.createTextField("campoTexto");
+    tf.setText("Original");
+    tf.addToPage(page, { x: 50, y: 300, width: 200, height: 30 });
+
+    const cb = form.createCheckBox("campoCheck");
+    cb.check();
+    cb.addToPage(page, { x: 50, y: 250, width: 20, height: 20 });
+
+    const dd = form.createDropdown("campoDrop");
+    dd.addOptions(["Opcao 1", "Opcao 2"]);
+    dd.select("Opcao 1");
+    dd.addToPage(page, { x: 50, y: 200, width: 150, height: 25 });
+
+    const initialPdf = await pdf.save();
+
+    // 1. Preenchimento mantendo o formulário editável
+    const filledBytes = await fillPdfForm(initialPdf, {
+      values: {
+        campoTexto: "Novo Valor Atualizado",
+        campoCheck: false,
+        campoDrop: "Opcao 2",
+      },
+      flatten: false,
+    });
+
+    const inspectedAfterFill = await inspectPdfFormFields(filledBytes);
+    expect(inspectedAfterFill.length).toBe(3);
+    expect(inspectedAfterFill.find((f) => f.name === "campoTexto")?.currentValue).toBe(
+      "Novo Valor Atualizado",
+    );
+    expect(inspectedAfterFill.find((f) => f.name === "campoCheck")?.currentValue).toBe(false);
+    expect(inspectedAfterFill.find((f) => f.name === "campoDrop")?.currentValue).toBe("Opcao 2");
+
+    // 2. Preenchimento com achatamento (flatten)
+    const flattenedBytes = await fillPdfForm(initialPdf, {
+      values: {
+        campoTexto: "Texto Permanente",
+      },
+      flatten: true,
+    });
+
+    const inspectedAfterFlatten = await inspectPdfFormFields(flattenedBytes);
+    expect(inspectedAfterFlatten.length).toBe(0);
+
+    // Erro ao enviar documento vazio
+    await expect(
+      fillPdfForm(new Uint8Array(0), {
+        values: {},
+      }),
+    ).rejects.toThrow("EMPTY_DOCUMENT");
+  });
+
+  it("verifica proteções e desbloqueia PDF removendo restrições criptográficas", async () => {
+    const { checkPdfProtection, unlockPdfDocument } = await import("./pdf-engine");
+
+    // 1. Documento vazio ou sem proteções
+    expect(await checkPdfProtection(new Uint8Array(0))).toEqual({
+      isProtected: false,
+      needsPassword: false,
+      hasPermissionsRestriction: false,
+    });
+    const blank = await makePdf(1);
+    expect(await checkPdfProtection(blank)).toEqual({
+      isProtected: false,
+      needsPassword: false,
+      hasPermissionsRestriction: false,
+    });
+    const identical = await unlockPdfDocument(blank);
+    expect(identical).toEqual(blank);
+
+    // 2. Documento com restrições /Encrypt (permissões com senha de proprietário)
+    const pdf = await PDFDocument.create();
+    pdf.addPage([300, 300]);
+    const enc = pdf.context.obj({ Filter: "Standard", V: 2, R: 3, P: -4 });
+    pdf.context.trailerInfo.Encrypt = enc;
+    const protectedBytes = await pdf.save();
+
+    const status = await checkPdfProtection(protectedBytes);
+    expect(status.isProtected).toBe(true);
+    expect(status.hasPermissionsRestriction).toBe(true);
+
+    // Desbloqueia o PDF
+    const unlockedBytes = await unlockPdfDocument(protectedBytes);
+    expect(unlockedBytes.byteLength).toBeGreaterThan(0);
+
+    // O arquivo resultante não deve ter mais nenhuma proteção
+    const unlockedStatus = await checkPdfProtection(unlockedBytes);
+    expect(unlockedStatus.isProtected).toBe(false);
+    expect(unlockedStatus.hasPermissionsRestriction).toBe(false);
+
+    // Teste de rejeição com documento vazio
+    await expect(unlockPdfDocument(new Uint8Array(0))).rejects.toThrow("EMPTY_DOCUMENT");
+  });
 });
 
 import { readFileSync } from "node:fs";

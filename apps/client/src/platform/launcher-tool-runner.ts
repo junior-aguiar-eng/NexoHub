@@ -18,14 +18,23 @@ import { readDocumentText } from "./document-reader";
 import {
   addPageNumbersToPdfDocument,
   addWatermarkToPdfDocument,
+  type CropMargins,
   compressPdfDocument,
   convertImagesToPdfDocument,
   convertPdfPagesToJpgImages,
+  convertPdfToMarkdown,
+  cropPdfDocument,
+  type ExtractedImage,
+  extractImagesFromPdf,
   extractPdfSelectedPages,
+  fillPdfForm,
   mergePdfDocuments,
   reorganizePdfDocument,
   rotatePdfDocument,
+  type SignaturePlacement,
+  signPdfDocument,
   splitPdfByInterval,
+  unlockPdfDocument,
 } from "./pdf-engine";
 
 export interface LauncherPage {
@@ -84,6 +93,24 @@ export interface LauncherToolInput {
     message?: string;
   }) => void;
   readonly onReviewProgress?: (info: { progress: number; message: string }) => void;
+  readonly detectHeadings?: boolean;
+  readonly detectTables?: boolean;
+  readonly includePageBreaks?: boolean;
+  readonly cropMargins?: CropMargins;
+  readonly cropScope?: "all" | "selected";
+  readonly cropSelectedPages?: readonly number[];
+  readonly signatureImageBytes?: Uint8Array;
+  readonly signerName?: string;
+  readonly includeDate?: boolean;
+  readonly dateText?: string;
+  readonly signaturePlacement?: SignaturePlacement;
+  readonly extractImageScope?: "all" | "selected";
+  readonly extractImagePages?: readonly number[];
+  readonly ignoreSmallImages?: boolean;
+  readonly selectedImageIds?: readonly string[];
+  readonly formValues?: Record<string, string | boolean>;
+  readonly formFlatten?: boolean;
+  readonly unlockPassword?: string;
 }
 
 export interface LauncherToolOutput {
@@ -94,6 +121,7 @@ export interface LauncherToolOutput {
   readonly secondaryBlob?: Blob;
   readonly secondaryFileName?: string;
   readonly reviewFindings?: readonly ReviewFinding[];
+  readonly extractedImages?: readonly ExtractedImage[];
 }
 
 const supportedIds = new Set([
@@ -101,6 +129,8 @@ const supportedIds = new Set([
   "pdf-merge",
   "pdf-split",
   "pdf-rotate",
+  "pdf-crop",
+  "pdf-sign",
   "pdf-compress",
   "text-compare",
   "images-to-pdf",
@@ -111,6 +141,9 @@ const supportedIds = new Set([
   "text-review",
   "text-translate",
   "pdf-extract-images",
+  "pdf-to-markdown",
+  "pdf-form-fill",
+  "pdf-unlock",
 ]);
 
 function pdfBlob(bytes: Uint8Array): Blob {
@@ -559,34 +592,48 @@ async function executeTool(
       };
     }
     case "pdf-extract-images": {
-      if (documentCore.invoke) {
-        const project = await documentCore.invoke("pick_project_folder", {});
-        if (!project) throw new Error("PROJECT_NOT_SELECTED");
-        const imported = await documentCore.invoke("import_document_bytes", {
-          projectPath: project.path,
-          title: first.name,
-          mimeType: "application/pdf",
-          bytes: Array.from(new Uint8Array(await first.arrayBuffer())),
-        });
-        const extractRes = await documentCore.invoke("extract_pdf_images", {
-          projectPath: project.path,
-          documentId: imported.document.id,
-          artifactId: imported.artifact.id,
-        });
-        if (extractRes.totalImages === 0) {
-          throw new Error("NO_IMAGES_FOUND");
-        }
-        const bytes = await documentCore.invoke("read_artifact_bytes", {
-          projectPath: project.path,
-          artifactId: extractRes.artifact.id,
-        });
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const minSize = input.ignoreSmallImages === false ? 1 : 16;
+      const allImages = await extractImagesFromPdf(pdfBytes, {
+        minWidth: minSize,
+        minHeight: minSize,
+        selectedPages: input.extractImagePages,
+      });
+
+      if (allImages.length === 0) {
+        throw new Error("NO_IMAGES_FOUND");
+      }
+
+      const selectedSet = input.selectedImageIds ? new Set(input.selectedImageIds) : null;
+      const imagesToExport = selectedSet
+        ? allImages.filter((img) => selectedSet.has(img.id))
+        : allImages;
+
+      const exportList = imagesToExport.length > 0 ? imagesToExport : allImages;
+
+      if (exportList.length === 1 && exportList[0]) {
+        const single = exportList[0];
+        const mime = single.format === "jpeg" ? "image/jpeg" : "image/png";
         return {
-          blob: new Blob([new Uint8Array(bytes)], { type: "application/zip" }),
-          fileName: `${baseName}_imagens.zip`,
-          categoryKey: "recent.type.pdf",
+          blob: new Blob([single.data as unknown as BlobPart], { type: mime }),
+          fileName: `${baseName}_${single.name}`,
+          categoryKey: "recent.type.document",
+          extractedImages: allImages,
         };
       }
-      throw new Error("TOOL_UNAVAILABLE");
+
+      const zipParts = exportList.map((img) => ({
+        name: `${baseName}_${img.name}`,
+        data: img.data,
+      }));
+      const zipBytes = createZipArchive(zipParts);
+      return {
+        blob: new Blob([zipBytes as unknown as BlobPart], { type: "application/zip" }),
+        fileName: `${baseName}_imagens.zip`,
+        categoryKey: "recent.type.document",
+        extractedImages: allImages,
+      };
     }
     case "images-to-pdf": {
       if (!input.files || input.files.length === 0) {
@@ -664,6 +711,84 @@ async function executeTool(
       return {
         blob: pdfBlob(numberedBytes),
         fileName: `${baseName}_numerado.pdf`,
+        categoryKey: "recent.type.pdf",
+      };
+    }
+    case "pdf-to-markdown": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const conversion = await convertPdfToMarkdown(pdfBytes, {
+        detectHeadings: input.detectHeadings ?? true,
+        detectTables: input.detectTables ?? true,
+        includePageBreaks: input.includePageBreaks ?? true,
+      });
+      return {
+        blob: new Blob([conversion.markdown], { type: "text/markdown;charset=utf-8" }),
+        fileName: `${baseName}.md`,
+        categoryKey: "recent.type.document",
+        extractedText: conversion.markdown,
+      };
+    }
+    case "pdf-crop": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const margins = input.cropMargins ?? { top: 0, bottom: 0, left: 0, right: 0 };
+      const croppedBytes = await cropPdfDocument(pdfBytes, {
+        margins,
+        scope: input.cropScope ?? "all",
+        selectedPages: input.cropSelectedPages,
+      });
+      return {
+        blob: pdfBlob(croppedBytes),
+        fileName: `${baseName}_recortado.pdf`,
+        categoryKey: "recent.type.pdf",
+      };
+    }
+    case "pdf-sign": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const placement = input.signaturePlacement ?? {
+        page: "last",
+        xPercent: 65,
+        yPercent: 8,
+        widthPercent: 28,
+        heightPercent: 12,
+      };
+      const signedBytes = await signPdfDocument(pdfBytes, {
+        signatureImageBytes: input.signatureImageBytes,
+        signerName: input.signerName,
+        includeDate: input.includeDate ?? true,
+        dateText: input.dateText,
+        placement,
+      });
+      return {
+        blob: pdfBlob(signedBytes),
+        fileName: `${baseName}_assinado.pdf`,
+        categoryKey: "recent.type.pdf",
+      };
+    }
+    case "pdf-form-fill": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const filledBytes = await fillPdfForm(pdfBytes, {
+        values: input.formValues ?? {},
+        flatten: input.formFlatten ?? false,
+      });
+      return {
+        blob: pdfBlob(filledBytes),
+        fileName: `${baseName}_preenchido.pdf`,
+        categoryKey: "recent.type.pdf",
+      };
+    }
+    case "pdf-unlock": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const unlockedBytes = await unlockPdfDocument(pdfBytes, {
+        password: input.unlockPassword,
+      });
+      return {
+        blob: pdfBlob(unlockedBytes),
+        fileName: `${baseName}_desbloqueado.pdf`,
         categoryKey: "recent.type.pdf",
       };
     }

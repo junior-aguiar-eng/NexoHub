@@ -6,11 +6,21 @@ describe("Strict Functional Tools Catalog", () => {
   it("mantém as ferramentas de navegador disponíveis no website com adapter HTTP", () => {
     const tools = resolveLauncherTools([], new HttpDocumentCorePort());
     const ids = tools.map((tool) => tool.id);
-    for (const id of ["images-to-pdf", "pdf-to-jpg", "pdf-watermark", "pdf-page-numbers"]) {
+    for (const id of [
+      "images-to-pdf",
+      "pdf-to-jpg",
+      "pdf-watermark",
+      "pdf-page-numbers",
+      "pdf-to-markdown",
+      "pdf-crop",
+      "pdf-sign",
+      "pdf-extract-images",
+      "pdf-form-fill",
+      "pdf-unlock",
+    ]) {
       expect(ids).toContain(id);
     }
-    expect(ids).not.toContain("pdf-extract-images");
-    expect(ids).toHaveLength(13);
+    expect(ids).toHaveLength(19);
   });
   it("não oferece conversões e proteção sem executor", () => {
     const tools = resolveLauncherTools();
@@ -23,7 +33,7 @@ describe("Strict Functional Tools Catalog", () => {
     expect(ids).toContain("pdf-watermark");
     expect(ids).toContain("pdf-page-numbers");
     expect(ids).toContain("pdf-ocr");
-    expect(ids).not.toContain("pdf-extract-images");
+    expect(ids).toContain("pdf-extract-images");
     expect(ids).toContain("text-compare");
     expect(ids).not.toContain("pdf-to-word");
     expect(ids).not.toContain("word-to-pdf");

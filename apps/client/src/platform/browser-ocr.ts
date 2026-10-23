@@ -277,14 +277,14 @@ export async function performBrowserOcr(
       await worker.terminate();
     }
 
+    if (!pageTexts.some((text) => text.trim())) {
+      throw new Error("OCR_NO_TEXT_FOUND");
+    }
+
     const fullText =
       pageTexts.length > 1
         ? pageTexts.map((txt, idx) => `--- Página ${idx + 1} ---\n${txt}`).join("\n\n")
         : pageTexts[0] || "";
-
-    if (!fullText.trim()) {
-      throw new Error("OCR_NO_TEXT_FOUND");
-    }
 
     if (options.onProgress) {
       options.onProgress({

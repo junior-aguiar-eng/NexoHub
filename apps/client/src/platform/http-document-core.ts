@@ -9,6 +9,7 @@ import { ToolRunError } from "@nexohub/tool-sdk";
 import type { DocumentCorePort } from "./document-core";
 
 export class HttpDocumentCorePort implements DocumentCorePort {
+  readonly ocrEngine = "browser" as const;
   readonly supportedToolIds: ReadonlySet<string> = new Set([
     "pdf-organize",
     "pdf-merge",
@@ -244,14 +245,15 @@ export class HttpDocumentCorePort implements DocumentCorePort {
       importedList.push(imported);
     }
 
+    const outputMimeType = request.output.type.split(";")[0].trim().toLowerCase();
     const mimeType =
       request.toolId === "text-compare"
         ? "text/plain"
-        : request.output.type === "application/zip"
+        : outputMimeType === "application/zip"
           ? "application/zip"
-          : request.output.type === "image/jpeg"
+          : outputMimeType === "image/jpeg"
             ? "image/jpeg"
-            : request.output.type === "text/plain"
+            : outputMimeType === "text/plain"
               ? "text/plain"
               : "application/pdf";
 

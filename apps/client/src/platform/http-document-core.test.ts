@@ -11,6 +11,33 @@ describe("HttpDocumentCorePort", () => {
     port = new HttpDocumentCorePort(baseUrl);
   });
 
+  it("preserva MIME textual com charset ao registrar resultado OCR", async () => {
+    const bytes = [...new TextEncoder().encode("Ação reconhecida")];
+    const invoke = vi.fn(async (command: string) => {
+      if (command === "import_document_bytes")
+        return { document: { id: "doc" }, artifact: { id: "orig" } };
+      if (command === "record_launcher_result") return { artifact: { id: "out" } };
+      if (command === "read_artifact_bytes") return bytes;
+      return {};
+    });
+    Object.assign(port, {
+      ensureProject: async () => ({ path: "/tmp/auditoria", name: "Auditoria" }),
+      invoke,
+    });
+    const result = await port.persistLauncherResult({
+      toolId: "pdf-ocr",
+      files: [new File(["scan"], "scan.png", { type: "image/png" })],
+      output: new Blob(["Ação reconhecida"], { type: "text/plain;charset=utf-8" }),
+      parameters: {},
+    });
+    expect(invoke).toHaveBeenCalledWith(
+      "record_launcher_result",
+      expect.objectContaining({ mimeType: "text/plain" }),
+    );
+    expect(result.type).toBe("text/plain");
+    expect(await result.text()).toBe("Ação reconhecida");
+  });
+
   it("reutiliza a sessão e envia sua credencial nas chamadas seguintes", async () => {
     const folder = { path: "/tmp/sessao.nexohub", name: "Sessão Web" };
     const fetchSpy = vi

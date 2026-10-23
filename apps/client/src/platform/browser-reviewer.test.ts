@@ -1,6 +1,12 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { checkWordSpelling, performBrowserReview } from "./browser-reviewer";
 import { addCustomWord, clearSessionIgnored, ignoreWordInSession } from "./user-vocabulary";
+
+vi.mock("hunspell-asm", () => ({
+  loadModule: async () => {
+    throw new Error("WASM indisponível");
+  },
+}));
 
 describe("browser-reviewer", () => {
   const mockHunspell = {
@@ -104,4 +110,27 @@ describe("browser-reviewer", () => {
       expect(findings).toEqual([]);
     });
   });
+});
+
+it("preserva identificadores antes da tokenização ortográfica", async () => {
+  const engine = {
+    spell: () => false,
+    suggest: () => ["alterado"],
+    addWord: () => {},
+    removeWord: () => {},
+    dispose: () => {},
+  };
+  const text = "https://exemploerrrado.com/relatorio usuarioerrrado@exemplo.com {{relatorio}}";
+  expect(await performBrowserReview({ text, hunspellOverride: engine })).toEqual([]);
+});
+
+it("não relata revisão concluída quando o motor morfológico falha", async () => {
+  const progress: string[] = [];
+  await expect(
+    performBrowserReview({
+      text: "Esste relatóriu.",
+      onProgress: (_p, message) => progress.push(message),
+    }),
+  ).rejects.toThrow("REVIEW_UNAVAILABLE");
+  expect(progress.some((message) => message.includes("concluída"))).toBe(false);
 });

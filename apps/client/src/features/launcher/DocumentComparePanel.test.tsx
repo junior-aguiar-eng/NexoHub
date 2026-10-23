@@ -85,3 +85,20 @@ describe("DocumentComparePanel - Comparador de 2 a 3 Documentos", () => {
     expect(container.querySelector(".doc-compare-textarea")).toBeInTheDocument();
   });
 });
+
+it("exibe limite de comparação sem sugerir documentos idênticos ou permitir exportação", () => {
+  const { container, rerender } = render(
+    <DocumentComparePanel
+      doc1Text={"linha\n".repeat(10_001)}
+      doc2Text="Outro texto"
+      onExportDiff={vi.fn()}
+    />,
+  );
+  expect(screen.getByRole("alert")).toHaveTextContent("10.000 linhas");
+  expect(container.querySelector(".doc-compare-stats-bar")).not.toBeInTheDocument();
+  expect(container.querySelector(".doc-compare-identical-badge")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Exportar/i })).toBeDisabled();
+  rerender(<DocumentComparePanel doc1Text="Original" doc2Text="Alterado" onExportDiff={vi.fn()} />);
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Exportar/i })).toBeEnabled();
+});

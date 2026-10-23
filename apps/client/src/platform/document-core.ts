@@ -7,6 +7,8 @@ export { BrowserDocumentCorePort, HttpDocumentCorePort, TauriDocumentCorePort };
 
 export interface DocumentCorePort {
   readonly supportedToolIds: ReadonlySet<string>;
+  /** Motor que atende idioma, contraste e PDF pesquisável na superfície atual. */
+  readonly ocrEngine?: "browser" | "core";
   saveOutputFile?(request: { blob: Blob; fileName: string }): Promise<boolean>;
   registerUploadedFile?(file: File): { path: string; name: string; mimeType: string };
   executePdfTool?(request: {

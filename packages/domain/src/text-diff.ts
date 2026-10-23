@@ -31,9 +31,131 @@ export type TextDiffResult = {
 
 const MAX_DIFF_LINES = 10_000;
 
+/** Myers limitado a poucas edições; o limite controla memória, nunca a precisão. */
+function sparsePairs(
+  original: readonly string[],
+  modified: readonly string[],
+): [number, number][] | null {
+  const frontier = new Map<number, number>([[1, 0]]);
+  const trace: Map<number, number>[] = [];
+  for (let distance = 0; distance <= 128; distance++) {
+    trace.push(new Map(frontier));
+    for (let diagonal = -distance; diagonal <= distance; diagonal += 2) {
+      let x =
+        diagonal === -distance ||
+        (diagonal !== distance &&
+          (frontier.get(diagonal - 1) ?? -1) < (frontier.get(diagonal + 1) ?? -1))
+          ? (frontier.get(diagonal + 1) ?? 0)
+          : (frontier.get(diagonal - 1) ?? 0) + 1;
+      let y = x - diagonal;
+      while (x < original.length && y < modified.length && original[x] === modified[y]) {
+        x++;
+        y++;
+      }
+      frontier.set(diagonal, x);
+      if (x >= original.length && y >= modified.length) {
+        const pairs: [number, number][] = [];
+        x = original.length;
+        y = modified.length;
+        for (let d = distance; d >= 0; d--) {
+          const previous = trace[d];
+          if (!previous) break;
+          const k = x - y;
+          const previousK =
+            k === -d || (k !== d && (previous.get(k - 1) ?? -1) < (previous.get(k + 1) ?? -1))
+              ? k + 1
+              : k - 1;
+          const previousX = previous.get(previousK) ?? 0;
+          const previousY = previousX - previousK;
+          while (x > previousX && y > previousY) pairs.push([--x, --y]);
+          x = previousX;
+          y = previousY;
+        }
+        return pairs.reverse();
+      }
+    }
+  }
+  return null;
+}
+
+/** LCS exato por Hirschberg: duas linhas de contagens, sem matriz quadrática. */
+function commonPairs(original: readonly string[], modified: readonly string[]): [number, number][] {
+  const pairs: [number, number][] = [];
+  function row(a0: number, a1: number, b0: number, b1: number, reverse: boolean): Uint32Array {
+    const width = b1 - b0;
+    let previous = new Uint32Array(width + 1);
+    let current = new Uint32Array(width + 1);
+    for (let i = 0; i < a1 - a0; i++) {
+      current[0] = 0;
+      for (let j = 0; j < width; j++) {
+        current[j + 1] =
+          original[reverse ? a1 - i - 1 : a0 + i] === modified[reverse ? b1 - j - 1 : b0 + j]
+            ? (previous[j] ?? 0) + 1
+            : Math.max(previous[j + 1] ?? 0, current[j] ?? 0);
+      }
+      [previous, current] = [current, previous];
+    }
+    return previous;
+  }
+  function split(a0: number, middle: number, a1: number, b0: number, b1: number): number {
+    const left = row(a0, middle, b0, b1, false);
+    const right = row(middle, a1, b0, b1, true);
+    let best = -1;
+    let boundary = 0;
+    for (let j = 0; j <= b1 - b0; j++) {
+      const score = (left[j] ?? 0) + (right[b1 - b0 - j] ?? 0);
+      if (score > best) {
+        best = score;
+        boundary = j;
+      }
+    }
+    return b0 + boundary;
+  }
+  function visit(a0: number, a1: number, b0: number, b1: number): void {
+    while (a0 < a1 && b0 < b1 && original[a0] === modified[b0]) {
+      pairs.push([a0++, b0++]);
+    }
+    let suffix = 0;
+    while (
+      a0 < a1 - suffix &&
+      b0 < b1 - suffix &&
+      original[a1 - suffix - 1] === modified[b1 - suffix - 1]
+    )
+      suffix++;
+    const aEnd = a1 - suffix;
+    const bEnd = b1 - suffix;
+    if (a0 < aEnd && b0 < bEnd) {
+      if (aEnd - a0 === 1) {
+        for (let j = b0; j < bEnd; j++)
+          if (original[a0] === modified[j]) {
+            pairs.push([a0, j]);
+            break;
+          }
+      } else {
+        // Textos inteiramente distintos não precisam do percurso quadrático de LCS.
+        const values = new Set(original.slice(a0, aEnd));
+        if (modified.slice(b0, bEnd).some((value) => values.has(value))) {
+          const sparse = sparsePairs(original.slice(a0, aEnd), modified.slice(b0, bEnd));
+          if (sparse) {
+            for (const [i, j] of sparse) pairs.push([a0 + i, b0 + j]);
+          } else {
+            const middle = Math.floor((a0 + aEnd) / 2);
+            const boundary = split(a0, middle, aEnd, b0, bEnd);
+            visit(a0, middle, b0, boundary);
+            visit(middle, aEnd, boundary, bEnd);
+          }
+        }
+      }
+    }
+    for (let i = suffix; i > 0; i--) pairs.push([a1 - i, b1 - i]);
+  }
+  visit(0, original.length, 0, modified.length);
+  return pairs;
+}
+
 export function tokenizeWords(text: string): string[] {
   if (text.length === 0) return [];
-  const match = text.match(/[\p{L}\p{N}]+|[^\p{L}\p{N}]/gu);
+  const match = text.match(/[\p{L}\p{M}\p{N}]+|[^\p{L}\p{M}\p{N}]/gu);
   return match ?? [text];
 }
 
@@ -63,79 +185,32 @@ export function diffWords(
     };
   }
 
-  const MAX_TOKEN_LCS = 600;
-  if (origTokens.length > MAX_TOKEN_LCS || modTokens.length > MAX_TOKEN_LCS) {
-    return {
-      originalWords: origTokens.map((text, idx) => ({
-        id: `word-rem-fallback-${idx}`,
-        type: "removed",
-        text,
-      })),
-      modifiedWords: modTokens.map((text, idx) => ({
-        id: `word-add-fallback-${idx}`,
-        type: "added",
-        text,
-      })),
-      wordsAdded: modTokens.filter((t) => /\p{L}|\p{N}/u.test(t)).length,
-      wordsDeleted: origTokens.filter((t) => /\p{L}|\p{N}/u.test(t)).length,
-    };
-  }
-
-  const n = origTokens.length;
-  const m = modTokens.length;
-  const dp: number[][] = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
-
-  for (let i = 0; i < n; i++) {
-    const rowNext = dp[i + 1];
-    const rowCurr = dp[i];
-    if (!rowNext || !rowCurr) continue;
-    for (let j = 0; j < m; j++) {
-      if (origTokens[i] === modTokens[j]) {
-        rowNext[j + 1] = (rowCurr[j] ?? 0) + 1;
-      } else {
-        rowNext[j + 1] = Math.max(rowNext[j] ?? 0, rowCurr[j + 1] ?? 0);
-      }
-    }
-  }
-
   const originalWords: DiffWord[] = [];
   const modifiedWords: DiffWord[] = [];
-
-  let i = n;
-  let j = m;
   let wordsAdded = 0;
   let wordsDeleted = 0;
-  let seq = 0;
-
-  while (i > 0 || j > 0) {
-    seq += 1;
-    const origTok = origTokens[i - 1] ?? "";
-    const modTok = modTokens[j - 1] ?? "";
-    const valLeft = dp[i]?.[j - 1] ?? 0;
-    const valUp = dp[i - 1]?.[j] ?? 0;
-
-    if (i > 0 && j > 0 && origTok === modTok) {
-      originalWords.push({ id: `word-same-${seq}`, type: "unchanged", text: origTok });
-      modifiedWords.push({ id: `word-same-${seq}`, type: "unchanged", text: modTok });
-      i -= 1;
-      j -= 1;
-    } else if (j > 0 && (i === 0 || valLeft >= valUp)) {
-      modifiedWords.push({ id: `word-add-${seq}`, type: "added", text: modTok });
-      if (/\p{L}|\p{N}/u.test(modTok)) {
-        wordsAdded += 1;
-      }
-      j -= 1;
-    } else if (i > 0) {
-      originalWords.push({ id: `word-rem-${seq}`, type: "removed", text: origTok });
-      if (/\p{L}|\p{N}/u.test(origTok)) {
-        wordsDeleted += 1;
-      }
-      i -= 1;
+  let i = 0;
+  let j = 0;
+  const matches = commonPairs(
+    origTokens.map((token) => token.normalize("NFC")),
+    modTokens.map((token) => token.normalize("NFC")),
+  );
+  for (const [a, b] of [...matches, [origTokens.length, modTokens.length]]) {
+    while (i < a) {
+      const text = origTokens[i] ?? "";
+      originalWords.push({ id: `word-rem-${i++}`, type: "removed", text });
+      if (/[\p{L}\p{N}]/u.test(text)) wordsDeleted++;
+    }
+    while (j < b) {
+      const text = modTokens[j] ?? "";
+      modifiedWords.push({ id: `word-add-${j++}`, type: "added", text });
+      if (/[\p{L}\p{N}]/u.test(text)) wordsAdded++;
+    }
+    if (i < origTokens.length && j < modTokens.length) {
+      originalWords.push({ id: `word-same-${i}`, type: "unchanged", text: origTokens[i++] ?? "" });
+      modifiedWords.push({ id: `word-same-${a}`, type: "unchanged", text: modTokens[j++] ?? "" });
     }
   }
-
-  originalWords.reverse();
-  modifiedWords.reverse();
 
   return {
     originalWords,
@@ -146,7 +221,7 @@ export function diffWords(
 }
 
 function countWords(text: string): number {
-  const matches = text.match(/[\p{L}\p{N}]+/gu);
+  const matches = text.match(/[\p{L}\p{N}][\p{L}\p{M}\p{N}]*/gu);
   return matches ? matches.length : 0;
 }
 
@@ -234,90 +309,44 @@ export function diffText(original: string, modified: string): TextDiffResult {
   const origMid = originalLines.slice(prefixLen, n - suffixLen);
   const modMid = modifiedLines.slice(prefixLen, m - suffixLen);
 
-  const MAX_MATRIX_CELLS = 4_000_000;
-  if (midN * midM > MAX_MATRIX_CELLS) {
-    // Fallback defensivo O(N+M) para miolos gigantescos, evitando estouro de heap de memória
-    for (let i = 0; i < midN; i++) {
-      sequence += 1;
+  let originalIndex = 0;
+  let modifiedIndex = 0;
+  for (const [a, b] of [...commonPairs(origMid, modMid), [midN, midM]]) {
+    while (originalIndex < a) {
+      sequence++;
       rawDiffLines.push({
-        id: `diff-removed-${prefixLen + i + 1}-${sequence}`,
+        id: `diff-removed-${sequence}`,
         type: "removed",
-        content: origMid[i] ?? "",
-        originalLineNumber: prefixLen + i + 1,
+        content: origMid[originalIndex] ?? "",
+        originalLineNumber: prefixLen + originalIndex + 1,
       });
-      deletions += 1;
+      originalIndex++;
+      deletions++;
     }
-    for (let j = 0; j < midM; j++) {
-      sequence += 1;
+    while (modifiedIndex < b) {
+      sequence++;
       rawDiffLines.push({
-        id: `diff-added-${prefixLen + j + 1}-${sequence}`,
+        id: `diff-added-${sequence}`,
         type: "added",
-        content: modMid[j] ?? "",
-        modifiedLineNumber: prefixLen + j + 1,
+        content: modMid[modifiedIndex] ?? "",
+        modifiedLineNumber: prefixLen + modifiedIndex + 1,
       });
-      additions += 1;
+      modifiedIndex++;
+      additions++;
     }
-  } else if (midN > 0 || midM > 0) {
-    const dp: number[][] = Array.from({ length: midN + 1 }, () => new Array(midM + 1).fill(0));
-
-    for (let i = 0; i < midN; i++) {
-      const rowNext = dp[i + 1];
-      const rowCurr = dp[i];
-      if (!rowNext || !rowCurr) continue;
-      for (let j = 0; j < midM; j++) {
-        if (origMid[i] === modMid[j]) {
-          rowNext[j + 1] = (rowCurr[j] ?? 0) + 1;
-        } else {
-          rowNext[j + 1] = Math.max(rowCurr[j + 1] ?? 0, rowNext[j] ?? 0);
-        }
-      }
+    if (originalIndex < midN && modifiedIndex < midM) {
+      sequence++;
+      rawDiffLines.push({
+        id: `diff-unchanged-${sequence}`,
+        type: "unchanged",
+        content: origMid[originalIndex] ?? "",
+        originalLineNumber: prefixLen + originalIndex + 1,
+        modifiedLineNumber: prefixLen + modifiedIndex + 1,
+      });
+      originalIndex++;
+      modifiedIndex++;
+      unchanged++;
     }
-
-    const midDiffLines: typeof rawDiffLines = [];
-    let i = midN;
-    let j = midM;
-
-    while (i > 0 || j > 0) {
-      sequence += 1;
-      const origLine = origMid[i - 1] ?? "";
-      const modLine = modMid[j - 1] ?? "";
-      const valLeft = dp[i]?.[j - 1] ?? 0;
-      const valUp = dp[i - 1]?.[j] ?? 0;
-
-      if (i > 0 && j > 0 && origLine === modLine) {
-        midDiffLines.push({
-          id: `diff-unchanged-${prefixLen + i}-${prefixLen + j}-${sequence}`,
-          type: "unchanged",
-          content: origLine,
-          originalLineNumber: prefixLen + i,
-          modifiedLineNumber: prefixLen + j,
-        });
-        unchanged += 1;
-        i -= 1;
-        j -= 1;
-      } else if (j > 0 && (i === 0 || valLeft >= valUp)) {
-        midDiffLines.push({
-          id: `diff-added-${prefixLen + j}-${sequence}`,
-          type: "added",
-          content: modLine,
-          modifiedLineNumber: prefixLen + j,
-        });
-        additions += 1;
-        j -= 1;
-      } else if (i > 0) {
-        midDiffLines.push({
-          id: `diff-removed-${prefixLen + i}-${sequence}`,
-          type: "removed",
-          content: origLine,
-          originalLineNumber: prefixLen + i,
-        });
-        deletions += 1;
-        i -= 1;
-      }
-    }
-
-    midDiffLines.reverse();
-    rawDiffLines.push(...midDiffLines);
   }
 
   // 3. Sufixo comum idêntico
@@ -428,7 +457,13 @@ export function diffText(original: string, modified: string): TextDiffResult {
   const similarityScore =
     totalOrigWords === 0 && totalModWords === 0
       ? 100
-      : Math.max(0, Math.min(100, Math.round((wordsKept / baseWords) * 100)));
+      : Math.max(
+          0,
+          Math.min(
+            totalWordsAdded + totalWordsDeleted > 0 ? 99.99 : 100,
+            Math.round((wordsKept / baseWords) * 10_000) / 100,
+          ),
+        );
 
   return {
     lines: finalLines,

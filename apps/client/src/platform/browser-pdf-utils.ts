@@ -15,7 +15,7 @@ export function createZipArchive(files: Array<{ name: string; data: Uint8Array }
     const lView = new DataView(localHeader.buffer);
     lView.setUint32(0, 0x04034b50, true); // Assinatura PK\x03\x04
     lView.setUint16(4, 10, true); // Versão mínima (1.0)
-    lView.setUint16(6, 0, true); // Flags gerais
+    lView.setUint16(6, 0x0800, true); // Nome codificado em UTF-8 (bit 11)
     lView.setUint16(8, 0, true); // Método de compressão (0 = Store)
     lView.setUint16(10, 0, true); // Hora modificação
     lView.setUint16(12, 0, true); // Data modificação
@@ -34,7 +34,7 @@ export function createZipArchive(files: Array<{ name: string; data: Uint8Array }
     cView.setUint32(0, 0x02014b50, true); // Assinatura PK\x01\x02
     cView.setUint16(4, 20, true); // Versão feita por
     cView.setUint16(6, 10, true); // Versão necessária
-    cView.setUint16(8, 0, true); // Flags
+    cView.setUint16(8, 0x0800, true); // Nome codificado em UTF-8 (bit 11)
     cView.setUint16(10, 0, true); // Método de compressão (0 = Store)
     cView.setUint16(12, 0, true); // Hora
     cView.setUint16(14, 0, true); // Data

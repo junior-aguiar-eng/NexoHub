@@ -89,9 +89,6 @@ export async function getHunspellInstance(
   initPromise = (async () => {
     try {
       onProgress?.(10, "Iniciando corretor ortográfico...");
-      const { loadModule } = await import("hunspell-asm");
-      const factory = await loadModule();
-
       if (!cachedBuffers) {
         onProgress?.(25, "Carregando regras de português...");
         let affData: Uint8Array | null = null;
@@ -140,6 +137,8 @@ export async function getHunspellInstance(
       }
 
       onProgress?.(92, "Preparando revisão...");
+      const { loadModule } = await import("hunspell-asm");
+      const factory = await loadModule();
       const affMounted = factory.mountBuffer(cachedBuffers.aff, "pt_BR.aff");
       const dicMounted = factory.mountBuffer(cachedBuffers.dic, "pt_BR.dic");
       const instance = factory.create(affMounted, dicMounted);
@@ -205,16 +204,12 @@ export async function performBrowserReview(options: {
   // 1. Executa as regras contextuais e sintáticas do domínio
   const contextualFindings = reviewText(text);
 
-  // 2. Inicializa o motor Hunspell WASM com fallback seguro
-  let hunspell: HunspellInstance | null = null;
+  // A revisão completa exige o dicionário. Falhas de inicialização não significam texto correto.
+  let hunspell: HunspellInstance;
   try {
     hunspell = hunspellOverride ?? (await getHunspellInstance(onProgress));
-  } catch (err) {
-    console.warn(
-      "Motor morfológico Hunspell indisponível no ambiente atual; utilizando motor contextual avançado do domínio:",
-      err,
-    );
-    onProgress?.(100, "Revisão concluída via motor de regras do domínio.");
+  } catch (cause) {
+    throw new Error("REVIEW_UNAVAILABLE", { cause });
   }
 
   // 3. Varre palavras do texto identificando possíveis erros ortográficos se Hunspell estiver ativo
@@ -222,11 +217,17 @@ export async function performBrowserReview(options: {
 
   if (hunspell) {
     WORD_TOKEN_REGEX.lastIndex = 0;
+    const protectedSpans = [
+      ...text.matchAll(
+        /https?:\/\/[^\s]+|www\.[^\s]+|[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}|\{\{[^{}]*\}\}|\$\{[^{}]*\}/g,
+      ),
+    ].map((match) => ({ start: match.index, end: match.index + match[0].length }));
 
     for (const match of text.matchAll(WORD_TOKEN_REGEX)) {
       const word = match[0];
       const start = match.index;
       const end = start + word.length;
+      if (protectedSpans.some((span) => start < span.end && end > span.start)) continue;
 
       // Se houver achado contextual que já cobre essa posição, ignora
       if (contextualFindings.some((cf) => start < cf.end && end > cf.start)) {

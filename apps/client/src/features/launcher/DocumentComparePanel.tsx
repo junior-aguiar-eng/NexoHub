@@ -127,11 +127,12 @@ export function DocumentComparePanel({
   const fileInputRef3 = useRef<HTMLInputElement | null>(null);
 
   // Calcula o diff real usando a biblioteca de domínio (Doc 1 vs Doc 2)
-  const diffResult1to2: TextDiffResult = useMemo(() => {
+  const diffResult1to2 = useMemo<TextDiffResult & { error?: string }>(() => {
     try {
       return diffText(doc1Text || "", doc2Text || "");
-    } catch {
+    } catch (error) {
       return {
+        error: error instanceof Error ? error.message : translate("dedicated.errorProcessing"),
         lines: [],
         stats: {
           additions: 0,
@@ -146,7 +147,7 @@ export function DocumentComparePanel({
   }, [doc1Text, doc2Text]);
 
   // Calcula o diff real usando a biblioteca de domínio (Doc 1 vs Doc 3)
-  const diffResult1to3: TextDiffResult = useMemo(() => {
+  const diffResult1to3 = useMemo<TextDiffResult & { error?: string }>(() => {
     if (!showDoc3 || !doc3Text) {
       return {
         lines: [],
@@ -162,8 +163,9 @@ export function DocumentComparePanel({
     }
     try {
       return diffText(doc1Text || "", doc3Text || "");
-    } catch {
+    } catch (error) {
       return {
+        error: error instanceof Error ? error.message : translate("dedicated.errorProcessing"),
         lines: [],
         stats: {
           additions: 0,
@@ -265,6 +267,7 @@ export function DocumentComparePanel({
   return (
     <div className="document-compare-panel">
       {readError && <p role="alert">{readError}</p>}
+      {activeDiff.error && <p role="alert">{activeDiff.error}</p>}
       {/* Header com Modos de Exibição e Estatísticas */}
       <div className="doc-compare-header">
         <div className="doc-compare-title-group">
@@ -373,7 +376,9 @@ export function DocumentComparePanel({
             variant="secondary"
             size="compact"
             onClick={onExportDiff}
-            disabled={!onExportDiff || !doc1Text.trim() || !doc2Text.trim()}
+            disabled={
+              Boolean(activeDiff.error) || !onExportDiff || !doc1Text.trim() || !doc2Text.trim()
+            }
             title={translate("workspace.compare.titleExportDiff")}
           >
             <Download size={14} />
@@ -383,7 +388,7 @@ export function DocumentComparePanel({
       </div>
 
       {/* Estatísticas do Diff e Similaridade */}
-      {hasAnyText && (
+      {hasAnyText && !activeDiff.error && (
         <div className="doc-compare-stats-bar">
           <div className="doc-compare-stat-item doc-compare-stat-item--added">
             <span className="doc-compare-stat-pill">+{activeDiff.stats.additions}</span>
@@ -684,7 +689,7 @@ export function DocumentComparePanel({
             </div>
 
             <div className="doc-compare-side-diff-rows-container">
-              {activeAlignedRows.length === 0 ? (
+              {activeDiff.error ? null : activeAlignedRows.length === 0 ? (
                 <div className="doc-compare-empty-lines">
                   {translate("workspace.compare.emptySideDiff")}
                 </div>
@@ -736,7 +741,7 @@ export function DocumentComparePanel({
         /* Visualização Unificada de Linhas Coloridas com Realce de Palavras */
         <div className="doc-compare-unified-board">
           <div className="doc-compare-lines-list">
-            {activeDiff.lines.length === 0 ? (
+            {activeDiff.error ? null : activeDiff.lines.length === 0 ? (
               <div className="doc-compare-empty-lines">
                 {translate("workspace.compare.emptyUnifiedDiff")}
               </div>

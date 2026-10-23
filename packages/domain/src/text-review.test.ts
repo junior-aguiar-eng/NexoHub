@@ -175,3 +175,23 @@ describe("revisão textual determinística", () => {
     expect(findings).toEqual([]);
   });
 });
+
+describe("regressões de português real", () => {
+  it.each([
+    "O agente foi ao local. Isso nos faz felizes. Ele nos disse a verdade.",
+    "Eu negocio contratos e publico relatórios. Ela duvida do resultado. Eu numero os autos e modulo o sinal.",
+    "Eles houveram por bem adiar a audiência.",
+    "https://exemplo.com/relatorio usuario@relatorio.com {{relatorio}}",
+  ])("preserva construções corretas e identificadores: %s", (text) => {
+    expect(reviewText(text)).toEqual([]);
+  });
+  it.each([
+    ["As pessoas falou a verdade.", "As pessoas falaram a verdade."],
+    ["A gente faremos amanhã.", "A gente fará amanhã."],
+    ["Vou estar enviando amanhã.", "Vou enviar amanhã."],
+    ["à partir de amanhã e à pé.", "a partir de amanhã e a pé."],
+    ["É é uma repetição. Você você fez isso.", "É uma repetição. Você fez isso."],
+  ])("corrige sem inventar flexão ou alterar tempo: %s", (text, expected) => {
+    expect(applyReviewFindings(text, reviewText(text))).toBe(expected);
+  });
+});

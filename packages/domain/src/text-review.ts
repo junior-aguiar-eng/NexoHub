@@ -35,6 +35,16 @@ function matchCase(source: string, target: string): string {
   return target;
 }
 
+const gerundToInfinitive: Readonly<Record<string, string>> = {
+  fazendo: "fazer",
+  enviando: "enviar",
+  analisando: "analisar",
+  verificando: "verificar",
+  entrando: "entrar",
+  conferindo: "conferir",
+  revisando: "revisar",
+};
+
 type RuleDefinition = {
   rule: ReviewRule;
   severity: ReviewFinding["severity"];
@@ -756,8 +766,10 @@ const rules: readonly RuleDefinition[] = [
       const verb = match[2]?.toLowerCase() ?? "";
       let singularVerb = "vai";
       if (verb === "fomos") singularVerb = "foi";
-      else if (verb === "fizeram" || verb === "fizemos" || verb === "faremos") singularVerb = "fez";
-      else if (verb === "vamos" || verb === "iremos") singularVerb = "vai";
+      else if (verb === "fizeram" || verb === "fizemos") singularVerb = "fez";
+      else if (verb === "faremos") singularVerb = "fará";
+      else if (verb === "iremos") singularVerb = "irá";
+      else if (verb === "vamos") singularVerb = "vai";
       else if (verb === "éramos") singularVerb = "era";
       else if (verb === "estamos") singularVerb = "está";
       else if (verb === "estivemos") singularVerb = "esteve";
@@ -777,10 +789,16 @@ const rules: readonly RuleDefinition[] = [
       if (verb === "fomos") {
         singularVerb = "foi";
         pluralOption = "nós fomos";
-      } else if (verb === "fizeram" || verb === "fizemos" || verb === "faremos") {
+      } else if (verb === "fizeram" || verb === "fizemos") {
         singularVerb = "fez";
         pluralOption = "nós fizemos";
-      } else if (verb === "vamos" || verb === "iremos") {
+      } else if (verb === "faremos") {
+        singularVerb = "fará";
+        pluralOption = "nós faremos";
+      } else if (verb === "iremos") {
+        singularVerb = "irá";
+        pluralOption = "nós iremos";
+      } else if (verb === "vamos") {
         singularVerb = "vai";
         pluralOption = "nós vamos";
       } else if (verb === "éramos") {
@@ -919,12 +937,12 @@ const rules: readonly RuleDefinition[] = [
     replacement: (match) =>
       matchCase(
         match[0],
-        `as pessoas ${match[1]?.toLowerCase() === "disse" ? "disseram" : match[1]?.toLowerCase() === "fez" ? "fizeram" : `${match[1]}ram`}`,
+        `as pessoas ${match[1]?.toLowerCase() === "disse" ? "disseram" : match[1]?.toLowerCase() === "fez" ? "fizeram" : `${match[1]?.slice(0, -2)}aram`}`,
       ),
     suggestions: (match) => [
       matchCase(
         match[0],
-        `as pessoas ${match[1]?.toLowerCase() === "disse" ? "disseram" : match[1]?.toLowerCase() === "fez" ? "fizeram" : `${match[1]}ram`}`,
+        `as pessoas ${match[1]?.toLowerCase() === "disse" ? "disseram" : match[1]?.toLowerCase() === "fez" ? "fizeram" : `${match[1]?.slice(0, -2)}aram`}`,
       ),
     ],
     message: "Concordância verbal: o sujeito no plural ('as pessoas') exige o verbo no plural.",
@@ -1293,8 +1311,11 @@ const rules: readonly RuleDefinition[] = [
     severity: "suggestion",
     pattern:
       /\bvamos\s+estar\s+(fazendo|enviando|analisando|verificando|entrando|conferindo|revisando)\b/giu,
-    replacement: (match) => `vamos ${match[1]?.toLowerCase()}`,
-    suggestions: (match) => [`vamos ${match[1]?.toLowerCase()}`],
+    replacement: (match) =>
+      matchCase(match[0], `vamos ${gerundToInfinitive[match[1]?.toLowerCase() ?? ""]}`),
+    suggestions: (match) => [
+      matchCase(match[0], `vamos ${gerundToInfinitive[match[1]?.toLowerCase() ?? ""]}`),
+    ],
     message:
       "Evite o gerundismo ('vamos estar fazendo'). Prefira o infinitivo ou o futuro do presente.",
   },
@@ -1303,8 +1324,11 @@ const rules: readonly RuleDefinition[] = [
     severity: "suggestion",
     pattern:
       /\bvou\s+estar\s+(fazendo|enviando|analisando|verificando|entrando|conferindo|revisando)\b/giu,
-    replacement: (match) => `vou ${match[1]?.toLowerCase()}`,
-    suggestions: (match) => [`vou ${match[1]?.toLowerCase()}`],
+    replacement: (match) =>
+      matchCase(match[0], `vou ${gerundToInfinitive[match[1]?.toLowerCase() ?? ""]}`),
+    suggestions: (match) => [
+      matchCase(match[0], `vou ${gerundToInfinitive[match[1]?.toLowerCase() ?? ""]}`),
+    ],
     message:
       "Evite o gerundismo ('vou estar enviando'). Prefira o infinitivo ou o futuro do presente.",
   },
@@ -1371,18 +1395,70 @@ const rules: readonly RuleDefinition[] = [
   },
 ];
 
+// \b do JavaScript é ASCII, mesmo sob /u: falha em "à", "é" e "você".
+const unicodeBoundary = String.raw`(?:(?<=[\p{L}\p{M}\p{N}_])(?![\p{L}\p{M}\p{N}_])|(?<![\p{L}\p{M}\p{N}_])(?=[\p{L}\p{M}\p{N}_]))`;
+const unicodeRules = rules.map((definition) => ({
+  ...definition,
+  pattern: new RegExp(
+    definition.pattern.source.replaceAll("\\b", unicodeBoundary),
+    definition.pattern.flags,
+  ),
+}));
+
+function protectedRanges(text: string): { start: number; end: number }[] {
+  return [
+    ...text.matchAll(
+      /https?:\/\/[^\s]+|www\.[^\s]+|[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}|\{\{[^{}]*\}\}|\$\{[^{}]*\}/g,
+    ),
+  ].map((match) => ({ start: match.index, end: match.index + match[0].length }));
+}
+
+function isContextuallyValid(
+  text: string,
+  start: number,
+  original: string,
+  rule: ReviewRule,
+): boolean {
+  const before = text.slice(0, start);
+  if (
+    rule === "ACCENTUATION" &&
+    /^(negocios?|public[oa]s?|duvidas?|numeros?|modulos?|historias?|paginas?|veiculos?)$/i.test(
+      original,
+    )
+  ) {
+    // Homógrafos sem acento também são verbos válidos. Exige contexto nominal.
+    return !/(?:^|[^\p{L}])(?:o|a|os|as|um|uma|uns|umas|este|esta|esse|essa|seu|sua|meu|minha|do|da|dos|das|no|na|pelo|pela|documento|escola|instituição|serviço|serviços)\s+$/iu.test(
+      before,
+    );
+  }
+  if (rule === "PARONYM_CONTEXT" && /^agente\s/i.test(original)) {
+    return /(?:^|[^\p{L}])(?:o|um|este|esse|aquele|ao|do|pelo|seu|meu)\s+$/iu.test(before);
+  }
+  if (rule === "GRAMMAR_AGREEMENT" && /^nos\s/i.test(original)) {
+    // "nos" é também pronome oblíquo; só infere "nós" em início de oração.
+    return !/(?:^|[.!?:;]\s*)$/u.test(before);
+  }
+  if (rule === "GRAMMAR_AGREEMENT" && /^houveram\s/i.test(original)) {
+    return /^houveram\s+por\s+bem\b/iu.test(text.slice(start));
+  }
+  return false;
+}
+
 export function reviewText(text: string): readonly ReviewFinding[] {
   if (text.length > MAX_REVIEW_LENGTH) {
     throw new Error("O texto para revisão excede 1.000.000 de caracteres.");
   }
 
   const accepted: ReviewFinding[] = [];
-  for (const definition of rules) {
+  const protectedSpans = protectedRanges(text);
+  for (const definition of unicodeRules) {
     definition.pattern.lastIndex = 0;
     for (const match of text.matchAll(definition.pattern)) {
       const start = match.index;
       const original = match[0];
       const end = start + original.length;
+      if (protectedSpans.some((span) => start < span.end && end > span.start)) continue;
+      if (isContextuallyValid(text, start, original, definition.rule)) continue;
       if (accepted.some((finding) => start < finding.end && end > finding.start)) continue;
       accepted.push({
         id: `${definition.rule}:${start}:${end}`,

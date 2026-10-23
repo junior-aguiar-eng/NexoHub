@@ -1,14 +1,17 @@
 import { readFileSync } from "node:fs";
 import { decodePDFRawStream, PDFArray, PDFDocument, PDFRawStream } from "pdf-lib";
+import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { performBrowserOcr } from "./browser-ocr";
+
+const recognition = vi.hoisted(() => ({ text: "Texto OCR № 漢字 😀 e\u0301" }));
 
 // Só o reconhecimento e a rasterização são substituídos; o PDF de saída é real.
 vi.mock("tesseract.js", () => ({
   createWorker: async () => ({
     recognize: async (_image: unknown, _options: unknown, output?: { blocks?: boolean }) => ({
       data: {
-        text: "Texto OCR",
+        text: recognition.text,
         confidence: 95,
         blocks: output?.blocks
           ? [
@@ -17,7 +20,7 @@ vi.mock("tesseract.js", () => ({
                   {
                     lines: [
                       {
-                        text: "Texto OCR",
+                        text: recognition.text,
                         confidence: 95,
                         bbox: { x0: 10, y0: 20, x1: 90, y1: 40 },
                       },
@@ -48,6 +51,13 @@ vi.mock("pdfjs-dist", () => ({
 
 describe("PDF pesquisável com Tesseract 7", () => {
   beforeEach(() => {
+    recognition.text = "Texto OCR № 漢字 😀 e\u0301";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () => new Response(readFileSync("public/standard_fonts/LiberationSans-Regular.ttf")),
+      ),
+    );
     vi.stubGlobal("Worker", class {});
     vi.stubGlobal("createImageBitmap", async () => ({ width: 100, height: 100 }));
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
@@ -58,6 +68,19 @@ describe("PDF pesquisável com Tesseract 7", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  it("rejeita PDF multipágina sem texto antes de inserir cabeçalhos", async () => {
+    recognition.text = "";
+    const source = await PDFDocument.create();
+    source.addPage([100, 100]);
+    source.addPage([100, 100]);
+    await expect(
+      performBrowserOcr(
+        new Blob([(await source.save()) as unknown as BlobPart], { type: "application/pdf" }),
+        { enhanceContrast: false },
+      ),
+    ).rejects.toThrow("OCR_NO_TEXT_FOUND");
   });
 
   it.each(["image", "pdf"] as const)(
@@ -88,7 +111,27 @@ describe("PDF pesquisável com Tesseract 7", () => {
             return new TextDecoder().decode(decodePDFRawStream(stream).decode());
           })
           .join("\n");
-        expect(content.toUpperCase()).toContain("<546578746F204F4352> TJ");
+        expect(content).toContain("3 Tr");
+      }
+      const loadingTask = getDocument({
+        data: result.searchablePdfBytes.slice(),
+        disableFontFace: true,
+      });
+      const parsed = await loadingTask.promise;
+      try {
+        for (let pageNumber = 1; pageNumber <= parsed.numPages; pageNumber++) {
+          const text = await (await parsed.getPage(pageNumber)).getTextContent({
+            disableNormalization: true,
+          });
+          expect(
+            text.items
+              .filter((item) => "str" in item)
+              .map((item) => item.str)
+              .join(""),
+          ).toBe(recognition.text);
+        }
+      } finally {
+        await loadingTask.destroy();
       }
       expect(result.lines).toHaveLength(kind === "pdf" ? 2 : 1);
       expect(result.lines[0]?.confidence).toBe(0.95);

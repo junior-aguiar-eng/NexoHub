@@ -39,6 +39,21 @@ export function SplitPdfPanel({
   const [intervalType, setIntervalType] = useState<"custom" | "fixed">("custom");
   const [fixedPageCount, setFixedPageCount] = useState<number>(1);
 
+  function applyFixedIntervals(value: number) {
+    const count = Math.max(1, Math.min(Math.trunc(value) || 1, totalPages));
+    setFixedPageCount(count);
+    const generated: SplitInterval[] = [];
+    for (let start = 1; start <= totalPages; start += count) {
+      generated.push({
+        id: `fix-${start}`,
+        start,
+        end: Math.min(start + count - 1, totalPages),
+      });
+    }
+    onIntervalsChange(generated);
+    onMergeIntervalsChange(false);
+  }
+
   function handleAddInterval() {
     const last = intervals[intervals.length - 1];
     const nextStart = last ? Math.min(last.end + 1, totalPages) : 1;
@@ -201,7 +216,10 @@ export function SplitPdfPanel({
               <button
                 type="button"
                 className={`ilovepdf-toggle-btn ${intervalType === "fixed" ? "ilovepdf-toggle-btn--active" : ""}`}
-                onClick={() => setIntervalType("fixed")}
+                onClick={() => {
+                  setIntervalType("fixed");
+                  applyFixedIntervals(fixedPageCount);
+                }}
               >
                 {translate("workspace.split.typeFixed")}
               </button>
@@ -288,18 +306,7 @@ export function SplitPdfPanel({
                     max={totalPages}
                     value={fixedPageCount}
                     onChange={(e) => {
-                      const count = parseInt(e.target.value, 10) || 1;
-                      setFixedPageCount(count);
-                      // Gera intervalos fixos
-                      const generated: SplitInterval[] = [];
-                      for (let start = 1; start <= totalPages; start += count) {
-                        generated.push({
-                          id: `fix-${start}`,
-                          start,
-                          end: Math.min(start + count - 1, totalPages),
-                        });
-                      }
-                      onIntervalsChange(generated);
+                      applyFixedIntervals(parseInt(e.target.value, 10));
                     }}
                   />
                   <span>páginas</span>

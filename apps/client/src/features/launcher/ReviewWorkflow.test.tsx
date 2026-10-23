@@ -4,6 +4,18 @@ import { BrowserDocumentCorePort } from "@/platform/browser-document-core";
 import { DedicatedToolView } from "./DedicatedToolView";
 import { launcherTools } from "./data";
 
+// A inicialização WASM é validada no Chromium. Este teste cobre o contrato de edição/aplicação.
+vi.mock("@/platform/browser-reviewer", async () => {
+  const actual = await vi.importActual<typeof import("@/platform/browser-reviewer")>(
+    "@/platform/browser-reviewer",
+  );
+  const { reviewText } = await import("@nexohub/domain");
+  return {
+    ...actual,
+    performBrowserReview: async ({ text }: { text: string }) => reviewText(text),
+  };
+});
+
 function openReview(text: string, upload = false) {
   const tool = launcherTools.find((tool) => tool.id === "text-review");
   if (!tool) throw new Error("Revisor ausente");

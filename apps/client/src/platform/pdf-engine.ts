@@ -1,4 +1,5 @@
 import {
+  concatTransformationMatrix,
   decodePDFRawStream,
   degrees,
   JpegEmbedder,
@@ -8,11 +9,15 @@ import {
   PDFName,
   PDFNumber,
   PDFRawStream,
+  popGraphicsState,
+  pushGraphicsState,
   rgb,
   StandardFonts,
 } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import { addOcrTextLayer } from "./pdf-ocr-text-layer";
+import { getVisiblePageGeometry } from "./pdf-page-geometry";
 
 // Configura o worker do PDF.js para renderização de miniaturas
 if (typeof window !== "undefined") {
@@ -486,8 +491,7 @@ export async function extractTextFromPdf(pdfBytes: Uint8Array): Promise<string> 
       }
     }
   } catch (err) {
-    console.error("Erro ao extrair texto do PDF:", err);
-    return "";
+    throw new Error("PDF_TEXT_EXTRACTION_FAILED", { cause: err });
   }
 }
 
@@ -760,14 +764,20 @@ export async function addWatermarkToPdfDocument(
   const text = options.text?.trim() || "CONFIDENCIAL";
 
   for (const page of pages) {
-    const { width, height } = page.getSize();
-    const fontSize = options.fontSize ?? Math.round(Math.min(width, height) / 9);
-    const textWidth = font.widthOfTextAtSize(text, fontSize);
-    const textHeight = font.heightAtSize(fontSize);
-
+    const view = getVisiblePageGeometry(page);
+    const { width, height } = view;
     const rad = (angle * Math.PI) / 180;
     const cos = Math.cos(rad);
     const sin = Math.sin(rad);
+    const unitWidth = font.widthOfTextAtSize(text, 1);
+    const unitHeight = font.heightAtSize(1);
+    const fontSize = Math.min(
+      options.fontSize ?? Math.round(Math.min(width, height) / 9),
+      (width * 0.9) / (unitWidth * Math.abs(cos) + unitHeight * Math.abs(sin)),
+      (height * 0.9) / (unitWidth * Math.abs(sin) + unitHeight * Math.abs(cos)),
+    );
+    const textWidth = font.widthOfTextAtSize(text, fontSize);
+    const textHeight = font.heightAtSize(fontSize);
 
     const centerX = width / 2;
     const centerY = height / 2;
@@ -777,6 +787,7 @@ export async function addWatermarkToPdfDocument(
     const x = centerX - (textCenterX * cos - textCenterY * sin);
     const y = centerY - (textCenterX * sin + textCenterY * cos);
 
+    page.pushOperators(pushGraphicsState(), concatTransformationMatrix(...view.matrix));
     page.drawText(text, {
       x,
       y,
@@ -786,6 +797,7 @@ export async function addWatermarkToPdfDocument(
       opacity,
       rotate: degrees(angle),
     });
+    page.pushOperators(popGraphicsState());
   }
 
   return await doc.save({ useObjectStreams: true });
@@ -836,7 +848,8 @@ export async function addPageNumbersToPdfDocument(
     }
 
     const page = pages[i];
-    const { width, height } = page.getSize();
+    const view = getVisiblePageGeometry(page);
+    const { width, height } = view;
     const textWidth = font.widthOfTextAtSize(label, fontSize);
     const textHeight = font.heightAtSize(fontSize);
 
@@ -857,6 +870,7 @@ export async function addPageNumbersToPdfDocument(
       y = margin;
     }
 
+    page.pushOperators(pushGraphicsState(), concatTransformationMatrix(...view.matrix));
     page.drawText(label, {
       x,
       y,
@@ -864,6 +878,7 @@ export async function addPageNumbersToPdfDocument(
       font,
       color: rgb(0.25, 0.25, 0.25),
     });
+    page.pushOperators(popGraphicsState());
   }
 
   return await doc.save({ useObjectStreams: true });
@@ -939,50 +954,7 @@ export async function generateSearchablePdf(
     page.drawImage(embedded, { x: 0, y: 0, width: imgWidth, height: imgHeight });
   }
 
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const pages = doc.getPages();
-
-  for (let i = 0; i < pages.length; i++) {
-    const pageData = pagesData.find((p) => p.pageNumber === i + 1);
-    if (!pageData) continue;
-    const page = pages[i];
-    const { width, height } = page.getSize();
-    const sourceWidth = pageData.width || width;
-    const sourceHeight = pageData.height || height;
-    const scaleX = width / sourceWidth;
-    const scaleY = height / sourceHeight;
-
-    for (const line of pageData.lines) {
-      if (!line.text || !line.bbox) continue;
-      const { x0, y0, y1 } = line.bbox;
-      const pdfX = x0 * scaleX;
-      const pdfY = height - y1 * scaleY;
-      const lineHeight = Math.max((y1 - y0) * scaleY * 0.85, 6);
-
-      const sanitizedText = line.text
-        .replace(/[\r\n\t]/g, " ")
-        .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
-        .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
-        .replace(/[\u2013\u2014\u2015]/g, "-")
-        .replace(/\u2026/g, "...")
-        .replace(/\u00A0/g, " ")
-        .trim();
-      if (!sanitizedText) continue;
-
-      try {
-        page.drawText(sanitizedText, {
-          x: pdfX,
-          y: Math.max(0, pdfY),
-          size: lineHeight,
-          font,
-          color: rgb(0, 0, 0),
-          opacity: 0,
-        });
-      } catch {
-        // Fallback silencioso para glifos especiais não codificáveis
-      }
-    }
-  }
+  await addOcrTextLayer(doc, pagesData);
 
   return await doc.save({ useObjectStreams: true });
 }

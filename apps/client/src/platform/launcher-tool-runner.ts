@@ -346,7 +346,7 @@ async function executeTool(
       let recognizedText = "";
       let searchablePdfBytes: Uint8Array | undefined;
 
-      if (documentCore.invoke) {
+      if (documentCore.ocrEngine !== "browser" && documentCore.invoke) {
         try {
           const project = await documentCore.invoke("pick_project_folder", {});
           if (!project) throw new Error("PROJECT_NOT_SELECTED");
@@ -390,6 +390,10 @@ async function executeTool(
 
       const txtBlob = new Blob([recognizedText], { type: "text/plain;charset=utf-8" });
       const txtFileName = `${baseName}_ocr.txt`;
+
+      if (input.ocrOutputMode === "searchable-pdf" && !searchablePdfBytes) {
+        throw new ToolRunError("EXECUTION_FAILED", translate("workspace.ocr.searchableFailed"));
+      }
 
       if (input.ocrOutputMode === "searchable-pdf" && searchablePdfBytes) {
         return {
@@ -478,12 +482,17 @@ async function executeTool(
       }
 
       // Execução no navegador com regras contextuais e verificação ortográfica
-      const findings = await performBrowserReview({
-        text: rawText,
-        onProgress: (progress, message) => {
-          input.onReviewProgress?.({ progress, message });
-        },
-      });
+      let findings: readonly ReviewFinding[];
+      try {
+        findings = await performBrowserReview({
+          text: rawText,
+          onProgress: (progress, message) => {
+            input.onReviewProgress?.({ progress, message });
+          },
+        });
+      } catch {
+        throw new ToolRunError("TOOL_UNAVAILABLE", translate("workspace.review.unavailable"));
+      }
 
       const lines = findings
         .map((f) => `• "${f.original}" → "${f.replacement}" (${f.message})`)
@@ -605,7 +614,7 @@ async function executeTool(
       const pdfBytes = new Uint8Array(await first.arrayBuffer());
       const jpgImages = await convertPdfPagesToJpgImages(pdfBytes, {
         quality: 0.92,
-        scale: 1.5,
+        scale: 150 / 72,
       });
       if (jpgImages.length === 0) {
         throw new ToolRunError("INVALID_INPUT", "Nenhuma página encontrada para converter.");

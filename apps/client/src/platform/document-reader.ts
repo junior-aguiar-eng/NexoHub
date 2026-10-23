@@ -18,17 +18,21 @@ export async function readDocumentText(file: File): Promise<string> {
     try {
       const buffer = new Uint8Array(await file.arrayBuffer());
       const extracted = await extractTextFromPdf(buffer);
+      if (!extracted.trim())
+        throw new ToolRunError("INVALID_INPUT", translate("document.errorPdfNoText"));
       return extracted.trim();
     } catch (err) {
-      console.warn("Falha na extração de texto do PDF:", err);
-      return "";
+      if (err instanceof ToolRunError) throw err;
+      throw new ToolRunError("INVALID_INPUT", translate("document.errorPdfTextExtraction"));
     }
   }
 
   try {
     return await file.text();
-  } catch (err) {
-    console.error("Erro ao ler conteúdo do arquivo como texto:", err);
-    return "";
+  } catch {
+    throw new ToolRunError("INVALID_INPUT", translate("document.errorTextRead"));
   }
 }
+
+import { ToolRunError } from "@nexohub/tool-sdk";
+import { translate } from "@/i18n";

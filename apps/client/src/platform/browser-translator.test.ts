@@ -1,9 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   performBrowserTranslation,
+  resetTranslatorCache,
   segmentTextForTranslation,
   type TranslationProgressInfo,
 } from "./browser-translator";
+
+const neuralBlock = vi.hoisted(() => vi.fn(async (text: string) => [{ translation_text: text }]));
+vi.mock("@huggingface/transformers", () => ({
+  env: {},
+  pipeline: vi.fn(async () => neuralBlock),
+}));
+afterEach(() => {
+  vi.unstubAllEnvs();
+  resetTranslatorCache();
+  neuralBlock.mockReset();
+  neuralBlock.mockImplementation(async (text: string) => [{ translation_text: text }]);
+});
 
 describe("browser-translator", () => {
   describe("segmentTextForTranslation", () => {
@@ -90,5 +103,63 @@ describe("browser-translator", () => {
         }),
       ).rejects.toThrow("OPERACAO_CANCELADA");
     });
+  });
+});
+
+describe("segmentação sem perda", () => {
+  it.each([
+    "!".repeat(405),
+    `...${"Documento válido. ".repeat(30)}`,
+    "a".repeat(1000),
+    "  Primeira linha\r\n\tSegunda linha\n\n  Última linha  ",
+    `Olá {{nome}}, veja https://example.com/relatorio e envie para pessoa@example.com. ${"Texto. ".repeat(90)}`,
+  ])("conserva todos os caracteres e respeita o limite", (text) => {
+    const chunks = segmentTextForTranslation(text);
+    expect(chunks.join("")).toBe(text);
+    expect(chunks.every((chunk) => chunk.length <= 400 || /^[\s\p{P}\p{S}]+$/u.test(chunk))).toBe(
+      true,
+    );
+  });
+  it("isola placeholders e endereços para que não sejam traduzidos", () => {
+    const chunks = segmentTextForTranslation(
+      "Olá {{nome}}! Envie para pessoa@example.com e https://example.com.",
+    );
+    expect(chunks).toContain("{{nome}}");
+    expect(chunks).toContain("pessoa@example.com");
+    expect(chunks).toContain("https://example.com");
+  });
+});
+
+describe("montagem da tradução fora do atalho de teste", () => {
+  it("preserva links e marcadores maiores que o limite sem enviá-los ao modelo", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    neuralBlock.mockImplementation(async () => [{ translation_text: "Translated" }]);
+    const url = `https://example.com/${"a".repeat(600)}`;
+    const placeholder = `{{${"campo".repeat(100)}}}`;
+    const result = await performBrowserTranslation(`Olá ${url}\n${placeholder} fim`, {
+      sourceLang: "pt",
+      targetLang: "en",
+    });
+    expect(neuralBlock.mock.calls.map(([block]) => block)).toEqual(["Olá", "fim"]);
+    expect(result.translatedText).toBe(`Translated ${url}\n${placeholder} Translated`);
+  });
+  it("mantém quebras, recuos, marcadores e separadores de blocos", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const text = `  Olá {{nome}}!\r\n\t${"Documento válido. ".repeat(40)}\nhttps://example.com  `;
+    const result = await performBrowserTranslation(text, { sourceLang: "pt", targetLang: "en" });
+    expect(neuralBlock).toHaveBeenCalled();
+    expect(
+      neuralBlock.mock.calls.every(
+        ([block]) => !block.includes("{{nome}}") && !block.includes("https://example.com"),
+      ),
+    ).toBe(true);
+    expect(result.translatedText).toBe(text);
+  });
+  it("rejeita saída neural vazia em vez de anunciar tradução do original", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    neuralBlock.mockResolvedValueOnce([{ translation_text: "" }]);
+    await expect(
+      performBrowserTranslation("Olá", { sourceLang: "pt", targetLang: "en" }),
+    ).rejects.toThrow("TRADUCAO_SEM_RESULTADO");
   });
 });

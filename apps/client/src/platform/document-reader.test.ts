@@ -1,6 +1,7 @@
 import { strToU8, zipSync } from "fflate";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { readDocumentText } from "./document-reader";
+import * as pdfEngine from "./pdf-engine";
 
 const namespace = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const wrap = (body: string) =>
@@ -11,6 +12,29 @@ function docx(xml: string, name = "minuta.docx", type = "") {
 }
 
 describe("Leitura local de documentos", () => {
+  it("informa ausência de texto em PDF digitalizado em vez de entregar entrada vazia", async () => {
+    const extraction = vi.spyOn(pdfEngine, "extractTextFromPdf").mockResolvedValueOnce("");
+    try {
+      await expect(readDocumentText(new File(["scan"], "scan.pdf"))).rejects.toMatchObject({
+        code: "INVALID_INPUT",
+      });
+    } finally {
+      extraction.mockRestore();
+    }
+  });
+
+  it("propaga falha de extração como erro legível", async () => {
+    const extraction = vi
+      .spyOn(pdfEngine, "extractTextFromPdf")
+      .mockRejectedValueOnce(new Error("PDF inválido"));
+    try {
+      await expect(readDocumentText(new File(["corrompido"], "arquivo.pdf"))).rejects.toMatchObject(
+        { code: "INVALID_INPUT" },
+      );
+    } finally {
+      extraction.mockRestore();
+    }
+  });
   it.each([
     ["minuta.docx", ""],
     ["MINUTA.DOCX", "application/octet-stream"],

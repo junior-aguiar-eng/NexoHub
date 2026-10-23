@@ -1,5 +1,5 @@
 import { PDFDocument } from "pdf-lib";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   compressPdfDocument,
   extractPdfSelectedPages,
@@ -131,6 +131,11 @@ describe("operações PDF no navegador", () => {
   });
 
   it("gera PDF pesquisável injetando camada de texto sobre o documento original", async () => {
+    const fontFetch = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(readFileSync("public/standard_fonts/LiberationSans-Regular.ttf")),
+      );
     const { generateSearchablePdf } = await import("./pdf-engine");
     const source = await makePdf(1);
     const searchablePdf = await generateSearchablePdf(source, [
@@ -155,5 +160,8 @@ describe("operações PDF no navegador", () => {
     const doc = await PDFDocument.load(searchablePdf);
     expect(doc.getPageCount()).toBe(1);
     expect(searchablePdf.length).toBeGreaterThan(source.length);
+    fontFetch.mockRestore();
   });
 });
+
+import { readFileSync } from "node:fs";

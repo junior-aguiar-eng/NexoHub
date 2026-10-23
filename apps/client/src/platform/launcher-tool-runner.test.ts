@@ -1,7 +1,8 @@
-import { applyReviewFindings } from "@nexohub/domain";
+import { applyReviewFindings, reviewText } from "@nexohub/domain";
 import { PDFDocument } from "pdf-lib";
 import { describe, expect, it, vi } from "vitest";
 import { BrowserDocumentCorePort } from "./browser-document-core";
+import * as browserReviewer from "./browser-reviewer";
 import { HttpDocumentCorePort } from "./http-document-core";
 import { type LauncherToolInput, runLauncherTool } from "./launcher-tool-runner";
 
@@ -280,7 +281,7 @@ describe("Tool Runner do Launcher", () => {
       }
       return {};
     });
-    Object.assign(port, { invoke });
+    Object.assign(port, { invoke, ocrEngine: "core" });
     const file = await fixture();
     const result = await runLauncherTool(port, "pdf-ocr", input([file]));
     expect(result.fileName).toBe("contrato_ocr.txt");
@@ -327,9 +328,14 @@ describe("Tool Runner do Launcher", () => {
       type: "text/plain",
     });
 
+    // O motor real é exercitado em E2E; aqui verificamos a montagem do relatório no runner.
+    const review = vi
+      .spyOn(browserReviewer, "performBrowserReview")
+      .mockResolvedValueOnce(reviewText(await textFile.text()));
     const result = await runLauncherTool(port, "text-review", {
       ...input([textFile]),
     });
+    review.mockRestore();
 
     expect(result.fileName).toBe("relatorio_revisao.txt");
     expect(result.blob.type).toBe("text/plain;charset=utf-8");

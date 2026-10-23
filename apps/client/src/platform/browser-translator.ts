@@ -61,62 +61,61 @@ export function resetTranslatorCache(): void {
   pipelineLoadingPromise = null;
 }
 
+// Identificadores e marcadores são preservados literalmente, sem exposição ao modelo.
+const LITERAL_PATTERN =
+  /https?:\/\/[^\s<>]*[^\s<>.,;:!?]|www\.[^\s<>]*[^\s<>.,;:!?]|[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}|\{\{[^{}]*\}\}|\$\{[^{}]*\}|%[A-Za-z_][A-Za-z_0-9]*%/g;
+
+function isPreservedChunk(chunk: string): boolean {
+  if (/^[\s\p{P}\p{S}]+$/u.test(chunk)) return true;
+  LITERAL_PATTERN.lastIndex = 0;
+  const match = LITERAL_PATTERN.exec(chunk);
+  return match?.[0] === chunk;
+}
+
 /**
- * Divide textos longos em parágrafos e sentenças seguras (< 400 caracteres)
- * para respeitar a janela de contexto do modelo NLLB sem truncar o conteúdo.
+ * Limita os blocos de prosa à janela de contexto do modelo sem perder caracteres.
+ * Literais podem exceder o limite: permanecem inteiros e não são enviados ao modelo.
  */
 export function segmentTextForTranslation(text: string, maxChunkLength: number = 400): string[] {
+  if (!Number.isInteger(maxChunkLength) || maxChunkLength < 2) {
+    throw new Error("LIMITE_DE_BLOCO_INVALIDO");
+  }
   if (!text.trim()) return [];
-
-  const rawParagraphs = text.split(/(\r?\n\s*\r?\n)/);
   const chunks: string[] = [];
-
-  for (const part of rawParagraphs) {
-    if (/^\r?\n\s*\r?\n$/.test(part)) {
-      chunks.push(part);
-      continue;
-    }
-
-    const trimmed = part.trim();
-    if (!trimmed) continue;
-
-    if (trimmed.length <= maxChunkLength) {
-      chunks.push(trimmed);
-      continue;
-    }
-
-    // Parágrafo longo: divide por limites de pontuação preservando sentenças
-    const sentences = trimmed.match(/[^.!?]+[.!?]+|\S[^.!?]*$/g) || [trimmed];
-    let currentChunk = "";
-
-    for (const sentence of sentences) {
-      if (`${currentChunk} ${sentence}`.trim().length <= maxChunkLength) {
-        currentChunk = currentChunk ? `${currentChunk} ${sentence.trim()}` : sentence.trim();
-      } else {
-        if (currentChunk) chunks.push(currentChunk);
-        if (sentence.trim().length <= maxChunkLength) {
-          currentChunk = sentence.trim();
-        } else {
-          // Sentença extrema: divide por palavras
-          const words = sentence.trim().split(/\s+/);
-          let wordChunk = "";
-          for (const word of words) {
-            if (`${wordChunk} ${word}`.trim().length <= maxChunkLength) {
-              wordChunk = wordChunk ? `${wordChunk} ${word}` : word;
-            } else {
-              if (wordChunk) chunks.push(wordChunk);
-              wordChunk = word;
-            }
-          }
-          currentChunk = wordChunk;
-        }
+  function appendPlain(part: string): void {
+    let remaining = part;
+    while (remaining) {
+      const leading = remaining.match(/^\s+/)?.[0];
+      if (leading) {
+        chunks.push(leading);
+        remaining = remaining.slice(leading.length);
+        continue;
       }
-    }
-    if (currentChunk) {
-      chunks.push(currentChunk);
+      let end = Math.min(maxChunkLength, remaining.length);
+      if (end < remaining.length) {
+        // Prefere palavra completa, mas também limita tokens sem espaços.
+        const candidate = remaining.slice(0, end + 1);
+        const spaces = [...candidate.matchAll(/\s+/g)];
+        const boundary = spaces.at(-1)?.index;
+        if (boundary) end = boundary;
+        // Nunca corta um par substituto UTF-16.
+        else if (/[\uD800-\uDBFF]/.test(remaining[end - 1] ?? "")) end--;
+      }
+      const piece = remaining.slice(0, end);
+      const trailing = piece.match(/\s+$/)?.[0] ?? "";
+      const content = piece.slice(0, piece.length - trailing.length);
+      if (content) chunks.push(content);
+      if (trailing) chunks.push(trailing);
+      remaining = remaining.slice(end);
     }
   }
-
+  // Quebras, recuos e marcadores não dependem de o modelo respeitar formatação.
+  const separators = new RegExp(`(${LITERAL_PATTERN.source}|\\r\\n|[\\r\\n\\t]+)`, "g");
+  for (const part of text.split(separators)) {
+    if (!part) continue;
+    if (isPreservedChunk(part)) chunks.push(part);
+    else appendPlain(part);
+  }
   return chunks;
 }
 
@@ -273,7 +272,7 @@ export async function performBrowserTranslation(
 
   // Traduz os blocos iterativamente reportando o progresso
   const translatedChunks: string[] = [];
-  const translatableChunks = chunks.filter((c) => !/^\r?\n\s*\r?\n$/.test(c));
+  const translatableChunks = chunks.filter((c) => !isPreservedChunk(c));
   const totalChunks = translatableChunks.length;
   let processedCount = 0;
 
@@ -283,7 +282,7 @@ export async function performBrowserTranslation(
     }
 
     // Preserva quebras de parágrafo sem passar pelo modelo
-    if (/^\r?\n\s*\r?\n$/.test(chunk)) {
+    if (isPreservedChunk(chunk)) {
       translatedChunks.push(chunk);
       continue;
     }
@@ -293,7 +292,10 @@ export async function performBrowserTranslation(
       tgt_lang: tgtNllb,
       max_new_tokens: 512,
     });
-    const outputPart = res?.[0]?.translation_text || chunk;
+    const outputPart = res?.[0]?.translation_text;
+    if (typeof outputPart !== "string" || !outputPart.trim()) {
+      throw new Error("TRADUCAO_SEM_RESULTADO");
+    }
     translatedChunks.push(outputPart);
 
     processedCount++;
@@ -317,22 +319,11 @@ export async function performBrowserTranslation(
     message: "Tradução concluída com sucesso!",
   });
 
-  // Reconstitui o texto com o espaçamento e quebras originais
-  let assembled = "";
-  for (let i = 0; i < translatedChunks.length; i++) {
-    const chunk = translatedChunks[i];
-    if (/^\r?\n\s*\r?\n$/.test(chunk)) {
-      assembled += chunk;
-    } else {
-      if (assembled && !assembled.endsWith("\n") && !assembled.endsWith(" ")) {
-        assembled += " ";
-      }
-      assembled += chunk;
-    }
-  }
+  // Separadores originais já estão explícitos nos blocos.
+  const assembled = translatedChunks.join("");
 
   return {
-    translatedText: assembled.trim(),
+    translatedText: assembled,
     sourceLang,
     targetLang,
     engine: "transformers.js-nllb-200",

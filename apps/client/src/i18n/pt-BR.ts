@@ -1,4 +1,14 @@
 export const ptBR = {
+  "document.errorPdfNoText":
+    "Este PDF não contém texto selecionável. Use Reconhecer texto para digitalizações e imagens.",
+  "document.errorPdfTextExtraction":
+    "Não foi possível extrair o texto. Verifique se o PDF é válido e não está protegido por senha.",
+  "document.errorTextRead":
+    "Não foi possível ler o arquivo de texto. Selecione-o novamente e tente outra vez.",
+  "workspace.review.unavailable":
+    "Não foi possível carregar o corretor de português. Tente novamente antes de revisar o texto.",
+  "workspace.ocr.searchableFailed":
+    "O texto foi reconhecido, mas não foi possível gerar o PDF pesquisável. Tente novamente ou selecione a saída em texto.",
   "document.errorInvalidDocx":
     "Não foi possível ler o DOCX. Verifique se o documento é válido e não está protegido por senha.",
   "document.errorDocxLimit":
@@ -544,8 +554,9 @@ export const ptBR = {
   "workspace.ocr.outputSearchablePdfDesc": "PDF com camada de texto para busca (Ctrl+F)",
   "workspace.ocr.outputText": "Texto Editável (.txt)",
   "workspace.ocr.outputTextDesc": "Arquivo de texto puro com as palavras extraídas",
-  "workspace.ocr.enhanceContrast": "Realce de contraste adaptativo",
-  "workspace.ocr.enhanceContrastDesc": "Otimiza a nitidez e binarização de digitalizações difíceis",
+  "workspace.ocr.enhanceContrast": "Realce de contraste",
+  "workspace.ocr.enhanceContrastDesc":
+    "Aumenta o contraste em escala de cinza. Desative se o resultado de uma digitalização clara piorar.",
   "workspace.ocr.noTextFound": "Nenhum texto legível foi detectado no documento.",
   "workspace.merge.removeFile": "Remover arquivo",
   "workspace.merge.moveLeft": "Mover para esquerda",

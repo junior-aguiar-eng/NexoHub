@@ -10,13 +10,19 @@ export default defineConfig({
     react(),
     tailwindcss(),
     {
-      name: "fix-hunspell-asm-nanoid",
+      name: "fix-hunspell-esm-interop",
       transform(code, id) {
         if (id.includes("hunspell-asm") || id.includes("emscripten-wasm-loader")) {
-          return code.replace(
-            /import\s+.*?\s+from\s+['"]nanoid['"];?/g,
-            "import { nanoid as nanoidFn } from 'nanoid'; const nanoid = nanoidFn || ((len = 21) => Array.from({length: len}, () => Math.floor(Math.random() * 36).toString(36)).join(''));",
-          );
+          const fixed = code
+            .replace(/import\s+.*?\s+from\s+['"]nanoid['"];?/g, "import { nanoid } from 'nanoid';")
+            .replace(/import\s+\*\s+as\s+runtime\s+from/g, "import runtime from")
+            .replace(
+              /import\s+\{\s*root\s*\}\s+from\s+['"]getroot['"];?/g,
+              "const root = globalThis;",
+            );
+          return id.split("?")[0].replaceAll("\\", "/").endsWith("/lib/browser/hunspell.js")
+            ? fixed.replace(/\nif \(typeof exports === [\s\S]*$/, "\nexport default Module;")
+            : fixed;
         }
       },
     },
@@ -27,6 +33,9 @@ export default defineConfig({
       nanoid: path.resolve(import.meta.dirname, "./src/shims/nanoid.ts"),
     },
   },
+  // Estes módulos ESM antigos tratam imports namespace como funções.
+  // A transformação acima precisa ocorrer antes de qualquer pré-bundle.
+  optimizeDeps: { exclude: ["hunspell-asm", "emscripten-wasm-loader"] },
   clearScreen: false,
   server: {
     host: tauriHost || false,

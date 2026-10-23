@@ -22,7 +22,7 @@ offline no computador do usuário.
   - **Texto e OCR:** Reconhecimento óptico de caracteres (OCR) local, Comparação semântica de textos, Revisão ortográfica/morfológica contextual e Tradução rápida offline.
   - **Segurança:** Inserção de Marca d'água com carimbo textual configurável.
   
-  *Critério estrito de vitrine:* Somente são anunciadas como executáveis as ferramentas com executor disponível e funcional na plataforma atual (23 ferramentas ativas no website). Ferramentas em fase de homologação técnica (como conversores complexos de/para Word) permanecem ocultas da vitrine até sua integração completa.
+  *Critério estrito de vitrine:* Somente são anunciadas como executáveis as ferramentas com executor disponível e funcional na plataforma atual (24 ferramentas ativas no website). Ferramentas em fase de homologação técnica (como conversores complexos de/para Word) permanecem ocultas da vitrine até sua integração completa.
 
 - **Tela Dedicada por Ferramenta (`DedicatedToolView`):** experiência sem fricção ao estilo iLovePDF:
   1. O usuário clica na ferramenta desejada.
@@ -45,3 +45,6 @@ complexas estão fora do escopo do produto.
 ## Idioma
 
 O idioma canônico do NexoHub é português brasileiro (`pt-BR`).
+
+O editor web adiciona elementos e modifica objetos textuais compatíveis localmente, com
+verificação do conteúdo exportado. Escopo e limites: [EDITAR-PDF-WEB.md](EDITAR-PDF-WEB.md).

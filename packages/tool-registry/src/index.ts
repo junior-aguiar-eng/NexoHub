@@ -4,6 +4,17 @@ const pdfCapabilities = ["documents.read", "documents.write", "pdf.transform"] a
 
 export const coreToolManifests = [
   {
+    id: "pdf-edit",
+    version: "1.0.0",
+    name: "Editar PDF",
+    category: "pdf",
+    surfaces: ["quick", "studio"],
+    accepts: ["application/pdf"],
+    produces: ["application/pdf"],
+    capabilities: pdfCapabilities,
+    executor: "browser",
+  },
+  {
     id: "pdf-compare",
     version: "1.0.0",
     name: "Comparar PDF",

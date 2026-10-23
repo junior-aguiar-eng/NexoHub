@@ -18,6 +18,7 @@ import {
   Images,
   Languages,
   Lock,
+  Pencil,
   PenTool,
   RotateCw,
   Scissors,
@@ -37,6 +38,14 @@ export const suites: readonly Suite[] = [
 ];
 
 const presentation = {
+  "pdf-edit": {
+    suite: "organize" as const,
+    titleKey: "editor.title" as const,
+    descriptionKey: "editor.description" as const,
+    uploadTaglineKey: "editor.tagline" as const,
+    icon: Pencil,
+    accentColor: "#e76b53",
+  },
   "pdf-compare": {
     suite: "text" as const,
     titleKey: "pdfCompare.title" as const,
@@ -243,6 +252,7 @@ import type { CapabilityProvider } from "@nexohub/tool-sdk";
 import type { DocumentCorePort } from "@/platform/document-core";
 
 const browserSupportedToolIds = new Set([
+  "pdf-edit",
   "pdf-compare",
   "pdf-organize",
   "pdf-merge",

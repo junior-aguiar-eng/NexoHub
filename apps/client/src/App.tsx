@@ -1,5 +1,5 @@
 import { Database, FileCheck, ShieldCheck, Zap } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import nexohubIcon from "@/assets/nexohub-icon.png";
 import { CommandPalette } from "@/features/launcher/CommandPalette";
 import { DedicatedToolView } from "@/features/launcher/DedicatedToolView";
@@ -12,6 +12,7 @@ import { SuiteNavigation } from "@/features/launcher/SuiteNavigation";
 import { useRecentOperations } from "@/features/launcher/useRecentOperations";
 import { translate } from "@/i18n";
 import { createDocumentCorePort } from "@/platform/document-core";
+import { allowToolNavigation } from "@/platform/tool-navigation-guard";
 
 function normalize(value: string) {
   return value
@@ -21,6 +22,8 @@ function normalize(value: string) {
 }
 
 const ROUTE_TOOL_MAP: Record<string, string> = {
+  "/editar-pdf": "pdf-edit",
+  "/edit-pdf": "pdf-edit",
   "/comparar-pdf": "pdf-compare",
   "/compare-pdf": "pdf-compare",
   "/pdf-compare": "pdf-compare",
@@ -81,6 +84,7 @@ const ROUTE_TOOL_MAP: Record<string, string> = {
 };
 
 const TOOL_ROUTE_MAP: Record<string, string> = {
+  "pdf-edit": "/editar-pdf",
   "pdf-compare": "/comparar-pdf",
   "pdf-merge": "/juntar-pdf",
   "pdf-split": "/dividir-pdf",
@@ -132,9 +136,16 @@ export function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
+  const activePath = useRef(window.location.pathname);
+
   // Sincroniza a URL do navegador com a ferramenta ativa
   useEffect(() => {
     function handlePopState() {
+      if (window.location.pathname !== activePath.current && !allowToolNavigation()) {
+        window.history.pushState({}, "", activePath.current);
+        return;
+      }
+      activePath.current = window.location.pathname;
       if (typeof window !== "undefined") {
         window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       }
@@ -155,6 +166,7 @@ export function App() {
   }, [dynamicTools]);
 
   const selectToolWithUrl = (tool: LauncherTool | null, files?: File[]) => {
+    if (!allowToolNavigation()) return;
     setInitialFilesForTool(files || []);
     setActiveDedicatedTool(tool);
     if (typeof window !== "undefined") {
@@ -170,6 +182,7 @@ export function App() {
         window.history.pushState({}, "", "/");
       }
     }
+    activePath.current = window.location.pathname;
   };
 
   useEffect(() => {

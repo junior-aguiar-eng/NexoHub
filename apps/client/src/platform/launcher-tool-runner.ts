@@ -21,6 +21,8 @@ import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
 import { performBrowserPdfComparison } from "./pdf-comparison-client";
 import type { PdfComparisonProgress, PdfComparisonResult } from "./pdf-comparison-types";
+import { reviseBrowserPdf } from "./pdf-editor-client";
+import type { EditorRevision, EditorSnapshot } from "./pdf-editor-types";
 import {
   addPageNumbersToPdfDocument,
   addWatermarkToPdfDocument,
@@ -60,6 +62,10 @@ export interface LauncherInterval {
 }
 
 export interface LauncherToolInput {
+  readonly editorSnapshot?: EditorSnapshot;
+  readonly editorPage?: number;
+  readonly editorThumbnails?: boolean;
+  readonly editorSignal?: AbortSignal;
   readonly comparisonSignal?: AbortSignal;
   readonly onComparisonProgress?: (info: PdfComparisonProgress) => void;
   readonly files: readonly File[];
@@ -137,6 +143,7 @@ export interface LauncherToolInput {
 }
 
 export interface LauncherToolOutput {
+  readonly editorRevision?: EditorRevision;
   readonly comparison?: PdfComparisonResult;
   readonly blob: Blob;
   readonly fileName: string;
@@ -149,6 +156,7 @@ export interface LauncherToolOutput {
 }
 
 const supportedIds = new Set([
+  "pdf-edit",
   "pdf-compare",
   "pdf-organize",
   "pdf-merge",
@@ -378,6 +386,22 @@ async function executeTool(
         }),
         fileName: `${baseName}_partes.zip`,
         categoryKey: "recent.type.pdf",
+      };
+    }
+    case "pdf-edit": {
+      if (!first || input.files.length !== 1)
+        throw new ToolRunError("INVALID_INPUT", translate("editor.invalidPdf"));
+      const revision = await reviseBrowserPdf(
+        new Uint8Array(await first.arrayBuffer()),
+        input.editorSnapshot ?? { replacements: [], elements: [] },
+        input.editorPage ?? 0,
+        { signal: input.editorSignal, thumbnails: input.editorThumbnails },
+      );
+      return {
+        blob: pdfBlob(revision.bytes),
+        fileName: `${baseName}_editado.pdf`,
+        categoryKey: "recent.type.pdf",
+        editorRevision: revision,
       };
     }
     case "pdf-compare": {
@@ -631,7 +655,7 @@ async function executeTool(
       const translationResult = await performBrowserTranslation(rawText, {
         sourceLang,
         targetLang,
-        signal: input.translationSignal ?? input.comparisonSignal,
+        signal: input.translationSignal ?? input.comparisonSignal ?? input.editorSignal,
         onProgress: (info) => {
           input.onTranslationProgress?.(info);
         },
@@ -932,6 +956,18 @@ export async function runLauncherTool(
           throw new ToolRunError("CANCELLED", translate("workspace.translate.cancelled"));
         }
         const messages = {
+          EDITOR_LIMITE: "editor.limit",
+          EDITOR_PDF_INVALIDO: "editor.invalidPdf",
+          EDITOR_SENHA: "editor.password",
+          EDITOR_GLIFO: "editor.glyph",
+          EDITOR_TEXTO_NAO_CABE: "editor.fitError",
+          EDITOR_WORKER: "editor.workerError",
+          EDITOR_IMAGEM: "editor.imageError",
+          EDITOR_OBJETO: "editor.unsafeObject",
+          EDITOR_OPERACAO: "editor.error",
+          EDITOR_TEXTO: "editor.error",
+          EDITOR_TAMANHO: "editor.error",
+          EDITOR_CAIXA: "editor.error",
           PDF_COMPARACAO_LIMITE_EXCEDIDO: "pdfCompare.errorLimit",
           PDF_COMPARACAO_TEXTO_LIMITE_EXCEDIDO: "pdfCompare.errorTextLimit",
           PDF_COMPARACAO_PDF_INVALIDO: "pdfCompare.errorInvalid",
@@ -984,7 +1020,7 @@ export async function runLauncherTool(
   const result = await runner.run({
     toolId,
     input,
-    signal: input.translationSignal ?? input.comparisonSignal,
+    signal: input.translationSignal ?? input.comparisonSignal ?? input.editorSignal,
   });
   const output = result.artifacts[0] as LauncherToolOutput | undefined;
   if (!output?.blob || !output.fileName) throw new Error("EXECUTION_FAILED");

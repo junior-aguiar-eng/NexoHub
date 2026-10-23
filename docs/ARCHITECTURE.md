@@ -63,7 +63,7 @@ O `@nexohub/tool-registry` é o catálogo canônico consumido pelas superfícies
 `@nexohub/tool-sdk` valida manifestos, antecipa indisponibilidade e encaminha execuções canceláveis
 ao adapter declarado.
 
-O ecossistema conta com 23 ferramentas executáveis no website na vitrine do Launcher:
+O ecossistema conta com 24 ferramentas executáveis no website na vitrine do Launcher:
 - **Manipulação documental de PDF:** `pdf-organize`, `pdf-merge`, `pdf-split`, `pdf-rotate`, `pdf-compress`,
   `images-to-pdf`, `pdf-to-jpg`, `pdf-watermark` e `pdf-page-numbers` (executores em `pdf-lib` no
   navegador e motor nativo Rust no desktop com persistência e controle de integridade).
@@ -84,6 +84,10 @@ com prévia real e exportação XLSX/CSV. Limitações e evidências estão em
 Comparar PDF (`pdf-compare`) executa PDF.js, alinhamento de páginas, diff textual e pixelmatch
 em um worker dedicado. Oferece texto, comparação visual, sobreposição e relatórios PDF/JSON,
 sem enviar arquivos ao servidor. Contratos e limites estão em [COMPARAR-PDF-WEB.md](COMPARAR-PDF-WEB.md).
+
+O editor web (`pdf-edit`) usa PDFium WASM em worker, snapshots de comandos e validação textual
+independente por PDF.js antes de publicar uma revisão. O guard da ferramenta ativa protege
+navegação interna com edições pendentes. Consulte [EDITAR-PDF-WEB.md](EDITAR-PDF-WEB.md).
 
 O Studio inicia como uma superfície do mesmo client, composta por árvore documental, abas, canvas e
 Inspector. O client depende de `DocumentCorePort`, tipada pelos contratos compartilhados; adapters

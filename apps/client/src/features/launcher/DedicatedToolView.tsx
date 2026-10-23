@@ -45,6 +45,7 @@ import type { LauncherTool } from "./model";
 import { OcrScannerPanel } from "./OcrScannerPanel";
 import { PageNumbersPdfPanel } from "./PageNumbersPdfPanel";
 import { PdfComparePanel } from "./PdfComparePanel";
+import { PdfEditorPanel } from "./PdfEditorPanel";
 import { PdfPageGridPanel, type PdfPageItem } from "./PdfPageGridPanel";
 import { PdfToExcelPanel } from "./PdfToExcelPanel";
 import { PdfToJpgPanel } from "./PdfToJpgPanel";
@@ -398,7 +399,7 @@ export function DedicatedToolView({
     let isCancelled = false;
 
     async function inspectPdf() {
-      if (tool.id === "pdf-compare") return;
+      if (tool.id === "pdf-compare" || tool.id === "pdf-edit") return;
       if (
         files.length > 0 &&
         (files[0].type.includes("pdf") || files[0].name.toLowerCase().endsWith(".pdf"))
@@ -1616,6 +1617,11 @@ export function DedicatedToolView({
       </div>
     );
   }
+
+  if (tool.id === "pdf-edit")
+    return (
+      <PdfEditorPanel documentCore={documentCore} onBack={onBack} initialFiles={initialFiles} />
+    );
 
   if (tool.id === "pdf-compare") {
     return (

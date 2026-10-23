@@ -7,6 +7,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @babel/runtime | 7.29.7 | MIT |
 | JavaScript | @base-ui/react | 1.7.0 | MIT |
 | JavaScript | @base-ui/utils | 0.3.2 | MIT |
+| JavaScript | @embedpdf/pdfium | 2.15.1 | MIT |
 | JavaScript | @floating-ui/core | 1.8.0 | MIT |
 | JavaScript | @floating-ui/dom | 1.8.0 | MIT |
 | JavaScript | @floating-ui/react-dom | 2.1.9 | MIT |

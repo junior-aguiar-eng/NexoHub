@@ -73,7 +73,10 @@ export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
       className={`tool-card ${isDragOver ? "tool-card--drag-over" : ""}`}
       initial={reduceMotion ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduceMotion ? 0 : 0.25, delay: reduceMotion ? 0 : index * 0.03 }}
+      transition={{
+        duration: reduceMotion ? 0 : 0.25,
+        delay: reduceMotion ? 0 : Math.min(index * 0.015, 0.12),
+      }}
       tabIndex={isAvailable ? 0 : -1}
       role="button"
       aria-label={translate(tool.titleKey)}

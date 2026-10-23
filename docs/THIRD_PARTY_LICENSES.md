@@ -21,3 +21,11 @@ por CDN em tempo de execução.
 A leitura de DOCX usa a implementação ZIP em JavaScript do `fflate`, sem dependências transitivas,
 e o parser XML nativo do navegador. A versão é fixada no lockfile; a extração limita a entrada a
 64 MiB e o XML principal a 16 MiB, inclusive quando o tamanho declarado no ZIP está incorreto.
+
+## Processamento de imagens no website
+
+Pica 10.0.3 e os pacotes jSquash JPEG 1.6.0, WebP 1.5.0 e OxiPNG 2.3.0 são carregados
+sob demanda. Pica declara MIT; os wrappers jSquash declaram Apache-2.0. Avisos dos wrappers
+e licenças upstream de MozJPEG, libwebp e OxiPNG estão distribuídos em
+`apps/client/public/licenses/image-codecs/`. Avaliação de necessidade, tamanho, limites e
+medição: [IMAGE-WEB-QUALITY.md](IMAGE-WEB-QUALITY.md).

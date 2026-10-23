@@ -170,8 +170,12 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
     return () => window.removeEventListener("beforeunload", leave);
   }, [dirty, draftDirty]);
   useEffect(
-    () => registerToolNavigationGuard(() => !(dirty || draftDirty) || window.confirm(t("discard"))),
-    [dirty, draftDirty],
+    () =>
+      registerToolNavigationGuard(
+        (reason) =>
+          !(dirty || draftDirty || (reason === "zone" && file)) || window.confirm(t("discard")),
+      ),
+    [dirty, draftDirty, file],
   );
   async function run(
     target: File,

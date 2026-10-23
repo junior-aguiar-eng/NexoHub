@@ -16,6 +16,7 @@ import { translate } from "@/i18n";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { type LauncherToolOutput, runLauncherTool } from "@/platform/launcher-tool-runner";
 import type { PdfComparisonPair, PdfComparisonProgress } from "@/platform/pdf-comparison-types";
+import { registerToolNavigationGuard } from "@/platform/tool-navigation-guard";
 import "./PdfComparePanel.css";
 
 export interface PdfComparePanelProps {
@@ -59,6 +60,16 @@ export function PdfComparePanel({ documentCore, onBack, initialFiles = [] }: Pdf
   const [sync, setSync] = useState(true);
   const [overlay, setOverlay] = useState(false);
   const [opacity, setOpacity] = useState(0.5);
+  useEffect(
+    () =>
+      registerToolNavigationGuard(
+        (reason) =>
+          reason !== "zone" ||
+          !files.some(Boolean) ||
+          window.confirm(translate("imageProcessing.leaveConfirm")),
+      ),
+    [files],
+  );
   const controller = useRef<AbortController | null>(null);
   const generation = useRef(0);
   const panes = useRef<(HTMLElement | null)[]>([]);

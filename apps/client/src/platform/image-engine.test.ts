@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  canvasToBlob,
   compressImage,
   convertImage,
   cropImage,
   getImageMetadata,
+  loadImageElement,
   resizeImage,
   rotateImage,
   watermarkImage,
@@ -42,6 +44,7 @@ describe("image-engine", () => {
       rotate: vi.fn(),
       scale: vi.fn(),
       fillText: vi.fn(),
+      measureText: vi.fn().mockReturnValue({ width: 100 }),
     });
 
     HTMLCanvasElement.prototype.toBlob = vi.fn(function (
@@ -71,7 +74,9 @@ describe("image-engine", () => {
     expect(res.height).toBe(600);
     expect(res.originalSizeBytes).toBe(testPngBytes.byteLength);
     expect(res.resultSizeBytes).toBeGreaterThan(0);
-    expect(res.mimeType).toBe("image/webp");
+    expect(res.mimeType).toBe("image/png");
+    expect(res.percentReduction).toBe(0);
+    expect(res.resultSizeBytes).toBe(testPngBytes.byteLength);
   });
 
   it("redimensiona imagem por porcentagem e por pixels", async () => {
@@ -127,5 +132,32 @@ describe("image-engine", () => {
       opacity: 0.5,
     });
     expect(watermarked).toBeInstanceOf(Blob);
+  });
+  it("rejeita falha real de exportação em vez de inventar bytes", async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((cb) => cb(null));
+    await expect(canvasToBlob(document.createElement("canvas"), "image/png")).rejects.toThrow(
+      "FALHA_EXPORTAR_IMAGEM",
+    );
+  });
+  it("rejeita fallback para MIME diferente do solicitado", async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((cb) =>
+      cb(new Blob(["png"], { type: "image/png" })),
+    );
+    await expect(canvasToBlob(document.createElement("canvas"), "image/webp")).rejects.toThrow(
+      "FORMATO_IMAGEM_NAO_SUPORTADO",
+    );
+  });
+  it("rejeita imagens que excedem o limite antes de criar canvas", async () => {
+    const close = vi.fn();
+    vi.stubGlobal("createImageBitmap", async () => ({ width: 20000, height: 20000, close }));
+    await expect(loadImageElement(new Blob([testPngBytes], { type: "image/png" }))).rejects.toThrow(
+      "IMAGEM_MUITO_GRANDE",
+    );
+    expect(close).toHaveBeenCalledOnce();
+  });
+  it("rejeita porcentagens inválidas sem executar redimensionamento", async () => {
+    await expect(
+      resizeImage(testPngBytes, { mode: "percentage", percentage: Number.NaN }),
+    ).rejects.toThrow("OPCOES_IMAGEM_INVALIDAS");
   });
 });

@@ -5,6 +5,7 @@ import { BrowserDocumentCorePort } from "./browser-document-core";
 import * as browserReviewer from "./browser-reviewer";
 import * as browserTranslator from "./browser-translator";
 import { HttpDocumentCorePort } from "./http-document-core";
+import * as imageProcessing from "./image-processing";
 import { type LauncherToolInput, runLauncherTool } from "./launcher-tool-runner";
 
 async function fixture(): Promise<File> {
@@ -600,7 +601,13 @@ describe("Tool Runner do Launcher", () => {
       },
     );
 
-    // Teste de compressão
+    const process = vi.spyOn(imageProcessing, "processImage").mockImplementation(
+      async (job) =>
+        new Blob(["transport-fixture"], {
+          type: job.kind === "convert" ? "image/webp" : "image/png",
+        }),
+    );
+    // Transporte é isolado aqui; codecs e pixels reais são verificados nos E2E.
     const compRes = await runLauncherTool(port, "image-compress", {
       ...input([testFile]),
       imageCompressionLevel: "recommended",
@@ -648,5 +655,19 @@ describe("Tool Runner do Launcher", () => {
       imageWatermarkText: "NexoHub Seguro",
     });
     expect(wmRes.fileName).toBe("foto_marca_dagua.png");
+    expect(process).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        kind: "watermark",
+        options: expect.objectContaining({ opacity: 0.5 }),
+      }),
+      undefined,
+    );
+    const batch = await runLauncherTool(port, "image-rotate", {
+      ...input([testFile, testFile]),
+      imageRotateAngle: 90,
+    });
+    expect(batch.blob.type).toBe("application/zip");
+    expect(process).toHaveBeenCalledTimes(8);
+    process.mockRestore();
   });
 });

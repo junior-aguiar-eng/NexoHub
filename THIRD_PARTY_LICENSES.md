@@ -18,8 +18,11 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @huggingface/jinja | 0.5.10 | MIT |
 | JavaScript | @huggingface/tokenizers | 0.2.0 | Apache-2.0 |
 | JavaScript | @huggingface/transformers | 4.3.1 | Apache-2.0 |
-| JavaScript | @napi-rs/canvas-linux-x64-gnu | 1.0.9 | MIT |
+| JavaScript | @jsquash/jpeg | 1.6.0 | Apache-2.0 |
+| JavaScript | @jsquash/oxipng | 2.3.0 | Apache-2.0 |
+| JavaScript | @jsquash/webp | 1.5.0 | Apache-2.0 |
 | JavaScript | @napi-rs/canvas | 1.0.9 | MIT |
+| JavaScript | @napi-rs/canvas-linux-x64-gnu | 1.0.9 | MIT |
 | JavaScript | @pdf-lib/standard-fonts | 1.0.0 | MIT |
 | JavaScript | @pdf-lib/upng | 1.0.1 | MIT |
 | JavaScript | @pdfsmaller/pdf-encrypt | 1.2.0 | MIT |
@@ -53,6 +56,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | getroot | 1.0.0 | MIT |
 | JavaScript | global-agent | 4.1.3 | BSD-3-Clause |
 | JavaScript | globalthis | 1.0.4 | MIT |
+| JavaScript | glur | 2.0.0 | MIT |
 | JavaScript | gopd | 1.2.0 | MIT |
 | JavaScript | guid-typescript | 1.0.9 | ISC |
 | JavaScript | has-property-descriptors | 1.0.2 | MIT |
@@ -63,9 +67,10 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | long | 5.3.2 | Apache-2.0 |
 | JavaScript | lucide-react | 0.542.0 | ISC |
 | JavaScript | matcher | 4.0.0 | MIT |
+| JavaScript | motion | 12.23.24 | MIT |
 | JavaScript | motion-dom | 12.43.0 | MIT |
 | JavaScript | motion-utils | 12.39.0 | MIT |
-| JavaScript | motion | 12.23.24 | MIT |
+| JavaScript | multimath | 3.0.0 | MIT |
 | JavaScript | nanoid | 3.3.20 | MIT |
 | JavaScript | node-fetch | 2.7.0 | MIT |
 | JavaScript | normalize-path | 2.1.1 | MIT |
@@ -79,14 +84,15 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | pako | 1.0.11 | (MIT AND Zlib) |
 | JavaScript | pdf-lib | 1.17.1 | MIT |
 | JavaScript | pdfjs-dist | 6.3.289 | Apache-2.0 |
+| JavaScript | pica | 10.0.3 | MIT |
 | JavaScript | pixelmatch | 8.0.0 | ISC |
 | JavaScript | platform | 1.3.6 | MIT |
-| JavaScript | playwright-core | 1.63.0 | Apache-2.0 |
 | JavaScript | playwright | 1.63.0 | Apache-2.0 |
+| JavaScript | playwright-core | 1.63.0 | Apache-2.0 |
 | JavaScript | pngjs | 7.0.0 | MIT |
 | JavaScript | protobufjs | 7.6.6 | BSD-3-Clause |
-| JavaScript | react-dom | 19.2.8 | MIT |
 | JavaScript | react | 19.2.8 | MIT |
+| JavaScript | react-dom | 19.2.8 | MIT |
 | JavaScript | regenerator-runtime | 0.13.11 | MIT |
 | JavaScript | remove-trailing-separator | 1.1.0 | ISC |
 | JavaScript | reselect | 5.3.0 | MIT |
@@ -94,8 +100,8 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | semver | 7.8.5 | ISC |
 | JavaScript | serialize-error | 8.1.0 | MIT |
 | JavaScript | tailwind-merge | 3.3.1 | MIT |
-| JavaScript | tesseract.js-core | 7.0.0 | Apache-2.0 |
 | JavaScript | tesseract.js | 7.0.0 | Apache-2.0 |
+| JavaScript | tesseract.js-core | 7.0.0 | Apache-2.0 |
 | JavaScript | tr46 | 0.0.3 | MIT |
 | JavaScript | tslib | 1.14.1 | 0BSD |
 | JavaScript | tslib | 2.8.1 | 0BSD |

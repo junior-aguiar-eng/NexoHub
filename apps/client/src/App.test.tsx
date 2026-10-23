@@ -169,7 +169,7 @@ describe("App", () => {
     const release = registerToolNavigationGuard(() => false);
     try {
       fireEvent.click(screen.getAllByRole("button", { name: /alternar para modo imagem/i })[0]);
-      expect(window.location.pathname).toBe("/");
+      expect(window.location.pathname).toBe("/pdf");
       expect(screen.getByTestId("panel-zone-pdf")).toBeInTheDocument();
     } finally {
       release();

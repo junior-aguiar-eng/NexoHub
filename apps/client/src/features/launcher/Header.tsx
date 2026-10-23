@@ -107,67 +107,65 @@ export function Header({
       </div>
 
       <nav className="header-main-nav" aria-label={translate("header.primaryNavigation")}>
-        <>
-          {availableTools
-            .filter((tool) =>
-              (isImageZone
-                ? ["image-compress", "image-resize", "image-crop"]
-                : ["pdf-merge", "pdf-split", "pdf-compress"]
-              ).includes(tool.id),
-            )
-            .map((tool) => (
-              <button
-                key={tool.id}
-                type="button"
-                className="nav-link-btn"
-                onClick={() => openTool(tool.id)}
-              >
-                {translate(tool.titleKey)}
-              </button>
-            ))}
-          <div className="nav-dropdown-wrapper" ref={menuRef}>
+        {availableTools
+          .filter((tool) =>
+            (isImageZone
+              ? ["image-compress", "image-resize", "image-crop"]
+              : ["pdf-merge", "pdf-split", "pdf-compress"]
+            ).includes(tool.id),
+          )
+          .map((tool) => (
             <button
-              ref={triggerRef}
+              key={tool.id}
               type="button"
-              className={`nav-link-btn nav-link-btn--dropdown ${allToolsMenuOpen ? "nav-link-btn--active" : ""}`}
-              aria-label={allToolsLabel}
-              aria-expanded={allToolsMenuOpen}
-              aria-controls={allToolsMenuOpen ? menuId : undefined}
-              onClick={() => setAllToolsMenuOpen(!allToolsMenuOpen)}
+              className="nav-link-btn"
+              onClick={() => openTool(tool.id)}
             >
-              <span className="nav-link-label--full">{allToolsLabel}</span>
-              <span className="nav-link-label--compact">{translate("header.toolsCompact")}</span>
-              <ChevronDown
-                size={14}
-                className={`dropdown-chevron ${allToolsMenuOpen ? "dropdown-chevron--open" : ""}`}
-              />
+              {translate(tool.titleKey)}
             </button>
-            {allToolsMenuOpen && (
-              <div id={menuId} className="megamenu-panel megamenu-panel--all">
-                {groups.map((group) => {
-                  const groupTools = availableTools.filter((tool) => tool.suite === group.id);
-                  if (groupTools.length === 0) return null;
-                  return (
-                    <div className="megamenu-column" key={group.id}>
-                      <span className="megamenu-col-title">{translate(group.labelKey)}</span>
-                      {groupTools.map((tool) => (
-                        <button
-                          key={tool.id}
-                          type="button"
-                          className="megamenu-item"
-                          onClick={() => openTool(tool.id)}
-                        >
-                          <tool.icon size={15} style={{ color: tool.accentColor }} />
-                          <span>{translate(tool.titleKey)}</span>
-                        </button>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </>
+          ))}
+        <div className="nav-dropdown-wrapper" ref={menuRef}>
+          <button
+            ref={triggerRef}
+            type="button"
+            className={`nav-link-btn nav-link-btn--dropdown ${allToolsMenuOpen ? "nav-link-btn--active" : ""}`}
+            aria-label={allToolsLabel}
+            aria-expanded={allToolsMenuOpen}
+            aria-controls={allToolsMenuOpen ? menuId : undefined}
+            onClick={() => setAllToolsMenuOpen(!allToolsMenuOpen)}
+          >
+            <span className="nav-link-label--full">{allToolsLabel}</span>
+            <span className="nav-link-label--compact">{translate("header.toolsCompact")}</span>
+            <ChevronDown
+              size={14}
+              className={`dropdown-chevron ${allToolsMenuOpen ? "dropdown-chevron--open" : ""}`}
+            />
+          </button>
+          {allToolsMenuOpen && (
+            <div id={menuId} className="megamenu-panel megamenu-panel--all">
+              {groups.map((group) => {
+                const groupTools = availableTools.filter((tool) => tool.suite === group.id);
+                if (groupTools.length === 0) return null;
+                return (
+                  <div className="megamenu-column" key={group.id}>
+                    <span className="megamenu-col-title">{translate(group.labelKey)}</span>
+                    {groupTools.map((tool) => (
+                      <button
+                        key={tool.id}
+                        type="button"
+                        className="megamenu-item"
+                        onClick={() => openTool(tool.id)}
+                      >
+                        <tool.icon size={15} style={{ color: tool.accentColor }} />
+                        <span>{translate(tool.titleKey)}</span>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </nav>
 
       <div className="header-actions flex items-center gap-2">

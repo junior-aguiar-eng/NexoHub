@@ -57,7 +57,7 @@ export interface ImageConvertOptions {
 }
 
 export interface ImageRotateOptions {
-  readonly angle: 90 | 180 | 270;
+  readonly angle: 0 | 90 | 180 | 270;
   readonly flipHorizontal?: boolean;
   readonly flipVertical?: boolean;
   readonly mimeType?: string;
@@ -89,211 +89,204 @@ export interface ImageWatermarkOptions {
   readonly quality?: number;
 }
 
-function detectMimeType(bytes: Uint8Array): string {
+export const MAX_IMAGE_PIXELS = 24_000_000;
+export const MAX_IMAGE_BYTES = 64 * 1024 * 1024;
+type ImageCanvas = HTMLCanvasElement | OffscreenCanvas;
+function validateDimensions(width: number, height: number) {
   if (
-    bytes.length >= 8 &&
-    bytes[0] === 0x89 &&
-    bytes[1] === 0x50 &&
-    bytes[2] === 0x4e &&
-    bytes[3] === 0x47
-  ) {
-    return "image/png";
-  }
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
-    return "image/jpeg";
-  }
-  if (
-    bytes.length >= 12 &&
-    bytes[0] === 0x52 &&
-    bytes[1] === 0x49 &&
-    bytes[2] === 0x46 &&
-    bytes[3] === 0x46 &&
-    bytes[8] === 0x57 &&
-    bytes[9] === 0x45 &&
-    bytes[10] === 0x42 &&
-    bytes[11] === 0x50
-  ) {
-    return "image/webp";
-  }
-  if (
-    bytes.length >= 4 &&
-    bytes[0] === 0x47 &&
-    bytes[1] === 0x49 &&
-    bytes[2] === 0x46 &&
-    bytes[3] === 0x38
-  ) {
-    return "image/gif";
-  }
-  return "image/jpeg";
+    !Number.isInteger(width) ||
+    !Number.isInteger(height) ||
+    width < 1 ||
+    height < 1 ||
+    width > 16384 ||
+    height > 16384 ||
+    width * height > MAX_IMAGE_PIXELS
+  )
+    throw new Error("IMAGEM_MUITO_GRANDE");
 }
-
-function toBlob(
+function validateNumbers(...values: (number | undefined)[]) {
+  if (values.some((value) => value !== undefined && (!Number.isFinite(value) || value < 0)))
+    throw new Error("OPCOES_IMAGEM_INVALIDAS");
+}
+function createCanvas(width: number, height: number): ImageCanvas {
+  validateDimensions(width, height);
+  if (typeof document === "undefined") return new OffscreenCanvas(width, height);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  return canvas;
+}
+function context2d(canvas: ImageCanvas) {
+  const ctx = canvas.getContext("2d") as
+    | CanvasRenderingContext2D
+    | OffscreenCanvasRenderingContext2D
+    | null;
+  if (!ctx) throw new Error("CANVAS_NAO_DISPONIVEL");
+  return ctx;
+}
+function detectMimeType(bytes: Uint8Array): string {
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47)
+    return "image/png";
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
+  if (
+    String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
+    String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
+  )
+    return "image/webp";
+  throw new Error("FORMATO_IMAGEM_NAO_SUPORTADO");
+}
+async function toBlob(
   input: File | Blob | Uint8Array,
-  fallbackMime: string = "image/jpeg",
-): { blob: Blob; mimeType: string; sizeBytes: number } {
-  if (input instanceof File) {
-    return {
-      blob: input,
-      mimeType: input.type || fallbackMime,
-      sizeBytes: input.size,
-    };
-  }
+): Promise<{ blob: Blob; mimeType: string; sizeBytes: number }> {
   if (input instanceof Blob) {
+    if (!input.size || input.size > MAX_IMAGE_BYTES) throw new Error("IMAGEM_MUITO_GRANDE");
+    const mimeType = detectMimeType(new Uint8Array(await input.slice(0, 32).arrayBuffer()));
     return {
-      blob: input,
-      mimeType: input.type || fallbackMime,
+      blob: input.type === mimeType ? input : input.slice(0, input.size, mimeType),
+      mimeType,
       sizeBytes: input.size,
     };
   }
-  const detected = detectMimeType(input);
+  const mimeType = detectMimeType(input);
   return {
-    blob: new Blob([input as BlobPart], { type: detected }),
-    mimeType: detected,
+    blob: new Blob([input as BlobPart], { type: mimeType }),
+    mimeType,
     sizeBytes: input.byteLength,
   };
 }
-
-/**
- * Carrega a imagem como HTMLImageElement ou ImageBitmap para extração de dimensões e desenho em Canvas.
- */
+async function validateImage(blob: Blob) {
+  if (!blob.size || blob.size > MAX_IMAGE_BYTES) throw new Error("IMAGEM_MUITO_GRANDE");
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const mime = detectMimeType(bytes);
+  // PNG animado e WebP animado não podem ser achatados silenciosamente.
+  if (mime === "image/png") {
+    const view = new DataView(bytes.buffer);
+    for (let pos = 8; pos + 12 <= bytes.length; ) {
+      const length = view.getUint32(pos);
+      const type = String.fromCharCode(...bytes.slice(pos + 4, pos + 8));
+      if (type === "acTL") throw new Error("ANIMACAO_IMAGEM_NAO_SUPORTADA");
+      if (type === "IHDR" && pos + 16 <= bytes.length)
+        validateDimensions(view.getUint32(pos + 8), view.getUint32(pos + 12));
+      pos += length + 12;
+    }
+  }
+  if (mime === "image/webp") {
+    const view = new DataView(bytes.buffer);
+    for (let pos = 12; pos + 8 <= bytes.length; ) {
+      const length = view.getUint32(pos + 4, true);
+      const type = String.fromCharCode(...bytes.slice(pos, pos + 4));
+      if (type === "ANIM" || type === "ANMF") throw new Error("ANIMACAO_IMAGEM_NAO_SUPORTADA");
+      pos += 8 + length + (length % 2);
+    }
+  }
+}
 export async function loadImageElement(blob: Blob): Promise<{
   element: HTMLImageElement | ImageBitmap;
   width: number;
   height: number;
   close: () => void;
 }> {
+  await validateImage(blob);
   if (typeof createImageBitmap === "function") {
+    // Falha de decode não deve produzir uma imagem fictícia nem disparar nova alocação.
+    const bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" });
     try {
-      const bitmap = await createImageBitmap(blob);
-      return {
-        element: bitmap,
-        width: bitmap.width,
-        height: bitmap.height,
-        close: () => {
-          if ("close" in bitmap && typeof bitmap.close === "function") {
-            bitmap.close();
-          }
-        },
-      };
-    } catch {
-      // Fallback para Image caso createImageBitmap falhe (ex: SVGs ou formato específico)
+      validateDimensions(bitmap.width, bitmap.height);
+    } catch (error) {
+      bitmap.close();
+      throw error;
     }
+    return {
+      element: bitmap,
+      width: bitmap.width,
+      height: bitmap.height,
+      close: () => bitmap.close(),
+    };
   }
-
-  if (typeof document !== "undefined" && typeof Image !== "undefined") {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const url = URL.createObjectURL(blob);
-      let timer: ReturnType<typeof setTimeout> | undefined;
-
-      img.onload = () => {
-        if (timer) clearTimeout(timer);
+  if (typeof Image === "undefined") throw new Error("CANVAS_NAO_DISPONIVEL");
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    const timer = setTimeout(() => {
+      img.src = "";
+      URL.revokeObjectURL(url);
+      reject(new Error("FALHA_CARREGAR_IMAGEM"));
+    }, 30000);
+    img.onload = () => {
+      clearTimeout(timer);
+      try {
+        validateDimensions(img.naturalWidth, img.naturalHeight);
         resolve({
           element: img,
-          width: img.naturalWidth || img.width || 800,
-          height: img.naturalHeight || img.height || 600,
+          width: img.naturalWidth,
+          height: img.naturalHeight,
           close: () => URL.revokeObjectURL(url),
         });
-      };
-      img.onerror = () => {
-        if (timer) clearTimeout(timer);
+      } catch (error) {
         URL.revokeObjectURL(url);
-        reject(new Error("FALHA_CARREGAR_IMAGEM"));
-      };
-
-      // Salvaguarda para jsdom onde blob: URLs não disparam evento de rede
-      timer = setTimeout(() => {
-        URL.revokeObjectURL(url);
-        resolve({
-          element: img,
-          width: img.naturalWidth || img.width || 800,
-          height: img.naturalHeight || img.height || 600,
-          close: () => {},
-        });
-      }, 50);
-
-      img.src = url;
-    });
-  }
-
-  throw new Error("CANVAS_NAO_DISPONIVEL");
+        reject(error);
+      }
+    };
+    img.onerror = () => {
+      clearTimeout(timer);
+      URL.revokeObjectURL(url);
+      reject(new Error("FALHA_CARREGAR_IMAGEM"));
+    };
+    img.src = url;
+  });
 }
-
-/**
- * Exporta um Canvas para Blob de forma assíncrona com qualidade controlada.
- */
 export async function canvasToBlob(
-  canvas: HTMLCanvasElement,
+  canvas: ImageCanvas,
   mimeType: string,
   quality?: number,
 ): Promise<Blob> {
-  return new Promise((resolve) => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-
-    if (typeof canvas.toBlob === "function") {
-      timer = setTimeout(() => {
-        // Se toBlob não disparar a callback (como no stub do jsdom)
-        resolve(
-          new Blob([new Uint8Array(Math.max(10, canvas.width * canvas.height * 0.05))], {
-            type: mimeType,
-          }),
-        );
-      }, 50);
-
-      try {
-        canvas.toBlob(
-          (blob) => {
-            if (timer) clearTimeout(timer);
-            if (blob) {
-              resolve(blob);
-            } else {
-              resolve(
-                new Blob([new Uint8Array(Math.max(10, canvas.width * canvas.height * 0.05))], {
-                  type: mimeType,
-                }),
-              );
-            }
-          },
-          mimeType,
-          quality,
-        );
-      } catch {
-        if (timer) clearTimeout(timer);
-        resolve(
-          new Blob([new Uint8Array(Math.max(10, canvas.width * canvas.height * 0.05))], {
-            type: mimeType,
-          }),
-        );
-      }
-    } else {
-      // Fallback para toDataURL se toBlob não estiver presente no ambiente
-      try {
-        const dataUrl = canvas.toDataURL(mimeType, quality);
-        const parts = dataUrl.split(",");
-        const byteString = atob(parts[1] || "");
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) {
-          ia[i] = byteString.charCodeAt(i);
-        }
-        resolve(new Blob([ab], { type: mimeType }));
-      } catch {
-        resolve(
-          new Blob([new Uint8Array(Math.max(10, canvas.width * canvas.height * 0.05))], {
-            type: mimeType,
-          }),
-        );
-      }
-    }
-  });
+  validateNumbers(quality);
+  if (quality !== undefined && quality > 1) throw new Error("OPCOES_IMAGEM_INVALIDAS");
+  const blob =
+    "convertToBlob" in canvas
+      ? await canvas.convertToBlob({ type: mimeType, quality })
+      : await new Promise<Blob>((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("FALHA_EXPORTAR_IMAGEM")), 30000);
+          try {
+            canvas.toBlob(
+              (value) => {
+                clearTimeout(timer);
+                if (value?.size) resolve(value);
+                else reject(new Error("FALHA_EXPORTAR_IMAGEM"));
+              },
+              mimeType,
+              quality,
+            );
+          } catch (error) {
+            clearTimeout(timer);
+            reject(error);
+          }
+        });
+  if (blob.type !== mimeType) throw new Error("FORMATO_IMAGEM_NAO_SUPORTADO");
+  if (!blob.size) throw new Error("FALHA_EXPORTAR_IMAGEM");
+  return blob;
 }
-
+async function encodeCanvas(canvas: ImageCanvas, mime: string, quality: number): Promise<Blob> {
+  // Codecs carregados apenas no worker de Imagem, fora do bundle inicial.
+  if (typeof document !== "undefined") return canvasToBlob(canvas, mime, quality);
+  const image = context2d(canvas).getImageData(0, 0, canvas.width, canvas.height);
+  if (mime === "image/jpeg") {
+    const { default: encode } = await import("@jsquash/jpeg/encode");
+    return new Blob([await encode(image, { quality: quality * 100 })], { type: mime });
+  }
+  if (mime === "image/webp") {
+    const { default: encode } = await import("@jsquash/webp/encode");
+    return new Blob([await encode(image, { quality: quality * 100 })], { type: mime });
+  }
+  return canvasToBlob(canvas, mime, quality);
+}
 /**
  * Obtém metadados reais da imagem (largura, altura, mimeType, tamanho em bytes).
  */
 export async function getImageMetadata(input: File | Blob | Uint8Array): Promise<ImageMetadata> {
-  const { blob, mimeType, sizeBytes } = toBlob(input);
+  const { blob, mimeType, sizeBytes } = await toBlob(input);
   const loaded = await loadImageElement(blob);
+  let canvas: ImageCanvas | undefined;
   try {
     return {
       width: loaded.width,
@@ -303,6 +296,10 @@ export async function getImageMetadata(input: File | Blob | Uint8Array): Promise
     };
   } finally {
     loaded.close();
+    if (canvas) {
+      canvas.width = 0;
+      canvas.height = 0;
+    }
   }
 }
 
@@ -314,10 +311,17 @@ export async function compressImage(
   input: File | Blob | Uint8Array,
   options: ImageCompressionOptions = {},
 ): Promise<ImageCompressionResult> {
-  const { blob, mimeType, sizeBytes: originalSizeBytes } = toBlob(input);
+  const { blob, mimeType, sizeBytes: originalSizeBytes } = await toBlob(input);
   const loaded = await loadImageElement(blob);
+  let canvas: ImageCanvas | undefined;
 
   try {
+    validateNumbers(options.customQuality, options.maxDimension);
+    if (
+      (options.customQuality !== undefined && options.customQuality > 1) ||
+      options.maxDimension === 0
+    )
+      throw new Error("OPCOES_IMAGEM_INVALIDAS");
     const level = options.level ?? "recommended";
     let quality = options.customQuality;
     if (quality === undefined) {
@@ -329,7 +333,7 @@ export async function compressImage(
     // Calcula dimensões, aplicando limite de dimensão máxima se configurado
     let targetWidth = loaded.width;
     let targetHeight = loaded.height;
-    const maxDim = options.maxDimension ?? 4096;
+    const maxDim = options.maxDimension ?? Math.max(loaded.width, loaded.height);
 
     if (targetWidth > maxDim || targetHeight > maxDim) {
       if (targetWidth >= targetHeight) {
@@ -341,17 +345,10 @@ export async function compressImage(
       }
     }
 
-    const canvas = document.createElement("canvas");
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-    const ctx = canvas.getContext("2d");
+    canvas = createCanvas(targetWidth, targetHeight);
+    const ctx = context2d(canvas);
 
-    const targetMime =
-      mimeType === "image/png"
-        ? "image/webp"
-        : mimeType === "image/webp"
-          ? "image/webp"
-          : "image/jpeg";
+    const targetMime = mimeType || detectMimeType(new Uint8Array(await blob.arrayBuffer()));
 
     if (ctx) {
       ctx.imageSmoothingEnabled = true;
@@ -365,7 +362,24 @@ export async function compressImage(
       ctx.drawImage(loaded.element, 0, 0, targetWidth, targetHeight);
     }
 
-    const compressedBlob = await canvasToBlob(canvas, targetMime, quality);
+    let compressedBlob: Blob;
+    if (targetMime === "image/png" && typeof document === "undefined") {
+      const { default: optimise } = await import("@jsquash/oxipng/optimise");
+      compressedBlob = new Blob(
+        [
+          await optimise(context2d(canvas).getImageData(0, 0, targetWidth, targetHeight), {
+            level: level === "extreme" ? 4 : level === "less" ? 1 : 2,
+          }),
+        ],
+        { type: targetMime },
+      );
+    } else compressedBlob = await encodeCanvas(canvas, targetMime, quality);
+    if (
+      targetWidth === loaded.width &&
+      targetHeight === loaded.height &&
+      compressedBlob.size >= blob.size
+    )
+      compressedBlob = blob;
     const resultSizeBytes = compressedBlob.size;
     const savedBytes = Math.max(0, originalSizeBytes - resultSizeBytes);
     const percentReduction =
@@ -381,10 +395,14 @@ export async function compressImage(
       percentReduction,
       width: targetWidth,
       height: targetHeight,
-      mimeType: targetMime,
+      mimeType: compressedBlob.type || targetMime,
     };
   } finally {
     loaded.close();
+    if (canvas) {
+      canvas.width = 0;
+      canvas.height = 0;
+    }
   }
 }
 
@@ -396,13 +414,17 @@ export async function resizeImage(
   input: File | Blob | Uint8Array,
   options: ImageResizeOptions,
 ): Promise<Blob> {
-  const { blob, mimeType } = toBlob(input);
+  const { blob, mimeType } = await toBlob(input);
   const loaded = await loadImageElement(blob);
+  let canvas: ImageCanvas | undefined;
 
   try {
     let targetWidth = loaded.width;
     let targetHeight = loaded.height;
 
+    validateNumbers(options.percentage, options.width, options.height, options.quality);
+    if (options.percentage === 0 || options.width === 0 || options.height === 0)
+      throw new Error("OPCOES_IMAGEM_INVALIDAS");
     if (options.mode === "percentage") {
       const pct = (options.percentage ?? 50) / 100;
       targetWidth = Math.max(1, Math.round(loaded.width * pct));
@@ -442,15 +464,19 @@ export async function resizeImage(
       }
     }
 
-    targetWidth = Math.max(1, targetWidth);
-    targetHeight = Math.max(1, targetHeight);
+    if (options.doNotEnlarge && (targetWidth > loaded.width || targetHeight > loaded.height)) {
+      const ratio = Math.min(loaded.width / targetWidth, loaded.height / targetHeight, 1);
+      targetWidth = Math.round(targetWidth * ratio);
+      targetHeight = Math.round(targetHeight * ratio);
+    }
+    targetWidth = Math.max(1, Math.round(targetWidth));
+    targetHeight = Math.max(1, Math.round(targetHeight));
 
-    const canvas = document.createElement("canvas");
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-    const ctx = canvas.getContext("2d");
+    canvas = createCanvas(targetWidth, targetHeight);
+    const ctx = context2d(canvas);
 
-    const outMime = options.mimeType || mimeType;
+    const outMime =
+      options.mimeType || mimeType || detectMimeType(new Uint8Array(await blob.arrayBuffer()));
 
     if (ctx) {
       ctx.imageSmoothingEnabled = true;
@@ -461,11 +487,26 @@ export async function resizeImage(
         ctx.fillRect(0, 0, targetWidth, targetHeight);
       }
 
-      ctx.drawImage(loaded.element, 0, 0, targetWidth, targetHeight);
+      if (typeof document === "undefined") {
+        const { Pica } = await import("pica");
+        class WorkerResizer extends Pica {
+          override createCanvas(width: number, height: number) {
+            return new OffscreenCanvas(width, height);
+          }
+        }
+        await new WorkerResizer({ features: ["js", "wasm"], concurrency: 1 }).resize(
+          loaded.element,
+          canvas,
+        );
+      } else ctx.drawImage(loaded.element, 0, 0, targetWidth, targetHeight);
     }
     return await canvasToBlob(canvas, outMime, options.quality ?? 0.92);
   } finally {
     loaded.close();
+    if (canvas) {
+      canvas.width = 0;
+      canvas.height = 0;
+    }
   }
 }
 
@@ -477,22 +518,24 @@ export async function cropImage(
   input: File | Blob | Uint8Array,
   options: ImageCropOptions,
 ): Promise<Blob> {
-  const { blob, mimeType } = toBlob(input);
+  const { blob, mimeType } = await toBlob(input);
   const loaded = await loadImageElement(blob);
+  let canvas: ImageCanvas | undefined;
 
   try {
+    validateNumbers(options.x, options.y, options.width, options.height, options.quality);
+    if (!options.width || !options.height) throw new Error("OPCOES_IMAGEM_INVALIDAS");
     // Sanitização e limitação das coordenadas aos limites da imagem
     const sx = Math.max(0, Math.min(loaded.width - 1, Math.round(options.x)));
     const sy = Math.max(0, Math.min(loaded.height - 1, Math.round(options.y)));
     const sw = Math.max(1, Math.min(loaded.width - sx, Math.round(options.width)));
     const sh = Math.max(1, Math.min(loaded.height - sy, Math.round(options.height)));
 
-    const canvas = document.createElement("canvas");
-    canvas.width = sw;
-    canvas.height = sh;
-    const ctx = canvas.getContext("2d");
+    canvas = createCanvas(sw, sh);
+    const ctx = context2d(canvas);
 
-    const outMime = options.mimeType || mimeType;
+    const outMime =
+      options.mimeType || mimeType || detectMimeType(new Uint8Array(await blob.arrayBuffer()));
 
     if (ctx) {
       ctx.imageSmoothingEnabled = true;
@@ -508,6 +551,10 @@ export async function cropImage(
     return await canvasToBlob(canvas, outMime, options.quality ?? 0.95);
   } finally {
     loaded.close();
+    if (canvas) {
+      canvas.width = 0;
+      canvas.height = 0;
+    }
   }
 }
 
@@ -519,14 +566,13 @@ export async function convertImage(
   input: File | Blob | Uint8Array,
   options: ImageConvertOptions,
 ): Promise<Blob> {
-  const { blob } = toBlob(input);
+  const { blob } = await toBlob(input);
   const loaded = await loadImageElement(blob);
+  let canvas: ImageCanvas | undefined;
 
   try {
-    const canvas = document.createElement("canvas");
-    canvas.width = loaded.width;
-    canvas.height = loaded.height;
-    const ctx = canvas.getContext("2d");
+    canvas = createCanvas(loaded.width, loaded.height);
+    const ctx = context2d(canvas);
 
     const targetFormat = options.targetFormat;
     const outMime =
@@ -544,9 +590,13 @@ export async function convertImage(
 
       ctx.drawImage(loaded.element, 0, 0);
     }
-    return await canvasToBlob(canvas, outMime, options.quality ?? 0.92);
+    return await encodeCanvas(canvas, outMime, options.quality ?? 0.92);
   } finally {
     loaded.close();
+    if (canvas) {
+      canvas.width = 0;
+      canvas.height = 0;
+    }
   }
 }
 
@@ -558,21 +608,22 @@ export async function rotateImage(
   input: File | Blob | Uint8Array,
   options: ImageRotateOptions,
 ): Promise<Blob> {
-  const { blob, mimeType } = toBlob(input);
+  const { blob, mimeType } = await toBlob(input);
   const loaded = await loadImageElement(blob);
+  let canvas: ImageCanvas | undefined;
 
   try {
+    if (![0, 90, 180, 270].includes(options.angle)) throw new Error("OPCOES_IMAGEM_INVALIDAS");
     const angle = options.angle;
     const isQuarterTurn = angle === 90 || angle === 270;
     const targetWidth = isQuarterTurn ? loaded.height : loaded.width;
     const targetHeight = isQuarterTurn ? loaded.width : loaded.height;
 
-    const canvas = document.createElement("canvas");
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-    const ctx = canvas.getContext("2d");
+    canvas = createCanvas(targetWidth, targetHeight);
+    const ctx = context2d(canvas);
 
-    const outMime = options.mimeType || mimeType;
+    const outMime =
+      options.mimeType || mimeType || detectMimeType(new Uint8Array(await blob.arrayBuffer()));
 
     if (ctx) {
       ctx.imageSmoothingEnabled = true;
@@ -609,6 +660,10 @@ export async function rotateImage(
     return await canvasToBlob(canvas, outMime, options.quality ?? 0.95);
   } finally {
     loaded.close();
+    if (canvas) {
+      canvas.width = 0;
+      canvas.height = 0;
+    }
   }
 }
 
@@ -620,16 +675,22 @@ export async function watermarkImage(
   input: File | Blob | Uint8Array,
   options: ImageWatermarkOptions,
 ): Promise<Blob> {
-  const { blob, mimeType } = toBlob(input);
+  const { blob, mimeType } = await toBlob(input);
   const loaded = await loadImageElement(blob);
+  let canvas: ImageCanvas | undefined;
 
   try {
-    const canvas = document.createElement("canvas");
-    canvas.width = loaded.width;
-    canvas.height = loaded.height;
-    const ctx = canvas.getContext("2d");
+    validateNumbers(options.opacity, options.watermarkScale, options.fontSize);
+    if (
+      (options.opacity !== undefined && options.opacity > 1) ||
+      (options.type === "image" && !options.watermarkBlob)
+    )
+      throw new Error("OPCOES_IMAGEM_INVALIDAS");
+    canvas = createCanvas(loaded.width, loaded.height);
+    const ctx = context2d(canvas);
 
-    const outMime = options.mimeType || mimeType;
+    const outMime =
+      options.mimeType || mimeType || detectMimeType(new Uint8Array(await blob.arrayBuffer()));
 
     if (ctx) {
       ctx.imageSmoothingEnabled = true;
@@ -643,103 +704,71 @@ export async function watermarkImage(
       // Desenha imagem base
       ctx.drawImage(loaded.element, 0, 0);
 
-      const opacity = Math.max(0.05, Math.min(1.0, options.opacity ?? 0.6));
+      const opacity = Math.max(0, Math.min(1.0, options.opacity ?? 0.6));
       const position = options.position || "center";
 
+      const rotation = ((options.rotation ?? 0) * Math.PI) / 180;
+      if (!Number.isFinite(rotation)) throw new Error("OPCOES_IMAGEM_INVALIDAS");
+      const padding = Math.min(30, Math.min(canvas.width, canvas.height) * 0.05);
+      const surface = canvas;
+      const drawAt = (width: number, height: number, draw: (x: number, y: number) => void) => {
+        const boundW = Math.abs(width * Math.cos(rotation)) + Math.abs(height * Math.sin(rotation));
+        const boundH = Math.abs(width * Math.sin(rotation)) + Math.abs(height * Math.cos(rotation));
+        const scale = Math.min(
+          1,
+          (surface.width - 2 * padding) / boundW,
+          (surface.height - 2 * padding) / boundH,
+        );
+        const halfW = (boundW * scale) / 2,
+          halfH = (boundH * scale) / 2;
+        const paint = (x: number, y: number) => {
+          ctx.save();
+          ctx.globalAlpha = opacity;
+          ctx.translate(x, y);
+          ctx.rotate(rotation);
+          ctx.scale(scale, scale);
+          draw(-width / 2, -height / 2);
+          ctx.restore();
+        };
+        if (position === "repeat") {
+          const stepX = Math.max(1, boundW * scale + padding * 2),
+            stepY = Math.max(1, boundH * scale + padding * 2);
+          // Limite de densidade evita uma marca de poucos pixels gerar milhões de desenhos.
+          if (Math.ceil(surface.width / stepX) * Math.ceil(surface.height / stepY) > 10000)
+            throw new Error("OPCOES_IMAGEM_INVALIDAS");
+          for (let x = halfW + padding; x < surface.width; x += stepX)
+            for (let y = halfH + padding; y < surface.height; y += stepY) paint(x, y);
+        } else {
+          const x = position.endsWith("left")
+            ? padding + halfW
+            : position.endsWith("right")
+              ? surface.width - padding - halfW
+              : surface.width / 2;
+          const y = position.startsWith("top")
+            ? padding + halfH
+            : position.startsWith("bottom")
+              ? surface.height - padding - halfH
+              : surface.height / 2;
+          paint(x, y);
+        }
+      };
       if (options.type === "text") {
         const text = options.text?.trim() || "NexoHub";
         const fontSize = options.fontSize || Math.max(20, Math.round(canvas.width * 0.05));
-        const fontFamily = options.fontFamily || "Inter, -apple-system, sans-serif";
-        const textColor = options.color || "#ffffff";
-        const rotationDeg = options.rotation ?? -30;
-
-        ctx.save();
-        ctx.globalAlpha = opacity;
-        ctx.font = `bold ${fontSize}px ${fontFamily}`;
-        ctx.fillStyle = textColor;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        // Adiciona sombra sutil para contraste legível em qualquer fundo
-        ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-        ctx.shadowBlur = 6;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
-
-        if (position === "repeat") {
-          // Grade em mosaico repetido por toda a imagem
-          const stepX = Math.max(120, fontSize * 5);
-          const stepY = Math.max(80, fontSize * 3.5);
-
-          for (let x = -stepX; x < canvas.width + stepX; x += stepX) {
-            for (let y = -stepY; y < canvas.height + stepY; y += stepY) {
-              ctx.save();
-              ctx.translate(x, y);
-              ctx.rotate((rotationDeg * Math.PI) / 180);
-              ctx.fillText(text, 0, 0);
-              ctx.restore();
-            }
-          }
-        } else {
-          // Posição pontual única
-          let px = canvas.width / 2;
-          let py = canvas.height / 2;
-          const padding = Math.max(24, fontSize);
-
-          if (position === "top-left") {
-            px = padding + fontSize * 2;
-            py = padding + fontSize / 2;
-          } else if (position === "top-right") {
-            px = canvas.width - padding - fontSize * 2;
-            py = padding + fontSize / 2;
-          } else if (position === "bottom-left") {
-            px = padding + fontSize * 2;
-            py = canvas.height - padding - fontSize / 2;
-          } else if (position === "bottom-right") {
-            px = canvas.width - padding - fontSize * 2;
-            py = canvas.height - padding - fontSize / 2;
-          }
-
-          ctx.translate(px, py);
-          if (rotationDeg !== 0) {
-            ctx.rotate((rotationDeg * Math.PI) / 180);
-          }
-          ctx.fillText(text, 0, 0);
-        }
-
-        ctx.restore();
-      } else if (options.type === "image" && options.watermarkBlob) {
-        const wmLoaded = await loadImageElement(options.watermarkBlob);
+        ctx.font = `bold ${fontSize}px ${options.fontFamily || "sans-serif"}`;
+        ctx.fillStyle = options.color || "#ffffff";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        const width = Math.max(1, ctx.measureText(text).width);
+        drawAt(width, fontSize, (x, y) => ctx.fillText(text, x, y));
+      } else if (options.watermarkBlob) {
+        const logo = await loadImageElement(options.watermarkBlob);
         try {
-          ctx.save();
-          ctx.globalAlpha = opacity;
-
-          const scale = options.watermarkScale ?? 0.25;
-          const wmWidth = Math.max(20, Math.round(canvas.width * scale));
-          const wmHeight = Math.round((wmWidth * wmLoaded.height) / wmLoaded.width);
-          const padding = 30;
-
-          let wx = (canvas.width - wmWidth) / 2;
-          let wy = (canvas.height - wmHeight) / 2;
-
-          if (position === "top-left") {
-            wx = padding;
-            wy = padding;
-          } else if (position === "top-right") {
-            wx = canvas.width - wmWidth - padding;
-            wy = padding;
-          } else if (position === "bottom-left") {
-            wx = padding;
-            wy = canvas.height - wmHeight - padding;
-          } else if (position === "bottom-right") {
-            wx = canvas.width - wmWidth - padding;
-            wy = canvas.height - wmHeight - padding;
-          }
-
-          ctx.drawImage(wmLoaded.element, wx, wy, wmWidth, wmHeight);
-          ctx.restore();
+          const width = Math.max(1, canvas.width * (options.watermarkScale ?? 0.25));
+          const height = (width * logo.height) / logo.width;
+          drawAt(width, height, (x, y) => ctx.drawImage(logo.element, x, y, width, height));
         } finally {
-          wmLoaded.close();
+          logo.close();
         }
       }
     }
@@ -747,5 +776,9 @@ export async function watermarkImage(
     return await canvasToBlob(canvas, outMime, options.quality ?? 0.95);
   } finally {
     loaded.close();
+    if (canvas) {
+      canvas.width = 0;
+      canvas.height = 0;
+    }
   }
 }

@@ -130,7 +130,6 @@
   --color-brand-contrast: #1e40af;
   --color-accent: #6366f1;
   --color-focus: #2563eb;
-  --color-surface: #f8fafc;
 }
 
 [data-theme="dark"] [data-zone="img"] {
@@ -736,6 +735,11 @@ button {
 
 .launcher-welcome-container {
   text-align: center;
+}
+.launcher-zone-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .tool-grid {
@@ -8135,6 +8139,12 @@ body,
   --color-border: #e4e4e7;
   --color-ink: #18181b;
   --color-ink-muted: #71717a;
+  --catalog-blue-ink: #2563eb;
+  --catalog-blue-surface: #eff6ff;
+  --catalog-violet-ink: #7c3aed;
+  --catalog-violet-surface: #f5f3ff;
+  --catalog-teal-ink: #0f766e;
+  --catalog-teal-surface: #f0fdfa;
   --catalog-coral-ink: #e11d48;
   --catalog-coral-surface: #fff1f2;
   --catalog-amber-ink: #b45309;
@@ -9910,4 +9920,107 @@ body,
   .zone-toggle button {
     transition: none;
   }
+}
+
+.zone-toggle {
+  margin: 0;
+  min-inline-size: 0;
+}
+.image-tool-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  margin: 0 auto;
+}
+.image-tool-preview {
+  width: 100%;
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+}
+.image-tool-preview img {
+  width: 100%;
+  height: auto;
+  max-height: 560px;
+  object-fit: contain;
+}
+.image-tool-panel > :first-child {
+  flex-direction: column;
+}
+.image-tool-panel :is(button, input, select) {
+  min-height: 44px;
+}
+.image-tool-panel button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.image-watermark-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+}
+.image-processing-limits {
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+}
+[data-zone="img"] .ilovepdf-action-red-btn {
+  background: var(--color-brand);
+}
+@media (min-width: 981px) {
+  .image-tool-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    align-items: start;
+  }
+  .image-tool-panel > :first-child {
+    grid-column: 1;
+    grid-row: 1 / span 8;
+    position: sticky;
+    top: 96px;
+    min-height: 440px;
+  }
+  .image-tool-panel > :not(:first-child) {
+    grid-column: 2;
+  }
+}
+
+.app-shell--catalog > .launcher-content--full {
+  padding-top: 16px;
+}
+.launcher-suites-center {
+  margin-top: 8px;
+}
+[data-theme="dark"] .app-shell--catalog {
+  --catalog-blue-ink: #60a5fa;
+  --catalog-blue-surface: #172554;
+  --catalog-violet-ink: #c4b5fd;
+  --catalog-violet-surface: #2e1065;
+  --catalog-teal-ink: #5eead4;
+  --catalog-teal-surface: #042f2e;
+}
+
+[data-zone] {
+  --color-on-brand: #fff;
+}
+[data-theme="dark"] [data-zone] {
+  --color-on-brand: #0f172a;
+}
+.zone-toggle button[aria-pressed="true"],
+[data-zone] .ilovepdf-action-red-btn {
+  color: var(--color-on-brand);
+}
+
+@media (min-width: 760px) {
+  .app-shell--catalog > .launcher-content--full {
+    padding-top: 8px;
+  }
+}
+.image-tool-panel label {
+  font-size: 14px;
+}
+.image-tool-panel input:not([type="range"]) {
+  font-size: 14px;
 }

@@ -18,11 +18,7 @@ import type { TranslationProgressInfo } from "@/platform/browser-translator";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { readDocumentText } from "@/platform/document-reader";
 import { extractPdfSpreadsheetData } from "@/platform/excel-converter";
-import {
-  getImageMetadata,
-  type ImageCompressionLevel,
-  type WatermarkPosition,
-} from "@/platform/image-engine";
+import type { ImageCompressionLevel, WatermarkPosition } from "@/platform/image-engine";
 import { runLauncherTool } from "@/platform/launcher-tool-runner";
 import {
   type CropMargins,
@@ -39,6 +35,7 @@ import {
   type SignaturePlacement,
 } from "@/platform/pdf-engine";
 import type { ScannedPageItem } from "@/platform/scan-to-pdf-engine";
+import { registerToolNavigationGuard } from "@/platform/tool-navigation-guard";
 import { addCustomWord, ignoreWordInSession } from "@/platform/user-vocabulary";
 import { CompressPdfPanel } from "./CompressPdfPanel";
 import { CropPdfPanel } from "./CropPdfPanel";
@@ -157,6 +154,9 @@ export function DedicatedToolView({
   const [translationProgress, setTranslationProgress] = useState<TranslationProgressInfo | null>(
     null,
   );
+  const imageController = useRef<AbortController | null>(null);
+  const [imageBatchProgress, setImageBatchProgress] = useState("");
+  useEffect(() => () => imageController.current?.abort(), []);
   const translationController = useRef<AbortController | null>(null);
   const translationRun = useRef(0);
   // biome-ignore lint/correctness/useExhaustiveDependencies: trocar o arquivo/ferramenta encerra o trabalho associado.
@@ -374,14 +374,15 @@ export function DedicatedToolView({
   const [imageCropWidth, setImageCropWidth] = useState<number>(800);
   const [imageCropHeight, setImageCropHeight] = useState<number>(600);
   const [imageTargetFormat, setImageTargetFormat] = useState<ImageTargetFormat>("jpeg");
-  const [imageConvertQuality, setImageConvertQuality] = useState<number>(85);
-  const [imageRotateAngle, setImageRotateAngle] = useState<90 | 180 | 270>(90);
+  const [imageConvertQuality, setImageConvertQuality] = useState<number>(0.92);
+  const [imageRotateAngle, setImageRotateAngle] = useState<0 | 90 | 180 | 270>(90);
   const [imageFlipHorizontal, setImageFlipHorizontal] = useState<boolean>(false);
   const [imageFlipVertical, setImageFlipVertical] = useState<boolean>(false);
   const [imageWatermarkType, setImageWatermarkType] = useState<"text" | "image">("text");
   const [imageWatermarkText, setImageWatermarkText] = useState<string>("NexoHub");
   const [imageWatermarkColor, setImageWatermarkColor] = useState<string>("#ffffff");
-  const [imageWatermarkOpacity, setImageWatermarkOpacity] = useState<number>(50);
+  const [imageWatermarkFile, setImageWatermarkFile] = useState<File | null>(null);
+  const [imageWatermarkOpacity, setImageWatermarkOpacity] = useState<number>(0.5);
   const [imageWatermarkRotation, setImageWatermarkRotation] = useState<number>(0);
   const [imageWatermarkPosition, setImageWatermarkPosition] = useState<WatermarkPosition>("center");
   const [imageOriginalDimensions, setImageOriginalDimensions] = useState<{
@@ -397,6 +398,24 @@ export function DedicatedToolView({
     [downloadUrl],
   );
 
+  const hasPendingSession =
+    files.length > 0 ||
+    Boolean(directText || doc1Text || doc2Text || htmlCodeContent) ||
+    scannedPages.length > 0;
+  useEffect(() => {
+    if (
+      !hasPendingSession ||
+      status === "success" ||
+      tool.id === "pdf-edit" ||
+      tool.id === "pdf-compare"
+    )
+      return;
+    return registerToolNavigationGuard(
+      (reason) =>
+        (reason !== "zone" && tool.manifest.category !== "image") ||
+        window.confirm(translate("imageProcessing.leaveConfirm")),
+    );
+  }, [hasPendingSession, status, tool.id, tool.manifest.category]);
   const isImageTool = tool.id === "images-to-pdf" || tool.manifest.category === "image";
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const previewFiles = useRef(new WeakMap<File, Map<number, Promise<string>>>());
@@ -448,13 +467,15 @@ export function DedicatedToolView({
         isImageTool
       }
       accept={
-        isImageTool
-          ? ".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
-          : tool.id === "pdf-ocr"
-            ? ".pdf,application/pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-            : tool.suite === "text"
-              ? ".txt,.md,.pdf,.docx"
-              : ".pdf,application/pdf"
+        tool.manifest.category === "image"
+          ? ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+          : isImageTool
+            ? ".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
+            : tool.id === "pdf-ocr"
+              ? ".pdf,application/pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              : tool.suite === "text"
+                ? ".txt,.md,.pdf,.docx"
+                : ".pdf,application/pdf"
       }
       onChange={handleFileInput}
     />
@@ -614,6 +635,7 @@ export function DedicatedToolView({
 
       try {
         const bytes = new Uint8Array(await file.arrayBuffer());
+        const { getImageMetadata } = await import("@/platform/image-engine");
         const meta = await getImageMetadata(bytes);
         if (isCancelled) return;
         setImageOriginalDimensions({ width: meta.width, height: meta.height });
@@ -983,12 +1005,21 @@ export function DedicatedToolView({
         ? files[0]
         : new File([directText], "documento_digitado.txt", { type: "text/plain" });
 
+    let currentImageRun: AbortController | null = null;
     try {
       if (!documentCore.supportedToolIds.has(tool.id)) {
         throw new Error("TOOL_UNAVAILABLE");
       }
       if (!isTranslation) setProgress(40);
+      if (tool.manifest.category === "image") {
+        imageController.current?.abort();
+        imageController.current = new AbortController();
+        setImageBatchProgress(translate("imageProcessing.running"));
+      }
+      currentImageRun = tool.manifest.category === "image" ? imageController.current : null;
       const output = await runLauncherTool(documentCore, tool.id, {
+        imageSignal: currentImageRun?.signal,
+        onImageProgress: (completed, total) => setImageBatchProgress(`${completed} / ${total}`),
         files: files.length > 0 ? files : [primaryFile],
         splitMode,
         splitIntervals,
@@ -1009,10 +1040,11 @@ export function DedicatedToolView({
         imageCropWidth,
         imageCropHeight,
         imageTargetFormat,
-        imageCustomQuality: imageConvertQuality,
+        imageCustomQuality: tool.id === "image-convert" ? imageConvertQuality : undefined,
         imageRotateAngle,
         imageFlipHorizontal,
         imageFlipVertical,
+        imageWatermarkFile: imageWatermarkFile ?? undefined,
         imageWatermarkType,
         imageWatermarkText,
         imageWatermarkColor,
@@ -1107,16 +1139,23 @@ export function DedicatedToolView({
         },
       });
       if (isTranslation && run !== translationRun.current) return;
+      if (currentImageRun?.signal.aborted) return;
       const outputBlob = output.blob;
       const outName = output.fileName;
       const categoryKey = output.categoryKey;
       const resultSizeBytes = outputBlob.size;
+      const totalOriginalBytes =
+        tool.manifest.category === "image"
+          ? files.reduce((total, file) => total + file.size, 0)
+          : primaryFile.size;
       if (tool.id === "pdf-compress" || tool.id === "image-compress") {
         setCompressionResult({
-          originalBytes: primaryFile.size,
+          originalBytes: totalOriginalBytes,
           compressedBytes: resultSizeBytes,
-          savedBytes: primaryFile.size - resultSizeBytes,
-          savedPercent: Math.round(((primaryFile.size - resultSizeBytes) / primaryFile.size) * 100),
+          savedBytes: totalOriginalBytes - resultSizeBytes,
+          savedPercent: Math.round(
+            ((totalOriginalBytes - resultSizeBytes) / totalOriginalBytes) * 100,
+          ),
         });
       }
       if (tool.id === "pdf-to-markdown") {
@@ -1162,11 +1201,16 @@ export function DedicatedToolView({
         documentName: primaryFile.name,
         toolId: tool.id,
         toolName: translate(tool.titleKey),
-        originalSize: primaryFile.size,
+        originalSize: totalOriginalBytes,
         resultSize: resultSizeBytes,
         categoryKey,
       });
     } catch (err) {
+      if (
+        currentImageRun &&
+        (currentImageRun.signal.aborted || currentImageRun !== imageController.current)
+      )
+        return;
       if (
         isTranslation &&
         (run !== translationRun.current ||
@@ -1902,6 +1946,8 @@ export function DedicatedToolView({
           fileSizeBytes={files[0]?.size || 0}
           thumbnailUrl={imagePreviewUrl ?? undefined}
           originalDimensions={imageOriginalDimensions ?? undefined}
+          watermarkFile={imageWatermarkFile}
+          onWatermarkFileChange={setImageWatermarkFile}
           watermarkType={imageWatermarkType}
           onWatermarkTypeChange={setImageWatermarkType}
           text={imageWatermarkText}
@@ -2179,13 +2225,30 @@ export function DedicatedToolView({
           renderVisualPanel()
         )}
 
+        {tool.manifest.category === "image" && (
+          <p className="image-processing-limits">{translate("imageProcessing.limit")}</p>
+        )}
         {/* Barra de Ação Inferior Fixa com Botão Estilo iLovePDF / iLoveIMG */}
         <div className="dedicated-tool-bottom-bar" style={{ marginTop: "1.5rem" }}>
+          {tool.manifest.category === "image" && status === "running" && (
+            <>
+              <p role="status">{imageBatchProgress}</p>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  imageController.current?.abort();
+                  setStatus("idle");
+                  setImageBatchProgress("");
+                }}
+              >
+                {translate("imageProcessing.cancel")}
+              </Button>
+            </>
+          )}
           {errorMessage && <p role="alert">{errorMessage}</p>}
           <button
             type="button"
             className="ilovepdf-action-red-btn"
-            style={tool.manifest.category === "image" ? { backgroundColor: "#2563eb" } : undefined}
             disabled={
               status === "running" ||
               !pageRangeValid ||

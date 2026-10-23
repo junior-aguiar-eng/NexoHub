@@ -221,7 +221,7 @@ export const ptBR = {
   "brand.webStation": "NexoHub Web",
   "brand.desktopStation": "NexoHub Desktop",
   "brand.subtitle": "Ferramentas práticas de PDF e documentos.",
-  "brand.footerTagline": "Ferramentas de PDF práticas, gratuitas e 100% locais.",
+  "brand.footerTagline": "Ferramentas para seus arquivos. Gratuitas e locais.",
   "header.search": "Buscar ferramenta",
   "header.homeLabel": "NexoHub - Página Inicial",
   "header.primaryNavigation": "Navegação Principal",
@@ -1275,13 +1275,21 @@ export const ptBR = {
   "scanToPdf.noPages": "Capture ou carregue ao menos uma página para gerar o PDF.",
 
   // ZONAS DE TRABALHO (MODO PDF E MODO IMAGEM)
-  "imageProcessing.leaveConfirm": "Sair desta ferramenta? Os arquivos e ajustes desta sessão serão descartados.",
+  "imageWatermark.selectLogo": "Selecionar logotipo (PNG, JPG ou WebP)",
+  "imageProcessing.leaveConfirm":
+    "Sair desta ferramenta? Os arquivos e ajustes desta sessão serão descartados.",
   "imageProcessing.running": "Processando no seu dispositivo…",
   "imageProcessing.cancel": "Cancelar processamento",
-  "imageProcessing.limit": "Use imagens JPG, PNG ou WebP estáticas, de até 24 megapixels e 64 MiB por arquivo.",
-  "imageProcessing.errorLarge": "A imagem excede 24 megapixels, 16.384 pixels por lado ou 64 MiB. Reduza as dimensões antes de continuar.",
-  "imageProcessing.errorFormat": "Este formato ou animação não é compatível. Use JPG, PNG ou WebP estático.",
-  "imageProcessing.errorExport": "Não foi possível exportar a imagem. Tente outro formato ou um arquivo menor.",
+  "imageProcessing.limit":
+    "Use imagens JPG, PNG ou WebP estáticas, de até 24 megapixels e 64 MiB por arquivo. Lotes: até 20 imagens e 128 MiB.",
+  "imageProcessing.errorBatch":
+    "Use até 20 imagens por lote, com no máximo 128 MiB de entrada e 128 MiB de saída.",
+  "imageProcessing.errorLarge":
+    "A imagem excede 24 megapixels, 16.384 pixels por lado ou 64 MiB. Reduza as dimensões antes de continuar.",
+  "imageProcessing.errorFormat":
+    "Este formato ou animação não é compatível. Use JPG, PNG ou WebP estático.",
+  "imageProcessing.errorExport":
+    "Não foi possível exportar a imagem. Tente outro formato ou um arquivo menor.",
   "imageProcessing.errorOptions": "Confira as dimensões, coordenadas e qualidade informadas.",
   "zone.pdf": "PDF",
   "zone.image": "Imagem",
@@ -1348,6 +1356,8 @@ export const ptBR = {
   "tool.imageWatermark.tagline": "Sua assinatura visual, na posição certa.",
 
   // OPÇÕES - COMPRIMIR IMAGEM
+  "imageCompress.pngHint":
+    "Em PNG, os pixels e as dimensões são preservados; o nível muda o esforço de otimização.",
   "imageCompress.levelRecommended": "Recomendada",
   "imageCompress.levelRecommendedDesc": "Melhor relação entre compressão e qualidade visual.",
   "imageCompress.levelExtreme": "Extrema",

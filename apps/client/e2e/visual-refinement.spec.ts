@@ -21,10 +21,10 @@ for (const [width, columns] of [
           .evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(" ").length),
       )
       .toBe(columns);
-    await expect(page.locator(".tool-card__icon").first()).toHaveCSS("width", "44px");
+    await expect(page.locator(".tool-card__icon").first()).toHaveCSS("width", "48px");
     await expect(cards.first()).toHaveCSS("padding", "24px");
     await expect(cards.first()).toHaveCSS("border-radius", "16px");
-    await expect(page.locator(".tool-grid")).toHaveCSS("gap", "20px");
+    await expect(page.locator(".tool-grid")).toHaveCSS("gap", "16px");
     const layout = await cards.evaluateAll((elements) =>
       elements.map((card) => {
         const rect = card.getBoundingClientRect();
@@ -231,26 +231,23 @@ test("clique interno no catálogo preserva a seleção da ferramenta", async ({ 
   await expect(panel).toHaveCount(0);
 });
 
-test("busca do catálogo combina categorias, limpa com Escape e abre a paleta pelo atalho", async ({
-  page,
-}) => {
-  await page.goto("/");
-  const search = page.getByRole("searchbox", { name: "Buscar ferramentas" });
+test("busca do cabeçalho encontra ações e mantém categorias funcionais", async ({ page }) => {
+  await page.goto("/pdf");
+  await expect(page.getByRole("searchbox")).toHaveCount(0);
+  await page.getByRole("button", { name: "Buscar no NexoHub" }).click();
+  const dialog = page.getByRole("dialog");
+  const search = dialog.getByRole("searchbox", { name: "Buscar ferramentas" });
   await search.fill("juntar");
-  await expect(page.locator(".tool-card")).toHaveCount(1);
-  await expect(page.locator(".tool-card")).toHaveAttribute("data-tone", "coral");
+  await expect(dialog.getByRole("button", { name: "Juntar PDF", exact: true })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Comprimir PDF", exact: true })).toHaveCount(0);
+  await search.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Buscar no NexoHub" })).toBeFocused();
   await page
     .getByRole("navigation", { name: "Categorias de ferramentas" })
     .getByRole("button", { name: "Converter PDF", exact: true })
     .click();
-  await expect(page.locator(".tool-card")).toHaveCount(0);
-  await search.focus();
-  await search.press("Escape");
-  await expect(search).toHaveValue("");
   await expect(page.locator(".tool-card").first()).toHaveAttribute("data-tone", "amber");
   await page.keyboard.press("Control+k");
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Abrir busca rápida (Ctrl + K ou ⌘K)" }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(dialog).toBeVisible();
 });

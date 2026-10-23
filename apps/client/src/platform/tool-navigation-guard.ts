@@ -1,11 +1,15 @@
-/** Guard único da ferramenta ativa; protege navegação SPA sem guardar conteúdo documental. */
-let guard: (() => boolean) | undefined;
-export function registerToolNavigationGuard(next: () => boolean): () => void {
-  guard = next;
+/** Guards da ferramenta ativa se compõem sem expor conteúdo documental. */
+export type ToolNavigationReason = "tool" | "zone";
+const guards = new Set<(reason: ToolNavigationReason) => boolean>();
+export function registerToolNavigationGuard(
+  next: (reason: ToolNavigationReason) => boolean,
+): () => void {
+  guards.add(next);
   return () => {
-    if (guard === next) guard = undefined;
+    guards.delete(next);
   };
 }
-export function allowToolNavigation(): boolean {
-  return guard?.() ?? true;
+export function allowToolNavigation(reason: ToolNavigationReason = "tool"): boolean {
+  for (const guard of guards) if (!guard(reason)) return false;
+  return true;
 }

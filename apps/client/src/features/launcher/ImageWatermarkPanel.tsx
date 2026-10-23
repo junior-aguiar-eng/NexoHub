@@ -7,6 +7,8 @@ interface ImageWatermarkPanelProps {
   readonly fileSizeBytes: number;
   readonly originalDimensions?: { width: number; height: number };
   readonly thumbnailUrl?: string;
+  readonly watermarkFile: File | null;
+  readonly onWatermarkFileChange: (file: File | null) => void;
   readonly watermarkType: "text" | "image";
   readonly onWatermarkTypeChange: (type: "text" | "image") => void;
   readonly text: string;
@@ -25,6 +27,8 @@ export function ImageWatermarkPanel({
   fileName,
   thumbnailUrl,
   originalDimensions,
+  watermarkFile,
+  onWatermarkFileChange,
   watermarkType,
   onWatermarkTypeChange,
   text,
@@ -55,12 +59,12 @@ export function ImageWatermarkPanel({
   ];
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto w-full p-4">
+    <div className="image-tool-panel">
       {/* Pré-visualização da Imagem com Simulação da Marca d'Água */}
       <div className="bg-surface rounded-2xl border border-border p-6 flex flex-col items-center justify-center gap-4 shadow-xs">
         <div className="w-64 h-64 rounded-xl bg-surface-muted border border-border overflow-hidden flex items-center justify-center relative select-none">
           {thumbnailUrl ? (
-            <img src={thumbnailUrl} alt={fileName} className="w-full h-full object-cover" />
+            <img src={thumbnailUrl} alt={fileName} className="w-full h-full object-contain" />
           ) : (
             <Stamp className="w-12 h-12 text-blue-600" />
           )}
@@ -152,6 +156,38 @@ export function ImageWatermarkPanel({
         </button>
       </div>
 
+      {watermarkType === "image" && (
+        <div className="image-watermark-upload">
+          <label htmlFor="image-watermark-logo">{translate("imageWatermark.selectLogo")}</label>
+          <input
+            id="image-watermark-logo"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(event) => onWatermarkFileChange(event.target.files?.[0] ?? null)}
+          />
+          {watermarkFile && <span>{watermarkFile.name}</span>}
+          <label htmlFor="logo-opacity">{translate("imageWatermark.opacity")}</label>
+          <input
+            id="logo-opacity"
+            type="range"
+            min="0.1"
+            max="1"
+            step="0.05"
+            value={opacity}
+            onChange={(event) => onOpacityChange(Number(event.target.value))}
+          />
+          <label htmlFor="logo-rotation">{translate("imageWatermark.rotation")}</label>
+          <input
+            id="logo-rotation"
+            type="range"
+            min="-90"
+            max="90"
+            step="5"
+            value={rotation}
+            onChange={(event) => onRotationChange(Number(event.target.value))}
+          />
+        </div>
+      )}
       {/* Controles de Texto */}
       {watermarkType === "text" && (
         <div className="flex flex-col gap-4 bg-surface p-5 rounded-2xl border border-border">

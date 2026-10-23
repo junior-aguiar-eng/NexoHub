@@ -6,8 +6,8 @@ interface ImageRotatePanelProps {
   readonly fileSizeBytes: number;
   readonly originalDimensions?: { width: number; height: number };
   readonly thumbnailUrl?: string;
-  readonly angle: 90 | 180 | 270;
-  readonly onAngleChange: (angle: 90 | 180 | 270) => void;
+  readonly angle: 0 | 90 | 180 | 270;
+  readonly onAngleChange: (angle: 0 | 90 | 180 | 270) => void;
   readonly flipHorizontal: boolean;
   readonly onFlipHorizontalChange: (flip: boolean) => void;
   readonly flipVertical: boolean;
@@ -30,12 +30,12 @@ export function ImageRotatePanel({
 
   const handleRotateCw = () => {
     const next = (angle + 90) % 360;
-    onAngleChange((next === 0 ? 360 : next) as 90 | 180 | 270);
+    onAngleChange(next as 0 | 90 | 180 | 270);
   };
 
   const handleRotateCcw = () => {
     const next = (angle - 90 + 360) % 360;
-    onAngleChange((next === 0 ? 360 : next) as 90 | 180 | 270);
+    onAngleChange(next as 0 | 90 | 180 | 270);
   };
 
   const isQuarterTurn = angle === 90 || angle === 270;
@@ -43,7 +43,7 @@ export function ImageRotatePanel({
   const resultH = isQuarterTurn ? origW : origH;
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto w-full p-4">
+    <div className="image-tool-panel">
       {/* Pré-visualização com Transformação em Tempo Real */}
       <div className="bg-surface rounded-2xl border border-border p-6 flex flex-col items-center justify-center gap-4 shadow-xs">
         <div className="w-56 h-56 rounded-xl bg-surface-muted border border-border overflow-hidden flex items-center justify-center relative">

@@ -189,14 +189,39 @@ export function App() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const activePath = useRef(window.location.pathname);
 
+  useEffect(() => {
+    const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (icon) icon.href = `/favicon-${workZone}.svg`;
+  }, [workZone]);
+
+  useEffect(() => {
+    if (window.location.pathname === "/") {
+      const route = workZone === "img" ? "/img" : "/pdf";
+      window.history.replaceState({ zone: workZone }, "", route);
+      activePath.current = route;
+    }
+  }, [workZone]);
+
   // Sincroniza a URL do navegador com a zona ativa e ferramenta
   useEffect(() => {
     function handlePopState() {
-      if (window.location.pathname !== activePath.current && !allowToolNavigation()) {
+      const destination = window.location.pathname.replace(/\/$/, "");
+      const destinationTool = dynamicTools.find((tool) => tool.id === ROUTE_TOOL_MAP[destination]);
+      const nextZone =
+        destination === "/img" ||
+        destination.startsWith("/img/") ||
+        destinationTool?.manifest.category === "image"
+          ? "img"
+          : "pdf";
+      if (
+        window.location.pathname !== activePath.current &&
+        !allowToolNavigation(nextZone === workZone ? "tool" : "zone")
+      ) {
         window.history.pushState({}, "", activePath.current);
         return;
       }
       activePath.current = window.location.pathname;
+      setActiveSuite("overview");
       if (typeof window !== "undefined") {
         window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       }
@@ -232,10 +257,10 @@ export function App() {
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [dynamicTools]);
+  }, [dynamicTools, workZone]);
 
   const handleZoneChange = (nextZone: WorkZone) => {
-    if (nextZone === workZone || !allowToolNavigation()) return;
+    if (nextZone === workZone || !allowToolNavigation("zone")) return;
     setInitialFilesForTool([]);
     setWorkZone(nextZone);
     setActiveDedicatedTool(null);

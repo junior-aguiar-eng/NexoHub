@@ -18,12 +18,12 @@ marca, ícones ou textos. Somente website; sem push, deploy ou mudanças desktop
 - Busca apenas pelo cabeçalho/paleta existente, com Ctrl/⌘K, Escape e navegação por teclado.
   Buscar por nome, ação e descrição sem distinguir acentos; resultados do modo ativo.
 - Margens: 24px no desktop, 16px abaixo de 760px; largura máxima do catálogo de 1440px.
-  Grade com gap de 16px em vez de 20px. Manter 5 colunas acima de 1200px, 4 de 1000 a
+  Grade com gap de 16px em vez de 20px. Separar os filtros dos cards por 24px visuais, conforme refinamento solicitado após aprovação. Manter 5 colunas acima de 1200px, 4 de 1000 a
   1200px, 3 de 760 a 999px, 2 de 520 a 759px e 1 abaixo de 520px.
 - Cards: padding 24px, raio 16px, altura mínima 224px e altura uniforme por linha;
   títulos 16px/600, descrições 14px/1,6, sem truncamento. Ilustrações de 48px.
 - Filtros: alvos de 48px, gap 12px, ativo grafite e inativos neutros. Não reduzir legibilidade
-  para aumentar densidade. Alvo de composição: primeira linha iniciando até 240px do topo
+  para aumentar densidade. Alvo de composição: primeira linha iniciando até 264px do topo
   em 1440×900, com título de uma linha. Em telas menores, permitir quebra natural.
 
 ## Temas e marca

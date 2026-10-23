@@ -20,15 +20,8 @@ import {
 import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
 import { convertHtmlToPdfDocument } from "./html-to-pdf-converter";
-import {
-  compressImage,
-  convertImage,
-  cropImage,
-  resizeImage,
-  rotateImage,
-  type WatermarkPosition,
-  watermarkImage,
-} from "./image-engine";
+import type { WatermarkPosition } from "./image-engine";
+import { processImage } from "./image-processing";
 import { performBrowserPdfComparison } from "./pdf-comparison-client";
 import type { PdfComparisonProgress, PdfComparisonResult } from "./pdf-comparison-types";
 import { reviseBrowserPdf } from "./pdf-editor-client";
@@ -81,6 +74,8 @@ export interface LauncherToolInput {
   readonly editorSignal?: AbortSignal;
   readonly comparisonSignal?: AbortSignal;
   readonly onComparisonProgress?: (info: PdfComparisonProgress) => void;
+  readonly imageSignal?: AbortSignal;
+  readonly onImageProgress?: (completed: number, total: number) => void;
   readonly files: readonly File[];
   readonly splitMode: "interval" | "pages";
   readonly splitIntervals: readonly LauncherInterval[];
@@ -177,7 +172,7 @@ export interface LauncherToolInput {
   readonly imageCropWidth?: number;
   readonly imageCropHeight?: number;
   readonly imageTargetFormat?: "jpeg" | "png" | "webp";
-  readonly imageRotateAngle?: 90 | 180 | 270;
+  readonly imageRotateAngle?: 0 | 90 | 180 | 270;
   readonly imageFlipHorizontal?: boolean;
   readonly imageFlipVertical?: boolean;
   readonly imageWatermarkType?: "text" | "image";
@@ -298,6 +293,38 @@ async function executeTool(
   request: ToolRunRequest,
 ): Promise<LauncherToolOutput> {
   const input = request.input as LauncherToolInput;
+  if (input.imageSignal?.aborted) throw new Error("OPERACAO_CANCELADA");
+  if (
+    request.toolId.startsWith("image-") &&
+    (input.files.length > 20 ||
+      input.files.reduce((sum, file) => sum + file.size, 0) > 128 * 1024 * 1024)
+  )
+    throw new Error("LOTE_IMAGEM_MUITO_GRANDE");
+  if (request.toolId.startsWith("image-") && input.files.length > 1) {
+    const entries: { name: string; data: Uint8Array }[] = [];
+    for (const [index, file] of input.files.entries()) {
+      const result = await executeTool(documentCore, {
+        ...request,
+        input: { ...input, files: [file], onImageProgress: undefined },
+      });
+      if (
+        entries.reduce((sum, entry) => sum + entry.data.byteLength, 0) + result.blob.size >
+        128 * 1024 * 1024
+      )
+        throw new Error("LOTE_IMAGEM_MUITO_GRANDE");
+      entries.push({
+        name: `${index + 1}_${result.fileName}`,
+        data: new Uint8Array(await result.blob.arrayBuffer()),
+      });
+      input.onImageProgress?.(index + 1, input.files.length);
+    }
+    if (input.imageSignal?.aborted) throw new Error("OPERACAO_CANCELADA");
+    return {
+      blob: new Blob([createZipArchive(entries) as BlobPart], { type: "application/zip" }),
+      fileName: "imagens_processadas.zip",
+      categoryKey: "recent.type.document",
+    };
+  }
   const first = input.files[0];
   const isDoclessTool =
     request.toolId === "text-compare" ||
@@ -718,7 +745,11 @@ async function executeTool(
       const translationResult = await performBrowserTranslation(rawText, {
         sourceLang,
         targetLang,
-        signal: input.translationSignal ?? input.comparisonSignal ?? input.editorSignal,
+        signal:
+          input.imageSignal ??
+          input.translationSignal ??
+          input.comparisonSignal ??
+          input.editorSignal,
         onProgress: (info) => {
           input.onTranslationProgress?.(info);
         },
@@ -1083,33 +1114,47 @@ async function executeTool(
     }
     case "image-compress": {
       if (!first) throw new Error("INVALID_INPUT");
-      const compResult = await compressImage(first, {
-        level: input.imageCompressionLevel,
-        customQuality: input.imageCustomQuality,
-      });
+      const compressedBlob = await processImage(
+        {
+          kind: "compress",
+          blob: first,
+          options: {
+            level: input.imageCompressionLevel,
+            customQuality: input.imageCustomQuality,
+          },
+        },
+        input.imageSignal,
+      );
       const ext =
-        compResult.mimeType === "image/png"
+        compressedBlob.type === "image/png"
           ? "png"
-          : compResult.mimeType === "image/webp"
+          : compressedBlob.type === "image/webp"
             ? "webp"
             : "jpg";
       return {
-        blob: compResult.blob,
+        blob: compressedBlob,
         fileName: `${baseName}_comprimido.${ext}`,
         categoryKey: "recent.type.document",
       };
     }
     case "image-resize": {
       if (!first) throw new Error("INVALID_INPUT");
-      const blob = await resizeImage(first, {
-        mode: input.imageResizeMode ?? "percentage",
-        percentage: input.imageResizePercentage,
-        width: input.imageResizeWidth,
-        height: input.imageResizeHeight,
-        maintainAspectRatio: input.imageResizeMaintainAspectRatio,
-        doNotEnlarge: input.imageResizeDoNotEnlarge,
-      });
-      const ext = first.name.includes(".") ? first.name.split(".").pop() || "jpg" : "jpg";
+      const blob = await processImage(
+        {
+          kind: "resize",
+          blob: first,
+          options: {
+            mode: input.imageResizeMode ?? "percentage",
+            percentage: input.imageResizePercentage,
+            width: input.imageResizeWidth,
+            height: input.imageResizeHeight,
+            maintainAspectRatio: input.imageResizeMaintainAspectRatio,
+            doNotEnlarge: input.imageResizeDoNotEnlarge,
+          },
+        },
+        input.imageSignal,
+      );
+      const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
       return {
         blob,
         fileName: `${baseName}_redimensionado.${ext}`,
@@ -1118,13 +1163,20 @@ async function executeTool(
     }
     case "image-crop": {
       if (!first) throw new Error("INVALID_INPUT");
-      const blob = await cropImage(first, {
-        x: input.imageCropX ?? 0,
-        y: input.imageCropY ?? 0,
-        width: input.imageCropWidth ?? 100,
-        height: input.imageCropHeight ?? 100,
-      });
-      const ext = first.name.includes(".") ? first.name.split(".").pop() || "jpg" : "jpg";
+      const blob = await processImage(
+        {
+          kind: "crop",
+          blob: first,
+          options: {
+            x: input.imageCropX ?? 0,
+            y: input.imageCropY ?? 0,
+            width: input.imageCropWidth ?? 100,
+            height: input.imageCropHeight ?? 100,
+          },
+        },
+        input.imageSignal,
+      );
+      const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
       return {
         blob,
         fileName: `${baseName}_recortado.${ext}`,
@@ -1134,9 +1186,17 @@ async function executeTool(
     case "image-convert": {
       if (!first) throw new Error("INVALID_INPUT");
       const targetFormat = input.imageTargetFormat ?? "jpeg";
-      const blob = await convertImage(first, {
-        targetFormat,
-      });
+      const blob = await processImage(
+        {
+          kind: "convert",
+          blob: first,
+          options: {
+            targetFormat,
+            quality: input.imageCustomQuality,
+          },
+        },
+        input.imageSignal,
+      );
       const ext = targetFormat === "jpeg" ? "jpg" : targetFormat;
       return {
         blob,
@@ -1146,12 +1206,19 @@ async function executeTool(
     }
     case "image-rotate": {
       if (!first) throw new Error("INVALID_INPUT");
-      const blob = await rotateImage(first, {
-        angle: input.imageRotateAngle ?? 90,
-        flipHorizontal: input.imageFlipHorizontal,
-        flipVertical: input.imageFlipVertical,
-      });
-      const ext = first.name.includes(".") ? first.name.split(".").pop() || "jpg" : "jpg";
+      const blob = await processImage(
+        {
+          kind: "rotate",
+          blob: first,
+          options: {
+            angle: input.imageRotateAngle ?? 90,
+            flipHorizontal: input.imageFlipHorizontal,
+            flipVertical: input.imageFlipVertical,
+          },
+        },
+        input.imageSignal,
+      );
+      const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
       return {
         blob,
         fileName: `${baseName}_girado.${ext}`,
@@ -1160,16 +1227,23 @@ async function executeTool(
     }
     case "image-watermark": {
       if (!first) throw new Error("INVALID_INPUT");
-      const blob = await watermarkImage(first, {
-        type: input.imageWatermarkType ?? "text",
-        text: input.imageWatermarkText,
-        color: input.imageWatermarkColor,
-        opacity: input.imageWatermarkOpacity,
-        rotation: input.imageWatermarkRotation,
-        position: input.imageWatermarkPosition,
-        watermarkBlob: input.imageWatermarkFile,
-      });
-      const ext = first.name.includes(".") ? first.name.split(".").pop() || "jpg" : "jpg";
+      const blob = await processImage(
+        {
+          kind: "watermark",
+          blob: first,
+          options: {
+            type: input.imageWatermarkType ?? "text",
+            text: input.imageWatermarkText,
+            color: input.imageWatermarkColor,
+            opacity: input.imageWatermarkOpacity ?? 0.5,
+            rotation: input.imageWatermarkRotation,
+            position: input.imageWatermarkPosition,
+            watermarkBlob: input.imageWatermarkFile,
+          },
+        },
+        input.imageSignal,
+      );
+      const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
       return {
         blob,
         fileName: `${baseName}_marca_dagua.${ext}`,
@@ -1207,6 +1281,15 @@ export async function runLauncherTool(
           throw new ToolRunError("CANCELLED", translate("workspace.translate.cancelled"));
         }
         const messages = {
+          LOTE_IMAGEM_MUITO_GRANDE: "imageProcessing.errorBatch",
+          IMAGEM_MUITO_GRANDE: "imageProcessing.errorLarge",
+          FORMATO_IMAGEM_NAO_SUPORTADO: "imageProcessing.errorFormat",
+          ANIMACAO_IMAGEM_NAO_SUPORTADA: "imageProcessing.errorFormat",
+          OPCOES_IMAGEM_INVALIDAS: "imageProcessing.errorOptions",
+          FALHA_CARREGAR_IMAGEM: "imageProcessing.errorExport",
+          FALHA_EXPORTAR_IMAGEM: "imageProcessing.errorExport",
+          TEMPO_PROCESSAMENTO_IMAGEM: "imageProcessing.errorExport",
+          CANVAS_NAO_DISPONIVEL: "imageProcessing.errorExport",
           EDITOR_LIMITE: "editor.limit",
           EDITOR_PDF_INVALIDO: "editor.invalidPdf",
           EDITOR_SENHA: "editor.password",
@@ -1271,7 +1354,8 @@ export async function runLauncherTool(
   const result = await runner.run({
     toolId,
     input,
-    signal: input.translationSignal ?? input.comparisonSignal ?? input.editorSignal,
+    signal:
+      input.imageSignal ?? input.translationSignal ?? input.comparisonSignal ?? input.editorSignal,
   });
   const output = result.artifacts[0] as LauncherToolOutput | undefined;
   if (!output?.blob || !output.fileName) throw new Error("EXECUTION_FAILED");

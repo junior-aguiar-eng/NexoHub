@@ -150,7 +150,7 @@ test("câmera conecta vídeo, troca dispositivo e encerra tracks", async ({ page
   await expect
     .poll(() => page.locator("video").evaluate((v) => !!(v as HTMLVideoElement).srcObject))
     .toBe(true);
-  await page.getByRole("button", { name: /Alternar|Trocar.*[Cc]âmera/ }).click();
+  await page.getByRole("button", { name: /(?:Alternar|Trocar).*?[Cc]âmera/ }).click();
   await expect
     .poll(() => page.evaluate(() => Reflect.get(window, "cameraAudit").requests))
     .toEqual(["environment", "user"]);

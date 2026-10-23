@@ -1,0 +1,15 @@
+NexoHub — codecs opcionais do website
+
+Wrappers jSquash: @jsquash/jpeg 1.6.0, @jsquash/webp 1.5.0, @jsquash/oxipng 2.3.0
+https://github.com/jamsinclair/jSquash
+Copyright Google Inc. / Jamie Sinclair. Apache-2.0, texto anexo.
+
+Pica 10.0.3: https://github.com/nodeca/pica
+MIT, texto anexo.
+
+Licenças upstream consultadas e preservadas em 23/10/2026:
+MozJPEG: https://github.com/mozilla/mozjpeg/blob/master/LICENSE.md
+libwebp: https://github.com/webmproject/libwebp/blob/main/COPYING
+OxiPNG: https://github.com/shssoichiro/oxipng/blob/master/LICENSE
+As versões dos wrappers estão fixadas no lockfile. Estes textos upstream complementam,
+não substituem, os avisos dos pacotes distribuídos.

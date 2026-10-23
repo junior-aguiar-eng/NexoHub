@@ -87,15 +87,15 @@ export function ImageCropPanel({
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto w-full p-4">
+    <div className="image-tool-panel">
       {/* Pré-visualização da Imagem */}
       <div className="bg-surface rounded-2xl border border-border p-5 flex flex-col sm:flex-row items-center gap-5 shadow-xs">
         {thumbnailUrl ? (
-          <div className="w-28 h-28 rounded-xl overflow-hidden bg-surface-muted border border-border shrink-0 flex items-center justify-center">
-            <img src={thumbnailUrl} alt={fileName} className="w-full h-full object-cover" />
+          <div className="image-tool-preview rounded-xl overflow-hidden bg-surface-muted border border-border shrink-0 flex items-center justify-center">
+            <img src={thumbnailUrl} alt={fileName} className="w-full h-full object-contain" />
           </div>
         ) : (
-          <div className="w-28 h-28 rounded-xl bg-blue-500/10 border border-blue-500/20 shrink-0 flex items-center justify-center text-blue-600">
+          <div className="image-tool-preview rounded-xl bg-blue-500/10 border border-blue-500/20 shrink-0 flex items-center justify-center text-blue-600">
             <Crop className="w-10 h-10" />
           </div>
         )}

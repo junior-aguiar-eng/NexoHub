@@ -76,9 +76,11 @@ export function Header({ tools, onSelectTool, onLogoClick, onOpenCommandPalette 
           <button
             type="button"
             className={`nav-link-btn nav-link-btn--dropdown ${allToolsMenuOpen ? "nav-link-btn--active" : ""}`}
+            aria-label={translate("header.allTools")}
             onClick={() => setAllToolsMenuOpen(!allToolsMenuOpen)}
           >
-            <span>{translate("header.allTools")}</span>
+            <span className="nav-link-label--full">{translate("header.allTools")}</span>
+            <span className="nav-link-label--compact">{translate("header.toolsCompact")}</span>
             <ChevronDown
               size={14}
               className={`dropdown-chevron ${allToolsMenuOpen ? "dropdown-chevron--open" : ""}`}

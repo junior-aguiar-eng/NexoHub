@@ -962,7 +962,6 @@ export function DedicatedToolView({
             <button
               type="button"
               className="ilovepdf-big-download-btn"
-              style={{ backgroundColor: "#e5322d" }}
               onClick={() => void handleSaveOutput()}
             >
               <Download size={22} />
@@ -970,12 +969,7 @@ export function DedicatedToolView({
             </button>
           ) : (
             downloadUrl && (
-              <a
-                href={downloadUrl}
-                download={outputFileName}
-                className="ilovepdf-big-download-btn"
-                style={{ backgroundColor: "#e5322d" }}
-              >
+              <a href={downloadUrl} download={outputFileName} className="ilovepdf-big-download-btn">
                 <Download size={22} />
                 <span>{translate("dedicated.download")}</span>
               </a>
@@ -1061,7 +1055,6 @@ export function DedicatedToolView({
           <button
             type="button"
             className="ilovepdf-main-upload-btn"
-            style={{ backgroundColor: "#e5322d" }}
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload size={24} />

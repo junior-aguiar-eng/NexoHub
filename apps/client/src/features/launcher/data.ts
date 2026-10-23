@@ -63,7 +63,7 @@ const presentation = {
     titleKey: "tool.pdfCompress.title" as const,
     descriptionKey: "tool.pdfCompress.description" as const,
     icon: FileArchive,
-    accentColor: "#10B981", // Verde Esmeralda
+    accentColor: "#00875F", // Verde Esmeralda
   },
   "pdf-to-word": {
     suite: "convert" as const,
@@ -91,7 +91,7 @@ const presentation = {
     titleKey: "tool.pdfToJpg.title" as const,
     descriptionKey: "tool.pdfToJpg.description" as const,
     icon: Images,
-    accentColor: "#EAB308", // Âmbar Dourado
+    accentColor: "#B77900", // Âmbar Dourado
   },
   "pdf-watermark": {
     suite: "security" as const,
@@ -147,7 +147,7 @@ const presentation = {
     titleKey: "tool.textTranslate.title" as const,
     descriptionKey: "tool.textTranslate.description" as const,
     icon: Languages,
-    accentColor: "#06B6D4", // Ciano / Turquesa
+    accentColor: "#0891B2", // Ciano / Turquesa
   },
 } as const;
 

@@ -4,33 +4,33 @@
 :root {
   color-scheme: light;
   --color-ink: #0f172a;
-  --color-ink-muted: #64748b;
-  --color-brand: #00d084;
-  --color-brand-strong: #00b570;
-  --color-brand-soft: #e6fbf2;
-  --color-brand-contrast: #04261b;
-  --color-accent: #00e599;
-  --color-surface: #f8fafc;
+  --color-ink-muted: #566176;
+  --color-brand: #e11d48;
+  --color-brand-strong: #be123c;
+  --color-brand-soft: #fff1f4;
+  --color-brand-contrast: #9f1239;
+  --color-accent: #f43f5e;
+  --color-surface: #f7f7fc;
   --color-surface-raised: #ffffff;
-  --color-surface-muted: #f1f5f9;
-  --color-border: #e2e8f0;
-  --color-focus: #00d084;
+  --color-surface-muted: #f0f1f8;
+  --color-border: #e1e4ef;
+  --color-focus: #be123c;
   --glass-background: rgba(255, 255, 255, 0.85);
   --glass-border: rgba(255, 255, 255, 0.9);
   --glass-bg: rgba(255, 255, 255, 0.9);
   --glass-bg-subtle: rgba(255, 255, 255, 0.65);
-  --glass-border-subtle: rgb(24 49 43 / 8%);
+  --glass-border-subtle: rgb(30 41 59 / 8%);
   --glass-blur: blur(16px) saturate(180%);
   --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
   --shadow-tactile-sm:
-    0 1px 2px rgb(24 49 43 / 7%), 0 2px 5px rgb(24 49 43 / 4%), inset 0 1px 0 rgb(255 255 255 / 40%);
+    0 1px 2px rgb(30 41 59 / 7%), 0 2px 5px rgb(30 41 59 / 4%), inset 0 1px 0 rgb(255 255 255 / 40%);
   --shadow-tactile-md:
-    0 3px 8px rgb(24 49 43 / 8%), 0 6px 16px rgb(24 49 43 / 6%),
+    0 3px 8px rgb(30 41 59 / 8%), 0 6px 16px rgb(30 41 59 / 6%),
     inset 0 1px 0 rgb(255 255 255 / 60%);
   --shadow-tactile-hover:
-    0 6px 18px rgb(13 79 63 / 14%), 0 2px 6px rgb(13 79 63 / 8%),
+    0 6px 18px rgb(30 41 59 / 14%), 0 2px 6px rgb(30 41 59 / 8%),
     inset 0 1px 0 rgb(255 255 255 / 50%);
-  --shadow-sheet: 0 10px 30px -5px rgb(24 49 43 / 10%), 0 20px 45px -10px rgb(24 49 43 / 8%);
+  --shadow-sheet: 0 10px 30px -5px rgb(30 41 59 / 10%), 0 20px 45px -10px rgb(30 41 59 / 8%);
   --highlight-gold: rgb(250 204 21 / 35%);
   --highlight-gold-border: rgb(234 179 8 / 60%);
   --space-1: 0.25rem;
@@ -44,10 +44,18 @@
   --space-12: 3rem;
   --space-16: 4rem;
   --radius-sm: 0.625rem;
-  --radius-md: 1rem;
+  --radius-md: 0.875rem;
   --radius-lg: 1.5rem;
   --radius-pill: 999px;
-  --shadow-sm: 0 1px 2px rgb(24 49 43 / 5%), 0 6px 18px rgb(24 49 43 / 5%);
+  --radius-xl: var(--radius-lg);
+  --control-height: 2.75rem;
+  --tool-icon-size: 3rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-title: clamp(1.75rem, 2.8vw, 2.25rem);
+  --shadow-card: 0 2px 5px rgb(30 41 59 / 3%), 0 8px 20px rgb(30 41 59 / 3%);
+  --shadow-card-hover: 0 8px 24px rgb(30 41 59 / 9%);
+  --shadow-sm: 0 1px 2px rgb(30 41 59 / 5%), 0 6px 18px rgb(30 41 59 / 5%);
   --shadow-lg: 0 22px 70px rgb(15 57 47 / 15%);
   --font-sans:
     "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -68,9 +76,9 @@
   color-scheme: dark;
   --color-ink: #f8fafc;
   --color-ink-muted: #94a3b8;
-  --color-brand: #00e599;
-  --color-brand-strong: #33ffb5;
-  --color-brand-soft: #063d27;
+  --color-brand: #fb7185;
+  --color-brand-strong: #fda4af;
+  --color-brand-soft: #3d1422;
   --color-brand-contrast: #ffffff;
   --color-surface: #090d12;
   --color-surface-raised: #111822;
@@ -141,19 +149,19 @@
 }
 
 .button--default {
-  height: 2.35rem;
+  min-height: var(--control-height);
   padding: 0 var(--space-4);
   font-size: 0.84rem;
 }
 .button--compact {
-  height: 1.85rem;
+  min-height: var(--control-height);
   padding: 0 var(--space-3);
   font-size: 0.76rem;
   border-radius: 0.45rem;
 }
 .button--icon {
-  width: 2.15rem;
-  height: 2.15rem;
+  width: var(--control-height);
+  height: var(--control-height);
   padding: 0;
   border-radius: var(--radius-sm);
 }
@@ -165,7 +173,7 @@
   box-shadow: var(--shadow-tactile-sm);
 }
 .button--primary:not(:disabled):hover {
-  background: linear-gradient(180deg, #10634f 0%, var(--color-brand) 100%);
+  background: var(--color-brand-strong);
   box-shadow: var(--shadow-tactile-hover);
 }
 
@@ -204,9 +212,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 82% 8%, rgb(201 159 98 / 12%), transparent 28rem),
-    radial-gradient(circle at 10% 35%, rgb(13 79 63 / 8%), transparent 34rem), var(--color-surface);
+  background: var(--color-surface);
 }
 button,
 input {
@@ -216,7 +222,7 @@ button {
   color: inherit;
 }
 :focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--color-focus), transparent 40%);
+  outline: 3px solid var(--color-focus);
   outline-offset: 3px;
 }
 
@@ -671,13 +677,13 @@ button {
 }
 
 .launcher-content--full {
-  max-width: 1240px;
+  max-width: 1320px;
   width: 100%;
   margin: 0 auto;
-  padding: 1.75rem 1.5rem 3.5rem;
+  padding: var(--space-6) var(--space-6) var(--space-12);
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: var(--space-6);
 }
 
 .launcher-welcome-container {
@@ -695,8 +701,8 @@ button {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 10.5rem;
+  justify-content: flex-start;
+  min-height: 12.5rem;
   padding: 1.25rem;
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
@@ -720,7 +726,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.85rem;
+  margin-bottom: var(--space-4);
 }
 
 .tool-card__icon {
@@ -2127,7 +2133,7 @@ button.button.studio-integrity-pill__btn {
 }
 button.button.document-canvas__btn-icon {
   width: 1.85rem;
-  height: 1.85rem;
+  min-height: var(--control-height);
   border-radius: 50%;
 }
 .document-canvas__viewport {
@@ -4540,7 +4546,7 @@ button.operational-dropzone--active {
   border: 1px solid #f5d0fe;
 }
 .badge-review {
-  background: #fef2f2;
+  background: var(--color-brand-soft);
   color: #b91c1c;
   border: 1px solid #fecaca;
 }
@@ -4995,7 +5001,7 @@ button.operational-dropzone--active {
 
 .capability-uninstall-btn:hover {
   color: #dc2626;
-  background: #fef2f2;
+  background: var(--color-brand-soft);
 }
 
 .capability-install-btn {
@@ -5007,7 +5013,7 @@ button.operational-dropzone--active {
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3);
-  background: #fef2f2;
+  background: var(--color-brand-soft);
   border: 1px solid #fecaca;
   border-radius: var(--radius-md, 0.5rem);
 }
@@ -5165,7 +5171,7 @@ button.capability-btn-danger:hover {
 }
 
 .quicktool-alert--error {
-  background: #fef2f2;
+  background: var(--color-brand-soft);
   border: 1px solid #fecaca;
   color: #991b1b;
 }
@@ -5291,9 +5297,9 @@ button.capability-btn-danger:hover {
 }
 
 .user-avatar-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: var(--control-height);
+  height: var(--control-height);
+  border-radius: var(--radius-sm);
   border: 2px solid var(--color-brand);
   background: var(--color-brand-soft);
   color: var(--color-brand-contrast);
@@ -5404,7 +5410,7 @@ button.capability-btn-danger:hover {
 }
 
 .user-dropdown-item--danger:hover {
-  background: #fef2f2;
+  background: var(--color-brand-soft);
 }
 
 /* Auth Modal & Profile Modal Overlays */
@@ -5573,7 +5579,7 @@ button.capability-btn-danger:hover {
 }
 
 .auth-modal-alert--error {
-  background: #fef2f2;
+  background: var(--color-brand-soft);
   color: #b91c1c;
   border: 1px solid #fecaca;
 }
@@ -5910,7 +5916,7 @@ button.capability-btn-danger:hover {
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-4);
-  background: #fef2f2;
+  background: var(--color-brand-soft);
   border: 1px solid #fecaca;
   border-radius: var(--radius-md);
 }
@@ -6587,6 +6593,7 @@ button.capability-btn-danger:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 4px;
   margin-top: var(--space-2);
   width: 100%;
@@ -6596,8 +6603,8 @@ button.capability-btn-danger:hover {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  width: 24px;
-  height: 24px;
+  width: var(--control-height);
+  height: var(--control-height);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -7728,6 +7735,8 @@ button.capability-btn-danger:hover {
   padding: 1.1rem 2.8rem;
   border-radius: var(--radius-pill);
   color: #ffffff;
+  background: var(--color-brand);
+  border: 0;
   font-size: 1.15rem;
   font-weight: 700;
   text-decoration: none;
@@ -7737,6 +7746,7 @@ button.capability-btn-danger:hover {
 }
 
 .ilovepdf-big-download-btn:hover {
+  background: var(--color-brand-strong);
   transform: scale(1.04);
   box-shadow: 0 16px 32px -4px rgba(0, 0, 0, 0.3);
 }
@@ -7776,37 +7786,76 @@ button.capability-btn-danger:hover {
    ILOVEPDF ULTRA-CLEAN DESIGN SYSTEM
    ========================================================================== */
 
-/* Plano de Fundo Parallax Elegante & Dinâmico */
+/* Fundo decorativo: três profundidades, sem interação ou conteúdo semântico. */
 .parallax-backdrop {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
   pointer-events: none;
   z-index: 0;
   overflow: hidden;
   user-select: none;
 }
 
-.parallax-backdrop__item {
+.parallax-backdrop__item,
+.parallax-backdrop__shape {
   position: absolute;
-  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
-  font-weight: 700;
-  color: #0f172a;
+  transform: translate3d(
+      calc(var(--parallax-x) * var(--depth)),
+      calc(var(--parallax-y) * var(--depth)),
+      0
+    )
+    rotate(var(--rotation, 0deg));
+}
+
+.parallax-backdrop__item {
+  font: 700 var(--text-sm) var(--font-sans);
+  color: var(--color-ink);
+  opacity: 0.07;
   white-space: nowrap;
-  pointer-events: none;
-  will-change: transform;
   letter-spacing: -0.01em;
-  transition: opacity 0.3s ease;
+}
+
+.parallax-backdrop__shape {
+  width: clamp(200px, 27vw, 420px);
+  aspect-ratio: 1;
+  border-radius: 32%;
+}
+
+.parallax-backdrop__shape--1 {
+  top: -14%;
+  right: -9%;
+  --rotation: 24deg;
+  background: linear-gradient(135deg, rgb(244 63 94 / 9%), rgb(244 63 94 / 2%));
+}
+
+.parallax-backdrop__shape--2 {
+  top: 42%;
+  left: -16%;
+  --rotation: -28deg;
+  background: linear-gradient(135deg, rgb(124 58 237 / 8%), rgb(37 99 235 / 2%));
+}
+
+.parallax-backdrop__shape--3 {
+  bottom: -18%;
+  right: -12%;
+  --rotation: 18deg;
+  border: 1px solid rgb(244 63 94 / 10%);
+  background: rgb(244 63 94 / 3%);
+}
+
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .parallax-backdrop__item,
+  .parallax-backdrop__shape {
+    transform: rotate(var(--rotation, 0deg));
+  }
 }
 
 /* Fundo suave e layout global */
 body,
 .app-shell {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: var(--color-surface);
+  color: var(--color-ink);
   position: relative;
-  overflow-x: hidden;
 }
 
 /* Header Estilo iLovePDF - Levemente ampliado para ergonomia e conforto */
@@ -7815,9 +7864,9 @@ body,
   align-items: center;
   justify-content: space-between;
   height: 74px;
-  padding: 0 2.25rem;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 0 var(--space-8);
+  background-color: var(--color-surface-raised);
+  border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -7852,7 +7901,7 @@ body,
 }
 
 .brand-logo-accent {
-  color: #e11d48;
+  color: var(--color-brand);
   margin-left: 2px;
 }
 
@@ -7867,7 +7916,8 @@ body,
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.6rem 1rem;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-4);
   background: transparent;
   border: none;
   border-radius: 8px;
@@ -7882,8 +7932,8 @@ body,
 
 .nav-link-btn:hover,
 .nav-link-btn--active {
-  color: #e11d48;
-  background-color: #fff1f2;
+  color: var(--color-brand-strong);
+  background-color: var(--color-brand-soft);
 }
 
 .dropdown-chevron {
@@ -7953,7 +8003,8 @@ body,
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  padding: 0.45rem 0.6rem;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
   background: transparent;
   border: none;
   border-radius: 6px;
@@ -7976,9 +8027,9 @@ body,
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: var(--control-height);
+  height: var(--control-height);
+  border-radius: var(--radius-sm);
   background: transparent;
   border: none;
   color: #475569;
@@ -8014,13 +8065,13 @@ body,
 /* Hero Section Ultra-Clean */
 .hero--clean {
   text-align: center;
-  padding: 3rem 1.5rem 1.5rem 1.5rem;
+  padding: var(--space-4) 0 var(--space-3);
   max-width: 800px;
   margin: 0 auto;
 }
 
 .hero--clean .hero__welcome-title {
-  font-size: 2.25rem;
+  font-size: var(--text-title);
   font-weight: 800;
   letter-spacing: -0.03em;
   color: #0f172a;
@@ -8029,112 +8080,250 @@ body,
 }
 
 .hero__clean-subtitle {
-  font-size: 1.05rem;
-  color: #64748b;
-  font-weight: 500;
-  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-ink-muted);
+  font-weight: 400;
+  line-height: 1.6;
+  margin: 0 auto;
+  max-width: 42rem;
 }
 
 /* Pílulas de Suíte / Categorias Centralizadas */
 .launcher-suites-center {
   display: flex;
   justify-content: center;
-  margin-top: 1.75rem;
-  margin-bottom: 2rem;
+  margin-top: var(--space-3);
+  margin-bottom: 0;
 }
 
 .suite-nav {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  gap: var(--space-2);
+  padding: var(--space-1);
+  max-width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .suite-nav__item {
-  padding: 0.45rem 1.1rem;
-  border-radius: 999px;
-  background: transparent;
-  border: none;
-  color: #475569;
-  font-size: 0.84rem;
+  min-height: var(--control-height);
+  min-width: var(--control-height);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast);
   white-space: nowrap;
 }
 
-.suite-nav__item:hover {
-  color: #0f172a;
-  background-color: #f1f5f9;
+.suite-nav__item:hover:not([data-active="true"]) {
+  color: var(--color-brand-strong);
+  background: var(--color-brand-soft);
+  border-color: color-mix(in srgb, var(--color-brand), white 70%);
 }
 
 .suite-nav__item[data-active="true"] {
-  background-color: #0f172a;
+  background: var(--color-brand);
+  border-color: var(--color-brand);
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 3px 8px rgb(225 29 72 / 16%);
 }
 
-/* Grade de Cards Minimalistas */
+/* Grade responsiva com medidas únicas, sem truncar descrições. */
 .quick-tools-section--clean {
-  padding: 0 2rem 4rem 2rem;
-  max-width: 1280px;
+  padding: 0 0 var(--space-8);
+  width: 100%;
   margin: 0 auto;
 }
 
 .tool-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  transition: none;
+}
+
+@media (min-width: 520px) {
+  .tool-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 760px) {
+  .tool-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1000px) {
+  .tool-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (width > 1200px) {
+  .tool-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 }
 
 .tool-card {
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
-  border: 1px solid #eef2f6;
-  border-radius: 16px;
-  padding: 1.75rem;
+  justify-content: flex-start;
+  min-width: 0;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition:
+    box-shadow var(--motion-standard),
+    border-color var(--motion-standard),
+    background-color var(--motion-standard);
+  box-shadow: var(--shadow-card);
   text-decoration: none;
   position: relative;
+  overflow: visible;
 }
 
-.tool-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.07);
-  border-color: #cbd5e1;
+.tool-card:hover,
+.tool-card:focus-visible,
+.tool-card--drag-over {
+  border-color: var(--tool-accent, var(--color-brand));
+  box-shadow: var(--shadow-card-hover);
+  background: color-mix(
+    in srgb,
+    var(--tool-accent, var(--color-brand)) 3%,
+    var(--color-surface-raised)
+  );
 }
 
-.tool-card__icon-wrapper,
+.tool-card:focus-visible {
+  outline: 3px solid var(--tool-accent, var(--color-focus));
+  outline-offset: 3px;
+}
+
+.tool-card__topline {
+  margin-bottom: var(--space-4);
+}
+
 .tool-card__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  margin-bottom: 1.25rem;
+  display: grid;
+  place-items: center;
+  width: var(--tool-icon-size);
+  height: var(--tool-icon-size);
+  border-radius: var(--radius-sm);
+  margin: 0;
+  color: #ffffff;
+  background: var(--tool-accent, var(--color-brand));
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--tool-accent, var(--color-brand)) 18%, transparent);
 }
 
 .tool-card__title {
-  font-size: 1.15rem;
+  font-size: var(--text-base);
   font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 0.5rem 0;
-  line-height: 1.3;
+  color: var(--color-ink);
+  margin: 0 0 var(--space-2);
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
 }
 
 .tool-card__desc {
-  font-size: 0.875rem;
-  color: #64748b;
-  line-height: 1.5;
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  line-height: 1.6;
   margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.tool-card__hover-arrow {
+  top: var(--space-5);
+  right: var(--space-5);
+  bottom: auto;
+}
+
+.tool-card:focus-visible .tool-card__hover-arrow,
+.tool-card--drag-over .tool-card__hover-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Cabeçalho compacto sem perder o acesso ao catálogo completo. */
+.ilovepdf-brand {
+  min-height: var(--control-height);
+}
+.header-actions {
+  flex-shrink: 0;
+}
+.nav-link-label--compact {
+  display: none;
+}
+.header-main-nav {
+  min-width: 0;
+}
+
+@media (max-width: 999px) {
+  .header-main-nav > .nav-link-btn {
+    display: none;
+  }
+  .app-header--ilovepdf {
+    padding: 0 var(--space-6);
+  }
+}
+
+@media (max-width: 759px) {
+  .launcher-content--full {
+    width: 100%;
+    padding: var(--space-5) var(--space-4) var(--space-8);
+    gap: var(--space-5);
+  }
+  .app-header--ilovepdf {
+    gap: var(--space-2);
+    padding: 0 var(--space-4);
+  }
+  .nav-link-label--full {
+    display: none;
+  }
+  .nav-link-label--compact {
+    display: inline;
+  }
+  .brand-logo-text {
+    font-size: 1.15rem;
+  }
+  .brand-app-icon {
+    width: 28px;
+    height: 28px;
+  }
+  .nav-link-btn--dropdown {
+    font-size: 0.75rem;
+    padding: var(--space-2);
+    white-space: normal;
+    text-align: left;
+  }
+  .hero--clean .hero__welcome-title {
+    font-size: 1.75rem;
+  }
+  .hero__clean-subtitle {
+    font-size: var(--text-sm);
+  }
+  .suite-nav {
+    gap: var(--space-2);
+  }
+  .suite-nav__item {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.8125rem;
+  }
 }
 
 /* ==========================================================================
@@ -8246,7 +8435,7 @@ body,
 .ilovepdf-page-number-tag {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #e5322d;
+  color: var(--color-brand);
 }
 
 .ilovepdf-interval-dots {
@@ -8289,9 +8478,9 @@ body,
 
 .ilovepdf-split-tab--active {
   background: #ffffff;
-  color: #e5322d;
+  color: var(--color-brand);
   font-weight: 700;
-  box-shadow: inset 0 -2px 0 #e5322d;
+  box-shadow: inset 0 -2px 0 var(--color-brand);
 }
 
 .ilovepdf-control-label {
@@ -8321,9 +8510,9 @@ body,
 }
 
 .ilovepdf-toggle-btn--active {
-  border-color: #e5322d;
-  color: #e5322d;
-  background: #fef2f2;
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  background: var(--color-brand-soft);
 }
 
 .ilovepdf-interval-input-row {
@@ -8374,8 +8563,8 @@ body,
   width: 100%;
   padding: 0.6rem;
   background: #ffffff;
-  border: 1px dashed #e5322d;
-  color: #e5322d;
+  border: 1px dashed var(--color-brand);
+  color: var(--color-brand);
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 700;
@@ -8385,7 +8574,7 @@ body,
 }
 
 .ilovepdf-add-interval-btn:hover {
-  background: #fef2f2;
+  background: var(--color-brand-soft);
 }
 
 .ilovepdf-checkbox-label {
@@ -8463,7 +8652,7 @@ body,
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #e5322d;
+  background: var(--color-brand);
   color: #ffffff;
   border: 2px solid #ffffff;
   display: flex;
@@ -8536,8 +8725,8 @@ body,
 }
 
 .ilovepdf-level-card--selected {
-  border-color: #e5322d;
-  background: #fef2f2;
+  border-color: var(--color-brand);
+  background: var(--color-brand-soft);
 }
 
 .ilovepdf-level-info {
@@ -8549,7 +8738,7 @@ body,
 .ilovepdf-level-name {
   font-size: 0.85rem;
   font-weight: 800;
-  color: #e5322d;
+  color: var(--color-brand);
   letter-spacing: -0.01em;
 }
 
@@ -8577,22 +8766,22 @@ body,
   gap: 0.6rem;
   width: 100%;
   padding: 1rem 1.5rem;
-  background-color: #e5322d;
+  background-color: var(--color-brand);
   color: #ffffff;
   border: none;
   border-radius: 10px;
   font-size: 1.05rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(229, 50, 45, 0.35);
+  box-shadow: 0 4px 14px rgb(225 29 72 / 16%);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   margin-top: auto;
 }
 
 .ilovepdf-action-red-btn:hover:not(:disabled) {
-  background-color: #cc2520;
+  background-color: var(--color-brand-strong);
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(229, 50, 45, 0.45);
+  box-shadow: 0 6px 18px rgb(225 29 72 / 22%);
 }
 
 .ilovepdf-action-red-btn:disabled {
@@ -8779,16 +8968,16 @@ body,
 }
 
 .ilovepdf-merge-add-card:hover {
-  border-color: #e5322d;
-  color: #e5322d;
-  background: #fef2f2;
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  background: var(--color-brand-soft);
 }
 
 .ilovepdf-merge-add-icon {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #e5322d;
+  background: var(--color-brand);
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -8883,9 +9072,9 @@ body,
 }
 
 .ilovepdf-page-mini-card--selected {
-  border-color: #e5322d;
-  background: #fef2f2;
-  box-shadow: 0 0 0 2px #e5322d;
+  border-color: var(--color-brand);
+  background: var(--color-brand-soft);
+  box-shadow: 0 0 0 2px var(--color-brand);
 }
 
 .ilovepdf-page-mini-header {
@@ -8968,8 +9157,8 @@ body,
 .ilovepdf-rotate-angle-badge {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #e5322d;
-  background: #fef2f2;
+  color: var(--color-brand);
+  background: var(--color-brand-soft);
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
   border: 1px solid #fecaca;
@@ -9010,9 +9199,9 @@ body,
 }
 
 .ilovepdf-rotate-control-btn:hover {
-  border-color: #e5322d;
-  color: #e5322d;
-  background: #fef2f2;
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  background: var(--color-brand-soft);
 }
 
 /* ==========================================================================
@@ -9020,7 +9209,7 @@ body,
    ========================================================================== */
 .pdf-page-cards-grid .pdf-page-card.pdf-page-card--deleted {
   border: 2px dashed #ef4444;
-  background: #fef2f2;
+  background: var(--color-brand-soft);
   position: relative;
 }
 
@@ -9068,4 +9257,112 @@ body,
   width: 100%;
   color: #ef4444;
   font-weight: 700;
+}
+
+/* Medidas compartilhadas pelas telas de processamento documental. */
+.dedicated-tool-page {
+  background: transparent;
+  min-height: 70vh;
+}
+.dedicated-tool-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
+  line-height: 1.2;
+}
+.dedicated-tool-desc {
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+.ilovepdf-tool-nav {
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.ilovepdf-upload-dropzone {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+.ilovepdf-main-upload-btn {
+  background: var(--color-brand);
+  border-radius: var(--radius-md);
+  max-width: 100%;
+}
+.ilovepdf-main-upload-btn:hover {
+  background: var(--color-brand-strong);
+  transform: translateY(-2px);
+}
+.dedicated-tool-options-panel,
+.dedicated-tool-right-column {
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-card);
+}
+.dedicated-tool-workspace-split {
+  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+}
+.dedicated-tool-left-column,
+.dedicated-tool-right-column {
+  min-width: 0;
+}
+.dedicated-tool-page
+  :is(
+    button,
+    select,
+    input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+    a[class*="btn"]
+  ) {
+  min-height: var(--control-height);
+}
+.dedicated-tool-page button {
+  min-width: var(--control-height);
+}
+.dedicated-tool-page :is(button, input, select, textarea, a):focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+.ilovepdf-split-options-sidebar,
+.ilovepdf-compress-options-sidebar,
+.ilovepdf-merge-options-sidebar,
+.ilovepdf-rotate-options-sidebar {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+@media (max-width: 980px) {
+  .dedicated-tool-workspace-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ilovepdf-split-container,
+  .ilovepdf-compress-container,
+  .ilovepdf-merge-container,
+  .ilovepdf-rotate-container {
+    flex-direction: column;
+    min-width: 0;
+    gap: var(--space-4);
+  }
+  .ilovepdf-split-options-sidebar,
+  .ilovepdf-compress-options-sidebar,
+  .ilovepdf-merge-options-sidebar,
+  .ilovepdf-rotate-options-sidebar {
+    width: 100%;
+  }
+}
+
+@media (max-width: 519px) {
+  .ilovepdf-upload-dropzone {
+    padding: var(--space-8) var(--space-4);
+  }
+  .ilovepdf-main-upload-btn {
+    padding: var(--space-4);
+    font-size: var(--text-base);
+  }
+  .ilovepdf-interval-card-body {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .pdf-page-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  .pdf-page-card-toolbar {
+    flex-wrap: wrap;
+  }
 }

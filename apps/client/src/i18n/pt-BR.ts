@@ -13,6 +13,7 @@ export const ptBR = {
   "brand.footerTagline": "Ferramentas de PDF práticas, gratuitas e 100% locais.",
   "header.search": "Buscar ferramenta",
   "header.allTools": "Todas as ferramentas PDF",
+  "header.toolsCompact": "Ferramentas",
   "header.searchShortcut": "Ctrl K",
   "header.commandPlaceholder": "O que você precisa fazer com seu PDF?",
   "header.settings": "Configurações",

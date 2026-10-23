@@ -63,8 +63,6 @@ export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
         {
           cursor: isAvailable ? "pointer" : "default",
           "--tool-accent": accent,
-          borderColor: isDragOver ? accent : undefined,
-          backgroundColor: isDragOver ? `${accent}12` : undefined,
         } as React.CSSProperties
       }
       onMouseEnter={handleMouseEnter}
@@ -84,14 +82,7 @@ export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
       }}
     >
       <div className="tool-card__topline">
-        <span
-          className="tool-card__icon"
-          style={{
-            color: accent,
-            backgroundColor: `${accent}18`,
-          }}
-          aria-hidden="true"
-        >
+        <span className="tool-card__icon" aria-hidden="true">
           <Icon size={24} />
         </span>
       </div>

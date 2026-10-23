@@ -3,6 +3,13 @@ import { describe, expect, it, vi } from "vitest";
 import { DocumentComparePanel } from "./DocumentComparePanel";
 
 describe("DocumentComparePanel - Comparador de 2 a 3 Documentos", () => {
+  it("mostra erro de leitura ao selecionar DOCX inválido na coluna", async () => {
+    const { container } = render(<DocumentComparePanel doc1Text="" doc2Text="" />);
+    const input = container.querySelector('input[type="file"]');
+    if (!input) throw new Error("Seletor ausente");
+    fireEvent.change(input, { target: { files: [new File(["inválido"], "invalido.docx")] } });
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Não foi possível ler o DOCX/);
+  });
   it("calcula adições e remoções reais entre os dois documentos", () => {
     render(
       <DocumentComparePanel

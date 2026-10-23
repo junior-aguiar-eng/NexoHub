@@ -124,6 +124,43 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     expect(screen.getByRole("button", { name: /Paisagem/i })).toBeInTheDocument();
   });
 
+  it("mantém todas as imagens selecionadas e acrescenta novos lotes", () => {
+    const tool = launcherTools.find((tool) => tool.id === "images-to-pdf");
+    if (!tool) throw new Error("Ferramenta ausente");
+    const { container } = render(
+      <DedicatedToolView tool={tool} documentCore={documentCore} onBack={vi.fn()} />,
+    );
+    const input = container.querySelector('input[type="file"]');
+    if (!input) throw new Error("Seletor ausente");
+    const first = new File(["imagem 1"], "primeira.png", { type: "image/png" });
+    const second = new File(["imagem 2"], "segunda.png", { type: "image/png" });
+    fireEvent.change(input, { target: { files: [first, second] } });
+    expect(screen.getByText("primeira.png")).toBeInTheDocument();
+    expect(screen.getByText("segunda.png")).toBeInTheDocument();
+    const nextInput = container.querySelector('input[type="file"]');
+    if (!nextInput) throw new Error("Seletor ausente");
+    fireEvent.change(nextInput, {
+      target: { files: [new File(["imagem 3"], "terceira.png", { type: "image/png" })] },
+    });
+    expect(screen.getByText("primeira.png")).toBeInTheDocument();
+    expect(screen.getByText("segunda.png")).toBeInTheDocument();
+    expect(screen.getByText("terceira.png")).toBeInTheDocument();
+  });
+
+  it("informa erro ao carregar DOCX inválido no comparador", async () => {
+    const tool = launcherTools.find((tool) => tool.id === "text-compare");
+    if (!tool) throw new Error("Comparador ausente");
+    render(
+      <DedicatedToolView
+        tool={tool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[new File(["arquivo inválido"], "invalido.docx")]}
+      />,
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Não foi possível ler o DOCX/);
+  });
+
   it("renderiza o conversor de PDF para JPG com informações de extração", async () => {
     const mockPdfToJpgTool =
       launcherTools.find((t) => t.id === "pdf-to-jpg") ?? mockPdfCompressTool;

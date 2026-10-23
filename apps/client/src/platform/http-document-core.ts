@@ -16,10 +16,13 @@ export class HttpDocumentCorePort implements DocumentCorePort {
     "pdf-rotate",
     "pdf-compress",
     "text-compare",
+    "images-to-pdf",
+    "pdf-to-jpg",
+    "pdf-watermark",
+    "pdf-page-numbers",
     "pdf-ocr",
     "text-review",
     "text-translate",
-    "pdf-extract-images",
   ]);
 
   private project: { path: string; name: string } | null = null;

@@ -61,7 +61,7 @@ export function applyContrastEnhancement(
   const data = imgData.data;
   const len = data.length;
   const contrast = 1.35;
-  const factor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
+  const factor = contrast;
 
   for (let i = 0; i < len; i += 4) {
     const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];

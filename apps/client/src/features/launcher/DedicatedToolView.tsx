@@ -307,14 +307,26 @@ export function DedicatedToolView({
             const t1 = await readDocumentText(files[0]);
             setDoc1Text(t1);
             setDoc1Name(files[0].name);
-          } catch {}
+          } catch (error) {
+            setErrorMessage(
+              error instanceof ToolRunError
+                ? error.message
+                : translate("dedicated.errorProcessing"),
+            );
+          }
         }
         if (files.length > 1 && files[1]) {
           try {
             const t2 = await readDocumentText(files[1]);
             setDoc2Text(t2);
             setDoc2Name(files[1].name);
-          } catch {}
+          } catch (error) {
+            setErrorMessage(
+              error instanceof ToolRunError
+                ? error.message
+                : translate("dedicated.errorProcessing"),
+            );
+          }
         }
         if (files.length > 2 && files[2]) {
           try {
@@ -322,7 +334,13 @@ export function DedicatedToolView({
             setDoc3Text(t3);
             setDoc3Name(files[2].name);
             setShowDoc3(true);
-          } catch {}
+          } catch (error) {
+            setErrorMessage(
+              error instanceof ToolRunError
+                ? error.message
+                : translate("dedicated.errorProcessing"),
+            );
+          }
         }
       }
     }
@@ -358,7 +376,12 @@ export function DedicatedToolView({
   }
 
   function addFiles(newFiles: File[]) {
-    if (tool.id === "pdf-organize" || tool.id === "pdf-merge" || tool.id === "text-compare") {
+    if (
+      tool.id === "pdf-organize" ||
+      tool.id === "pdf-merge" ||
+      tool.id === "text-compare" ||
+      isImageTool
+    ) {
       setFiles((prev) => [...prev, ...newFiles]);
     } else {
       setFiles(newFiles.slice(0, 1));
@@ -407,7 +430,7 @@ export function DedicatedToolView({
 
   function handleApplyAllReview() {
     try {
-      const current = reviewedText || directText;
+      const current = reviewedText;
       const corrected = applyReviewFindings(current, reviewFindings);
       setReviewedText(corrected);
       setReviewFindings([]);
@@ -425,13 +448,27 @@ export function DedicatedToolView({
     try {
       const singleFinding = reviewFindings.find((f) => f.id === findingId);
       if (!singleFinding) return;
-      const findingToApply = customReplacement
-        ? { ...singleFinding, replacement: customReplacement }
-        : singleFinding;
-      const current = reviewedText || directText;
+      const findingToApply = {
+        ...singleFinding,
+        replacement: customReplacement ?? singleFinding.replacement,
+      };
+      const current = reviewedText;
       const corrected = applyReviewFindings(current, [findingToApply]);
       setReviewedText(corrected);
-      setReviewFindings((prev) => prev.filter((f) => f.id !== findingId));
+      const delta = findingToApply.replacement.length - (singleFinding.end - singleFinding.start);
+      setReviewFindings((prev) =>
+        prev
+          .filter(
+            (finding) =>
+              finding.id !== findingId &&
+              (finding.end <= singleFinding.start || finding.start >= singleFinding.end),
+          )
+          .map((finding) =>
+            finding.start >= singleFinding.end
+              ? { ...finding, start: finding.start + delta, end: finding.end + delta }
+              : finding,
+          ),
+      );
     } catch (err) {
       console.error("Erro ao aplicar correção única:", err);
     }
@@ -538,21 +575,8 @@ export function DedicatedToolView({
         setTranslatedText(text);
       }
       if (tool.id === "text-review") {
-        if (output.reviewFindings) {
-          setReviewFindings(output.reviewFindings);
-        }
-        if (output.extractedText) {
-          const textToReview = output.extractedText;
-          if (output.reviewFindings && output.reviewFindings.length > 0) {
-            try {
-              setReviewedText(applyReviewFindings(textToReview, output.reviewFindings));
-            } catch {
-              setReviewedText(textToReview);
-            }
-          } else {
-            setReviewedText(textToReview);
-          }
-        }
+        setReviewFindings(output.reviewFindings ?? []);
+        setReviewedText(output.extractedText ?? "");
       }
       if (tool.id === "pdf-ocr" && output.extractedText) {
         setRecognizedOcrText(output.extractedText);
@@ -564,8 +588,7 @@ export function DedicatedToolView({
       setDownloadUrl(url);
       setOutputBlob(outputBlob);
 
-      const shouldStayInWorkspace =
-        tool.id === "text-translate" || (tool.id === "text-review" && inputTab === "text");
+      const shouldStayInWorkspace = tool.id === "text-translate" || tool.id === "text-review";
 
       if (shouldStayInWorkspace) {
         setStatus("idle");
@@ -840,8 +863,11 @@ export function DedicatedToolView({
       return (
         <ReviewDocumentPanel
           reviewFindings={reviewFindings}
-          reviewedText={reviewedText || directText}
-          onReviewedTextChange={setReviewedText}
+          reviewedText={reviewedText}
+          onReviewedTextChange={(text) => {
+            setReviewedText(text);
+            setReviewFindings([]);
+          }}
           onApplySingleReview={handleApplySingleReview}
           onApplyAllReview={handleApplyAllReview}
           onIgnoreFinding={handleIgnoreFinding}

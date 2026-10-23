@@ -27,6 +27,7 @@
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "dictionary-pt": "^4.0.0",
+    "fflate": "0.8.3",
     "hunspell-asm": "^4.0.2",
     "lucide-react": "0.542.0",
     "motion": "12.23.24",

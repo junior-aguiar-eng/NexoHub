@@ -1,4 +1,8 @@
 export const ptBR = {
+  "document.errorInvalidDocx":
+    "Não foi possível ler o DOCX. Verifique se o documento é válido e não está protegido por senha.",
+  "document.errorDocxLimit":
+    "O DOCX excede o limite de tamanho permitido para leitura no navegador.",
   "app.skip": "Ir para o conteúdo",
   "app.status.offline": "100% Local • Offline • Seguro",
   "brand.tagline": "Ferramentas locais de PDF e documentos.",

@@ -1,4 +1,5 @@
 import { type DiffLine, type DiffWord, diffText, type TextDiffResult } from "@nexohub/domain";
+import { ToolRunError } from "@nexohub/tool-sdk";
 import {
   ArrowLeftRight,
   Columns,
@@ -107,6 +108,7 @@ export function DocumentComparePanel({
     doc1Text.trim() && doc2Text.trim() ? "diff" : "edit",
   );
   const [activeDiffPair, setActiveDiffPair] = useState<"1-2" | "1-3">("1-2");
+  const [readError, setReadError] = useState<string | null>(null);
 
   const [isExtractingDoc1, setIsExtractingDoc1] = useState(false);
   const [isExtractingDoc2, setIsExtractingDoc2] = useState(false);
@@ -193,6 +195,7 @@ export function DocumentComparePanel({
   const hasAnyText = Boolean(doc1Text.trim() || doc2Text.trim() || doc3Text.trim());
 
   async function handleFileSelected(file: File, docIndex: 1 | 2 | 3) {
+    setReadError(null);
     if (docIndex === 1) setIsExtractingDoc1(true);
     if (docIndex === 2) setIsExtractingDoc2(true);
     if (docIndex === 3) setIsExtractingDoc3(true);
@@ -211,7 +214,9 @@ export function DocumentComparePanel({
       }
       setDisplayStyle("diff");
     } catch (err) {
-      console.error("Erro ao carregar arquivo no comparador:", err);
+      setReadError(
+        err instanceof ToolRunError ? err.message : translate("dedicated.errorProcessing"),
+      );
     } finally {
       if (docIndex === 1) setIsExtractingDoc1(false);
       if (docIndex === 2) setIsExtractingDoc2(false);
@@ -259,6 +264,7 @@ export function DocumentComparePanel({
 
   return (
     <div className="document-compare-panel">
+      {readError && <p role="alert">{readError}</p>}
       {/* Header com Modos de Exibição e Estatísticas */}
       <div className="doc-compare-header">
         <div className="doc-compare-title-group">

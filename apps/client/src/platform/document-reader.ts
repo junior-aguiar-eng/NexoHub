@@ -1,3 +1,4 @@
+import { readBrowserDocxText } from "./browser-docx";
 import { extractTextFromPdf } from "./pdf-engine";
 
 /**
@@ -5,6 +6,12 @@ import { extractTextFromPdf } from "./pdf-engine";
  * (executando extração de texto via PDF.js) ou arquivo textual comum (.txt, .md, .csv, etc.).
  */
 export async function readDocumentText(file: File): Promise<string> {
+  if (
+    file.name.toLowerCase().endsWith(".docx") ||
+    file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ) {
+    return readBrowserDocxText(file);
+  }
   const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 
   if (isPdf) {

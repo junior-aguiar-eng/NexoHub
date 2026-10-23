@@ -1,6 +1,8 @@
+import { applyReviewFindings } from "@nexohub/domain";
 import { PDFDocument } from "pdf-lib";
 import { describe, expect, it, vi } from "vitest";
 import { BrowserDocumentCorePort } from "./browser-document-core";
+import { HttpDocumentCorePort } from "./http-document-core";
 import { type LauncherToolInput, runLauncherTool } from "./launcher-tool-runner";
 
 async function fixture(): Promise<File> {
@@ -31,6 +33,71 @@ function input(files: File[]): LauncherToolInput {
 }
 
 describe("Tool Runner do Launcher", () => {
+  it.each([0, 5])("preserva caracteres ao aplicar inserção HTTP na posição %s", async (offset) => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          language: "pt-BR",
+          engine: "languagetool-community",
+          version: "teste",
+          matches: [
+            {
+              offset,
+              length: 0,
+              message: "Inserir sinal",
+              shortMessage: "Pontuação",
+              replacements: [{ value: "." }, { value: "!" }],
+              rule: { id: "SINAL", description: "Sinal", issueType: "typographical" },
+            },
+          ],
+        }),
+      ),
+    );
+    const result = await runLauncherTool(
+      new HttpDocumentCorePort("https://teste.invalid"),
+      "text-review",
+      input([new File(["Frase"], "minuta.txt", { type: "text/plain" })]),
+    );
+    expect(applyReviewFindings("Frase", result.reviewFindings ?? [])).toBe(
+      offset === 0 ? ".Frase" : "Frase.",
+    );
+    const first = result.reviewFindings?.[0];
+    if (!first) throw new Error("Sugestão ausente");
+    expect(
+      applyReviewFindings("Frase", [{ ...first, replacement: first.suggestions?.[1] ?? "" }]),
+    ).toBe(offset === 0 ? "!Frase" : "Frase!");
+    vi.restoreAllMocks();
+  });
+  it("transforma observações da revisão HTTP em sugestões aplicáveis", async () => {
+    const text = "Eu fasso isso.";
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          language: "pt-BR",
+          engine: "languagetool-community",
+          version: "teste",
+          matches: [
+            {
+              offset: 3,
+              length: 5,
+              message: "Grafia incorreta",
+              shortMessage: "Ortografia",
+              replacements: [{ value: "faço" }],
+              rule: { id: "GRAFIA", description: "Grafia", issueType: "misspelling" },
+            },
+          ],
+        }),
+      ),
+    );
+    const result = await runLauncherTool(
+      new HttpDocumentCorePort("https://teste.invalid"),
+      "text-review",
+      input([new File([text], "minuta.txt", { type: "text/plain" })]),
+    );
+    expect(result.reviewFindings).toHaveLength(1);
+    expect(applyReviewFindings(text, result.reviewFindings ?? [])).toBe("Eu faço isso.");
+    vi.restoreAllMocks();
+  });
   it("encaminha o perfil de compressão ao executor nativo", async () => {
     const port = new BrowserDocumentCorePort();
     const executePdfTool = vi.fn(async () => new Blob(["resultado"], { type: "application/pdf" }));

@@ -1,7 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
+import { HttpDocumentCorePort } from "@/platform/http-document-core";
 import { resolveLauncherTools } from "./data";
 
 describe("Strict Functional Tools Catalog", () => {
+  it("mantém as ferramentas de navegador disponíveis no website com adapter HTTP", () => {
+    const tools = resolveLauncherTools([], new HttpDocumentCorePort());
+    const ids = tools.map((tool) => tool.id);
+    for (const id of ["images-to-pdf", "pdf-to-jpg", "pdf-watermark", "pdf-page-numbers"]) {
+      expect(ids).toContain(id);
+    }
+    expect(ids).not.toContain("pdf-extract-images");
+    expect(ids).toHaveLength(13);
+  });
   it("não oferece conversões e proteção sem executor", () => {
     const tools = resolveLauncherTools();
     const ids = tools.map((t) => t.id);

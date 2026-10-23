@@ -1,7 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { performBrowserOcr } from "./browser-ocr";
+import { applyContrastEnhancement, performBrowserOcr } from "./browser-ocr";
 
 describe("OCR no navegador", () => {
+  it("preserva preto e branco e aumenta contraste sem inverter os tons", () => {
+    const data = new Uint8ClampedArray([
+      0, 0, 0, 255, 255, 255, 255, 255, 96, 96, 96, 255, 160, 160, 160, 255,
+    ]);
+    const context = {
+      getImageData: () => ({ data }),
+      putImageData: () => {},
+    } as unknown as CanvasRenderingContext2D;
+    applyContrastEnhancement(context, 4, 1);
+    expect(data[0]).toBe(0);
+    expect(data[4]).toBe(255);
+    expect(data[8]).toBeLessThan(96);
+    expect(data[12]).toBeGreaterThan(160);
+    expect([data[3], data[7], data[11], data[15]]).toEqual([255, 255, 255, 255]);
+  });
   it("falha quando o Worker não está disponível, sem inventar texto", async () => {
     const originalWorker = globalThis.Worker;
     try {

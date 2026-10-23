@@ -1,4 +1,4 @@
-import { diffText, type ReviewFinding } from "@nexohub/domain";
+import { diffText, mergeReviewFindings, type ReviewFinding } from "@nexohub/domain";
 import { coreToolRegistry } from "@nexohub/tool-registry";
 import {
   type ToolExecutor,
@@ -426,11 +426,40 @@ async function executeTool(
             )
             .join("\n");
           const report = `RELATÓRIO DE REVISÃO\n====================\nTotal de observações: ${res.matches.length}\n\n${findings || "Nenhum erro identificado."}`;
+          const reviewFindings = mergeReviewFindings(
+            res.matches.map((match, index): ReviewFinding => {
+              // Inserções usam um intervalo adjacente para preservar o contrato do domínio.
+              const start =
+                match.length === 0 ? Math.min(match.offset, rawText.length - 1) : match.offset;
+              const end = match.length === 0 ? start + 1 : start + match.length;
+              const original = rawText.slice(start, end);
+              const suggestions = match.replacements.map(({ value }) =>
+                match.length === 0
+                  ? match.offset === rawText.length
+                    ? `${original}${value}`
+                    : `${value}${original}`
+                  : value,
+              );
+              return {
+                id: `${match.rule.id}:${match.offset}:${index}`,
+                rule: "LANGUAGE_TOOL",
+                severity: "warning",
+                start,
+                end,
+                original,
+                replacement: suggestions[0] ?? original,
+                suggestions,
+                message: match.message,
+              };
+            }),
+            [],
+          );
           return {
             blob: new Blob([report], { type: "text/plain;charset=utf-8" }),
             fileName: `${baseName}_revisao.txt`,
             categoryKey: "recent.type.document",
             extractedText: rawText,
+            reviewFindings,
           };
         } catch (error) {
           const isUnavailable =

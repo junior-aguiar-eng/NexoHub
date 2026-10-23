@@ -1,6 +1,118 @@
 import { readFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
+import { strToU8, zipSync } from "fflate";
 import { PDFDocument, PDFName, type PDFNumber, PDFRawStream, StandardFonts } from "pdf-lib";
+
+test("mantém ferramentas locais e sugestões quando o website usa o adapter HTTP", async ({
+  page,
+}) => {
+  await page.addInitScript(() => Object.assign(window, { __NEXOHUB_WEB_MODE__: true }));
+  for (const path of ["/imagem-para-pdf", "/pdf-para-jpg", "/marca-dagua", "/numeros-de-pagina"]) {
+    await page.goto(path);
+    await expect(page.locator(".dedicated-tool-page")).toBeVisible();
+  }
+  await page.route("**/api/v1/invoke/review_text", (route) =>
+    route.fulfill({
+      json: {
+        language: "pt-BR",
+        engine: "languagetool-community",
+        version: "teste",
+        matches: [
+          {
+            offset: 3,
+            length: 5,
+            message: "Grafia incorreta",
+            shortMessage: "Ortografia",
+            replacements: [{ value: "faço" }],
+            rule: { id: "GRAFIA", description: "Grafia", issueType: "misspelling" },
+          },
+        ],
+      },
+    }),
+  );
+  await page.goto("/revisar-texto");
+  await page.getByRole("button", { name: "Digitar Texto" }).click();
+  await page.locator("#dedicated-tool-direct-textarea").fill("Eu fasso isso.");
+  await page.getByRole("button", { name: "Revisar Texto", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Revisar Texto", exact: true })).toBeEnabled();
+  await expect(page.locator(".text-review-textarea")).toHaveValue("Eu fasso isso.");
+  await page.getByRole("button", { name: "Aplicar Todas as Correções" }).click();
+  await expect(page.locator(".text-review-textarea")).toHaveValue("Eu faço isso.");
+});
+
+test("converte todos os lotes de imagens selecionados em um PDF", async ({ page }) => {
+  const png = await readFile("src/assets/nexohub-icon.png");
+  await page.goto("/imagem-para-pdf");
+  await page.locator('input[type="file"]').setInputFiles([
+    { name: "primeira.png", mimeType: "image/png", buffer: png },
+    { name: "segunda.png", mimeType: "image/png", buffer: png },
+  ]);
+  await expect(page.locator(".ilovepdf-merge-file-card")).toHaveCount(2);
+  await page
+    .locator('input[type="file"]')
+    .setInputFiles({ name: "terceira.png", mimeType: "image/png", buffer: png });
+  await expect(page.locator(".ilovepdf-merge-file-card")).toHaveCount(3);
+  await page.getByRole("button", { name: "Converter em PDF", exact: true }).click();
+  const download = page.waitForEvent("download");
+  await page.getByRole("link", { name: /Baixar arquivo gerado/i }).click();
+  const bytes = await readFile(await (await download).path());
+  expect((await PDFDocument.load(bytes)).getPageCount()).toBe(3);
+});
+
+test("revisa sem alterar o texto antes da confirmação e permite edição posterior", async ({
+  page,
+}) => {
+  await page.goto("/revisar-texto");
+  await page.getByRole("button", { name: "Digitar Texto" }).click();
+  await page.locator("#dedicated-tool-direct-textarea").fill("Eu fasso e fasso.");
+  await page.getByRole("button", { name: "Revisar Texto", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Revisar Texto", exact: true })).toBeEnabled();
+  const editor = page.locator(".text-review-textarea");
+  await expect(editor).toHaveValue("Eu fasso e fasso.");
+  await page.getByRole("button", { name: "Aplicar Todas as Correções" }).click();
+  await expect(editor).toHaveValue("Eu faço e faço.");
+  await editor.fill("");
+  await expect(editor).toHaveValue("");
+});
+
+test("extrai texto de dois DOCX e exporta comparação legível", async ({ page }) => {
+  const document = (text: string) =>
+    Buffer.from(
+      zipSync({
+        "word/document.xml": strToU8(
+          `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>${text}</w:t></w:r></w:p></w:body></w:document>`,
+        ),
+      }),
+    );
+  await page.goto("/comparar-textos");
+  await page
+    .locator('input[type="file"]')
+    .first()
+    .setInputFiles([
+      {
+        name: "original.docx",
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        buffer: document("Texto original."),
+      },
+      {
+        name: "alterado.docx",
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        buffer: document("Texto alterado."),
+      },
+    ]);
+  await expect(page.getByRole("textbox", { name: "original.docx", exact: true })).toHaveValue(
+    "Texto original.",
+  );
+  await expect(page.getByRole("textbox", { name: "alterado.docx", exact: true })).toHaveValue(
+    "Texto alterado.",
+  );
+  await page.getByRole("button", { name: "Comparar Textos", exact: true }).last().click();
+  const download = page.waitForEvent("download");
+  await page.getByRole("link", { name: /Baixar arquivo gerado/i }).click();
+  const report = await readFile(await (await download).path(), "utf8");
+  expect(report).toContain("- Texto original.");
+  expect(report).toContain("+ Texto alterado.");
+});
 
 test("abre o Launcher compartilhado com vitrine de ferramentas", async ({ page }) => {
   await page.goto("/");

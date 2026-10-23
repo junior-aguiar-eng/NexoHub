@@ -24,6 +24,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | class-variance-authority | 0.7.1 | Apache-2.0 |
 | JavaScript | clsx | 2.1.1 | MIT |
 | JavaScript | csstype | 3.2.3 | MIT |
+| JavaScript | fflate | 0.8.3 | MIT |
 | JavaScript | framer-motion | 12.43.0 | MIT |
 | JavaScript | idb-keyval | 6.3.0 | Apache-2.0 |
 | JavaScript | is-url | 1.2.4 | MIT |

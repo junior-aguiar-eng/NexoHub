@@ -2,9 +2,9 @@
   --editor-accent: #df614b;
   --editor-border: #dde1e8;
   color: #252b37;
-  width: min(1600px, 100%);
+  width: min(1920px, 100%);
   margin: auto;
-  padding: 24px;
+  padding: 0;
 }
 .pdf-editor *,
 .pdf-editor *::before,

@@ -77,7 +77,13 @@ export async function renderPdfPagesThumbnails(
         try {
           const clampedPage = Math.max(1, Math.min(pageNumber, pdf.numPages));
           const page = await pdf.getPage(clampedPage);
-          const viewport = page.getViewport({ scale });
+          const baseViewport = page.getViewport({ scale: 1 });
+          const boundedScale = Math.min(
+            scale,
+            1800 / Math.max(baseViewport.width, baseViewport.height),
+            Math.sqrt(3_000_000 / (baseViewport.width * baseViewport.height)),
+          );
+          const viewport = page.getViewport({ scale: boundedScale });
 
           const canvas = document.createElement("canvas");
           canvas.width = viewport.width;

@@ -63,6 +63,16 @@ web de ferramentas. O catálogo `pt-BR` é a fonte de verdade dos textos da inte
   As ações principais usam coral; os acentos por ferramenta continuam identificando a operação.
 - Painéis específicos de juntar, dividir, comprimir e rotacionar empilham abaixo de 981px;
   colunas genéricas usam trilhas que podem encolher sem causar overflow.
+- Após o upload, as mesas usam a largura disponível, com margens laterais de 12–32px e
+  controles de 320px em telas largas. A página principal chega a 860px de largura; documentos
+  altos têm rolagem na prévia, sem redução automática a uma miniatura. Em telas menores, a
+  página acompanha a largura disponível e os controles ficam empilhados.
+- Prévias individuais são renderizadas em escala 1,8, limitadas a 1800px no lado maior e
+  3 megapixels por página. Grades usam escala 0,6 e arquivos adicionais de junção usam 1,2.
+  Esses limites afetam apenas a visualização; o documento exportado mantém seu processamento.
+  Miniaturas de organização têm altura de 300px; cartões de junção têm largura de 260px.
+- Editor e comparação aproveitam até 1920px; a comparação amplia também a altura dos leitores
+  em telas largas. A rotação reserva o espaço da página já girada para evitar cortes laterais.
 - Controles das ferramentas mantêm alvos mínimos de 44px, com quebra de linha nos grupos de
   miniaturas. Foco de teclado recebe contorno visível; conteúdo de arquivo e textos longos
   devem permanecer acessíveis.

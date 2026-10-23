@@ -1,4 +1,5 @@
 import { RotateCcw, RotateCw } from "lucide-react";
+import { useState } from "react";
 import { translate } from "@/i18n";
 
 type RotatePdfPanelProps = {
@@ -18,31 +19,43 @@ export function RotatePdfPanel({
   onRotateRight,
   onRotateLeft,
 }: RotatePdfPanelProps) {
+  const [aspect, setAspect] = useState(1 / Math.SQRT2);
+  const quarterTurn = Math.abs(rotation % 180) === 90;
   return (
     <div className="ilovepdf-rotate-container">
       {/* Centro: Visualização da Página Rotacionada */}
       <div className="ilovepdf-rotate-preview-area">
         <div className="ilovepdf-rotate-card-center">
           <div
-            className="ilovepdf-rotate-thumb-wrapper"
-            style={{
-              transform: `rotate(${rotation}deg)`,
-              transition: "transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
-            }}
+            className="ilovepdf-rotate-rotation-stage"
+            style={{ aspectRatio: String(quarterTurn ? 1 / aspect : aspect) }}
           >
-            {thumbnailUrl ? (
-              <img
-                src={thumbnailUrl}
-                alt={`Visualização de ${fileName}`}
-                className="ilovepdf-rotate-thumb-img"
-              />
-            ) : (
-              <div className="ilovepdf-rotate-placeholder">
-                <span>{translate("workspace.rotate.page")} 1</span>
-              </div>
-            )}
+            <div
+              className="ilovepdf-rotate-thumb-wrapper"
+              style={{
+                width: quarterTurn ? `${aspect * 100}%` : "100%",
+                transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+                transition: "transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
+            >
+              {thumbnailUrl ? (
+                <img
+                  src={thumbnailUrl}
+                  alt={`Visualização de ${fileName}`}
+                  className="ilovepdf-rotate-thumb-img"
+                  onLoad={(event) => {
+                    const image = event.currentTarget;
+                    if (image.naturalWidth && image.naturalHeight)
+                      setAspect(image.naturalWidth / image.naturalHeight);
+                  }}
+                />
+              ) : (
+                <div className="ilovepdf-rotate-placeholder">
+                  <span>{translate("workspace.rotate.page")} 1</span>
+                </div>
+              )}
+            </div>
           </div>
-
           <span className="ilovepdf-rotate-filename" title={fileName}>
             {fileName}
           </span>

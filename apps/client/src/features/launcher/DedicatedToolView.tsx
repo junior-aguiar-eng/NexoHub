@@ -350,7 +350,7 @@ export function DedicatedToolView({
       if (!pending) {
         pending = file
           .arrayBuffer()
-          .then((bytes) => renderPdfPageToDataUrl(new Uint8Array(bytes), pageNumber, 0.6));
+          .then((bytes) => renderPdfPageToDataUrl(new Uint8Array(bytes), pageNumber, 1.8));
         cache.set(pageNumber, pending);
       }
       void pending
@@ -439,7 +439,7 @@ export function DedicatedToolView({
           const renderedThumbs = await renderPdfPagesThumbnails(
             buffer,
             pageNumbersToRender,
-            isGridTool ? 0.4 : 0.6,
+            isGridTool ? 0.6 : 1.8,
           );
           if (isCancelled) return;
 
@@ -473,7 +473,7 @@ export function DedicatedToolView({
               const preview = await renderPdfPageToDataUrl(
                 new Uint8Array(await file.arrayBuffer()),
                 1,
-                0.6,
+                1.2,
               );
               if (isCancelled) return;
               setFileThumbnails((prev) => new Map(prev).set(file, preview));

@@ -302,7 +302,10 @@ export function SignPdfPanel({
     <div className="ilovepdf-compress-container">
       {/* Área Central: Pré-visualização com Selo Arrastável */}
       <div className="ilovepdf-compress-preview-area">
-        <div className="ilovepdf-file-card-center" style={{ maxWidth: "460px" }}>
+        <div
+          className="ilovepdf-file-card-center"
+          style={{ width: "100%", maxWidth: "var(--workspace-page-width, 860px)" }}
+        >
           {/* Navegação entre páginas */}
           {totalPages > 1 && (
             <div
@@ -369,7 +372,7 @@ export function SignPdfPanel({
               boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
               backgroundColor: "#ffffff",
               border: "1px solid #e2e8f0",
-              width: "fit-content",
+              width: "100%",
               maxWidth: "100%",
               marginInline: "auto",
               display: "flex",
@@ -386,10 +389,10 @@ export function SignPdfPanel({
                   .replace("{name}", fileName)}
                 className="ilovepdf-file-thumb-img"
                 style={{
-                  maxHeight: "380px",
+                  maxHeight: "none",
                   maxWidth: "100%",
                   height: "auto",
-                  width: "auto",
+                  width: "100%",
                   objectFit: "contain",
                   display: "block",
                   pointerEvents: "none",

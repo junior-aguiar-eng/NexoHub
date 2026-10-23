@@ -561,8 +561,8 @@ export function RedactPdfPanel({
         }
         .redact-header-card {
           padding: 1rem 1.25rem;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
         }
         .redact-file-info {
@@ -583,7 +583,7 @@ export function RedactPdfPanel({
         .redact-file-name {
           font-weight: 600;
           font-size: 0.95rem;
-          color: #f8fafc;
+          color: var(--color-ink);
           word-break: break-all;
         }
         .redact-file-meta {
@@ -591,17 +591,17 @@ export function RedactPdfPanel({
           align-items: center;
           gap: 0.5rem;
           font-size: 0.8rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           margin-top: 2px;
         }
         .redact-badge-count {
-          color: #38bdf8;
+          color: #0369a1;
           font-weight: 500;
         }
         .redact-section-card {
           padding: 1.25rem;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
           display: flex;
           flex-direction: column;
@@ -613,11 +613,11 @@ export function RedactPdfPanel({
           gap: 0.5rem;
           font-size: 0.9rem;
           font-weight: 600;
-          color: #f8fafc;
+          color: var(--color-ink);
         }
         .redact-instruction {
           font-size: 0.82rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           line-height: 1.4;
           margin: 0;
         }
@@ -629,7 +629,7 @@ export function RedactPdfPanel({
         .redact-field-label {
           font-size: 0.78rem;
           font-weight: 500;
-          color: #cbd5e1;
+          color: var(--color-ink);
         }
         .redact-color-picker {
           display: grid;
@@ -641,18 +641,18 @@ export function RedactPdfPanel({
           align-items: center;
           gap: 0.5rem;
           padding: 0.5rem 0.65rem;
-          background: rgba(15, 23, 42, 0.5);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: var(--color-surface-muted);
+          border: 1px solid var(--color-border);
           border-radius: 6px;
-          color: #e2e8f0;
+          color: var(--color-ink);
           font-size: 0.78rem;
           cursor: pointer;
           transition: border-color 0.15s, background 0.15s;
         }
         .redact-color-btn.selected {
-          border-color: #38bdf8;
+          border-color: #0369a1;
           background: rgba(56, 189, 248, 0.1);
-          color: #f8fafc;
+          color: var(--color-ink);
         }
         .redact-swatch {
           width: 14px;
@@ -663,15 +663,15 @@ export function RedactPdfPanel({
         .redact-text-input {
           width: 100%;
           padding: 0.55rem 0.75rem;
-          background: rgba(15, 23, 42, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 6px;
-          color: #f8fafc;
+          color: var(--color-ink);
           font-size: 0.85rem;
         }
         .redact-text-input:focus {
           outline: none;
-          border-color: #38bdf8;
+          border-color: #0369a1;
           box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
         }
         .redact-add-manual-btn {
@@ -680,10 +680,10 @@ export function RedactPdfPanel({
           justify-content: center;
           gap: 0.4rem;
           padding: 0.6rem 1rem;
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 8px;
-          color: #f8fafc;
+          color: var(--color-ink);
           font-size: 0.82rem;
           font-weight: 500;
           cursor: pointer;
@@ -691,7 +691,7 @@ export function RedactPdfPanel({
           margin-top: 0.25rem;
         }
         .redact-add-manual-btn:hover {
-          background: rgba(255, 255, 255, 0.1);
+          background: var(--color-surface-muted);
         }
         .redact-list-header {
           display: flex;
@@ -715,11 +715,11 @@ export function RedactPdfPanel({
           align-items: center;
           gap: 0.5rem;
           padding: 0.85rem;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px dashed rgba(255, 255, 255, 0.1);
+          background: var(--color-surface-muted);
+          border: 1px dashed var(--color-border);
           border-radius: 8px;
           font-size: 0.8rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
         }
         .redact-items-list {
           display: flex;
@@ -730,8 +730,8 @@ export function RedactPdfPanel({
         }
         .redact-item-card {
           padding: 0.65rem 0.85rem;
-          background: rgba(15, 23, 42, 0.4);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-muted);
+          border: 1px solid var(--color-border);
           border-radius: 8px;
           display: flex;
           flex-direction: column;
@@ -750,12 +750,12 @@ export function RedactPdfPanel({
         .redact-item-badge {
           font-size: 0.75rem;
           font-weight: 600;
-          color: #cbd5e1;
+          color: var(--color-ink);
         }
         .redact-item-remove {
           background: transparent;
           border: none;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           cursor: pointer;
           padding: 2px;
           border-radius: 4px;
@@ -787,10 +787,10 @@ export function RedactPdfPanel({
           flex: 1;
           padding: 0.3rem 0.5rem;
           font-size: 0.78rem;
-          background: rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 4px;
-          color: #f8fafc;
+          color: var(--color-ink);
         }
         .redact-preview-pane {
           position: sticky;
@@ -798,8 +798,8 @@ export function RedactPdfPanel({
         }
         .redact-preview-card {
           padding: 1.25rem;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
           display: flex;
           flex-direction: column;
@@ -813,7 +813,7 @@ export function RedactPdfPanel({
         .redact-preview-title {
           font-size: 0.85rem;
           font-weight: 600;
-          color: #cbd5e1;
+          color: var(--color-ink);
         }
         .redact-page-nav {
           display: flex;
@@ -827,9 +827,9 @@ export function RedactPdfPanel({
           width: 26px;
           height: 26px;
           border-radius: 6px;
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: #f8fafc;
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
+          color: var(--color-ink);
           cursor: pointer;
         }
         .redact-nav-btn:disabled {
@@ -838,20 +838,20 @@ export function RedactPdfPanel({
         }
         .redact-page-counter {
           font-size: 0.75rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           min-width: 48px;
           text-align: center;
         }
         .redact-draw-hint {
           font-size: 0.75rem;
-          color: #38bdf8;
+          color: #0369a1;
           background: rgba(56, 189, 248, 0.08);
           border: 1px solid rgba(56, 189, 248, 0.2);
           padding: 0.45rem 0.75rem;
           border-radius: 6px;
         }
         .redact-preview-area {
-          background: rgba(0, 0, 0, 0.4);
+          background: var(--color-surface-muted);
           border-radius: 8px;
           padding: 1rem;
           display: flex;
@@ -885,7 +885,7 @@ export function RedactPdfPanel({
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
-          background: rgba(15, 23, 42, 0.8);
+          background: var(--color-surface-muted);
           color: #64748b;
           font-size: 0.85rem;
         }
@@ -935,12 +935,12 @@ export function RedactPdfPanel({
         }
         .redact-preview-footer {
           padding-top: 0.5rem;
-          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          border-top: 1px solid var(--color-border);
           text-align: center;
         }
         .redact-privacy-notice {
           font-size: 0.75rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           line-height: 1.4;
         }
       `}</style>

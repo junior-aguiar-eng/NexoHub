@@ -436,8 +436,8 @@ export function ProtectPdfPanel({
         }
         .protect-header-card {
           padding: 1rem 1.25rem;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
         }
         .protect-file-info {
@@ -453,19 +453,19 @@ export function ProtectPdfPanel({
           height: 42px;
           border-radius: 10px;
           background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          border: 1px solid var(--color-border);
         }
         .protect-file-name {
           font-weight: 600;
           font-size: 0.95rem;
-          color: #f8fafc;
+          color: var(--color-ink);
           word-break: break-all;
         }
         .protect-file-meta {
           display: flex;
           gap: 0.5rem;
           font-size: 0.8rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           margin-top: 2px;
         }
         .protect-alert-already {
@@ -485,7 +485,7 @@ export function ProtectPdfPanel({
         .protect-alert-desc {
           margin: 0.4rem 0 0.8rem 0;
           font-size: 0.85rem;
-          color: #cbd5e1;
+          color: var(--color-ink);
           line-height: 1.4;
         }
         .protect-btn-unlock {
@@ -507,8 +507,8 @@ export function ProtectPdfPanel({
         }
         .protect-section-card {
           padding: 1.25rem;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
           display: flex;
           flex-direction: column;
@@ -520,13 +520,13 @@ export function ProtectPdfPanel({
           gap: 0.5rem;
           font-size: 0.9rem;
           font-weight: 600;
-          color: #f8fafc;
+          color: var(--color-ink);
         }
         .protect-field-label {
           display: block;
           font-size: 0.8rem;
           font-weight: 500;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           margin-bottom: 0.35rem;
         }
         .protect-input-wrapper {
@@ -537,16 +537,16 @@ export function ProtectPdfPanel({
         .protect-input {
           width: 100%;
           padding: 0.65rem 2.5rem 0.65rem 0.85rem;
-          background: rgba(15, 23, 42, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 8px;
-          color: #f8fafc;
+          color: var(--color-ink);
           font-size: 0.9rem;
           transition: border-color 0.2s, box-shadow 0.2s;
         }
         .protect-input:focus {
           outline: none;
-          border-color: #38bdf8;
+          border-color: #0369a1;
           box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
         }
         .protect-input-error {
@@ -557,7 +557,7 @@ export function ProtectPdfPanel({
           right: 0.75rem;
           background: transparent;
           border: none;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -565,7 +565,7 @@ export function ProtectPdfPanel({
           padding: 4px;
         }
         .protect-toggle-eye:hover {
-          color: #f8fafc;
+          color: var(--color-ink);
         }
         .protect-strength-bar-container {
           margin-top: 0.4rem;
@@ -576,7 +576,7 @@ export function ProtectPdfPanel({
         .protect-strength-track {
           flex: 1;
           height: 4px;
-          background: rgba(255, 255, 255, 0.1);
+          background: var(--color-surface-muted);
           border-radius: 2px;
           overflow: hidden;
         }
@@ -606,24 +606,24 @@ export function ProtectPdfPanel({
           align-items: flex-start;
           gap: 0.75rem;
           padding: 0.75rem 0.85rem;
-          background: rgba(15, 23, 42, 0.4);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-muted);
+          border: 1px solid var(--color-border);
           border-radius: 8px;
           cursor: pointer;
           transition: border-color 0.15s, background 0.15s;
         }
         .protect-algo-option.selected {
-          border-color: #38bdf8;
+          border-color: #0369a1;
           background: rgba(56, 189, 248, 0.08);
         }
         .protect-algo-title {
           font-weight: 600;
           font-size: 0.85rem;
-          color: #f8fafc;
+          color: var(--color-ink);
         }
         .protect-algo-desc {
           font-size: 0.75rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           margin-top: 2px;
         }
         .protect-permissions-list {
@@ -636,11 +636,11 @@ export function ProtectPdfPanel({
           align-items: center;
           gap: 0.6rem;
           font-size: 0.85rem;
-          color: #cbd5e1;
+          color: var(--color-ink);
           cursor: pointer;
         }
         .protect-checkbox-row input[type="checkbox"] {
-          accent-color: #38bdf8;
+          accent-color: #0369a1;
           width: 16px;
           height: 16px;
           cursor: pointer;
@@ -651,8 +651,8 @@ export function ProtectPdfPanel({
         }
         .protect-preview-card {
           padding: 1.25rem;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
           display: flex;
           flex-direction: column;
@@ -666,7 +666,7 @@ export function ProtectPdfPanel({
         .protect-preview-title {
           font-size: 0.85rem;
           font-weight: 600;
-          color: #cbd5e1;
+          color: var(--color-ink);
         }
         .protect-page-nav {
           display: flex;
@@ -680,9 +680,9 @@ export function ProtectPdfPanel({
           width: 26px;
           height: 26px;
           border-radius: 6px;
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: #f8fafc;
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
+          color: var(--color-ink);
           cursor: pointer;
         }
         .protect-nav-btn:disabled {
@@ -691,12 +691,12 @@ export function ProtectPdfPanel({
         }
         .protect-page-counter {
           font-size: 0.75rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           min-width: 48px;
           text-align: center;
         }
         .protect-thumbnail-canvas {
-          background: rgba(0, 0, 0, 0.35);
+          background: var(--color-surface-muted);
           border-radius: 8px;
           padding: 1rem;
           display: flex;
@@ -731,11 +731,11 @@ export function ProtectPdfPanel({
           align-items: center;
           gap: 0.5rem;
           padding: 0.5rem 0.85rem;
-          background: rgba(15, 23, 42, 0.85);
+          background: var(--color-surface-raised);
           backdrop-filter: blur(8px);
           border: 1px solid rgba(56, 189, 248, 0.4);
           border-radius: 20px;
-          color: #38bdf8;
+          color: #0369a1;
           font-size: 0.8rem;
           font-weight: 600;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -750,12 +750,12 @@ export function ProtectPdfPanel({
         }
         .protect-preview-footer {
           padding-top: 0.5rem;
-          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          border-top: 1px solid var(--color-border);
           text-align: center;
         }
         .protect-footer-hint {
           font-size: 0.75rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
         }
       `}</style>
     </div>

@@ -90,7 +90,7 @@ Todas as ferramentas abaixo possuem **executores reais e funcionais** na Web e n
 | Ferramenta | Descrição Operacional | Motor de Execução |
 |---|---|---|
 | **Imagem para PDF** | Converter e compilar JPG, PNG e WebP com orientação e margens | `pdf-lib` (Client-side) |
-| **HTML para PDF** | Converter código ou página HTML semântica com layout preservado | Web Renderer / PDF |
+| **HTML para PDF** | Converter HTML semântico em PDF com títulos, listas e tabelas; sem preservar o layout CSS original | Parser semântico / `pdf-lib` |
 | **PDF para JPG** | Exportar páginas em alta definição (150 DPI) com download direto ou em ZIP | PDF.js + ZIP em memória |
 | **PDF para Excel** | Extração posicional tabular para planilha OpenXML (`.xlsx`) ou `.csv` | PDF.js + Excel Engine |
 | **Extrair Imagens** | Identificar e salvar recursos gráficos (`XObject`) em PNG/JPG nativo | PDF.js / `pdf-lib` |

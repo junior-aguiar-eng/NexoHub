@@ -17,8 +17,8 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 
 ### Corrigido
 
-- **Responsividade e Transbordo Mobile (390px)**: Compactação do alternador de zona PDF/Imagem no cabeçalho em telas menores que 480px, eliminando transbordo horizontal de 5px.
-- **Compatibilidade Windows em Testes E2E**: Ajuste na passagem de `standardFontDataUrl` para o motor `pdfjs-dist` em testes Playwright, garantindo URL com trailing slash.
+- **Responsividade e Transbordo Mobile (390px)**: Ocultação dos rótulos visuais do alternador PDF/Imagem em telas menores que 480px, preservando os nomes acessíveis e os alvos de toque.
+- **Compatibilidade Windows em Testes E2E**: Passagem de caminho local com separador final a `standardFontDataUrl` nos testes Playwright, usando `fileURLToPath` para suportar caminhos Windows e POSIX sem falha de carregamento de fontes.
 - **Suíte E2E**: Restauração da aprovação integral de 100% dos testes Playwright (97 aprovados).
 
 ## [0.1.1] - 2026-10-22

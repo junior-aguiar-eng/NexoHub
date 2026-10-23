@@ -8539,7 +8539,7 @@ body,
 
 /* Seletor PDF/Imagem compacto: os botões mantêm aria-label, só o rótulo visual sai. */
 @media (max-width: 479px) {
-  .header-zone-toggle [role="tab"] > span {
+  .header-zone-toggle button > span {
     display: none;
   }
 }

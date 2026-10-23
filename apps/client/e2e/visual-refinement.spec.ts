@@ -1,6 +1,31 @@
 import { expect, test } from "@playwright/test";
 import { PDFDocument } from "pdf-lib";
 
+test("seletor compacto mantém nomes acessíveis e alternância no celular", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/pdf");
+  const selector = page.locator(".header-zone-toggle");
+  const pdfButton = selector.getByRole("button", { name: /alternar para modo pdf/i });
+  const imageButton = selector.getByRole("button", { name: /alternar para modo imagem/i });
+  await expect(pdfButton.locator("span")).toBeHidden();
+  await expect(imageButton.locator("span")).toBeHidden();
+  for (const button of [pdfButton, imageButton]) {
+    const box = await button.boundingBox();
+    expect(box?.width).toBeGreaterThanOrEqual(44);
+    expect(box?.height).toBeGreaterThanOrEqual(44);
+  }
+  await imageButton.click();
+  await expect(imageButton).toHaveAttribute("aria-pressed", "true");
+  await expect(page).toHaveURL(/\/img$/);
+  await pdfButton.click();
+  await expect(pdfButton).toHaveAttribute("aria-pressed", "true");
+  await expect(page).toHaveURL(/\/pdf$/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+  await page.setViewportSize({ width: 768, height: 1000 });
+  await expect(pdfButton.locator("span")).toBeVisible();
+  await expect(imageButton.locator("span")).toBeVisible();
+});
+
 for (const [width, columns] of [
   [390, 1],
   [520, 2],

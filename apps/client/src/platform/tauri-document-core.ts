@@ -34,6 +34,12 @@ export class TauriDocumentCorePort implements DocumentCorePort {
     "pdf-extract-pages",
     "html-to-pdf",
     "scan-to-pdf",
+    "image-compress",
+    "image-resize",
+    "image-crop",
+    "image-convert",
+    "image-rotate",
+    "image-watermark",
   ]);
   private projectPath: string | null = null;
 

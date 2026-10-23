@@ -3,13 +3,16 @@ import { describe, expect, it, vi } from "vitest";
 import { launcherTools } from "./data";
 import { Header } from "./Header";
 
-function renderHeader() {
+function renderHeader(props?: Partial<Parameters<typeof Header>[0]>) {
   return render(
     <Header
       tools={launcherTools}
       activeSuite="overview"
       onSelectSuite={vi.fn()}
       onOpenCommandPalette={vi.fn()}
+      currentZone={props?.currentZone ?? "pdf"}
+      onZoneChange={props?.onZoneChange ?? vi.fn()}
+      {...props}
     />,
   );
 }
@@ -53,5 +56,24 @@ describe("Header", () => {
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     fireEvent.focusIn(screen.getByRole("button", { name: "Buscar no NexoHub" }));
     expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("renderiza o SegmentedZoneToggle e dispara onZoneChange", () => {
+    const onZoneChange = vi.fn();
+    renderHeader({ currentZone: "pdf", onZoneChange });
+
+    const imgTab = screen.getAllByRole("tab", { name: /alternar para modo imagem/i })[0];
+    fireEvent.click(imgTab);
+
+    expect(onZoneChange).toHaveBeenCalledWith("img");
+  });
+
+  it("adapta a barra de navegação no Modo Imagem", () => {
+    renderHeader({ currentZone: "img" });
+    expect(screen.getAllByText("IMAGEM")[0]).toBeInTheDocument();
+    // No modo imagem puro, links de ferramentas PDF de topo não são exibidos
+    expect(
+      screen.queryByRole("button", { name: "Todas as ferramentas PDF" }),
+    ).not.toBeInTheDocument();
   });
 });

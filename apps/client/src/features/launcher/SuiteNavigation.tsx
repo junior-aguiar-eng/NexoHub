@@ -1,17 +1,24 @@
 import { useRef } from "react";
 import { translate } from "@/i18n";
-import { suites } from "./data";
-import type { LauncherTool, SuiteId } from "./model";
+import { suites as defaultSuites } from "./data";
+import type { LauncherTool, Suite, SuiteId } from "./model";
 
 type SuiteNavigationProps = {
   activeSuite: SuiteId;
   onSelect: (suite: SuiteId) => void;
   tools: readonly LauncherTool[];
+  suitesList?: readonly Suite[];
 };
 
-export function SuiteNavigation({ activeSuite, onSelect, tools }: SuiteNavigationProps) {
+export function SuiteNavigation({
+  activeSuite,
+  onSelect,
+  tools,
+  suitesList,
+}: SuiteNavigationProps) {
+  const currentSuites = suitesList ?? defaultSuites;
   const buttonsRef = useRef<Array<HTMLButtonElement | null>>([]);
-  const visibleSuites = suites.filter(
+  const visibleSuites = currentSuites.filter(
     (suite) => suite.id === "overview" || tools.some((tool) => tool.suite === suite.id),
   );
 

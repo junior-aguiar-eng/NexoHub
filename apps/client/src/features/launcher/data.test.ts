@@ -24,10 +24,18 @@ describe("Strict Functional Tools Catalog", () => {
       "pdf-extract-pages",
       "html-to-pdf",
       "scan-to-pdf",
+      "pdf-edit",
+      "pdf-compare",
+      "image-compress",
+      "image-resize",
+      "image-crop",
+      "image-convert",
+      "image-rotate",
+      "image-watermark",
     ]) {
       expect(ids).toContain(id);
     }
-    expect(ids).toHaveLength(28);
+    expect(ids).toHaveLength(34);
   });
   it("não oferece conversões e proteção sem executor", () => {
     const tools = resolveLauncherTools();

@@ -251,13 +251,21 @@ export const ptBR = {
   "suite.flow": "NexoFlow",
   "hero.welcome": "Olá, vamos começar",
   "hero.welcomeQuestion": "Olá, o que faremos hoje?",
+  "hero.welcomeQuestionPdf": "Olá, o que faremos hoje no seu PDF?",
+  "hero.welcomeQuestionImage": "Todas as ferramentas necessárias para editar imagens",
   "hero.eyebrow": "Ferramentas de PDF práticas e 100% gratuitas",
   "hero.titlePrefix": "Todas as ferramentas de PDF",
   "hero.titleAccent": "em um só lugar.",
   "hero.description": "Todas as ferramentas para simplificar seus documentos, em um só lugar.",
+  "hero.descriptionPdf":
+    "Todas as ferramentas para simplificar seus documentos PDF, em um só lugar.",
+  "hero.descriptionImage": "Manipulação e edição visual de imagens sem enviar dados para a nuvem.",
   "hero.securityBadge": "Processado localmente • Seus arquivos nunca saem deste dispositivo",
   "hero.searchLabel": "Buscar ferramentas",
   "hero.searchPlaceholder": "Buscar ferramenta por nome ou ação (ex: juntar, assinar, ocr)...",
+  "hero.searchPlaceholderPdf": "Buscar ferramenta (ex: juntar, assinar, ocr)...",
+  "hero.searchPlaceholderImage":
+    "Buscar ferramenta de imagem (ex: redimensionar, remover fundo)...",
   "hero.commandShortcut": "Abrir busca rápida (Ctrl + K ou ⌘K)",
   "hero.trust.local": "Processamento 100% local",
   "hero.trust.privacy": "Seus arquivos nunca saem do PC",
@@ -655,6 +663,12 @@ export const ptBR = {
   "dedicated.actionPdfToMarkdown": "Converter para Markdown",
   "dedicated.actionFormFill": "Preencher PDF",
   "dedicated.actionUnlock": "Desbloquear PDF",
+  "dedicated.actionImageCompress": "Comprimir IMAGEM",
+  "dedicated.actionImageResize": "Redimensionar IMAGEM",
+  "dedicated.actionImageCrop": "Recortar IMAGEM",
+  "dedicated.actionImageConvert": "Converter IMAGEM",
+  "dedicated.actionImageRotate": "Girar IMAGEM",
+  "dedicated.actionImageWatermark": "Inserir Marca d'água",
   "dedicated.genericVisualTitle": "Espaço de Visualização Documental",
   "dedicated.genericVisualDesc": "Arquivo selecionado e pronto para processamento imediato.",
   "dedicated.processing": "Processando arquivo...",
@@ -1259,6 +1273,135 @@ export const ptBR = {
   "scanToPdf.capturedPages": "Páginas Digitalizadas ({count})",
   "scanToPdf.confirmButton": "Gerar PDF Digitalizado",
   "scanToPdf.noPages": "Capture ou carregue ao menos uma página para gerar o PDF.",
+
+  // ZONAS DE TRABALHO (MODO PDF E MODO IMAGEM)
+  "zone.pdf": "PDF",
+  "zone.image": "IMAGEM",
+  "zone.pdfFull": "NEXOHUB PDF",
+  "zone.imageFull": "NEXOHUB IMAGEM",
+  "zone.toggleAria": "Alternar zona de trabalho",
+  "zone.switchToPdf": "Alternar para Modo PDF",
+  "zone.switchToImage": "Alternar para Modo Imagem",
+
+  // ESPAÇO MODO IMAGEM (ESTÚDIO)
+  "imageZone.badge": "Estúdio de Imagens",
+  "imageZone.title": "Edição e Otimização Visual 100% no seu Navegador",
+  "imageZone.subtitle":
+    "Uma zona dedicada exclusivamente ao processamento visual de imagens. Privacidade total, sem uploads para servidores e acelerado pelo seu próprio dispositivo.",
+  "imageZone.pillar1Title": "Privacidade Absoluta",
+  "imageZone.pillar1Desc":
+    "Suas fotos e gráficos nunca saem deste computador ou celular. Sem armazenamento externo ou rastreamento.",
+  "imageZone.pillar2Title": "Processamento Local de Alta Performance",
+  "imageZone.pillar2Desc":
+    "Transformações e filtros executados diretamente via Canvas e aceleração gráfica no navegador.",
+  "imageZone.pillar3Title": "Fidelidade e Formatos Modernos",
+  "imageZone.pillar3Desc":
+    "Suporte a formatos modernos com controle preciso de dimensões, proporção e compactação.",
+  "imageZone.statusBadge": "Zona de Imagens Ativa",
+  "imageZone.statusTitle": "Estúdio de Imagens NexoHub",
+  "imageZone.statusDesc":
+    "Ferramentas completas de processamento e manipulação visual com máxima privacidade e zero fila remota.",
+
+  // SUITES MODO IMAGEM
+  "suite.imgOptimize": "Otimizar",
+  "suite.imgEdit": "Editar",
+  "suite.imgConvert": "Converter",
+  "suite.imgSecurity": "Marca d'água",
+
+  // FERRAMENTAS DE IMAGEM
+  "tool.imageCompress.title": "Comprimir IMAGEM",
+  "tool.imageCompress.description":
+    "Comprima imagens JPG, PNG ou WebP com a melhor qualidade e menor tamanho de arquivo.",
+  "tool.imageCompress.tagline": "Menos espaço, mesma nitidez visual.",
+
+  "tool.imageResize.title": "Redimensionar IMAGEM",
+  "tool.imageResize.description":
+    "Redimensione imagens por porcentagem ou definindo dimensões exatas em pixels.",
+  "tool.imageResize.tagline": "Ajuste dimensões e proporção com precisão.",
+
+  "tool.imageCrop.title": "Recortar IMAGEM",
+  "tool.imageCrop.description":
+    "Recorte fotos e gráficos definindo um retângulo em pixels ou proporções como 1:1, 4:3 e 16:9.",
+  "tool.imageCrop.tagline": "Foque no que realmente importa.",
+
+  "tool.imageConvert.title": "Converter IMAGEM",
+  "tool.imageConvert.description":
+    "Converta imagens entre JPG, PNG e WebP mantendo fidelidade visual e transparências.",
+  "tool.imageConvert.tagline": "Transforme formatos com total compatibilidade.",
+
+  "tool.imageRotate.title": "Girar IMAGEM",
+  "tool.imageRotate.description":
+    "Gire imagens em 90°, 180° ou 270° e aplique espelhamento horizontal ou vertical.",
+  "tool.imageRotate.tagline": "Orientação perfeita em um clique.",
+
+  "tool.imageWatermark.title": "Marca d'água em IMAGEM",
+  "tool.imageWatermark.description":
+    "Estampe texto ou logotipo sobre suas imagens com controle de opacidade, rotação e posição.",
+  "tool.imageWatermark.tagline": "Proteja seus direitos autorais e identidade.",
+
+  // OPÇÕES - COMPRIMIR IMAGEM
+  "imageCompress.levelRecommended": "Recomendada",
+  "imageCompress.levelRecommendedDesc": "Melhor relação entre compressão e qualidade visual.",
+  "imageCompress.levelExtreme": "Extrema",
+  "imageCompress.levelExtremeDesc": "Menor qualidade visual, máxima redução de tamanho.",
+  "imageCompress.levelLess": "Baixa",
+  "imageCompress.levelLessDesc": "Alta qualidade visual, compressão leve.",
+  "imageCompress.action": "Comprimir IMAGEM",
+  "imageCompress.actionRunning": "Comprimindo...",
+
+  // OPÇÕES - REDIMENSIONAR IMAGEM
+  "imageResize.modePixels": "Por pixels",
+  "imageResize.modePercentage": "Por porcentagem",
+  "imageResize.width": "Largura (px)",
+  "imageResize.height": "Altura (px)",
+  "imageResize.maintainAspectRatio": "Manter proporção",
+  "imageResize.doNotEnlarge": "Não ampliar se for menor",
+  "imageResize.pct25": "25% menor",
+  "imageResize.pct50": "50% menor",
+  "imageResize.pct75": "75% menor",
+  "imageResize.action": "Redimensionar IMAGEM",
+  "imageResize.actionRunning": "Redimensionando...",
+
+  // OPÇÕES - RECORTAR IMAGEM
+  "imageCrop.ratioFree": "Livre",
+  "imageCrop.ratioSquare": "1:1 (Quadrado)",
+  "imageCrop.ratio4_3": "4:3 (Padrão)",
+  "imageCrop.ratio16_9": "16:9 (Widescreen)",
+  "imageCrop.ratio3_2": "3:2 (Fotografia)",
+  "imageCrop.action": "Recortar IMAGEM",
+  "imageCrop.actionRunning": "Recortando...",
+
+  // OPÇÕES - CONVERTER IMAGEM
+  "imageConvert.format": "Formato de destino",
+  "imageConvert.quality": "Qualidade de saída",
+  "imageConvert.action": "Converter IMAGEM",
+  "imageConvert.actionRunning": "Convertendo...",
+
+  // OPÇÕES - GIRAR IMAGEM
+  "imageRotate.rotateRight": "Girar 90° à direita",
+  "imageRotate.rotateLeft": "Girar 90° à esquerda",
+  "imageRotate.rotate180": "Girar 180°",
+  "imageRotate.flipH": "Inverter horizontal",
+  "imageRotate.flipV": "Inverter vertical",
+  "imageRotate.action": "Girar IMAGEM",
+  "imageRotate.actionRunning": "Girando...",
+
+  // OPÇÕES - MARCA D'ÁGUA EM IMAGEM
+  "imageWatermark.tabText": "Texto",
+  "imageWatermark.tabImage": "Logotipo / Imagem",
+  "imageWatermark.text": "Texto da marca d'água",
+  "imageWatermark.color": "Cor do texto",
+  "imageWatermark.opacity": "Opacidade",
+  "imageWatermark.rotation": "Rotação",
+  "imageWatermark.position": "Posicionamento",
+  "imageWatermark.posCenter": "Centro",
+  "imageWatermark.posTopLeft": "Superior esquerdo",
+  "imageWatermark.posTopRight": "Superior direito",
+  "imageWatermark.posBottomLeft": "Inferior esquerdo",
+  "imageWatermark.posBottomRight": "Inferior direito",
+  "imageWatermark.posRepeat": "Mosaico repetido",
+  "imageWatermark.action": "Aplicar Marca d'Água",
+  "imageWatermark.actionRunning": "Aplicando...",
 } as const;
 
 export type MessageKey = keyof typeof ptBR;

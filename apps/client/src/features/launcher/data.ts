@@ -1,6 +1,7 @@
 import { coreToolRegistry } from "@nexohub/tool-registry";
 import { resolveToolAvailability } from "@nexohub/tool-sdk";
 import {
+  ArrowLeftRight,
   BetweenHorizontalStart,
   Camera,
   Crop,
@@ -22,6 +23,8 @@ import {
   Images,
   Languages,
   Lock,
+  Maximize2,
+  Minimize2,
   Pencil,
   PenTool,
   RotateCw,
@@ -32,7 +35,7 @@ import {
 } from "lucide-react";
 import type { LauncherTool, Suite } from "./model";
 
-export const suites: readonly Suite[] = [
+export const pdfSuites: readonly Suite[] = [
   { id: "overview", labelKey: "suite.all", ariaLabel: "Todas" },
   { id: "organize", labelKey: "suite.organize", ariaLabel: "Organizar PDF" },
   { id: "optimize", labelKey: "suite.optimize", ariaLabel: "Otimizar PDF" },
@@ -40,6 +43,16 @@ export const suites: readonly Suite[] = [
   { id: "text", labelKey: "suite.text", ariaLabel: "Texto e OCR" },
   { id: "security", labelKey: "suite.security", ariaLabel: "Segurança" },
 ];
+
+export const imageSuites: readonly Suite[] = [
+  { id: "overview", labelKey: "suite.all", ariaLabel: "Todas" },
+  { id: "img-optimize", labelKey: "suite.imgOptimize", ariaLabel: "Otimizar" },
+  { id: "img-edit", labelKey: "suite.imgEdit", ariaLabel: "Editar" },
+  { id: "img-convert", labelKey: "suite.imgConvert", ariaLabel: "Converter" },
+  { id: "img-security", labelKey: "suite.imgSecurity", ariaLabel: "Marca d'água" },
+];
+
+export const suites: readonly Suite[] = pdfSuites;
 
 const presentation = {
   "pdf-edit": {
@@ -278,6 +291,54 @@ const presentation = {
     icon: Camera,
     accentColor: "#0284C7", // Azul Céu / Scanner
   },
+  "image-compress": {
+    suite: "img-optimize" as const,
+    titleKey: "tool.imageCompress.title" as const,
+    descriptionKey: "tool.imageCompress.description" as const,
+    uploadTaglineKey: "tool.imageCompress.tagline" as const,
+    icon: Minimize2,
+    accentColor: "#0284C7", // Azul Sky
+  },
+  "image-resize": {
+    suite: "img-edit" as const,
+    titleKey: "tool.imageResize.title" as const,
+    descriptionKey: "tool.imageResize.description" as const,
+    uploadTaglineKey: "tool.imageResize.tagline" as const,
+    icon: Maximize2,
+    accentColor: "#2563EB", // Azul Royal
+  },
+  "image-crop": {
+    suite: "img-edit" as const,
+    titleKey: "tool.imageCrop.title" as const,
+    descriptionKey: "tool.imageCrop.description" as const,
+    uploadTaglineKey: "tool.imageCrop.tagline" as const,
+    icon: Crop,
+    accentColor: "#0EA5E9", // Azul Ciano
+  },
+  "image-convert": {
+    suite: "img-convert" as const,
+    titleKey: "tool.imageConvert.title" as const,
+    descriptionKey: "tool.imageConvert.description" as const,
+    uploadTaglineKey: "tool.imageConvert.tagline" as const,
+    icon: ArrowLeftRight,
+    accentColor: "#3B82F6", // Azul Vivo
+  },
+  "image-rotate": {
+    suite: "img-edit" as const,
+    titleKey: "tool.imageRotate.title" as const,
+    descriptionKey: "tool.imageRotate.description" as const,
+    uploadTaglineKey: "tool.imageRotate.tagline" as const,
+    icon: RotateCw,
+    accentColor: "#4F46E5", // Índigo
+  },
+  "image-watermark": {
+    suite: "img-security" as const,
+    titleKey: "tool.imageWatermark.title" as const,
+    descriptionKey: "tool.imageWatermark.description" as const,
+    uploadTaglineKey: "tool.imageWatermark.tagline" as const,
+    icon: Stamp,
+    accentColor: "#6366F1", // Violeta Índigo
+  },
 } as const;
 
 import type { CapabilityProvider } from "@nexohub/tool-sdk";
@@ -312,6 +373,12 @@ const browserSupportedToolIds = new Set([
   "pdf-extract-pages",
   "html-to-pdf",
   "scan-to-pdf",
+  "image-compress",
+  "image-resize",
+  "image-crop",
+  "image-convert",
+  "image-rotate",
+  "image-watermark",
 ]);
 
 export function createDynamicCapabilitiesProvider(

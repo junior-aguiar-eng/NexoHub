@@ -1,6 +1,7 @@
 import { type ToolManifest, ToolRegistry } from "@nexohub/tool-sdk";
 
 const pdfCapabilities = ["documents.read", "documents.write", "pdf.transform"] as const;
+const imageCapabilities = ["documents.read", "documents.write", "image.transform"] as const;
 
 export const coreToolManifests = [
   {
@@ -334,6 +335,72 @@ export const coreToolManifests = [
     accepts: ["image/jpeg", "image/png", "image/webp"],
     produces: ["application/pdf"],
     capabilities: pdfCapabilities,
+    executor: "browser",
+  },
+  {
+    id: "image-compress",
+    version: "1.0.0",
+    name: "Comprimir Imagem",
+    category: "image",
+    surfaces: ["quick", "studio"],
+    accepts: ["image/jpeg", "image/png", "image/webp"],
+    produces: ["image/jpeg", "image/png", "image/webp"],
+    capabilities: imageCapabilities,
+    executor: "browser",
+  },
+  {
+    id: "image-resize",
+    version: "1.0.0",
+    name: "Redimensionar Imagem",
+    category: "image",
+    surfaces: ["quick", "studio"],
+    accepts: ["image/jpeg", "image/png", "image/webp"],
+    produces: ["image/jpeg", "image/png", "image/webp"],
+    capabilities: imageCapabilities,
+    executor: "browser",
+  },
+  {
+    id: "image-crop",
+    version: "1.0.0",
+    name: "Recortar Imagem",
+    category: "image",
+    surfaces: ["quick", "studio"],
+    accepts: ["image/jpeg", "image/png", "image/webp"],
+    produces: ["image/jpeg", "image/png", "image/webp"],
+    capabilities: imageCapabilities,
+    executor: "browser",
+  },
+  {
+    id: "image-convert",
+    version: "1.0.0",
+    name: "Converter Formato de Imagem",
+    category: "image",
+    surfaces: ["quick", "studio"],
+    accepts: ["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/svg+xml"],
+    produces: ["image/jpeg", "image/png", "image/webp"],
+    capabilities: imageCapabilities,
+    executor: "browser",
+  },
+  {
+    id: "image-rotate",
+    version: "1.0.0",
+    name: "Girar Imagem",
+    category: "image",
+    surfaces: ["quick", "studio"],
+    accepts: ["image/jpeg", "image/png", "image/webp"],
+    produces: ["image/jpeg", "image/png", "image/webp"],
+    capabilities: imageCapabilities,
+    executor: "browser",
+  },
+  {
+    id: "image-watermark",
+    version: "1.0.0",
+    name: "Marca d'água em Imagem",
+    category: "image",
+    surfaces: ["quick", "studio"],
+    accepts: ["image/jpeg", "image/png", "image/webp"],
+    produces: ["image/jpeg", "image/png", "image/webp"],
+    capabilities: imageCapabilities,
     executor: "browser",
   },
 ] as const satisfies readonly ToolManifest[];

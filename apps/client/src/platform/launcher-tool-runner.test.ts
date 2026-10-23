@@ -589,4 +589,64 @@ describe("Tool Runner do Launcher", () => {
     const doc = await PDFDocument.load(new Uint8Array(await result.blob.arrayBuffer()));
     expect(doc.getPageCount()).toBe(1);
   });
+
+  it("executa ferramentas de imagem pelo launcher-tool-runner", async () => {
+    const port = new BrowserDocumentCorePort();
+    const testFile = new File(
+      [new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])],
+      "foto.png",
+      {
+        type: "image/png",
+      },
+    );
+
+    // Teste de compressão
+    const compRes = await runLauncherTool(port, "image-compress", {
+      ...input([testFile]),
+      imageCompressionLevel: "recommended",
+    });
+    expect(compRes.fileName).toContain("foto_comprimido");
+    expect(compRes.blob).toBeInstanceOf(Blob);
+
+    // Teste de redimensionamento
+    const resizeRes = await runLauncherTool(port, "image-resize", {
+      ...input([testFile]),
+      imageResizeMode: "percentage",
+      imageResizePercentage: 50,
+    });
+    expect(resizeRes.fileName).toBe("foto_redimensionado.png");
+
+    // Teste de recorte
+    const cropRes = await runLauncherTool(port, "image-crop", {
+      ...input([testFile]),
+      imageCropX: 10,
+      imageCropY: 10,
+      imageCropWidth: 100,
+      imageCropHeight: 100,
+    });
+    expect(cropRes.fileName).toBe("foto_recortado.png");
+
+    // Teste de conversão
+    const convertRes = await runLauncherTool(port, "image-convert", {
+      ...input([testFile]),
+      imageTargetFormat: "webp",
+    });
+    expect(convertRes.fileName).toBe("foto.webp");
+
+    // Teste de rotação
+    const rotateRes = await runLauncherTool(port, "image-rotate", {
+      ...input([testFile]),
+      imageRotateAngle: 90,
+      imageFlipHorizontal: true,
+    });
+    expect(rotateRes.fileName).toBe("foto_girado.png");
+
+    // Teste de marca d'água
+    const wmRes = await runLauncherTool(port, "image-watermark", {
+      ...input([testFile]),
+      imageWatermarkType: "text",
+      imageWatermarkText: "NexoHub Seguro",
+    });
+    expect(wmRes.fileName).toBe("foto_marca_dagua.png");
+  });
 });

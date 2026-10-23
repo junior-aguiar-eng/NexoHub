@@ -106,6 +106,12 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
     "pdf-extract-pages",
     "html-to-pdf",
     "scan-to-pdf",
+    "image-compress",
+    "image-resize",
+    "image-crop",
+    "image-convert",
+    "image-rotate",
+    "image-watermark",
   ]);
   private projectData: Map<string, StoredProjectData> = new Map();
   private pendingFiles: Map<string, File> = new Map();

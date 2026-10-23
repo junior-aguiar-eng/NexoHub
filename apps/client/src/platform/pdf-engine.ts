@@ -1,3 +1,4 @@
+import { AlreadyEncryptedError, encryptPDF } from "@pdfsmaller/pdf-encrypt";
 import {
   concatTransformationMatrix,
   decodePDFRawStream,
@@ -981,6 +982,142 @@ export async function generateSearchablePdf(
   return await doc.save({ useObjectStreams: true });
 }
 
+export interface ProtectPdfOptions {
+  readonly password?: string;
+  readonly ownerPassword?: string;
+  readonly algorithm?: "AES-256" | "RC4";
+  readonly allowPrinting?: boolean;
+  readonly allowModifying?: boolean;
+  readonly allowCopying?: boolean;
+  readonly allowAnnotating?: boolean;
+  readonly allowFillingForms?: boolean;
+}
+
+/**
+ * Protege um documento PDF adicionando criptografia e restrições de permissões.
+ */
+export async function protectPdfDocument(
+  pdfBytes: Uint8Array,
+  options: ProtectPdfOptions = {},
+): Promise<Uint8Array> {
+  if (pdfBytes.byteLength === 0) {
+    throw new Error("EMPTY_DOCUMENT");
+  }
+
+  const password = options.password?.trim() ?? "";
+  const ownerPassword = options.ownerPassword?.trim() || undefined;
+
+  if (!password && !ownerPassword) {
+    throw new Error("SENHA_OBRIGATORIA");
+  }
+
+  try {
+    return await encryptPDF(pdfBytes, password, {
+      ownerPassword,
+      algorithm: options.algorithm ?? "AES-256",
+      allowPrinting: options.allowPrinting ?? true,
+      allowModifying: options.allowModifying ?? false,
+      allowCopying: options.allowCopying ?? false,
+      allowAnnotating: options.allowAnnotating ?? false,
+      allowFillingForms: options.allowFillingForms ?? true,
+    });
+  } catch (err: unknown) {
+    if (
+      err instanceof AlreadyEncryptedError ||
+      (err as { code?: string })?.code === "ALREADY_ENCRYPTED"
+    ) {
+      throw new Error("DOCUMENTO_JA_PROTEGIDO");
+    }
+    throw err;
+  }
+}
+
+export interface RedactionArea {
+  readonly id: string;
+  readonly pageIndex: number; // 0-based
+  readonly xPercent: number; // 0 a 100% da largura da página
+  readonly yPercent: number; // 0 a 100% da altura da página (a partir do topo)
+  readonly widthPercent: number;
+  readonly heightPercent: number;
+  readonly color?: "black" | "white" | "gray" | string;
+  readonly label?: string;
+}
+
+export interface RedactPdfOptions {
+  readonly redactions: readonly RedactionArea[];
+}
+
+/**
+ * Aplica tarjas definitivas de ocultação e privacidade (Redaction / LGPD) em áreas do PDF.
+ */
+export async function redactPdfDocument(
+  pdfBytes: Uint8Array,
+  options: RedactPdfOptions,
+): Promise<Uint8Array> {
+  if (pdfBytes.byteLength === 0) {
+    throw new Error("EMPTY_DOCUMENT");
+  }
+
+  const doc = await PDFDocument.load(pdfBytes);
+  const pages = doc.getPages();
+  const font = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  const resolveColor = (c?: string) => {
+    if (c === "white") return rgb(1, 1, 1);
+    if (c === "gray") return rgb(0.5, 0.5, 0.5);
+    return rgb(0, 0, 0);
+  };
+
+  for (const area of options.redactions) {
+    if (area.pageIndex < 0 || area.pageIndex >= pages.length) {
+      continue;
+    }
+    const page = pages[area.pageIndex];
+    const { width, height } = page.getSize();
+
+    const rectWidth = Math.max(1, (area.widthPercent / 100) * width);
+    const rectHeight = Math.max(1, (area.heightPercent / 100) * height);
+    const rectX = Math.max(0, (area.xPercent / 100) * width);
+    const rectY = Math.max(0, height - (area.yPercent / 100) * height - rectHeight);
+
+    const fillColor = resolveColor(area.color);
+
+    page.drawRectangle({
+      x: rectX,
+      y: rectY,
+      width: rectWidth,
+      height: rectHeight,
+      color: fillColor,
+      opacity: 1,
+    });
+
+    if (area.label?.trim()) {
+      const labelText = area.label.trim();
+      const textColor = area.color === "white" ? rgb(0, 0, 0) : rgb(1, 1, 1);
+      const fontSize = Math.min(10, Math.max(6, Math.floor(rectHeight * 0.5)));
+      const textWidth = font.widthOfTextAtSize(labelText, fontSize);
+      if (textWidth < rectWidth) {
+        const textX = rectX + (rectWidth - textWidth) / 2;
+        const textY = rectY + (rectHeight - fontSize) / 2;
+        page.drawText(labelText, {
+          x: textX,
+          y: textY,
+          size: fontSize,
+          font,
+          color: textColor,
+        });
+      }
+    }
+  }
+
+  return await doc.save({ useObjectStreams: true });
+}
+
+export {
+  convertPdfToExcelDocument,
+  type PdfToExcelOptions,
+  type PdfToExcelResult,
+} from "./excel-converter";
 export {
   convertPdfToMarkdown,
   type MarkdownConversionOptions,

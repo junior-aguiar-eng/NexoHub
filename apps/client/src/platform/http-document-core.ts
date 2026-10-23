@@ -30,6 +30,9 @@ export class HttpDocumentCorePort implements DocumentCorePort {
     "pdf-to-markdown",
     "pdf-form-fill",
     "pdf-unlock",
+    "pdf-protect",
+    "pdf-redact",
+    "pdf-to-excel",
   ]);
 
   private project: { path: string; name: string } | null = null;

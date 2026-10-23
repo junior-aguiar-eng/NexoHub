@@ -161,7 +161,7 @@ describe("Tool Runner do Launcher", () => {
 
   it("rejeita ferramenta sem executor", async () => {
     await expect(
-      runLauncherTool(new BrowserDocumentCorePort(), "pdf-protect", input([await fixture()])),
+      runLauncherTool(new BrowserDocumentCorePort(), "pdf-to-word", input([await fixture()])),
     ).rejects.toThrow();
   });
 
@@ -398,5 +398,87 @@ describe("Tool Runner do Launcher", () => {
     expect(result.fileName).toBe("bloqueado_desbloqueado.pdf");
     expect(result.blob.type).toBe("application/pdf");
     expect(result.blob.size).toBeGreaterThan(0);
+  });
+
+  it("executa proteção de PDF adicionando senha e restrições", async () => {
+    const port = new BrowserDocumentCorePort();
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.addPage([200, 200]);
+    const pdfBytes = await pdfDoc.save();
+    const pdfFile = new File([pdfBytes as unknown as BlobPart], "contrato.pdf", {
+      type: "application/pdf",
+    });
+
+    const result = await runLauncherTool(port, "pdf-protect", {
+      ...input([pdfFile]),
+      protectPassword: "SenhaSegura123!",
+      protectAllowPrinting: true,
+      protectAllowCopying: false,
+    });
+
+    expect(result.fileName).toBe("contrato_protegido.pdf");
+    expect(result.blob.type).toBe("application/pdf");
+    expect(result.blob.size).toBeGreaterThan(0);
+  });
+
+  it("executa ocultação e tarja definitiva (redaction) de PDF", async () => {
+    const port = new BrowserDocumentCorePort();
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.addPage([200, 200]);
+    const pdfBytes = await pdfDoc.save();
+    const pdfFile = new File([pdfBytes as unknown as BlobPart], "documento_sensivel.pdf", {
+      type: "application/pdf",
+    });
+
+    const result = await runLauncherTool(port, "pdf-redact", {
+      ...input([pdfFile]),
+      redactionAreas: [
+        {
+          id: "r1",
+          pageIndex: 0,
+          xPercent: 10,
+          yPercent: 10,
+          widthPercent: 60,
+          heightPercent: 15,
+          color: "black",
+          label: "[DADOS LGPD]",
+        },
+      ],
+    });
+
+    expect(result.fileName).toBe("documento_sensivel_tarjado.pdf");
+    expect(result.blob.type).toBe("application/pdf");
+    expect(result.blob.size).toBeGreaterThan(0);
+  });
+
+  it("executa conversão de PDF para Excel (.xlsx) e CSV", async () => {
+    const port = new BrowserDocumentCorePort();
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([400, 400]);
+    page.drawText("Item        Valor");
+    page.drawText("A           10");
+    const pdfBytes = await pdfDoc.save();
+    const pdfFile = new File([pdfBytes as unknown as BlobPart], "dados.pdf", {
+      type: "application/pdf",
+    });
+
+    const resultXlsx = await runLauncherTool(port, "pdf-to-excel", {
+      ...input([pdfFile]),
+      excelOutputFormat: "xlsx",
+    });
+    expect(resultXlsx.fileName).toBe("dados.xlsx");
+    expect(resultXlsx.blob.type).toBe(
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    expect(resultXlsx.blob.size).toBeGreaterThan(0);
+
+    const resultCsv = await runLauncherTool(port, "pdf-to-excel", {
+      ...input([pdfFile]),
+      excelOutputFormat: "csv",
+      excelCsvDelimiter: ";",
+    });
+    expect(resultCsv.fileName).toBe("dados.csv");
+    expect(resultCsv.blob.type).toContain("text/csv");
+    expect(resultCsv.blob.size).toBeGreaterThan(0);
   });
 });

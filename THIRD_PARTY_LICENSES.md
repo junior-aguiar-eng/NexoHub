@@ -14,49 +14,98 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @fontsource-variable/inter | 5.3.0 | OFL-1.1 |
 | JavaScript | @fontsource-variable/playfair-display | 5.2.8 | OFL-1.1 |
 | JavaScript | @fontsource-variable/plus-jakarta-sans | 5.2.8 | OFL-1.1 |
+| JavaScript | @huggingface/jinja | 0.5.10 | MIT |
+| JavaScript | @huggingface/tokenizers | 0.2.0 | Apache-2.0 |
+| JavaScript | @huggingface/transformers | 4.3.1 | Apache-2.0 |
 | JavaScript | @napi-rs/canvas-win32-x64-msvc | 1.0.9 | MIT |
 | JavaScript | @napi-rs/canvas | 1.0.9 | MIT |
 | JavaScript | @pdf-lib/standard-fonts | 1.0.0 | MIT |
 | JavaScript | @pdf-lib/upng | 1.0.1 | MIT |
+| JavaScript | @pdfsmaller/pdf-encrypt | 1.2.0 | MIT |
 | JavaScript | @playwright/test | 1.63.0 | Apache-2.0 |
+| JavaScript | @protobufjs/aspromise | 1.1.2 | BSD-3-Clause |
+| JavaScript | @protobufjs/base64 | 1.1.2 | BSD-3-Clause |
+| JavaScript | @protobufjs/codegen | 2.0.5 | BSD-3-Clause |
+| JavaScript | @protobufjs/eventemitter | 1.1.1 | BSD-3-Clause |
+| JavaScript | @protobufjs/fetch | 1.1.1 | BSD-3-Clause |
+| JavaScript | @protobufjs/float | 1.0.2 | BSD-3-Clause |
+| JavaScript | @protobufjs/path | 1.1.2 | BSD-3-Clause |
+| JavaScript | @protobufjs/pool | 1.1.0 | BSD-3-Clause |
+| JavaScript | @protobufjs/utf8 | 1.1.2 | BSD-3-Clause |
+| JavaScript | @types/node | 26.4.0 | MIT |
 | JavaScript | @types/react | 19.2.18 | MIT |
+| JavaScript | adm-zip | 0.6.1 | MIT |
 | JavaScript | bmp-js | 0.1.0 | MIT |
 | JavaScript | class-variance-authority | 0.7.1 | Apache-2.0 |
 | JavaScript | clsx | 2.1.1 | MIT |
 | JavaScript | csstype | 3.2.3 | MIT |
+| JavaScript | define-data-property | 1.1.4 | MIT |
+| JavaScript | define-properties | 1.2.1 | MIT |
+| JavaScript | dictionary-pt | 4.0.0 | (LGPL-3.0 OR MPL-2.0) |
+| JavaScript | emscripten-wasm-loader | 3.0.3 | MIT |
+| JavaScript | es-define-property | 1.0.1 | MIT |
+| JavaScript | es-errors | 1.3.0 | MIT |
+| JavaScript | escape-string-regexp | 4.0.0 | MIT |
 | JavaScript | fflate | 0.8.3 | MIT |
+| JavaScript | flatbuffers | 25.9.23 | Apache-2.0 |
 | JavaScript | framer-motion | 12.43.0 | MIT |
+| JavaScript | getroot | 1.0.0 | MIT |
+| JavaScript | global-agent | 4.1.3 | BSD-3-Clause |
+| JavaScript | globalthis | 1.0.4 | MIT |
+| JavaScript | gopd | 1.2.0 | MIT |
+| JavaScript | guid-typescript | 1.0.9 | ISC |
+| JavaScript | has-property-descriptors | 1.0.2 | MIT |
+| JavaScript | hunspell-asm | 4.0.2 | MIT |
 | JavaScript | idb-keyval | 6.3.0 | Apache-2.0 |
+| JavaScript | is-buffer | 2.0.5 | MIT |
 | JavaScript | is-url | 1.2.4 | MIT |
+| JavaScript | long | 5.3.2 | Apache-2.0 |
 | JavaScript | lucide-react | 0.542.0 | ISC |
+| JavaScript | matcher | 4.0.0 | MIT |
 | JavaScript | motion-dom | 12.43.0 | MIT |
 | JavaScript | motion-utils | 12.39.0 | MIT |
 | JavaScript | motion | 12.23.24 | MIT |
+| JavaScript | nanoid | 3.3.20 | MIT |
 | JavaScript | node-fetch | 2.7.0 | MIT |
+| JavaScript | normalize-path | 2.1.1 | MIT |
+| JavaScript | nspell | 2.1.5 | MIT |
+| JavaScript | object-keys | 1.1.1 | MIT |
+| JavaScript | onnxruntime-common | 1.30.0 | MIT |
+| JavaScript | onnxruntime-common | 1.31.0-dev.20260911-2a43ec07e | MIT |
+| JavaScript | onnxruntime-node | 1.30.0 | MIT |
+| JavaScript | onnxruntime-web | 1.31.0-dev.20260914-8d85527a0 | MIT |
 | JavaScript | opencollective-postinstall | 2.0.3 | MIT |
 | JavaScript | pako | 1.0.11 | (MIT AND Zlib) |
 | JavaScript | pdf-lib | 1.17.1 | MIT |
 | JavaScript | pdfjs-dist | 6.3.289 | Apache-2.0 |
+| JavaScript | platform | 1.3.6 | MIT |
 | JavaScript | playwright-core | 1.63.0 | Apache-2.0 |
 | JavaScript | playwright | 1.63.0 | Apache-2.0 |
+| JavaScript | protobufjs | 7.6.6 | BSD-3-Clause |
 | JavaScript | react-dom | 19.2.8 | MIT |
 | JavaScript | react | 19.2.8 | MIT |
 | JavaScript | regenerator-runtime | 0.13.11 | MIT |
+| JavaScript | remove-trailing-separator | 1.1.0 | ISC |
 | JavaScript | reselect | 5.3.0 | MIT |
 | JavaScript | scheduler | 0.27.0 | MIT |
+| JavaScript | semver | 7.8.5 | ISC |
+| JavaScript | serialize-error | 8.1.0 | MIT |
 | JavaScript | tailwind-merge | 3.3.1 | MIT |
 | JavaScript | tesseract.js-core | 7.0.0 | Apache-2.0 |
 | JavaScript | tesseract.js | 7.0.0 | Apache-2.0 |
 | JavaScript | tr46 | 0.0.3 | MIT |
 | JavaScript | tslib | 1.14.1 | 0BSD |
 | JavaScript | tslib | 2.8.1 | 0BSD |
+| JavaScript | type-fest | 0.20.2 | (MIT OR CC0-1.0) |
+| JavaScript | undici-types | 8.3.0 | MIT |
+| JavaScript | unixify | 1.0.0 | MIT |
 | JavaScript | use-sync-external-store | 1.6.0 | MIT |
 | JavaScript | wasm-feature-detect | 1.9.0 | Apache-2.0 |
 | JavaScript | webidl-conversions | 3.0.1 | BSD-2-Clause |
 | JavaScript | whatwg-url | 5.0.0 | MIT |
 | JavaScript | zlibjs | 0.3.1 | MIT |
 | Python | antlr4-python3-runtime | 4.9.3 | BSD |
-| Python | certifi | 2026.7.22 | MPL-2.0 |
+| Python | certifi | 2026.10.19 | MPL-2.0 |
 | Python | charset-normalizer | 3.5.1 | MIT |
 | Python | colorama | 0.4.6 | BSD-3-Clause |
 | Python | colorlog | 6.12.0 | MIT License |
@@ -71,7 +120,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Python | onnxruntime | 1.29.0 | MIT License |
 | Python | opencv-python | 5.0.0.93 | Apache 2.0 |
 | Python | packaging | 26.3 | Apache-2.0 OR BSD-2-Clause |
-| Python | pillow | 12.3.0 | MIT-CMU |
+| Python | pillow | 13.0.0 | MIT-CMU |
 | Python | pluggy | 1.6.0 | MIT |
 | Python | protobuf | 7.36.1 | 3-Clause BSD License |
 | Python | pyclipper | 1.4.0 | MIT |
@@ -89,7 +138,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Python | six | 1.17.0 | MIT |
 | Python | tqdm | 4.70.0 | MPL-2.0 AND MIT |
 | Python | typing_extensions | 4.16.0 | PSF-2.0 |
-| Python | urllib3 | 2.7.0 | MIT |
+| Python | urllib3 | 2.8.0 | MIT |
 | Rust | adler2 | 2.0.1 | 0BSD OR MIT OR Apache-2.0 |
 | Rust | aes | 0.9.2 | MIT OR Apache-2.0 |
 | Rust | aho-corasick | 1.1.5 | Unlicense OR MIT |
@@ -102,6 +151,8 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | atk | 0.18.2 | MIT |
 | Rust | atomic-waker | 1.1.2 | Apache-2.0 OR MIT |
 | Rust | autocfg | 1.5.1 | Apache-2.0 OR MIT |
+| Rust | axum-core | 0.5.6 | MIT |
+| Rust | axum | 0.8.9 | MIT |
 | Rust | base64 | 0.21.7 | MIT OR Apache-2.0 |
 | Rust | base64 | 0.22.1 | MIT OR Apache-2.0 |
 | Rust | bit-set | 0.8.0 | Apache-2.0 OR MIT |
@@ -185,6 +236,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | encoding_rs | 0.8.35 | (Apache-2.0 OR MIT) AND BSD-3-Clause |
 | Rust | equivalent | 1.0.2 | Apache-2.0 OR MIT |
 | Rust | erased-serde | 0.4.10 | MIT OR Apache-2.0 |
+| Rust | errno | 0.3.14 | MIT OR Apache-2.0 |
 | Rust | fallible-iterator | 0.3.0 | MIT/Apache-2.0 |
 | Rust | fallible-streaming-iterator | 0.1.9 | MIT/Apache-2.0 |
 | Rust | fastrand | 2.5.0 | Apache-2.0 OR MIT |
@@ -235,8 +287,10 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | html5ever | 0.38.0 | MIT OR Apache-2.0 |
 | Rust | http-body-util | 0.1.5 | MIT |
 | Rust | http-body | 1.1.0 | MIT |
+| Rust | http-range-header | 0.4.2 | MIT |
 | Rust | http | 1.5.0 | MIT OR Apache-2.0 |
 | Rust | httparse | 1.10.1 | MIT OR Apache-2.0 |
+| Rust | httpdate | 1.0.3 | MIT OR Apache-2.0 |
 | Rust | hybrid-array | 0.4.14 | MIT OR Apache-2.0 |
 | Rust | hyper-util | 0.1.20 | MIT |
 | Rust | hyper | 1.11.1 | MIT |
@@ -270,6 +324,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | json-patch | 3.0.1 | MIT/Apache-2.0 |
 | Rust | jsonptr | 0.6.3 | MIT OR Apache-2.0 |
 | Rust | keyboard-types | 0.7.0 | MIT OR Apache-2.0 |
+| Rust | lazy_static | 1.5.1 | MIT OR Apache-2.0 |
 | Rust | libappindicator-sys | 0.9.0 | Apache-2.0 OR MIT |
 | Rust | libappindicator | 0.9.0 | Apache-2.0 OR MIT |
 | Rust | libc | 0.2.189 | MIT OR Apache-2.0 |
@@ -277,14 +332,18 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | libloading | 0.7.4 | ISC |
 | Rust | libredox | 0.1.21 | MIT |
 | Rust | libsqlite3-sys | 0.38.2 | MIT |
+| Rust | linux-raw-sys | 0.12.1 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT |
 | Rust | litemap | 0.8.3 | Unicode-3.0 |
 | Rust | lock_api | 0.4.14 | MIT OR Apache-2.0 |
 | Rust | log | 0.4.34 | MIT OR Apache-2.0 |
 | Rust | lopdf | 0.44.0 | MIT |
 | Rust | markup5ever | 0.38.0 | MIT OR Apache-2.0 |
+| Rust | matchers | 0.2.0 | MIT |
+| Rust | matchit | 0.8.4 | MIT AND BSD-3-Clause |
 | Rust | md-5 | 0.11.0 | MIT OR Apache-2.0 |
 | Rust | memchr | 2.8.3 | Unlicense OR MIT |
 | Rust | memoffset | 0.9.1 | MIT |
+| Rust | mime_guess | 2.0.5 | MIT |
 | Rust | mime | 0.3.17 | MIT OR Apache-2.0 |
 | Rust | miniz_oxide | 0.8.9 | MIT OR Zlib OR Apache-2.0 |
 | Rust | miniz_oxide | 0.9.1 | MIT OR Zlib OR Apache-2.0 |
@@ -296,6 +355,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | new_debug_unreachable | 1.0.6 | MIT |
 | Rust | nexohub-core | 0.1.0 | MPL-2.0 |
 | Rust | nexohub-desktop | 0.1.0 | MPL-2.0 |
+| Rust | nexohub-server | 0.1.0 | MPL-2.0 |
 | Rust | nom | 8.0.0 | MIT |
 | Rust | num_enum_derive | 0.7.6 | BSD-3-Clause OR MIT OR Apache-2.0 |
 | Rust | num_enum | 0.7.6 | BSD-3-Clause OR MIT OR Apache-2.0 |
@@ -366,9 +426,10 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | rusqlite | 0.40.2 | MIT |
 | Rust | rustc_version | 0.4.1 | MIT OR Apache-2.0 |
 | Rust | rustc-hash | 2.1.3 | Apache-2.0 OR MIT |
+| Rust | rustix | 1.1.5 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT |
 | Rust | rustls-pki-types | 1.15.1 | MIT OR Apache-2.0 |
-| Rust | rustls-webpki | 0.103.15 | ISC |
-| Rust | rustls | 0.23.45 | Apache-2.0 OR ISC OR MIT |
+| Rust | rustls-webpki | 0.103.16 | ISC |
+| Rust | rustls | 0.23.46 | Apache-2.0 OR ISC OR MIT |
 | Rust | rustversion | 1.0.23 | MIT OR Apache-2.0 |
 | Rust | same-file | 1.0.6 | Unlicense/MIT |
 | Rust | schemars_derive | 0.8.22 | MIT |
@@ -382,6 +443,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | serde_derive_internals | 0.29.1 | MIT OR Apache-2.0 |
 | Rust | serde_derive | 1.0.229 | MIT OR Apache-2.0 |
 | Rust | serde_json | 1.0.151 | MIT OR Apache-2.0 |
+| Rust | serde_path_to_error | 0.1.20 | MIT OR Apache-2.0 |
 | Rust | serde_repr | 0.1.21 | MIT OR Apache-2.0 |
 | Rust | serde_spanned | 0.6.9 | MIT OR Apache-2.0 |
 | Rust | serde_spanned | 1.1.1 | MIT OR Apache-2.0 |
@@ -394,7 +456,9 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | servo_arc | 0.4.3 | MIT OR Apache-2.0 |
 | Rust | sha2 | 0.10.9 | MIT OR Apache-2.0 |
 | Rust | sha2 | 0.11.0 | MIT OR Apache-2.0 |
+| Rust | sharded-slab | 0.1.7 | MIT |
 | Rust | shlex | 2.0.1 | MIT OR Apache-2.0 |
+| Rust | signal-hook-registry | 1.4.8 | MIT OR Apache-2.0 |
 | Rust | simd-adler32 | 0.3.10 | MIT |
 | Rust | siphasher | 1.0.3 | MIT/Apache-2.0 |
 | Rust | slab | 0.4.12 | MIT |
@@ -430,17 +494,20 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | tauri-utils | 2.9.3 | Apache-2.0 OR MIT |
 | Rust | tauri-winres | 0.3.6 | MIT |
 | Rust | tauri | 2.11.5 | Apache-2.0 OR MIT |
+| Rust | tempfile | 3.27.0 | MIT OR Apache-2.0 |
 | Rust | tendril | 0.5.1 | MIT OR Apache-2.0 |
 | Rust | thiserror-impl | 1.0.69 | MIT OR Apache-2.0 |
 | Rust | thiserror-impl | 2.0.20 | MIT OR Apache-2.0 |
 | Rust | thiserror | 1.0.69 | MIT OR Apache-2.0 |
 | Rust | thiserror | 2.0.20 | MIT OR Apache-2.0 |
+| Rust | thread_local | 1.1.10 | MIT OR Apache-2.0 |
 | Rust | time-core | 0.1.8 | MIT OR Apache-2.0 |
 | Rust | time-macros | 0.2.27 | MIT OR Apache-2.0 |
 | Rust | time | 0.3.47 | MIT OR Apache-2.0 |
 | Rust | tinystr | 0.8.4 | Unicode-3.0 |
 | Rust | tinyvec_macros | 0.1.1 | MIT OR Apache-2.0 OR Zlib |
 | Rust | tinyvec | 1.12.0 | Zlib OR Apache-2.0 OR MIT |
+| Rust | tokio-macros | 2.7.2 | MIT |
 | Rust | tokio-util | 0.7.19 | MIT |
 | Rust | tokio | 1.53.1 | MIT |
 | Rust | toml_datetime | 0.6.3 | MIT OR Apache-2.0 |
@@ -458,7 +525,9 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | tower-layer | 0.3.3 | MIT |
 | Rust | tower-service | 0.3.3 | MIT |
 | Rust | tower | 0.5.3 | MIT |
+| Rust | tracing-attributes | 0.1.31 | MIT |
 | Rust | tracing-core | 0.1.36 | MIT |
+| Rust | tracing-subscriber | 0.3.23 | MIT |
 | Rust | tracing | 0.1.44 | MIT |
 | Rust | tray-icon | 0.24.2 | MIT OR Apache-2.0 |
 | Rust | try-lock | 0.2.5 | MIT |
@@ -469,6 +538,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | unic-common | 0.9.0 | MIT/Apache-2.0 |
 | Rust | unic-ucd-ident | 0.9.0 | MIT/Apache-2.0 |
 | Rust | unic-ucd-version | 0.9.0 | MIT/Apache-2.0 |
+| Rust | unicase | 2.10.0 | MIT OR Apache-2.0 |
 | Rust | unicode-bidi | 0.3.18 | MIT OR Apache-2.0 |
 | Rust | unicode-ident | 1.0.24 | (MIT OR Apache-2.0) AND Unicode-3.0 |
 | Rust | unicode-normalization | 0.1.25 | MIT OR Apache-2.0 |
@@ -500,7 +570,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | webkit2gtk-sys | 2.0.2 | MIT |
 | Rust | webkit2gtk | 2.0.2 | MIT |
 | Rust | webpki-roots | 0.26.11 | CDLA-Permissive-2.0 |
-| Rust | webpki-roots | 1.0.9 | CDLA-Permissive-2.0 |
+| Rust | webpki-roots | 1.0.10 | CDLA-Permissive-2.0 |
 | Rust | webview2-com-macros | 0.8.1 | MIT |
 | Rust | webview2-com-sys | 0.38.2 | MIT |
 | Rust | webview2-com | 0.38.2 | MIT |

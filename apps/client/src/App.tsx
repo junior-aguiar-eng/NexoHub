@@ -46,6 +46,9 @@ const ROUTE_TOOL_MAP: Record<string, string> = {
   "/pdf-ocr": "pdf-ocr",
   "/proteger-pdf": "pdf-protect",
   "/protect-pdf": "pdf-protect",
+  "/ocultar-pdf": "pdf-redact",
+  "/redact-pdf": "pdf-redact",
+  "/pdf-redact": "pdf-redact",
   "/extrair-imagens": "pdf-extract-images",
   "/comparar-textos": "text-compare",
   "/revisar-texto": "text-review",
@@ -70,6 +73,9 @@ const ROUTE_TOOL_MAP: Record<string, string> = {
   "/desbloquear-pdf": "pdf-unlock",
   "/pdf-unlock": "pdf-unlock",
   "/unlock-pdf": "pdf-unlock",
+  "/pdf-para-excel": "pdf-to-excel",
+  "/pdf-to-excel": "pdf-to-excel",
+  "/excel-pdf": "pdf-to-excel",
 };
 
 const TOOL_ROUTE_MAP: Record<string, string> = {
@@ -91,6 +97,8 @@ const TOOL_ROUTE_MAP: Record<string, string> = {
   "pdf-page-numbers": "/numeros-de-pagina",
   "pdf-ocr": "/ocr-pdf",
   "pdf-protect": "/proteger-pdf",
+  "pdf-redact": "/ocultar-pdf",
+  "pdf-to-excel": "/pdf-para-excel",
   "pdf-extract-images": "/extrair-imagens",
   "text-compare": "/comparar-textos",
   "text-review": "/revisar-texto",

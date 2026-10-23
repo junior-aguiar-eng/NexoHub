@@ -27,6 +27,9 @@ export class TauriDocumentCorePort implements DocumentCorePort {
     "pdf-to-markdown",
     "pdf-form-fill",
     "pdf-unlock",
+    "pdf-protect",
+    "pdf-redact",
+    "pdf-to-excel",
   ]);
   private projectPath: string | null = null;
 

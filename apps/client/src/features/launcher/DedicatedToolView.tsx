@@ -26,6 +26,7 @@ import {
   getPdfPageCount,
   inspectPdfFormFields,
   type PdfProtectionStatus,
+  type RedactionArea,
   renderPdfPagesThumbnails,
   renderPdfPageToDataUrl,
   type SignaturePlacement,
@@ -42,8 +43,11 @@ import type { LauncherTool } from "./model";
 import { OcrScannerPanel } from "./OcrScannerPanel";
 import { PageNumbersPdfPanel } from "./PageNumbersPdfPanel";
 import { PdfPageGridPanel, type PdfPageItem } from "./PdfPageGridPanel";
+import { PdfToExcelPanel } from "./PdfToExcelPanel";
 import { PdfToJpgPanel } from "./PdfToJpgPanel";
 import { PdfToMarkdownPanel } from "./PdfToMarkdownPanel";
+import { ProtectPdfPanel } from "./ProtectPdfPanel";
+import { RedactPdfPanel } from "./RedactPdfPanel";
 import { ReviewDocumentPanel } from "./ReviewDocumentPanel";
 import { RotatePdfPanel } from "./RotatePdfPanel";
 import { SignPdfPanel } from "./SignPdfPanel";
@@ -193,6 +197,25 @@ export function DedicatedToolView({
   const [isCheckingProtection, setIsCheckingProtection] = useState<boolean>(false);
   const [unlockPassword, setUnlockPassword] = useState<string>("");
 
+  // Estados de Proteção de PDF (Protect)
+  const [protectPassword, setProtectPassword] = useState<string>("");
+  const [protectConfirmPassword, setProtectConfirmPassword] = useState<string>("");
+  const [protectAlgorithm, setProtectAlgorithm] = useState<"AES-256" | "RC4">("AES-256");
+  const [protectAllowPrinting, setProtectAllowPrinting] = useState<boolean>(true);
+  const [protectAllowCopying, setProtectAllowCopying] = useState<boolean>(false);
+  const [protectAllowModifying, setProtectAllowModifying] = useState<boolean>(false);
+  const [protectAllowAnnotating, setProtectAllowAnnotating] = useState<boolean>(false);
+  const [protectAllowFillingForms, setProtectAllowFillingForms] = useState<boolean>(true);
+
+  // Estados de Ocultação / Tarja de PDF (Redact)
+  const [redactionAreas, setRedactionAreas] = useState<RedactionArea[]>([]);
+
+  // Estados de PDF para Excel
+  const [excelOutputFormat, setExcelOutputFormat] = useState<"xlsx" | "csv">("xlsx");
+  const [excelSheetMode, setExcelSheetMode] = useState<"per-page" | "single-sheet">("per-page");
+  const [excelCsvDelimiter, setExcelCsvDelimiter] = useState<"," | ";" | "\t">(";");
+  const [excelDetectTablesOnly, setExcelDetectTablesOnly] = useState<boolean>(false);
+
   // Estados de Páginas (Organizador e Extrator)
   const [pdfPageCount, setPdfPageCount] = useState<number>(() =>
     initialFiles && initialFiles.length > 0 ? 1 : 1,
@@ -337,7 +360,11 @@ export function DedicatedToolView({
           setSplitSelectedPages([1]);
 
           // Renderiza miniaturas compartilhando a mesma instância de parsing
-          const isGridTool = tool.id === "pdf-organize" || tool.id === "pdf-extract";
+          const isGridTool =
+            tool.id === "pdf-organize" ||
+            tool.id === "pdf-extract" ||
+            tool.id === "pdf-protect" ||
+            tool.id === "pdf-redact";
           const maxGrid = isGridTool ? Math.min(count, 48) : 0;
           const pageNumbersToRender = isGridTool
             ? Array.from({ length: maxGrid }, (_, i) => i + 1)
@@ -413,6 +440,26 @@ export function DedicatedToolView({
               if (!isCancelled) setFormFields([]);
             } finally {
               if (!isCancelled) setIsLoadingFormFields(false);
+            }
+          }
+
+          if (tool.id === "pdf-unlock" || tool.id === "pdf-protect") {
+            setIsCheckingProtection(true);
+            try {
+              const status = await checkPdfProtection(buffer);
+              if (!isCancelled) {
+                setProtectionStatus(status);
+              }
+            } catch {
+              if (!isCancelled) {
+                setProtectionStatus({
+                  isProtected: false,
+                  needsPassword: false,
+                  hasPermissionsRestriction: false,
+                });
+              }
+            } finally {
+              if (!isCancelled) setIsCheckingProtection(false);
             }
           }
         } catch (err) {
@@ -677,6 +724,19 @@ export function DedicatedToolView({
     const isDirectTextInput = inputTab === "text" && directText.trim().length > 0;
     if (files.length === 0 && !isDirectTextInput && tool.id !== "text-compare") return;
 
+    if (tool.id === "pdf-protect") {
+      if (!protectPassword.trim()) {
+        setStatus("idle");
+        setErrorMessage(translate("protect.passwordRequired"));
+        return;
+      }
+      if (protectPassword !== protectConfirmPassword) {
+        setStatus("idle");
+        setErrorMessage(translate("protect.passwordMismatch"));
+        return;
+      }
+    }
+
     setStatus("running");
     setErrorMessage(null);
     setProgress(20);
@@ -732,6 +792,19 @@ export function DedicatedToolView({
         formValues,
         formFlatten,
         unlockPassword,
+        protectPassword,
+        protectOwnerPassword: protectPassword,
+        protectAlgorithm,
+        protectAllowPrinting,
+        protectAllowModifying,
+        protectAllowCopying,
+        protectAllowAnnotating,
+        protectAllowFillingForms,
+        redactionAreas,
+        excelOutputFormat,
+        excelSheetMode,
+        excelCsvDelimiter,
+        excelDetectTablesOnly,
         onOcrProgress: (info) => {
           setProgress(info.progress);
           setOcrProgressStatus(`Pág. ${info.page}/${info.totalPages} - ${info.status}`);
@@ -865,6 +938,9 @@ export function DedicatedToolView({
     if (tool.id === "pdf-sign") return translate("dedicated.actionSign");
     if (tool.id === "pdf-form-fill") return translate("dedicated.actionFormFill");
     if (tool.id === "pdf-unlock") return translate("dedicated.actionUnlock");
+    if (tool.id === "pdf-protect") return translate("protect.actionSubmit");
+    if (tool.id === "pdf-redact") return translate("redact.actionSubmit");
+    if (tool.id === "pdf-to-excel") return translate("excel.actionSubmit");
     if (tool.id === "pdf-organize") return translate("dedicated.actionOrganize");
     if (tool.id === "images-to-pdf") return translate("dedicated.actionImagesToPdf");
     if (tool.id === "pdf-extract-images") return translate("dedicated.actionExtractImages");
@@ -1133,6 +1209,75 @@ export function DedicatedToolView({
           onGoToOrganize={() => {
             window.location.hash = "#/organizar-pdf";
           }}
+        />
+      );
+    }
+
+    // PROTEGER PDF
+    if (tool.id === "pdf-protect") {
+      return (
+        <ProtectPdfPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          totalPages={pdfPageCount}
+          thumbnailUrl={firstPageThumb}
+          pageThumbnails={allPageThumbnails}
+          protectionStatus={protectionStatus}
+          passwordValue={protectPassword}
+          onPasswordChange={setProtectPassword}
+          confirmPasswordValue={protectConfirmPassword}
+          onConfirmPasswordChange={setProtectConfirmPassword}
+          algorithm={protectAlgorithm}
+          onAlgorithmChange={setProtectAlgorithm}
+          allowPrinting={protectAllowPrinting}
+          onAllowPrintingChange={setProtectAllowPrinting}
+          allowCopying={protectAllowCopying}
+          onAllowCopyingChange={setProtectAllowCopying}
+          allowModifying={protectAllowModifying}
+          onAllowModifyingChange={setProtectAllowModifying}
+          allowAnnotating={protectAllowAnnotating}
+          onAllowAnnotatingChange={setProtectAllowAnnotating}
+          allowFillingForms={protectAllowFillingForms}
+          onAllowFillingFormsChange={setProtectAllowFillingForms}
+          onGoToUnlock={() => {
+            window.location.hash = "#/desbloquear-pdf";
+          }}
+        />
+      );
+    }
+
+    // OCULTAR / TARJAR PDF
+    if (tool.id === "pdf-redact") {
+      return (
+        <RedactPdfPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          totalPages={pdfPageCount}
+          thumbnailUrl={firstPageThumb}
+          pageThumbnails={allPageThumbnails}
+          redactions={redactionAreas}
+          onRedactionsChange={(areas) => setRedactionAreas([...areas])}
+        />
+      );
+    }
+
+    // PDF PARA EXCEL
+    if (tool.id === "pdf-to-excel") {
+      return (
+        <PdfToExcelPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          totalPages={pdfPageCount}
+          thumbnailUrl={firstPageThumb}
+          pageThumbnails={allPageThumbnails}
+          outputFormat={excelOutputFormat}
+          onOutputFormatChange={setExcelOutputFormat}
+          sheetMode={excelSheetMode}
+          onSheetModeChange={setExcelSheetMode}
+          csvDelimiter={excelCsvDelimiter}
+          onCsvDelimiterChange={setExcelCsvDelimiter}
+          detectTablesOnly={excelDetectTablesOnly}
+          onDetectTablesOnlyChange={setExcelDetectTablesOnly}
         />
       );
     }

@@ -96,6 +96,9 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
     "pdf-to-markdown",
     "pdf-form-fill",
     "pdf-unlock",
+    "pdf-protect",
+    "pdf-redact",
+    "pdf-to-excel",
   ]);
   private projectData: Map<string, StoredProjectData> = new Map();
   private pendingFiles: Map<string, File> = new Map();

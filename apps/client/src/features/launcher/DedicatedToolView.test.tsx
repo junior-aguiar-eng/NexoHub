@@ -71,7 +71,7 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
       type: "application/pdf",
     });
     const onOperationComplete = vi.fn();
-    const tool = { ...mockPdfCompressTool, id: "pdf-protect" };
+    const tool = { ...mockPdfCompressTool, id: "pdf-to-word" };
     render(
       <DedicatedToolView
         tool={tool}
@@ -274,5 +274,25 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     );
     expect(screen.getByText(/Corretor Ortográfico e Gramatical/i)).toBeInTheDocument();
     expect(screen.getByText(/Correção no Navegador/i)).toBeInTheDocument();
+  });
+
+  it("renderiza o painel de PDF para Excel com seletores de formato e tabela de prévia", async () => {
+    const mockExcelTool = launcherTools.find((t) => t.id === "pdf-to-excel") ?? mockPdfCompressTool;
+    const pdf = await PDFDocument.create();
+    pdf.addPage([100, 100]);
+    const file = new File([(await pdf.save()) as unknown as BlobPart], "planilha.pdf", {
+      type: "application/pdf",
+    });
+    render(
+      <DedicatedToolView
+        tool={mockExcelTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[file]}
+      />,
+    );
+    expect(screen.getByTestId("pdf-to-excel-panel")).toBeInTheDocument();
+    expect(screen.getByTestId("format-xlsx-btn")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Converter para Excel/i })).toBeInTheDocument();
   });
 });

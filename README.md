@@ -65,11 +65,21 @@ O **NexoHub** combina a agilidade, elegância e foco operacional do **iLovePDF**
 | **Inserir Marca d'Água** | Carimbo de texto customizável com ângulo e opacidade | ✅ Disponível | ✅ Instalado | `pdf-lib` / Motor Rust |
 | **Número de Páginas** | Numeração automática de rodapé e cabeçalho | ✅ Disponível | ✅ Instalado | `pdf-lib` / Motor Rust |
 | **Reconhecer Texto (OCR)** | Converter digitalizações e PDFs em texto pesquisável | ✅ Disponível | ✅ Instalado | Tesseract.js (Web) / RapidOCR (Desktop) |
-| **Comparar Textos** | Identificar adições, remoções e diff semântico | ✅ Disponível | ✅ Instalado | Motor semântico TypeScript / Rust Core |
+| **Comparar Textos** | Identificar adições, remoções e diff textual | ✅ Disponível | ✅ Instalado | Diff textual TypeScript / Rust Core |
 | **Revisar Texto** | Revisão ortográfica e sugestões morfológicas | ✅ Disponível | ✅ Instalado | Motor contextual / Hunspell / LanguageTool |
-| **Traduzir Texto** | Tradução rápida de textos de forma offline | ✅ Disponível | ✅ Instalado | Motor léxico / CTranslate2 |
+| **Traduzir Texto** | Tradução local após obtenção do modelo | ✅ Disponível | ✅ Instalado | NLLB-200 no navegador / CTranslate2 |
+| **PDF para Markdown** | Extrair texto com estrutura de títulos, listas e tabelas heurísticas | ✅ Disponível | Não auditado nesta entrega | PDF.js |
+| **Recortar PDF** | Ajustar margens na orientação visual sem rasterizar páginas | ✅ Disponível | Não auditado nesta entrega | `pdf-lib` |
+| **Assinar PDF** | Aplicar assinatura visual por desenho, texto ou imagem | ✅ Disponível | Não auditado nesta entrega | Canvas / `pdf-lib` |
+| **Extrair Imagens** | Exportar imagens embutidas em JPEG/PNG com resolução nativa | ✅ Disponível | Não auditado nesta entrega | PDF.js / `pdf-lib` |
+| **Preencher Formulário** | Editar campos AcroForm e opcionalmente achatá-los | ✅ Disponível | Não auditado nesta entrega | `pdf-lib` |
+| **Desbloquear PDF** | Descriptografar PDFs compatíveis com a senha de abertura quando exigida | ✅ Disponível | Não auditado nesta entrega | PDF.js |
 
-> 💡 **Todas as 13 ferramentas acima estão 100% operacionais, integradas à interface e prontas para uso.** Apenas ferramentas de conversão pesada de/para Word (`pdf-to-word`, `word-to-pdf`), proteção com senha (`pdf-protect`) e extração de imagens embutidas (`pdf-extract-images`) estão em homologação técnica e permanecem deliberadamente ocultas da vitrine até sua conclusão.
+O website oferece 19 ferramentas. Conversões de/para Word e proteção com senha permanecem ocultas
+sem executor disponível. A auditoria das seis novas ferramentas e seus limites estão em
+[Auditoria das novas ferramentas](docs/AUDITORIA-NOVAS-FERRAMENTAS-WEB-2026-10-23.md).
+Assinatura visual não é assinatura digital criptográfica; a qualidade da tradução ainda requer
+avaliação linguística representativa.
 
 ---
 

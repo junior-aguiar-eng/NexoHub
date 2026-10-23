@@ -79,6 +79,40 @@ async function createSyntheticSamplePdf(): Promise<Uint8Array> {
 }
 
 describe("convertPdfToMarkdown", () => {
+  it("não inventa espaços dentro de palavras com mudança de fonte", async () => {
+    const doc = await PDFDocument.create();
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+    const page = doc.addPage([400, 300]);
+    page.drawText("con", { x: 30, y: 230, font, size: 12 });
+    page.drawText("trato", {
+      x: 30 + font.widthOfTextAtSize("con", 12),
+      y: 230,
+      font: bold,
+      size: 12,
+    });
+    const result = await convertPdfToMarkdown(await doc.save(), { detectHeadings: false });
+    expect(result.markdown).toBe("contrato");
+  });
+
+  it("preserva aspas tipográficas, travessões e reticências do original", async () => {
+    const doc = await PDFDocument.create();
+    const page = doc.addPage([500, 300]);
+    const text = "“Condição” — cláusula…";
+    page.drawText(text, { x: 30, y: 230, size: 12 });
+    const result = await convertPdfToMarkdown(await doc.save(), { detectHeadings: false });
+    expect(result.markdown).toBe(text);
+  });
+
+  it("orienta usar OCR quando o PDF não contém texto selecionável", async () => {
+    const doc = await PDFDocument.create();
+    doc.addPage([400, 300]);
+    doc.addPage([400, 300]);
+    await expect(convertPdfToMarkdown(await doc.save())).rejects.toThrow(
+      "PDF_SEM_TEXTO_SELECIONAVEL",
+    );
+  });
+
   it("rejeita buffer vazio lançando erro DOCUMENTO_VAZIO", async () => {
     await expect(convertPdfToMarkdown(new Uint8Array())).rejects.toThrow("DOCUMENTO_VAZIO");
   });

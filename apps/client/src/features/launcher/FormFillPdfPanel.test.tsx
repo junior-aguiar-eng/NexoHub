@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { FormFieldDescriptor } from "@/platform/pdf-engine";
+import type { FormFieldDescriptor } from "@/platform/pdf-form";
 import { FormFillPdfPanel } from "./FormFillPdfPanel";
 
 describe("FormFillPdfPanel", () => {
@@ -32,6 +32,43 @@ describe("FormFillPdfPanel", () => {
       isReadOnly: false,
     },
   ];
+
+  it("mostra seleções originais, permite multiseleção e preserva readonly ao limpar", () => {
+    const onValuesChange = vi.fn();
+    const fields: FormFieldDescriptor[] = [
+      { name: "fixo", type: "text", currentValue: "Original", isReadOnly: true },
+      {
+        name: "idiomas",
+        type: "option-list",
+        currentValue: ["PT", "EN"],
+        options: ["PT", "EN", "ES"],
+        multiSelect: true,
+        isReadOnly: false,
+      },
+    ];
+    render(
+      <FormFillPdfPanel
+        fileName="form.pdf"
+        fileSizeBytes={100}
+        totalPages={1}
+        fields={fields}
+        values={{}}
+        onValuesChange={onValuesChange}
+        flatten={false}
+        onFlattenChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByDisplayValue("Original")).toBeDisabled();
+    const select = screen.getByLabelText("idiomas") as HTMLSelectElement;
+    expect(select.multiple).toBe(true);
+    expect(Array.from(select.selectedOptions, (option) => option.value)).toEqual(["PT", "EN"]);
+    select.options[0].selected = false;
+    select.options[2].selected = true;
+    fireEvent.change(select);
+    expect(onValuesChange).toHaveBeenLastCalledWith({ fixo: "Original", idiomas: ["EN", "ES"] });
+    fireEvent.click(screen.getByText("Limpar campos"));
+    expect(onValuesChange).toHaveBeenLastCalledWith({ fixo: "Original", idiomas: [] });
+  });
 
   it("renderiza o estado vazio quando o PDF não contém campos de formulário", () => {
     const onGoToSign = vi.fn();

@@ -12,7 +12,7 @@ for (const [width, columns] of [
     await page.setViewportSize({ width, height: 1000 });
     await page.goto("/");
     const cards = page.locator(".tool-card");
-    await expect(cards).toHaveCount(13);
+    await expect(cards).toHaveCount(19);
     await expect(cards.last()).toHaveCSS("opacity", "1");
     await expect
       .poll(() =>

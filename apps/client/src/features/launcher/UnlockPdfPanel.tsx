@@ -13,7 +13,7 @@ import {
   SlidersHorizontal,
   Unlock,
 } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { translate } from "@/i18n";
 import type { PdfProtectionStatus } from "@/platform/pdf-engine";
 
@@ -23,6 +23,7 @@ export interface UnlockPdfPanelProps {
   readonly totalPages: number;
   readonly thumbnailUrl?: string;
   readonly pageThumbnails?: readonly string[];
+  readonly onPreviewPageChange?: (page: number) => void;
   readonly protectionStatus: PdfProtectionStatus;
   readonly isCheckingStatus?: boolean;
   readonly passwordValue: string;
@@ -38,6 +39,7 @@ export function UnlockPdfPanel({
   totalPages,
   thumbnailUrl,
   pageThumbnails,
+  onPreviewPageChange,
   protectionStatus,
   isCheckingStatus = false,
   passwordValue,
@@ -46,9 +48,16 @@ export function UnlockPdfPanel({
   onGoToCompress,
   onGoToOrganize,
 }: UnlockPdfPanelProps) {
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [previewPage, setPreviewPage] = useState<number>(1);
+  const documentKey = `${fileName}:${fileSizeBytes}:${thumbnailUrl ?? ""}:${totalPages}`;
+  const [view, setView] = useState({ documentKey, page: 1, showPassword: false });
+  const currentView =
+    view.documentKey === documentKey ? view : { documentKey, page: 1, showPassword: false };
+  const previewPage = Math.min(currentView.page, Math.max(1, totalPages));
+  const showPassword = currentView.showPassword;
   const inputId = useId();
+  useEffect(() => {
+    onPreviewPageChange?.(previewPage);
+  }, [previewPage, onPreviewPageChange]);
 
   const formattedSize =
     fileSizeBytes > 1024 * 1024
@@ -56,9 +65,7 @@ export function UnlockPdfPanel({
       : `${Math.round(fileSizeBytes / 1024)} KB`;
 
   const activeThumbnail =
-    pageThumbnails && pageThumbnails.length >= previewPage
-      ? pageThumbnails[previewPage - 1]
-      : thumbnailUrl;
+    pageThumbnails?.[previewPage - 1] ?? (previewPage === 1 ? thumbnailUrl : undefined);
 
   return (
     <div className="unlock-container">
@@ -78,7 +85,8 @@ export function UnlockPdfPanel({
                 {fileName}
               </div>
               <div className="unlock-file-meta">
-                {formattedSize} • {totalPages} {totalPages === 1 ? "página" : "páginas"}
+                {formattedSize} • {totalPages}{" "}
+                {translate(totalPages === 1 ? "unlock.pageSingular" : "unlock.pagePlural")}
               </div>
             </div>
           </div>
@@ -92,17 +100,22 @@ export function UnlockPdfPanel({
             ) : protectionStatus.needsPassword ? (
               <span className="unlock-badge unlock-badge--locked">
                 <Lock size={13} />
-                Protegido com Senha
+                {translate("unlock.badgeProtected")}
               </span>
             ) : protectionStatus.hasPermissionsRestriction ? (
               <span className="unlock-badge unlock-badge--restricted">
                 <KeyRound size={13} />
-                Restrições Ativas
+                {translate("unlock.badgeRestricted")}
+              </span>
+            ) : protectionStatus.isProtected ? (
+              <span className="unlock-badge unlock-badge--restricted">
+                <KeyRound size={13} />
+                {translate("unlock.badgeEncrypted")}
               </span>
             ) : (
               <span className="unlock-badge unlock-badge--unlocked">
                 <CheckCircle2 size={13} />
-                Desbloqueado
+                {translate("unlock.badgeUnlocked")}
               </span>
             )}
           </div>
@@ -115,10 +128,7 @@ export function UnlockPdfPanel({
               <CheckCircle2 size={36} color="#10b981" />
             </div>
             <h3>{translate("unlock.statusAlreadyUnlocked")}</h3>
-            <p>
-              Este arquivo PDF não possui senhas nem restrições de edição ativas. Você pode
-              processá-lo livremente em outras ferramentas do NexoHub.
-            </p>
+            <p>{translate("unlock.alreadyUnlockedDescription")}</p>
             <div className="unlock-fallback-actions">
               {onGoToCompress && (
                 <button
@@ -176,13 +186,14 @@ export function UnlockPdfPanel({
                   placeholder={translate("unlock.passwordPlaceholder")}
                   value={passwordValue}
                   onChange={(e) => onPasswordChange(e.target.value)}
-                  autoComplete="current-password"
+                  autoComplete="off"
+                  disabled={isCheckingStatus}
                   aria-invalid={Boolean(errorMessage)}
                 />
                 <button
                   type="button"
                   className="unlock-password-toggle-btn"
-                  onClick={() => setShowPassword((prev) => !prev)}
+                  onClick={() => setView({ ...currentView, showPassword: !showPassword })}
                   title={
                     showPassword
                       ? translate("unlock.hidePassword")
@@ -201,7 +212,7 @@ export function UnlockPdfPanel({
 
             <div className="unlock-security-note">
               <KeyRound size={14} color="#94a3b8" />
-              <span>Processamento 100% offline e local: a senha nunca sai do seu computador.</span>
+              <span>{translate("unlock.securityNote")}</span>
             </div>
           </div>
         )}
@@ -212,7 +223,7 @@ export function UnlockPdfPanel({
         <div className="unlock-preview-header">
           <div className="unlock-preview-title">
             <FileCheck2 size={16} color="#f43f5e" />
-            <span>Pré-visualização</span>
+            <span>{translate("unlock.previewTitle")}</span>
           </div>
 
           {totalPages > 1 && (
@@ -220,9 +231,9 @@ export function UnlockPdfPanel({
               <button
                 type="button"
                 className="unlock-page-nav-btn"
-                onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
+                onClick={() => setView({ ...currentView, page: Math.max(1, previewPage - 1) })}
                 disabled={previewPage <= 1}
-                aria-label="Página anterior"
+                aria-label={translate("unlock.previousPage")}
               >
                 <ChevronLeft size={16} />
               </button>
@@ -232,9 +243,11 @@ export function UnlockPdfPanel({
               <button
                 type="button"
                 className="unlock-page-nav-btn"
-                onClick={() => setPreviewPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setView({ ...currentView, page: Math.min(totalPages, previewPage + 1) })
+                }
                 disabled={previewPage >= totalPages}
-                aria-label="Próxima página"
+                aria-label={translate("unlock.nextPage")}
               >
                 <ChevronRight size={16} />
               </button>
@@ -246,7 +259,7 @@ export function UnlockPdfPanel({
           {activeThumbnail ? (
             <img
               src={activeThumbnail}
-              alt={`Pré-visualização da página ${previewPage}`}
+              alt={translate("unlock.previewAlt").replace("{page}", String(previewPage))}
               className="unlock-preview-image"
             />
           ) : (
@@ -256,8 +269,8 @@ export function UnlockPdfPanel({
               </div>
               <span className="unlock-locked-text">
                 {protectionStatus.needsPassword
-                  ? "Conteúdo bloqueado por senha"
-                  : `Página ${previewPage}`}
+                  ? translate("unlock.contentLocked")
+                  : translate("unlock.pageLabel").replace("{page}", String(previewPage))}
               </span>
             </div>
           )}
@@ -268,7 +281,7 @@ export function UnlockPdfPanel({
       <style>{`
         .unlock-container {
           display: grid;
-          grid-template-columns: minmax(360px, 1.2fr) minmax(320px, 1fr);
+          grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
           gap: 1.5rem;
           width: 100%;
           min-height: 480px;
@@ -279,6 +292,16 @@ export function UnlockPdfPanel({
           .unlock-container {
             grid-template-columns: 1fr;
           }
+        }
+
+        @media (max-width: 480px) {
+          .unlock-header-card {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          .unlock-file-name { max-width: 100%; }
+          .unlock-preview-header { flex-wrap: wrap; gap: 0.5rem; }
+          .unlock-preview-pane { padding: 0.75rem; }
         }
 
         .unlock-controls-pane {
@@ -292,9 +315,9 @@ export function UnlockPdfPanel({
           align-items: center;
           justify-content: space-between;
           padding: 1rem 1.25rem;
-          background: rgba(30, 41, 59, 0.7);
+          background: var(--color-surface-raised);
           backdrop-filter: blur(8px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
           gap: 1rem;
         }
@@ -320,7 +343,7 @@ export function UnlockPdfPanel({
         .unlock-file-name {
           font-weight: 600;
           font-size: 0.95rem;
-          color: var(--color-text-primary, #f8fafc);
+          color: var(--color-ink);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -329,7 +352,7 @@ export function UnlockPdfPanel({
 
         .unlock-file-meta {
           font-size: 0.8rem;
-          color: var(--color-text-secondary, #94a3b8);
+          color: var(--color-ink-muted);
           margin-top: 2px;
         }
 
@@ -352,26 +375,26 @@ export function UnlockPdfPanel({
 
         .unlock-badge--restricted {
           background: rgba(245, 158, 11, 0.15);
-          color: #fbbf24;
+          color: #92400e;
           border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
         .unlock-badge--unlocked {
           background: rgba(16, 185, 129, 0.15);
-          color: #34d399;
+          color: #047857;
           border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .unlock-badge--checking {
           background: rgba(59, 130, 246, 0.15);
-          color: #60a5fa;
+          color: #1d4ed8;
           border: 1px solid rgba(59, 130, 246, 0.3);
         }
 
         .unlock-form-card {
           padding: 1.5rem;
-          background: rgba(30, 41, 59, 0.65);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
           display: flex;
           flex-direction: column;
@@ -387,13 +410,13 @@ export function UnlockPdfPanel({
         .unlock-form-title {
           font-size: 1rem;
           font-weight: 600;
-          color: #f8fafc;
+          color: var(--color-ink);
           margin: 0 0 0.25rem 0;
         }
 
         .unlock-form-desc {
           font-size: 0.85rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           margin: 0;
           line-height: 1.4;
         }
@@ -406,7 +429,7 @@ export function UnlockPdfPanel({
           background: rgba(239, 68, 68, 0.15);
           border: 1px solid rgba(239, 68, 68, 0.35);
           border-radius: 8px;
-          color: #fca5a5;
+          color: #b91c1c;
           font-size: 0.85rem;
         }
 
@@ -419,7 +442,7 @@ export function UnlockPdfPanel({
         .unlock-input-label {
           font-size: 0.85rem;
           font-weight: 600;
-          color: #e2e8f0;
+          color: var(--color-ink);
         }
 
         .unlock-password-field-wrapper {
@@ -430,11 +453,11 @@ export function UnlockPdfPanel({
 
         .unlock-password-input {
           width: 100%;
-          background: rgba(15, 23, 42, 0.8);
-          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 8px;
           padding: 0.75rem 2.75rem 0.75rem 1rem;
-          color: #f8fafc;
+          color: var(--color-ink);
           font-size: 0.95rem;
           outline: none;
           box-sizing: border-box;
@@ -451,7 +474,7 @@ export function UnlockPdfPanel({
           right: 0.75rem;
           background: transparent;
           border: none;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -462,7 +485,7 @@ export function UnlockPdfPanel({
         }
 
         .unlock-password-toggle-btn:hover {
-          color: #f8fafc;
+          color: var(--color-ink);
         }
 
         .unlock-security-note {
@@ -470,7 +493,7 @@ export function UnlockPdfPanel({
           align-items: center;
           gap: 0.5rem;
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--color-ink-muted);
           line-height: 1.4;
         }
 
@@ -480,7 +503,7 @@ export function UnlockPdfPanel({
           align-items: center;
           text-align: center;
           padding: 3rem 1.5rem;
-          background: rgba(30, 41, 59, 0.4);
+          background: var(--color-surface-raised);
           border: 1px solid rgba(16, 185, 129, 0.2);
           border-radius: 12px;
           gap: 0.85rem;
@@ -499,13 +522,13 @@ export function UnlockPdfPanel({
         .unlock-already-unlocked-card h3 {
           font-size: 1.05rem;
           font-weight: 600;
-          color: #f8fafc;
+          color: var(--color-ink);
           margin: 0;
         }
 
         .unlock-already-unlocked-card p {
           font-size: 0.85rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           max-width: 360px;
           margin: 0;
           line-height: 1.4;
@@ -523,11 +546,11 @@ export function UnlockPdfPanel({
           display: flex;
           align-items: center;
           gap: 0.45rem;
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: var(--color-surface-muted);
+          border: 1px solid var(--color-border);
           border-radius: 8px;
           padding: 0.55rem 0.95rem;
-          color: #e2e8f0;
+          color: var(--color-ink);
           font-size: 0.85rem;
           font-weight: 500;
           cursor: pointer;
@@ -535,16 +558,16 @@ export function UnlockPdfPanel({
         }
 
         .unlock-action-secondary-btn:hover {
-          background: rgba(255, 255, 255, 0.15);
-          border-color: rgba(255, 255, 255, 0.25);
+          background: var(--color-surface-muted);
+          border-color: var(--color-border);
         }
 
         /* Coluna Direita: Pré-visualização */
         .unlock-preview-pane {
           display: flex;
           flex-direction: column;
-          background: rgba(15, 23, 42, 0.7);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
           padding: 1.25rem;
           gap: 1rem;
@@ -562,7 +585,7 @@ export function UnlockPdfPanel({
           gap: 0.5rem;
           font-size: 0.9rem;
           font-weight: 600;
-          color: #f8fafc;
+          color: var(--color-ink);
         }
 
         .unlock-preview-pagination {
@@ -577,16 +600,16 @@ export function UnlockPdfPanel({
           justify-content: center;
           width: 28px;
           height: 28px;
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-muted);
           border: none;
           border-radius: 6px;
-          color: #e2e8f0;
+          color: var(--color-ink);
           cursor: pointer;
           transition: background 0.2s ease;
         }
 
         .unlock-page-nav-btn:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.16);
+          background: var(--color-surface-muted);
         }
 
         .unlock-page-nav-btn:disabled {
@@ -596,7 +619,7 @@ export function UnlockPdfPanel({
 
         .unlock-page-indicator {
           font-size: 0.8rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           min-width: 44px;
           text-align: center;
         }
@@ -606,8 +629,8 @@ export function UnlockPdfPanel({
           display: flex;
           align-items: center;
           justify-content: center;
-          background: rgba(2, 6, 23, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          background: var(--color-surface-muted);
+          border: 1px solid var(--color-border);
           border-radius: 8px;
           padding: 1rem;
           min-height: 380px;
@@ -626,7 +649,7 @@ export function UnlockPdfPanel({
           flex-direction: column;
           align-items: center;
           gap: 1rem;
-          color: #64748b;
+          color: var(--color-ink-muted);
           font-size: 0.85rem;
         }
 
@@ -642,7 +665,7 @@ export function UnlockPdfPanel({
 
         .unlock-locked-text {
           font-weight: 500;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
         }
       `}</style>
     </div>

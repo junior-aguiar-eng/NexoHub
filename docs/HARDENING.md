@@ -36,8 +36,8 @@ parágrafos, 500 tabelas, 50.000 células e 16 milhões de caracteres.
 | PDF | Criptografia não suportada, limite prévio de bytes, páginas e objetos; entrada inválida não cria artifact derivado. |
 | DOCX | Validação ZIP, path traversal, symlink, criptografia, bomba de compressão e contagem XML antes de materializar o documento. |
 | OCR | Base64 limitado antes e depois da decodificação; páginas produzidas em streaming e fechadas individualmente; orçamento de pixels e de saída. |
-| HTML/Markdown | Não existe sink de HTML bruto ou renderizador Markdown no produto atual; texto React é escapado. Qualquer renderizador futuro exigirá sanitização explícita. |
-| Senhas | Não há coleta, persistência nem log de senhas. PDF/DOCX criptografado é rejeitado; não se solicita senha. |
+| HTML/Markdown | A prévia Markdown web produz elementos React e texto escapado, sem interpretar HTML bruto. |
+| Senhas | No desbloqueio web, a senha é recebida em memória e usada localmente; não é persistida nem enviada a um servidor. A política do core permanece independente. Consulte `PDF-UNLOCK.md`. |
 | Rede e logs | Operações documentais e sidecars não usam rede. O core não registra conteúdo, caminhos, argumentos ou stderr de documentos. |
 
 Os comandos Tauri validam os caminhos através do broker de grants (`grant_broker`), conforme

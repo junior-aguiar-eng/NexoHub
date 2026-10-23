@@ -27,6 +27,7 @@ import {
   type ExtractedImage,
   extractImagesFromPdf,
   extractPdfSelectedPages,
+  type FormFieldValue,
   fillPdfForm,
   mergePdfDocuments,
   reorganizePdfDocument,
@@ -108,7 +109,7 @@ export interface LauncherToolInput {
   readonly extractImagePages?: readonly number[];
   readonly ignoreSmallImages?: boolean;
   readonly selectedImageIds?: readonly string[];
-  readonly formValues?: Record<string, string | boolean>;
+  readonly formValues?: Record<string, FormFieldValue>;
   readonly formFlatten?: boolean;
   readonly unlockPassword?: string;
 }
@@ -593,12 +594,18 @@ async function executeTool(
     }
     case "pdf-extract-images": {
       if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      if (input.selectedImageIds?.length === 0) {
+        throw new ToolRunError("INVALID_INPUT", translate("toolQuality.selectImages"));
+      }
+      if (input.extractImageScope === "selected" && !input.extractImagePages?.length) {
+        throw new ToolRunError("INVALID_INPUT", translate("toolQuality.invalidPages"));
+      }
       const pdfBytes = new Uint8Array(await first.arrayBuffer());
       const minSize = input.ignoreSmallImages === false ? 1 : 16;
       const allImages = await extractImagesFromPdf(pdfBytes, {
         minWidth: minSize,
         minHeight: minSize,
-        selectedPages: input.extractImagePages,
+        selectedPages: input.extractImageScope === "selected" ? input.extractImagePages : undefined,
       });
 
       if (allImages.length === 0) {
@@ -610,7 +617,10 @@ async function executeTool(
         ? allImages.filter((img) => selectedSet.has(img.id))
         : allImages;
 
-      const exportList = imagesToExport.length > 0 ? imagesToExport : allImages;
+      if (!imagesToExport.length) {
+        throw new ToolRunError("INVALID_INPUT", translate("toolQuality.selectImages"));
+      }
+      const exportList = imagesToExport;
 
       if (exportList.length === 1 && exportList[0]) {
         const single = exportList[0];
@@ -815,8 +825,36 @@ export async function runLauncherTool(
   const executor = (kind: ToolExecutorKind): ToolExecutor => ({
     kind,
     async execute(request) {
-      const output = await executeTool(documentCore, request);
-      return { artifacts: [output] };
+      try {
+        const output = await executeTool(documentCore, request);
+        return { artifacts: [output] };
+      } catch (error) {
+        const messages = {
+          PDF_SEM_TEXTO_SELECIONAVEL: "toolQuality.noText",
+          SENHA_OBRIGATORIA: "toolQuality.passwordRequired",
+          SENHA_INCORRETA: "toolQuality.passwordIncorrect",
+          EMPTY_DOCUMENT: "toolQuality.invalidDocument",
+          DOCUMENTO_VAZIO: "toolQuality.invalidDocument",
+          PDF_FORM_CAMPO_INEXISTENTE: "toolQuality.invalidForm",
+          PDF_FORM_CAMPO_NAO_SUPORTADO: "toolQuality.invalidForm",
+          PDF_FORM_CAMPO_SOMENTE_LEITURA: "toolQuality.invalidForm",
+          PDF_FORM_VALOR_INVALIDO: "toolQuality.invalidForm",
+          PDF_XFA_NAO_SUPORTADO: "toolQuality.unsupportedForm",
+          PDF_ASSINADO_NAO_SUPORTADO: "toolQuality.signedDocument",
+          MARGEM_INVALIDA: "toolQuality.invalidCrop",
+          RECORTE_MUITO_GRANDE: "toolQuality.invalidCrop",
+          PAGINAS_INVALIDAS: "toolQuality.invalidPages",
+          POSICAO_ASSINATURA_INVALIDA: "toolQuality.invalidSignature",
+          ASSINATURA_VAZIA: "toolQuality.invalidSignature",
+          ASSINATURA_TEXTO_NAO_SUPORTADO: "toolQuality.unsupportedSignatureText",
+          PDF_UNLOCK_CRYPT_FILTER_UNSUPPORTED: "toolQuality.unsupportedEncryption",
+        } as const;
+        if (error instanceof Error && Object.hasOwn(messages, error.message)) {
+          const key = messages[error.message as keyof typeof messages];
+          throw new ToolRunError("INVALID_INPUT", translate(key));
+        }
+        throw error;
+      }
     },
   });
   const runner = new ToolRunner(

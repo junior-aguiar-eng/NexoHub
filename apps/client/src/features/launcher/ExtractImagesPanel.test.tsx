@@ -114,4 +114,35 @@ describe("ExtractImagesPanel", () => {
     fireEvent.click(checkbox);
     expect(onSelectedImageIdsChange).toHaveBeenCalledWith(["img-1"]);
   });
+  it("reutiliza miniaturas ao selecionar e libera URLs ao desmontar", () => {
+    const create = vi.spyOn(URL, "createObjectURL");
+    const revoke = vi.spyOn(URL, "revokeObjectURL");
+    const props = {
+      fileName: "catalogo.pdf",
+      fileSizeBytes: 1024,
+      totalPages: 2,
+      scope: "all" as const,
+      onScopeChange: vi.fn(),
+      selectedPagesText: "",
+      onSelectedPagesTextChange: vi.fn(),
+      ignoreSmall: true,
+      onIgnoreSmallChange: vi.fn(),
+      extractedImages: sampleImages,
+      selectedImageIds: [] as string[],
+      onSelectedImageIdsChange: vi.fn(),
+      isExtracting: false,
+    };
+    const { rerender, unmount } = render(<ExtractImagesPanel {...props} />);
+    expect(create).toHaveBeenCalledTimes(2);
+    rerender(<ExtractImagesPanel {...props} selectedImageIds={["img-1"]} />);
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(screen.getByLabelText("Selecionar foto_perfil.jpg")).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    unmount();
+    expect(revoke).toHaveBeenCalledTimes(2);
+    create.mockRestore();
+    revoke.mockRestore();
+  });
 });

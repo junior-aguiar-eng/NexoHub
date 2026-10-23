@@ -10,6 +10,15 @@ export default defineConfig({
     react(),
     tailwindcss(),
     {
+      name: "pdfjs-unlock-internals",
+      enforce: "pre",
+      transform(code, id) {
+        if (id.includes("pdf.worker.mjs?nexohub-unlock-internals")) {
+          return `${code}\nexport { LocalPdfManager, Ref, RefMap, incrementalUpdate, BaseStream, Dict, Name };`;
+        }
+      },
+    },
+    {
       name: "fix-hunspell-esm-interop",
       transform(code, id) {
         if (id.includes("hunspell-asm") || id.includes("emscripten-wasm-loader")) {
@@ -54,6 +63,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // O parser de desbloqueio só é necessário ao executar essa ferramenta.
+          if (id.includes("nexohub-unlock-internals")) return "pdf-unlock-internals";
           if (id.includes("pdfjs-dist")) {
             return "pdfjs";
           }
@@ -71,6 +82,7 @@ export default defineConfig({
     },
   },
   test: {
+    server: { deps: { inline: [/pdfjs-dist/] } },
     environment: "jsdom",
     setupFiles: "./src/test-setup.ts",
     include: ["src/**/*.test.{ts,tsx}"],

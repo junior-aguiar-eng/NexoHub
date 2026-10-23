@@ -1,5 +1,5 @@
 import { CheckSquare, Crop, Download, Filter, ImageIcon, Layers, Square } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { translate } from "@/i18n";
 import type { ExtractedImage } from "@/platform/pdf-engine";
 
@@ -45,6 +45,23 @@ export function ExtractImagesPanel({
   }
 
   const selectedSet = useMemo(() => new Set(selectedImageIds), [selectedImageIds]);
+  const [previewUrls, setPreviewUrls] = useState<ReadonlyMap<string, string>>(new Map());
+  useEffect(() => {
+    const urls = new Map(
+      extractedImages.map((image) => [
+        image.id,
+        URL.createObjectURL(
+          new Blob([image.data as BlobPart], {
+            type: image.format === "jpeg" ? "image/jpeg" : "image/png",
+          }),
+        ),
+      ]),
+    );
+    setPreviewUrls(urls);
+    return () => {
+      for (const url of urls.values()) URL.revokeObjectURL(url);
+    };
+  }, [extractedImages]);
 
   function toggleImage(id: string) {
     if (selectedSet.has(id)) {
@@ -116,7 +133,7 @@ export function ExtractImagesPanel({
                     fontWeight: 600,
                   }}
                 >
-                  {selectedImageIds.length} selecionadas
+                  {selectedImageIds.length} {translate("extractImages.selectedCount")}
                 </span>
               </div>
 
@@ -175,10 +192,7 @@ export function ExtractImagesPanel({
             >
               {extractedImages.map((img) => {
                 const isSelected = selectedSet.has(img.id);
-                const mime = img.format === "jpeg" ? "image/jpeg" : "image/png";
-                const imgBlobUrl = URL.createObjectURL(
-                  new Blob([img.data as unknown as BlobPart], { type: mime }),
-                );
+                const imgBlobUrl = previewUrls.get(img.id);
 
                 return (
                   <div
@@ -220,7 +234,11 @@ export function ExtractImagesPanel({
                       <button
                         type="button"
                         onClick={() => toggleImage(img.id)}
-                        aria-label={`Selecionar ${img.name}`}
+                        aria-label={translate("extractImages.selectImage").replace(
+                          "{name}",
+                          img.name,
+                        )}
+                        aria-pressed={isSelected}
                         style={{
                           position: "absolute",
                           top: "6px",
@@ -253,7 +271,7 @@ export function ExtractImagesPanel({
                           fontWeight: 600,
                         }}
                       >
-                        Pág. {img.pageNumber}
+                        {translate("extractImages.pageLabel")} {img.pageNumber}
                       </span>
                     </div>
 
@@ -342,7 +360,7 @@ export function ExtractImagesPanel({
               {thumbnailUrl ? (
                 <img
                   src={thumbnailUrl}
-                  alt={`Capa de ${fileName}`}
+                  alt={translate("extractImages.coverAlt").replace("{name}", fileName)}
                   className="ilovepdf-file-thumb-img"
                   style={{ maxHeight: "360px", width: "auto", objectFit: "contain" }}
                 />
@@ -350,7 +368,10 @@ export function ExtractImagesPanel({
                 <div className="ilovepdf-file-thumb-placeholder" style={{ minHeight: "360px" }}>
                   <ImageIcon size={48} style={{ color: "#d97706", opacity: 0.6 }} />
                   <span style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "#64748b" }}>
-                    {totalPages} {totalPages === 1 ? "página" : "páginas"}
+                    {totalPages}{" "}
+                    {translate(
+                      totalPages === 1 ? "extractImages.pageSingular" : "extractImages.pagePlural",
+                    )}
                   </span>
                 </div>
               )}
@@ -435,7 +456,7 @@ export function ExtractImagesPanel({
                 type="text"
                 value={selectedPagesText}
                 onChange={(e) => onSelectedPagesTextChange(e.target.value)}
-                placeholder="Ex: 1, 3, 5-8"
+                placeholder={translate("extractImages.pagesPlaceholder")}
                 style={{
                   width: "100%",
                   padding: "0.55rem 0.75rem",
@@ -486,8 +507,7 @@ export function ExtractImagesPanel({
         >
           <Filter size={16} style={{ color: "#d97706", flexShrink: 0, marginTop: "2px" }} />
           <p style={{ margin: 0, fontSize: "0.75rem", color: "#92400e", lineHeight: 1.4 }}>
-            As imagens embutidas são extraídas em seus formatos e resoluções originais (PNG ou
-            JPEG).
+            {translate("extractImages.hint")}
           </p>
         </div>
       </aside>

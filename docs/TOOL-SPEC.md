@@ -32,8 +32,13 @@ Quick e Studio reutilizam o mesmo manifesto e executor; indisponibilidade é con
 Capability Layer antes da execução.
 
 Os manifestos das ferramentas descrevem entradas, saídas, parâmetros e capacidades exigidas. No
-Launcher e no Studio, 13 ferramentas possuem executores consolidados no client (`pdf-engine`,
+website, 19 ferramentas possuem executores no client (`pdf-engine`,
 `browser-ocr`, `browser-reviewer`, `browser-translator`) e no core nativo.
+
+As seis novas operações web são recorte visual, assinatura visual, extração de imagens,
+preenchimento AcroForm, desbloqueio e PDF para Markdown. A assinatura não é criptográfica;
+o recorte não elimina definitivamente o conteúdo ocultado. Limites e provas estão na
+[auditoria das novas ferramentas](AUDITORIA-NOVAS-FERRAMENTAS-WEB-2026-10-23.md).
 
 ## Executores Documentais PDF
 

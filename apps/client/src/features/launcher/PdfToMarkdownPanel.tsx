@@ -61,15 +61,15 @@ function SimpleMarkdownViewer({ content }: { content: string }) {
       renderedElements.push(
         <div
           key={`${keyPrefix}-table`}
-          className="my-4 overflow-x-auto rounded border border-slate-700/60 bg-slate-900/40"
+          className="my-4 overflow-x-auto rounded border border-[var(--color-border)] bg-[var(--color-surface-muted)]"
         >
-          <table className="w-full text-left text-sm text-slate-200">
-            <thead className="bg-slate-800/80 text-xs uppercase tracking-wider text-slate-300">
+          <table className="w-full text-left text-sm text-[var(--color-ink)]">
+            <thead className="bg-[var(--color-surface-muted)] text-xs uppercase tracking-wider text-[var(--color-ink)]">
               <tr>
                 {header.map((cell) => (
                   <th
                     key={`th-${keyPrefix}-${cell}`}
-                    className="border-b border-slate-700 px-3 py-2 font-semibold"
+                    className="border-b border-[var(--color-border)] px-3 py-2 font-semibold"
                   >
                     {cell}
                   </th>
@@ -80,7 +80,7 @@ function SimpleMarkdownViewer({ content }: { content: string }) {
               {body.map((row) => (
                 <tr
                   key={`tr-${keyPrefix}-${row.join("-")}`}
-                  className="hover:bg-slate-800/40 transition-colors"
+                  className="hover:bg-[var(--color-surface-muted)] transition-colors"
                 >
                   {row.map((cell) => (
                     <td key={`td-${keyPrefix}-${cell}-${row[0] ?? ""}`} className="px-3 py-2">
@@ -110,7 +110,7 @@ function SimpleMarkdownViewer({ content }: { content: string }) {
 
     if (trimmed.startsWith("<!--") && trimmed.endsWith("-->")) {
       renderedElements.push(
-        <div key={i} className="my-3 text-xs italic text-slate-400 font-mono">
+        <div key={i} className="my-3 text-xs italic text-[var(--color-ink-muted)] font-mono">
           {trimmed}
         </div>,
       );
@@ -118,7 +118,7 @@ function SimpleMarkdownViewer({ content }: { content: string }) {
     }
 
     if (trimmed === "---") {
-      renderedElements.push(<hr key={i} className="my-6 border-slate-700/80" />);
+      renderedElements.push(<hr key={i} className="my-6 border-[var(--color-border)]" />);
       continue;
     }
 
@@ -126,32 +126,32 @@ function SimpleMarkdownViewer({ content }: { content: string }) {
       renderedElements.push(
         <h1
           key={i}
-          className="mt-6 mb-3 text-2xl font-bold text-white tracking-tight border-b border-slate-700/60 pb-2"
+          className="mt-6 mb-3 text-2xl font-bold text-[var(--color-ink)] tracking-tight border-b border-[var(--color-border)] pb-2"
         >
           {trimmed.slice(2)}
         </h1>,
       );
     } else if (trimmed.startsWith("## ")) {
       renderedElements.push(
-        <h2 key={i} className="mt-5 mb-2 text-xl font-semibold text-slate-100">
+        <h2 key={i} className="mt-5 mb-2 text-xl font-semibold text-[var(--color-ink)]">
           {trimmed.slice(3)}
         </h2>,
       );
     } else if (trimmed.startsWith("### ")) {
       renderedElements.push(
-        <h3 key={i} className="mt-4 mb-2 text-lg font-medium text-slate-200">
+        <h3 key={i} className="mt-4 mb-2 text-lg font-medium text-[var(--color-ink)]">
           {trimmed.slice(4)}
         </h3>,
       );
     } else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
       renderedElements.push(
-        <li key={i} className="ml-5 list-disc text-slate-300 my-0.5 leading-relaxed">
+        <li key={i} className="ml-5 list-disc text-[var(--color-ink)] my-0.5 leading-relaxed">
           {trimmed.slice(2)}
         </li>,
       );
     } else if (/^\d+\.\s/.test(trimmed)) {
       renderedElements.push(
-        <li key={i} className="ml-5 list-decimal text-slate-300 my-0.5 leading-relaxed">
+        <li key={i} className="ml-5 list-decimal text-[var(--color-ink)] my-0.5 leading-relaxed">
           {trimmed.replace(/^\d+\.\s/, "")}
         </li>,
       );
@@ -159,14 +159,14 @@ function SimpleMarkdownViewer({ content }: { content: string }) {
       renderedElements.push(
         <blockquote
           key={i}
-          className="my-2 border-l-4 border-indigo-500 bg-indigo-950/20 px-4 py-2 italic text-slate-300 rounded-r"
+          className="my-2 border-l-4 border-indigo-500 bg-indigo-950/20 px-4 py-2 italic text-[var(--color-ink)] rounded-r"
         >
           {trimmed.slice(2)}
         </blockquote>,
       );
     } else if (trimmed.length > 0) {
       renderedElements.push(
-        <p key={i} className="my-2 text-slate-300 leading-relaxed text-sm md:text-base">
+        <p key={i} className="my-2 text-[var(--color-ink)] leading-relaxed text-sm md:text-base">
           {trimmed}
         </p>,
       );
@@ -234,9 +234,9 @@ export function PdfToMarkdownPanel({
       >
         {markdownResult ? (
           /* Estado com Resultado Pronto: Visualizador Duplo */
-          <div className="flex flex-col gap-3 rounded-xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur shadow-xl">
+          <div className="flex flex-col gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 backdrop-blur shadow-xl">
             {/* Barra de Ferramentas do Resultado */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] pb-3">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -244,7 +244,7 @@ export function PdfToMarkdownPanel({
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     viewTab === "rendered"
                       ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
-                      : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                      : "bg-[var(--color-surface-muted)] text-[var(--color-ink)] hover:bg-[var(--color-surface-muted)]"
                   }`}
                 >
                   <Eye size={14} />
@@ -256,7 +256,7 @@ export function PdfToMarkdownPanel({
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     viewTab === "raw"
                       ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
-                      : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                      : "bg-[var(--color-surface-muted)] text-[var(--color-ink)] hover:bg-[var(--color-surface-muted)]"
                   }`}
                 >
                   <FileCode2 size={14} />
@@ -270,9 +270,9 @@ export function PdfToMarkdownPanel({
                   variant="secondary"
                   size="compact"
                   onClick={handleCopy}
-                  className="gap-1.5 border border-slate-700 bg-slate-800 text-xs text-slate-200 hover:bg-slate-700"
+                  className="gap-1.5 border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-xs text-[var(--color-ink)] hover:bg-[var(--color-surface-muted)]"
                 >
-                  {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                  {copied ? <Check size={14} className="text-emerald-700" /> : <Copy size={14} />}
                   <span>
                     {copied ? translate("pdfToMarkdown.copied") : translate("pdfToMarkdown.copy")}
                   </span>
@@ -299,22 +299,22 @@ export function PdfToMarkdownPanel({
             )}
 
             {/* Conteúdo: Visualização ou Código Raw */}
-            <div className="min-h-[420px] max-h-[620px] overflow-y-auto rounded-lg border border-slate-800/80 bg-slate-950/70 p-4">
+            <div className="min-h-[420px] max-h-[620px] overflow-y-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
               {viewTab === "rendered" ? (
                 <SimpleMarkdownViewer content={markdownResult} />
               ) : (
                 <textarea
                   value={markdownResult}
                   onChange={(e) => onMarkdownResultChange?.(e.target.value)}
-                  className="h-full min-h-[400px] w-full resize-none bg-transparent font-mono text-xs md:text-sm text-slate-200 outline-none leading-relaxed"
+                  className="h-full min-h-[400px] w-full resize-none bg-transparent font-mono text-xs md:text-sm text-[var(--color-ink)] outline-none leading-relaxed"
                   spellCheck={false}
                 />
               )}
             </div>
 
             {/* Estatísticas do Documento */}
-            <div className="flex flex-wrap items-center justify-between text-xs text-slate-400 pt-1">
-              <span className="font-medium text-slate-300">{fileName}</span>
+            <div className="flex flex-wrap items-center justify-between text-xs text-[var(--color-ink-muted)] pt-1">
+              <span className="font-medium text-[var(--color-ink)]">{fileName}</span>
               <div className="flex items-center gap-3">
                 <span>
                   {charCount.toLocaleString()} {translate("pdfToMarkdown.statsCharacters")}
@@ -340,6 +340,7 @@ export function PdfToMarkdownPanel({
                     src={thumbnailUrl}
                     alt={`Miniatura de ${fileName}`}
                     className="ilovepdf-file-thumb-img"
+                    style={{ height: "auto", width: "100%", objectFit: "contain" }}
                   />
                 ) : (
                   <div className="ilovepdf-file-thumb-placeholder">PDF</div>
@@ -354,32 +355,32 @@ export function PdfToMarkdownPanel({
             </div>
 
             <div className="grid max-w-lg grid-cols-1 md:grid-cols-3 gap-3 w-full text-left">
-              <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3">
-                <div className="flex items-center gap-2 text-indigo-400 mb-1 text-xs font-semibold">
+              <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
+                <div className="flex items-center gap-2 text-indigo-700 mb-1 text-xs font-semibold">
                   <Heading size={14} />
                   <span>Hierarquia</span>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-tight">
+                <p className="text-[11px] text-[var(--color-ink-muted)] leading-tight">
                   Títulos #, ## e ### identificados pelo tamanho de fonte.
                 </p>
               </div>
 
-              <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3">
-                <div className="flex items-center gap-2 text-emerald-400 mb-1 text-xs font-semibold">
+              <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
+                <div className="flex items-center gap-2 text-emerald-700 mb-1 text-xs font-semibold">
                   <TableIcon size={14} />
                   <span>Tabelas</span>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-tight">
+                <p className="text-[11px] text-[var(--color-ink-muted)] leading-tight">
                   Colunas tabulares formatadas na sintaxe nativa do Markdown.
                 </p>
               </div>
 
-              <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3">
-                <div className="flex items-center gap-2 text-sky-400 mb-1 text-xs font-semibold">
+              <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
+                <div className="flex items-center gap-2 text-sky-700 mb-1 text-xs font-semibold">
                   <Sparkles size={14} />
                   <span>Pronto para IA</span>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-tight">
+                <p className="text-[11px] text-[var(--color-ink-muted)] leading-tight">
                   Ideal para Notion, Obsidian, GitHub e prompts em LLMs.
                 </p>
               </div>
@@ -394,57 +395,57 @@ export function PdfToMarkdownPanel({
 
         <div className="flex flex-col gap-4">
           {/* Opção 1: Detectar Títulos */}
-          <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-900/80 cursor-pointer transition-colors">
+          <label className="flex items-start gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-muted)] cursor-pointer transition-colors">
             <input
               type="checkbox"
               checked={detectHeadings}
               onChange={(e) => onDetectHeadingsChange(e.target.checked)}
               disabled={isConverting}
-              className="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
+              className="mt-1 h-4 w-4 rounded border-[var(--color-border)] bg-[var(--color-surface-muted)] text-indigo-600 focus:ring-indigo-500"
             />
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-200">
+              <span className="text-xs font-semibold text-[var(--color-ink)]">
                 {translate("pdfToMarkdown.detectHeadings")}
               </span>
-              <span className="text-[11px] text-slate-400 mt-0.5">
+              <span className="text-[11px] text-[var(--color-ink-muted)] mt-0.5">
                 {translate("pdfToMarkdown.detectHeadingsDesc")}
               </span>
             </div>
           </label>
 
           {/* Opção 2: Formatar Tabelas */}
-          <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-900/80 cursor-pointer transition-colors">
+          <label className="flex items-start gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-muted)] cursor-pointer transition-colors">
             <input
               type="checkbox"
               checked={detectTables}
               onChange={(e) => onDetectTablesChange(e.target.checked)}
               disabled={isConverting}
-              className="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
+              className="mt-1 h-4 w-4 rounded border-[var(--color-border)] bg-[var(--color-surface-muted)] text-indigo-600 focus:ring-indigo-500"
             />
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-200">
+              <span className="text-xs font-semibold text-[var(--color-ink)]">
                 {translate("pdfToMarkdown.detectTables")}
               </span>
-              <span className="text-[11px] text-slate-400 mt-0.5">
+              <span className="text-[11px] text-[var(--color-ink-muted)] mt-0.5">
                 {translate("pdfToMarkdown.detectTablesDesc")}
               </span>
             </div>
           </label>
 
           {/* Opção 3: Quebras de Página */}
-          <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-900/80 cursor-pointer transition-colors">
+          <label className="flex items-start gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-muted)] cursor-pointer transition-colors">
             <input
               type="checkbox"
               checked={includePageBreaks}
               onChange={(e) => onIncludePageBreaksChange(e.target.checked)}
               disabled={isConverting}
-              className="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
+              className="mt-1 h-4 w-4 rounded border-[var(--color-border)] bg-[var(--color-surface-muted)] text-indigo-600 focus:ring-indigo-500"
             />
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-200">
+              <span className="text-xs font-semibold text-[var(--color-ink)]">
                 {translate("pdfToMarkdown.includePageBreaks")}
               </span>
-              <span className="text-[11px] text-slate-400 mt-0.5">
+              <span className="text-[11px] text-[var(--color-ink-muted)] mt-0.5">
                 {translate("pdfToMarkdown.includePageBreaksDesc")}
               </span>
             </div>

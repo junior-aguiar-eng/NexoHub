@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Crop, Info, Layers, RefreshCcw } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { translate } from "@/i18n";
 import type { CropMargins } from "@/platform/pdf-engine";
 
@@ -9,6 +9,7 @@ export interface CropPdfPanelProps {
   readonly totalPages: number;
   readonly thumbnailUrl?: string;
   readonly pageThumbnails?: readonly string[];
+  readonly onPreviewPageChange?: (page: number) => void;
   readonly margins: CropMargins;
   readonly onMarginsChange: (margins: CropMargins) => void;
   readonly scope: "all" | "selected";
@@ -23,6 +24,7 @@ export function CropPdfPanel({
   totalPages,
   thumbnailUrl,
   pageThumbnails,
+  onPreviewPageChange,
   margins,
   onMarginsChange,
   scope,
@@ -52,10 +54,12 @@ export function CropPdfPanel({
     onMarginsChange({ top: value, bottom: value, left: value, right: value });
   }
 
+  useEffect(() => {
+    onPreviewPageChange?.(currentPage);
+  }, [onPreviewPageChange, currentPage]);
+
   const currentThumb =
-    pageThumbnails && pageThumbnails.length >= currentPage
-      ? pageThumbnails[currentPage - 1]
-      : thumbnailUrl;
+    pageThumbnails?.[currentPage - 1] || (currentPage === 1 ? thumbnailUrl : undefined);
 
   const visibleWidthPercent = Math.max(10, 100 - margins.left - margins.right);
   const visibleHeightPercent = Math.max(10, 100 - margins.top - margins.bottom);
@@ -80,7 +84,7 @@ export function CropPdfPanel({
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
-                aria-label="Página anterior"
+                aria-label={translate("crop.previousPage")}
                 style={{
                   padding: "0.3rem 0.5rem",
                   borderRadius: "6px",
@@ -103,7 +107,7 @@ export function CropPdfPanel({
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage >= totalPages}
-                aria-label="Próxima página"
+                aria-label={translate("crop.nextPage")}
                 style={{
                   padding: "0.3rem 0.5rem",
                   borderRadius: "6px",
@@ -130,7 +134,9 @@ export function CropPdfPanel({
               boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
               backgroundColor: "#ffffff",
               border: "1px solid #e2e8f0",
-              minHeight: "360px",
+              width: "fit-content",
+              maxWidth: "100%",
+              marginInline: "auto",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -139,10 +145,14 @@ export function CropPdfPanel({
             {currentThumb ? (
               <img
                 src={currentThumb}
-                alt={`Página ${currentPage} de ${fileName}`}
+                alt={translate("crop.pageAlt")
+                  .replace("{page}", String(currentPage))
+                  .replace("{name}", fileName)}
                 className="ilovepdf-file-thumb-img"
                 style={{
                   maxHeight: "360px",
+                  height: "auto",
+                  maxWidth: "100%",
                   width: "auto",
                   objectFit: "contain",
                   display: "block",

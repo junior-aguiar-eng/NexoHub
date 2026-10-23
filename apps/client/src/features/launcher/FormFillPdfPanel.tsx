@@ -11,9 +11,9 @@ import {
   PenTool,
   RotateCcw,
 } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { translate } from "@/i18n";
-import type { FormFieldDescriptor } from "@/platform/pdf-engine";
+import type { FormFieldDescriptor, FormFieldValue } from "@/platform/pdf-form";
 
 export interface FormFillPdfPanelProps {
   readonly fileName: string;
@@ -21,10 +21,11 @@ export interface FormFillPdfPanelProps {
   readonly totalPages: number;
   readonly thumbnailUrl?: string;
   readonly pageThumbnails?: readonly string[];
+  readonly onPreviewPageChange?: (page: number) => void;
   readonly fields: readonly FormFieldDescriptor[];
   readonly isLoadingFields?: boolean;
-  readonly values: Record<string, string | boolean>;
-  readonly onValuesChange: (values: Record<string, string | boolean>) => void;
+  readonly values: Record<string, FormFieldValue>;
+  readonly onValuesChange: (values: Record<string, FormFieldValue>) => void;
   readonly flatten: boolean;
   readonly onFlattenChange: (flatten: boolean) => void;
   readonly onGoToSign?: () => void;
@@ -36,6 +37,7 @@ export function FormFillPdfPanel({
   totalPages,
   thumbnailUrl,
   pageThumbnails,
+  onPreviewPageChange,
   fields,
   isLoadingFields = false,
   values,
@@ -53,28 +55,38 @@ export function FormFillPdfPanel({
       : `${Math.round(fileSizeBytes / 1024)} KB`;
 
   // Miniatura da página selecionada
+  useEffect(() => {
+    onPreviewPageChange?.(previewPage);
+  }, [onPreviewPageChange, previewPage]);
+
   const activeThumbnail =
-    pageThumbnails && pageThumbnails.length >= previewPage
-      ? pageThumbnails[previewPage - 1]
-      : thumbnailUrl;
+    pageThumbnails?.[previewPage - 1] || (previewPage === 1 ? thumbnailUrl : undefined);
+
+  const effectiveValues = Object.fromEntries(
+    fields.map((field) => [field.name, values[field.name] ?? field.currentValue]),
+  );
 
   const filledCount = fields.filter((f) => {
-    const val = values[f.name];
+    const val = effectiveValues[f.name];
     if (f.type === "checkbox") return Boolean(val);
-    return typeof val === "string" && val.trim().length > 0;
+    return Array.isArray(val) ? val.length > 0 : typeof val === "string" && val.trim().length > 0;
   }).length;
 
-  function handleFieldChange(name: string, value: string | boolean) {
+  function handleFieldChange(name: string, value: FormFieldValue) {
     onValuesChange({
-      ...values,
+      ...effectiveValues,
       [name]: value,
     });
   }
 
   function handleClearAll() {
-    const cleared: Record<string, string | boolean> = {};
+    const cleared: Record<string, FormFieldValue> = {};
     for (const f of fields) {
-      if (f.type === "checkbox") {
+      if (f.isReadOnly) {
+        cleared[f.name] = f.currentValue;
+      } else if (f.multiSelect) {
+        cleared[f.name] = [];
+      } else if (f.type === "checkbox") {
         cleared[f.name] = false;
       } else {
         cleared[f.name] = "";
@@ -112,7 +124,11 @@ export function FormFillPdfPanel({
                 {fileName}
               </div>
               <div className="form-fill-file-meta">
-                {formattedSize} • {totalPages} {totalPages === 1 ? "página" : "páginas"}
+                {formattedSize} •{" "}
+                {translate(totalPages === 1 ? "formFill.pageCount" : "formFill.pagesCount").replace(
+                  "{count}",
+                  String(totalPages),
+                )}
               </div>
             </div>
           </div>
@@ -144,7 +160,7 @@ export function FormFillPdfPanel({
                 onChange={(e) => onFlattenChange(e.target.checked)}
                 className="form-fill-checkbox-input"
               />
-              <span style={{ fontWeight: 600, color: "var(--color-text-primary, #f1f5f9)" }}>
+              <span style={{ fontWeight: 600, color: "var(--color-ink)" }}>
                 {translate("formFill.flattenLabel")}
               </span>
             </label>
@@ -156,7 +172,7 @@ export function FormFillPdfPanel({
         {isLoadingFields ? (
           <div className="form-fill-loading-state">
             <Loader2 size={28} className="animate-spin" color="#3b82f6" />
-            <p>Carregando e inspecionando campos do formulário...</p>
+            <p>{translate("formFill.loadingFields")}</p>
           </div>
         ) : fields.length === 0 ? (
           <div className="form-fill-empty-state">
@@ -184,7 +200,7 @@ export function FormFillPdfPanel({
                 type="button"
                 className="form-fill-clear-btn"
                 onClick={handleClearAll}
-                title="Limpar todos os campos preenchidos"
+                title={translate("formFill.clearTitle")}
               >
                 <RotateCcw size={14} />
                 <span>{translate("formFill.clearValues")}</span>
@@ -194,7 +210,7 @@ export function FormFillPdfPanel({
             <div className="form-fill-fields-list">
               {fields.map((field, idx) => {
                 const fieldId = `${baseId}-field-${idx}`;
-                const val = values[field.name];
+                const val = effectiveValues[field.name];
 
                 return (
                   <div key={field.name} className="form-fill-field-card">
@@ -236,23 +252,62 @@ export function FormFillPdfPanel({
                           disabled={field.isReadOnly}
                         />
                         <span className="form-fill-checkbox-text">
-                          {val ? "Marcado / Sim" : "Desmarcado / Não"}
+                          {translate(val ? "formFill.checked" : "formFill.unchecked")}
                         </span>
                       </label>
                     )}
 
-                    {field.type === "dropdown" && (
+                    {field.type === "dropdown" && field.isEditable && !field.multiSelect && (
+                      <>
+                        <input
+                          id={fieldId}
+                          list={`${fieldId}-options`}
+                          className="form-fill-input-text"
+                          value={typeof val === "string" ? val : ""}
+                          onChange={(event) => handleFieldChange(field.name, event.target.value)}
+                          disabled={field.isReadOnly}
+                        />
+                        <datalist id={`${fieldId}-options`}>
+                          {field.options?.map((option) => (
+                            <option key={option} value={option} />
+                          ))}
+                        </datalist>
+                      </>
+                    )}
+
+                    {(field.type === "option-list" ||
+                      (field.type === "dropdown" && (!field.isEditable || field.multiSelect))) && (
                       <select
                         id={fieldId}
                         className="form-fill-select"
-                        value={typeof val === "string" ? val : ""}
-                        onChange={(e) => handleFieldChange(field.name, e.target.value)}
+                        multiple={field.multiSelect}
+                        value={
+                          field.multiSelect
+                            ? Array.isArray(val)
+                              ? val
+                              : typeof val === "string" && val !== ""
+                                ? [val]
+                                : []
+                            : typeof val === "string"
+                              ? val
+                              : ""
+                        }
+                        onChange={(event) =>
+                          handleFieldChange(
+                            field.name,
+                            field.multiSelect
+                              ? Array.from(event.target.selectedOptions, (option) => option.value)
+                              : event.target.value,
+                          )
+                        }
                         disabled={field.isReadOnly}
                       >
-                        <option value="">Selecione uma opção...</option>
-                        {field.options?.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
+                        {!field.multiSelect && (
+                          <option value="">{translate("formFill.selectPlaceholder")}</option>
+                        )}
+                        {field.options?.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
                           </option>
                         ))}
                       </select>
@@ -279,23 +334,6 @@ export function FormFillPdfPanel({
                         })}
                       </div>
                     )}
-
-                    {field.type === "option-list" && (
-                      <select
-                        id={fieldId}
-                        className="form-fill-select"
-                        value={typeof val === "string" ? val : ""}
-                        onChange={(e) => handleFieldChange(field.name, e.target.value)}
-                        disabled={field.isReadOnly}
-                      >
-                        <option value="">Selecione uma opção...</option>
-                        {field.options?.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
-                    )}
                   </div>
                 );
               })}
@@ -319,7 +357,7 @@ export function FormFillPdfPanel({
                 className="form-fill-page-nav-btn"
                 onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
                 disabled={previewPage <= 1}
-                aria-label="Página anterior"
+                aria-label={translate("formFill.previousPage")}
               >
                 <ChevronLeft size={16} />
               </button>
@@ -331,7 +369,7 @@ export function FormFillPdfPanel({
                 className="form-fill-page-nav-btn"
                 onClick={() => setPreviewPage((p) => Math.min(totalPages, p + 1))}
                 disabled={previewPage >= totalPages}
-                aria-label="Próxima página"
+                aria-label={translate("formFill.nextPage")}
               >
                 <ChevronRight size={16} />
               </button>
@@ -343,23 +381,20 @@ export function FormFillPdfPanel({
           {activeThumbnail ? (
             <img
               src={activeThumbnail}
-              alt={`Pré-visualização da página ${previewPage}`}
+              alt={translate("formFill.previewPageAlt").replace("{page}", String(previewPage))}
               className="form-fill-preview-image"
             />
           ) : (
             <div className="form-fill-preview-placeholder">
               <FileText size={48} color="#64748b" />
-              <span>Página {previewPage}</span>
+              <span>{translate("formFill.pageLabel").replace("{page}", String(previewPage))}</span>
             </div>
           )}
         </div>
 
         <div className="form-fill-preview-footer-hint">
           <Info size={14} />
-          <span>
-            Os campos preenchidos serão injetados com fidelidade vetorial nas posições originais do
-            PDF.
-          </span>
+          <span>{translate("formFill.previewHint")}</span>
         </div>
       </div>
 
@@ -391,9 +426,9 @@ export function FormFillPdfPanel({
           align-items: center;
           justify-content: space-between;
           padding: 1rem 1.25rem;
-          background: rgba(30, 41, 59, 0.7);
+          background: var(--color-surface-raised);
           backdrop-filter: blur(8px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
           gap: 1rem;
         }
@@ -419,7 +454,7 @@ export function FormFillPdfPanel({
         .form-fill-file-name {
           font-weight: 600;
           font-size: 0.95rem;
-          color: var(--color-text-primary, #f8fafc);
+          color: var(--color-ink);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -428,7 +463,7 @@ export function FormFillPdfPanel({
 
         .form-fill-file-meta {
           font-size: 0.8rem;
-          color: var(--color-text-secondary, #94a3b8);
+          color: var(--color-ink-muted);
           margin-top: 2px;
         }
 
@@ -441,15 +476,15 @@ export function FormFillPdfPanel({
           border: 1px solid rgba(16, 185, 129, 0.25);
           border-radius: 9999px;
           font-size: 0.8rem;
-          color: #34d399;
+          color: #047857;
           font-weight: 500;
           white-space: nowrap;
         }
 
         .form-fill-options-box {
           padding: 1rem 1.25rem;
-          background: rgba(30, 41, 59, 0.5);
-          border: 1px solid rgba(255, 255, 255, 0.06);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
         }
 
@@ -468,7 +503,7 @@ export function FormFillPdfPanel({
 
         .form-fill-option-hint {
           font-size: 0.8rem;
-          color: var(--color-text-secondary, #94a3b8);
+          color: var(--color-ink-muted);
           margin-left: 1.6rem;
           line-height: 1.4;
         }
@@ -486,12 +521,12 @@ export function FormFillPdfPanel({
           gap: 0.5rem;
           font-weight: 600;
           font-size: 0.95rem;
-          color: var(--color-text-primary, #f8fafc);
+          color: var(--color-ink);
         }
 
         .form-fill-count-pill {
           background: rgba(59, 130, 246, 0.15);
-          color: #60a5fa;
+          color: #1d4ed8;
           padding: 0.1rem 0.45rem;
           border-radius: 9999px;
           font-size: 0.75rem;
@@ -503,8 +538,8 @@ export function FormFillPdfPanel({
           align-items: center;
           gap: 0.35rem;
           background: transparent;
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          color: var(--color-text-secondary, #94a3b8);
+          border: 1px solid var(--color-border);
+          color: var(--color-ink-muted);
           border-radius: 6px;
           padding: 0.3rem 0.6rem;
           font-size: 0.75rem;
@@ -515,7 +550,7 @@ export function FormFillPdfPanel({
         .form-fill-clear-btn:hover {
           background: rgba(239, 68, 68, 0.12);
           border-color: rgba(239, 68, 68, 0.3);
-          color: #f87171;
+          color: #b91c1c;
         }
 
         .form-fill-fields-list {
@@ -529,8 +564,8 @@ export function FormFillPdfPanel({
 
         .form-fill-field-card {
           padding: 0.85rem 1rem;
-          background: rgba(15, 23, 42, 0.65);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 10px;
           transition: border-color 0.2s ease;
         }
@@ -551,7 +586,7 @@ export function FormFillPdfPanel({
         .form-fill-field-name {
           font-size: 0.85rem;
           font-weight: 600;
-          color: var(--color-text-primary, #e2e8f0);
+          color: var(--color-ink);
           word-break: break-all;
         }
 
@@ -563,8 +598,8 @@ export function FormFillPdfPanel({
         }
 
         .form-fill-badge {
-          background: rgba(255, 255, 255, 0.08);
-          color: #cbd5e1;
+          background: var(--color-surface-muted);
+          color: var(--color-ink-muted);
           font-size: 0.7rem;
           padding: 0.15rem 0.4rem;
           border-radius: 4px;
@@ -573,17 +608,17 @@ export function FormFillPdfPanel({
 
         .form-fill-badge--readonly {
           background: rgba(245, 158, 11, 0.15);
-          color: #fbbf24;
+          color: #92400e;
         }
 
         .form-fill-input-text,
         .form-fill-select {
           width: 100%;
-          background: rgba(30, 41, 59, 0.8);
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 6px;
           padding: 0.55rem 0.75rem;
-          color: #f8fafc;
+          color: var(--color-ink);
           font-size: 0.85rem;
           box-sizing: border-box;
           outline: none;
@@ -604,7 +639,7 @@ export function FormFillPdfPanel({
 
         .form-fill-checkbox-text {
           font-size: 0.85rem;
-          color: var(--color-text-secondary, #cbd5e1);
+          color: var(--color-ink-muted);
         }
 
         .form-fill-radio-group {
@@ -618,7 +653,7 @@ export function FormFillPdfPanel({
           align-items: center;
           gap: 0.35rem;
           font-size: 0.85rem;
-          color: #cbd5e1;
+          color: var(--color-ink-muted);
           cursor: pointer;
         }
 
@@ -630,8 +665,8 @@ export function FormFillPdfPanel({
           justify-content: center;
           text-align: center;
           padding: 3rem 1.5rem;
-          background: rgba(30, 41, 59, 0.4);
-          border: 1px dashed rgba(255, 255, 255, 0.12);
+          background: var(--color-surface-raised);
+          border: 1px dashed var(--color-border);
           border-radius: 12px;
           gap: 0.75rem;
         }
@@ -649,13 +684,13 @@ export function FormFillPdfPanel({
         .form-fill-empty-state h3 {
           font-size: 1rem;
           font-weight: 600;
-          color: #f8fafc;
+          color: var(--color-ink);
           margin: 0;
         }
 
         .form-fill-empty-state p {
           font-size: 0.85rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           max-width: 320px;
           margin: 0;
           line-height: 1.4;
@@ -685,8 +720,8 @@ export function FormFillPdfPanel({
         .form-fill-preview-pane {
           display: flex;
           flex-direction: column;
-          background: rgba(15, 23, 42, 0.7);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
           padding: 1.25rem;
           gap: 1rem;
@@ -704,7 +739,7 @@ export function FormFillPdfPanel({
           gap: 0.5rem;
           font-size: 0.9rem;
           font-weight: 600;
-          color: #f8fafc;
+          color: var(--color-ink);
         }
 
         .form-fill-preview-pagination {
@@ -719,16 +754,16 @@ export function FormFillPdfPanel({
           justify-content: center;
           width: 28px;
           height: 28px;
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--color-surface-muted);
           border: none;
           border-radius: 6px;
-          color: #e2e8f0;
+          color: var(--color-ink);
           cursor: pointer;
           transition: background 0.2s ease;
         }
 
         .form-fill-page-nav-btn:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.16);
+          background: var(--color-surface-muted);
         }
 
         .form-fill-page-nav-btn:disabled {
@@ -738,7 +773,7 @@ export function FormFillPdfPanel({
 
         .form-fill-page-indicator {
           font-size: 0.8rem;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           min-width: 44px;
           text-align: center;
         }
@@ -748,8 +783,8 @@ export function FormFillPdfPanel({
           display: flex;
           align-items: center;
           justify-content: center;
-          background: rgba(2, 6, 23, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          background: var(--color-surface-muted);
+          border: 1px solid var(--color-border);
           border-radius: 8px;
           padding: 1rem;
           min-height: 420px;
@@ -768,7 +803,7 @@ export function FormFillPdfPanel({
           flex-direction: column;
           align-items: center;
           gap: 0.75rem;
-          color: #64748b;
+          color: var(--color-ink-muted);
           font-size: 0.85rem;
         }
 
@@ -777,7 +812,7 @@ export function FormFillPdfPanel({
           align-items: center;
           gap: 0.5rem;
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--color-ink-muted);
           line-height: 1.4;
         }
       `}</style>

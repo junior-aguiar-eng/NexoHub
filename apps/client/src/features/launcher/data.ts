@@ -138,7 +138,7 @@ const presentation = {
     titleKey: "tool.pdfExtractImages.title" as const,
     descriptionKey: "tool.pdfExtractImages.description" as const,
     icon: Images,
-    accentColor: "#F59E0B", // Âmbar / Ouro Solar
+    accentColor: "#B77900", // Âmbar com contraste no cartão claro
   },
   "pdf-ocr": {
     suite: "text" as const,

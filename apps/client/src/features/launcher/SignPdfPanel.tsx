@@ -19,6 +19,7 @@ export interface SignPdfPanelProps {
   readonly totalPages: number;
   readonly thumbnailUrl?: string;
   readonly pageThumbnails?: readonly string[];
+  readonly onPreviewPageChange?: (page: number) => void;
   readonly placement: SignaturePlacement;
   readonly onPlacementChange: (placement: SignaturePlacement) => void;
   readonly signatureImageBytes?: Uint8Array;
@@ -35,23 +36,30 @@ export function SignPdfPanel({
   totalPages,
   thumbnailUrl,
   pageThumbnails,
+  onPreviewPageChange,
   placement,
   onPlacementChange,
-  signatureImageBytes: _signatureImageBytes,
+  signatureImageBytes,
   onSignatureImageChange,
   signerName,
   onSignerNameChange,
   includeDate,
   onIncludeDateChange,
 }: SignPdfPanelProps) {
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState<number>(
+    placement.page === "last" || placement.page === undefined
+      ? totalPages
+      : typeof placement.page === "number"
+        ? placement.page
+        : 1,
+  );
   const [activeTab, setActiveTab] = useState<"draw" | "type" | "upload">("draw");
-  const [typedText, setTypedText] = useState<string>("Boni Jr.");
+  const [typedText, setTypedText] = useState<string>("");
   const [penColor, setPenColor] = useState<string>("#0f172a");
   const [penWidth, setPenWidth] = useState<number>(2.5);
   const [signaturePreviewUrl, setSignaturePreviewUrl] = useState<string>("");
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
-  const [_hasDrawn, setHasDrawn] = useState<boolean>(false);
+  const uploadUrlRef = useRef<string | undefined>(undefined);
 
   // Canvas drawing ref
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -79,6 +87,7 @@ export function SignPdfPanel({
 
   // Inicializa o canvas de desenho
   useEffect(() => {
+    if (activeTab !== "draw") return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -88,7 +97,7 @@ export function SignPdfPanel({
     ctx.lineJoin = "round";
     ctx.strokeStyle = penColor;
     ctx.lineWidth = penWidth;
-  }, [penColor, penWidth]);
+  }, [penColor, penWidth, activeTab]);
 
   function startDrawing(e: ReactPointerEvent<HTMLCanvasElement>) {
     const canvas = canvasRef.current;
@@ -99,10 +108,9 @@ export function SignPdfPanel({
     if (!ctx) return;
 
     setIsDrawing(true);
-    setHasDrawn(true);
     ctx.beginPath();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = ((e.clientX - rect.left) / rect.width) * canvas.width;
+    const y = ((e.clientY - rect.top) / rect.height) * canvas.height;
     ctx.moveTo(x, y);
   }
 
@@ -114,8 +122,8 @@ export function SignPdfPanel({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = ((e.clientX - rect.left) / rect.width) * canvas.width;
+    const y = ((e.clientY - rect.top) / rect.height) * canvas.height;
     ctx.lineTo(x, y);
     ctx.stroke();
   }
@@ -147,14 +155,37 @@ export function SignPdfPanel({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    setHasDrawn(false);
     setSignaturePreviewUrl("");
     onSignatureImageChange(undefined, undefined);
   }
 
+  useEffect(
+    () => () => {
+      if (uploadUrlRef.current) URL.revokeObjectURL(uploadUrlRef.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!signatureImageBytes?.length) return;
+    const url = URL.createObjectURL(
+      new Blob([new Uint8Array(signatureImageBytes)], {
+        type: signatureImageBytes[0] === 0x89 ? "image/png" : "image/jpeg",
+      }),
+    );
+    setSignaturePreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [signatureImageBytes]);
+
   // Gera imagem a partir da digitação
   useEffect(() => {
-    if (activeTab !== "type" || !typedText.trim()) return;
+    if (activeTab !== "type") return;
+    if (!typedText.trim()) {
+      setSignaturePreviewUrl("");
+      onSignatureImageChange(undefined, undefined);
+      return;
+    }
+    let cancelled = false;
 
     const offscreen = document.createElement("canvas");
     offscreen.width = 400;
@@ -167,17 +198,21 @@ export function SignPdfPanel({
     ctx.font = "italic 44px 'Dancing Script', 'Brush Script MT', 'Segoe Script', cursive";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(typedText.trim(), offscreen.width / 2, offscreen.height / 2);
+    ctx.fillText(typedText.trim(), offscreen.width / 2, offscreen.height / 2, offscreen.width - 16);
 
     offscreen.toBlob((blob) => {
-      if (!blob) return;
+      if (!blob || cancelled) return;
       blob.arrayBuffer().then((buf) => {
+        if (cancelled) return;
         const bytes = new Uint8Array(buf);
         const dataUrl = offscreen.toDataURL("image/png");
         setSignaturePreviewUrl(dataUrl);
         onSignatureImageChange(bytes, dataUrl);
       });
     }, "image/png");
+    return () => {
+      cancelled = true;
+    };
   }, [activeTab, typedText, penColor, onSignatureImageChange]);
 
   // Upload de imagem de assinatura/carimbo
@@ -187,7 +222,9 @@ export function SignPdfPanel({
 
     file.arrayBuffer().then((buf) => {
       const bytes = new Uint8Array(buf);
+      if (uploadUrlRef.current) URL.revokeObjectURL(uploadUrlRef.current);
       const url = URL.createObjectURL(file);
+      uploadUrlRef.current = url;
       setSignaturePreviewUrl(url);
       onSignatureImageChange(bytes, url);
     });
@@ -203,7 +240,7 @@ export function SignPdfPanel({
       startX: placement.xPercent,
       startY: placement.yPercent,
     };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    e.currentTarget.setPointerCapture(e.pointerId);
   }
 
   function handlePointerMoveDrag(e: ReactPointerEvent<HTMLDivElement>) {
@@ -212,6 +249,7 @@ export function SignPdfPanel({
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
     const deltaX = ((e.clientX - dragStartPosRef.current.clientX) / rect.width) * 100;
     // Y no PDF é medido de baixo para cima
     const deltaY = -(((e.clientY - dragStartPosRef.current.clientY) / rect.height) * 100);
@@ -236,14 +274,24 @@ export function SignPdfPanel({
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
     try {
-      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      e.currentTarget.releasePointerCapture(e.pointerId);
     } catch {}
   }
 
+  useEffect(() => {
+    onPreviewPageChange?.(currentPage);
+  }, [onPreviewPageChange, currentPage]);
+
   const currentThumb =
-    pageThumbnails && pageThumbnails.length >= currentPage
-      ? pageThumbnails[currentPage - 1]
-      : thumbnailUrl;
+    pageThumbnails?.[currentPage - 1] || (currentPage === 1 ? thumbnailUrl : undefined);
+
+  const showStamp =
+    placement.page === "all" ||
+    (placement.page === "first"
+      ? currentPage === 1
+      : placement.page === "last" || placement.page === undefined
+        ? currentPage === totalPages
+        : placement.page === currentPage);
 
   const todayFormatted = new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "short",
@@ -270,7 +318,7 @@ export function SignPdfPanel({
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
-                aria-label="Página anterior"
+                aria-label={translate("crop.previousPage")}
                 style={{
                   padding: "0.3rem 0.5rem",
                   borderRadius: "6px",
@@ -293,7 +341,7 @@ export function SignPdfPanel({
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage >= totalPages}
-                aria-label="Próxima página"
+                aria-label={translate("crop.nextPage")}
                 style={{
                   padding: "0.3rem 0.5rem",
                   borderRadius: "6px",
@@ -321,7 +369,9 @@ export function SignPdfPanel({
               boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
               backgroundColor: "#ffffff",
               border: "1px solid #e2e8f0",
-              minHeight: "380px",
+              width: "fit-content",
+              maxWidth: "100%",
+              marginInline: "auto",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -331,10 +381,14 @@ export function SignPdfPanel({
             {currentThumb ? (
               <img
                 src={currentThumb}
-                alt={`Página ${currentPage} de ${fileName}`}
+                alt={translate("crop.pageAlt")
+                  .replace("{page}", String(currentPage))
+                  .replace("{name}", fileName)}
                 className="ilovepdf-file-thumb-img"
                 style={{
                   maxHeight: "380px",
+                  maxWidth: "100%",
+                  height: "auto",
                   width: "auto",
                   objectFit: "contain",
                   display: "block",
@@ -351,109 +405,118 @@ export function SignPdfPanel({
             )}
 
             {/* Selo Arrastável de Assinatura */}
-            <div
-              onPointerDown={handlePointerDownDrag}
-              onPointerMove={handlePointerMoveDrag}
-              onPointerUp={handlePointerUpDrag}
-              style={{
-                position: "absolute",
-                left: `${placement.xPercent}%`,
-                bottom: `${placement.yPercent}%`,
-                width: `${placement.widthPercent}%`,
-                minWidth: "120px",
-                padding: "6px",
-                borderRadius: "6px",
-                border: "2px dashed #059669",
-                backgroundColor: "rgba(255, 255, 255, 0.92)",
-                boxShadow: "0 4px 12px rgba(5, 150, 105, 0.25)",
-                cursor: "move",
-                touchAction: "none",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: isDraggingRef.current ? "none" : "box-shadow 0.15s ease",
-                zIndex: 10,
-              }}
-            >
+            {showStamp && (
               <div
+                onPointerDown={handlePointerDownDrag}
+                onPointerMove={handlePointerMoveDrag}
+                onPointerUp={handlePointerUpDrag}
+                onPointerCancel={handlePointerUpDrag}
                 style={{
-                  width: "100%",
+                  position: "absolute",
+                  left: `${placement.xPercent}%`,
+                  bottom: `${placement.yPercent}%`,
+                  width: `${placement.widthPercent}%`,
+                  height: `${placement.heightPercent}%`,
+                  boxSizing: "border-box",
+                  padding: "2px",
+                  borderRadius: "6px",
+                  border: "2px dashed #059669",
+                  backgroundColor: "rgba(255, 255, 255, 0.92)",
+                  boxShadow: "0 4px 12px rgba(5, 150, 105, 0.25)",
+                  cursor: "move",
+                  touchAction: "none",
                   display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
-                  justifyContent: "space-between",
-                  fontSize: "0.65rem",
-                  color: "#059669",
-                  fontWeight: 700,
-                  marginBottom: "2px",
+                  justifyContent: "center",
+                  transition: isDraggingRef.current ? "none" : "box-shadow 0.15s ease",
+                  zIndex: 10,
                 }}
               >
-                <span>{translate("sign.previewBadge")}</span>
-                <GripHorizontal size={12} />
-              </div>
-
-              {signaturePreviewUrl ? (
-                <img
-                  src={signaturePreviewUrl}
-                  alt="Assinatura"
-                  style={{
-                    maxHeight: "44px",
-                    maxWidth: "100%",
-                    objectFit: "contain",
-                    display: "block",
-                    pointerEvents: "none",
-                  }}
-                />
-              ) : (
                 <div
                   style={{
-                    height: "36px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#94a3b8",
-                    fontSize: "0.75rem",
-                    fontStyle: "italic",
-                  }}
-                >
-                  {translate("sign.tabDraw")}...
-                </div>
-              )}
-
-              {signerName.trim() && (
-                <div
-                  style={{
-                    fontSize: "0.68rem",
-                    fontWeight: 700,
-                    color: "#1e293b",
-                    marginTop: "2px",
-                    textAlign: "center",
+                    position: "absolute",
+                    bottom: "100%",
                     width: "100%",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {signerName}
-                </div>
-              )}
-
-              {includeDate && (
-                <div
-                  style={{
-                    fontSize: "0.62rem",
-                    color: "#64748b",
-                    textAlign: "center",
                     display: "flex",
                     alignItems: "center",
-                    gap: "2px",
+                    justifyContent: "space-between",
+                    fontSize: "0.65rem",
+                    color: "#059669",
+                    fontWeight: 700,
+                    marginBottom: "2px",
                   }}
                 >
-                  <Calendar size={10} />
-                  <span>{todayFormatted}</span>
+                  <span>{translate("sign.previewBadge")}</span>
+                  <GripHorizontal size={12} />
                 </div>
-              )}
-            </div>
+
+                {signaturePreviewUrl ? (
+                  <img
+                    src={signaturePreviewUrl}
+                    alt={translate("sign.signatureImageAlt")}
+                    style={{
+                      minHeight: 0,
+                      flex: 1,
+                      height: "100%",
+                      width: "100%",
+                      maxWidth: "100%",
+                      objectFit: "contain",
+                      display: "block",
+                      pointerEvents: "none",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      height: "36px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#94a3b8",
+                      fontSize: "0.75rem",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    {translate("sign.tabDraw")}...
+                  </div>
+                )}
+
+                {signerName.trim() && (
+                  <div
+                    style={{
+                      fontSize: "0.68rem",
+                      fontWeight: 700,
+                      color: "#1e293b",
+                      marginTop: "2px",
+                      textAlign: "center",
+                      width: "100%",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {signerName}
+                  </div>
+                )}
+
+                {includeDate && (
+                  <div
+                    style={{
+                      fontSize: "0.62rem",
+                      color: "#64748b",
+                      textAlign: "center",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "2px",
+                    }}
+                  >
+                    <Calendar size={10} />
+                    <span>{todayFormatted}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div style={{ marginTop: "0.6rem", textAlign: "center" }}>
@@ -552,7 +615,7 @@ export function SignPdfPanel({
             }}
           >
             <ImageIcon size={15} />
-            <span>Carimbo</span>
+            <span>{translate("sign.tabUpload")}</span>
           </button>
         </div>
 
@@ -575,6 +638,7 @@ export function SignPdfPanel({
                 onPointerDown={startDrawing}
                 onPointerMove={draw}
                 onPointerUp={stopDrawing}
+                onPointerCancel={stopDrawing}
                 style={{
                   width: "100%",
                   height: "120px",
@@ -597,7 +661,7 @@ export function SignPdfPanel({
                 <button
                   type="button"
                   onClick={() => setPenColor("#0f172a")}
-                  title="Tinta Preta"
+                  title={translate("sign.colorBlack")}
                   style={{
                     width: "20px",
                     height: "20px",
@@ -610,7 +674,7 @@ export function SignPdfPanel({
                 <button
                   type="button"
                   onClick={() => setPenColor("#1d4ed8")}
-                  title="Tinta Azul Caneta"
+                  title={translate("sign.colorBlue")}
                   style={{
                     width: "20px",
                     height: "20px",
@@ -686,7 +750,7 @@ export function SignPdfPanel({
               type="text"
               value={typedText}
               onChange={(e) => setTypedText(e.target.value)}
-              placeholder="Digite seu nome..."
+              placeholder={translate("sign.typePlaceholder")}
               style={{
                 width: "100%",
                 padding: "0.55rem 0.75rem",
@@ -715,7 +779,7 @@ export function SignPdfPanel({
                 justifyContent: "center",
               }}
             >
-              {typedText || "Prévia da rubrica"}
+              {typedText || translate("sign.previewPlaceholder")}
             </div>
           </div>
         )}

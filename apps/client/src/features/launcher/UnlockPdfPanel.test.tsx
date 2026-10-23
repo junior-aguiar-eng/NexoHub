@@ -76,4 +76,94 @@ describe("UnlockPdfPanel", () => {
     fireEvent.click(toggleBtn);
     expect(input.getAttribute("type")).toBe("text");
   });
+  it("reinicia página e oculta senha ao trocar de documento", () => {
+    const props = {
+      fileName: "primeiro.pdf",
+      fileSizeBytes: 2048,
+      totalPages: 3,
+      protectionStatus: { isProtected: true, needsPassword: true, hasPermissionsRestriction: true },
+      passwordValue: "senha",
+      onPasswordChange: vi.fn(),
+      pageThumbnails: ["pagina-1.png", "pagina-2.png", "pagina-3.png"],
+    };
+    const { rerender } = render(<UnlockPdfPanel {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "Próxima página" }));
+    expect(screen.getByRole("img").getAttribute("src")).toBe("pagina-2.png");
+    fireEvent.click(screen.getByLabelText("Ver senha"));
+    expect(screen.getByLabelText("Senha do Documento").getAttribute("type")).toBe("text");
+    rerender(
+      <UnlockPdfPanel
+        {...props}
+        fileName="segundo.pdf"
+        totalPages={1}
+        pageThumbnails={["nova-pagina.png"]}
+      />,
+    );
+    expect(screen.getByRole("img").getAttribute("alt")).toBe("Pré-visualização da página 1");
+    expect(screen.getByLabelText("Senha do Documento").getAttribute("type")).toBe("password");
+  });
+
+  it("não apresenta criptografia sem restrições como documento desbloqueado", () => {
+    render(
+      <UnlockPdfPanel
+        fileName="cifrado.pdf"
+        fileSizeBytes={2048}
+        totalPages={1}
+        protectionStatus={{
+          isProtected: true,
+          needsPassword: false,
+          hasPermissionsRestriction: false,
+        }}
+        passwordValue=""
+        onPasswordChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Criptografia ativa")).toBeDefined();
+    expect(screen.queryByText("Desbloqueado")).toBeNull();
+  });
+
+  it("desativa a entrada enquanto verifica proteções", () => {
+    render(
+      <UnlockPdfPanel
+        fileName="cifrado.pdf"
+        fileSizeBytes={2048}
+        totalPages={1}
+        protectionStatus={{
+          isProtected: true,
+          needsPassword: true,
+          hasPermissionsRestriction: true,
+        }}
+        isCheckingStatus
+        passwordValue=""
+        onPasswordChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText("Senha do Documento")).toBeDisabled();
+    expect(screen.getByText("Analisando proteções do documento...")).toBeDefined();
+  });
+  it("solicita a página atual e não reutiliza miniatura da primeira nas demais", () => {
+    const onPreviewPageChange = vi.fn();
+    render(
+      <UnlockPdfPanel
+        fileName="previews.pdf"
+        fileSizeBytes={2048}
+        totalPages={3}
+        protectionStatus={{
+          isProtected: true,
+          needsPassword: false,
+          hasPermissionsRestriction: true,
+        }}
+        thumbnailUrl="primeira.png"
+        pageThumbnails={["primeira.png"]}
+        onPreviewPageChange={onPreviewPageChange}
+        passwordValue=""
+        onPasswordChange={vi.fn()}
+      />,
+    );
+    expect(onPreviewPageChange).toHaveBeenLastCalledWith(1);
+    fireEvent.click(screen.getByRole("button", { name: "Próxima página" }));
+    expect(onPreviewPageChange).toHaveBeenLastCalledWith(2);
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.getByText("Página 2")).toBeDefined();
+  });
 });

@@ -382,12 +382,10 @@ describe("Tool Runner do Launcher", () => {
 
   it("executa desbloqueio de PDF removendo restrições criptográficas", async () => {
     const port = new BrowserDocumentCorePort();
-    const { PDFDocument } = await import("pdf-lib");
-    const doc = await PDFDocument.create();
-    doc.addPage([300, 300]);
-    const enc = doc.context.obj({ Filter: "Standard", V: 2, R: 3, P: -4 });
-    doc.context.trailerInfo.Encrypt = enc;
-    const bytes = await doc.save();
+    const { readFileSync } = await import("node:fs");
+    const bytes = new Uint8Array(
+      readFileSync("src/platform/__fixtures__/pdf-unlock/permissions-only.pdf"),
+    );
     const pdfFile = new File([bytes as unknown as BlobPart], "bloqueado.pdf", {
       type: "application/pdf",
     });

@@ -1,5 +1,5 @@
-import * as pdfjsLib from "pdfjs-dist";
-import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 
 const isTestEnv =
   typeof window === "undefined" ||
@@ -55,15 +55,6 @@ interface ExtractedLine {
   readonly columns: readonly string[];
 }
 
-function sanitizeText(raw: string): string {
-  return raw
-    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
-    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
-    .replace(/[\u2013\u2014\u2015]/g, "-")
-    .replace(/\u2026/g, "...")
-    .replace(/\u00A0/g, " ");
-}
-
 /**
  * Converte bytes de um documento PDF em Markdown formatado, com suporte a detecção
  * inteligente de títulos (#, ##, ###), tabelas (| col |) e quebras de página.
@@ -111,7 +102,7 @@ export async function convertPdfToMarkdown(
 
       for (const item of content.items) {
         if (!("str" in item) || typeof item.str !== "string") continue;
-        const text = sanitizeText(item.str);
+        const text = item.str;
         if (!text) continue;
 
         const transform = item.transform || [1, 0, 0, 1, 0, 0];
@@ -163,6 +154,8 @@ export async function convertPdfToMarkdown(
 
       parsedPages.push(lines);
     }
+
+    if (allFontSizes.length === 0) throw new Error("PDF_SEM_TEXTO_SELECIONAVEL");
 
     // Calcula tamanho mediano de fonte no documento
     allFontSizes.sort((a, b) => a - b);
@@ -289,21 +282,27 @@ function buildExtractedLine(items: RawTextItem[], y: number): ExtractedLine {
     // Se houver um espaçamento substancial (> 24px) entre palavras, consideramos coluna de tabela
     if (idx > 0 && gap > 24) {
       if (currentColumnParts.length > 0) {
-        columns.push(currentColumnParts.join(" ").trim());
+        columns.push(currentColumnParts.join("").trim());
         currentColumnParts = [];
       }
     }
 
-    currentColumnParts.push(item.str);
-    textParts.push(item.str);
+    // O PDF pode dividir uma palavra entre fontes/estilos. Só introduz espaço
+    // quando a distância visual corresponde a um intervalo entre palavras.
+    const separator = idx > 0 && gap > item.fontSize * 0.12 ? " " : "";
+    currentColumnParts.push(`${separator}${item.str}`);
+    textParts.push(`${separator}${item.str}`);
     prevRight = item.x + item.width;
   }
 
   if (currentColumnParts.length > 0) {
-    columns.push(currentColumnParts.join(" ").trim());
+    columns.push(currentColumnParts.join("").trim());
   }
 
-  const lineText = textParts.join(" ").replace(/\s+/g, " ").trim();
+  const lineText = textParts
+    .join("")
+    .replace(/[ \t]+/g, " ")
+    .trim();
 
   return {
     y,

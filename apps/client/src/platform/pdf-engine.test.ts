@@ -285,17 +285,24 @@ describe("operações PDF no navegador", () => {
 
   it("extrai imagens embutidas em documento PDF descartando miniaturas decorativas", async () => {
     const { extractImagesFromPdf } = await import("./pdf-engine");
-    const source = await makePdf(2);
+    const doc = await PDFDocument.create();
+    const page = doc.addPage([200, 200]);
+    const { readFileSync } = await import("node:fs");
+    const jpg = await doc.embedJpg(
+      new Uint8Array(readFileSync("src/platform/fixtures/extraction-red-2x1.jpg")),
+    );
+    page.drawImage(jpg, { x: 10, y: 10, width: 100, height: 50 });
+    const source = await doc.save();
     const images = await extractImagesFromPdf(source, {
-      minWidth: 16,
-      minHeight: 16,
+      minWidth: 1,
+      minHeight: 1,
     });
 
-    expect(images.length).toBeGreaterThan(0);
+    expect(images).toHaveLength(1);
     const firstImg = images[0];
     expect(firstImg).toBeDefined();
-    expect(firstImg?.width).toBeGreaterThanOrEqual(16);
-    expect(firstImg?.height).toBeGreaterThanOrEqual(16);
+    expect(firstImg?.width).toBe(2);
+    expect(firstImg?.height).toBe(1);
     expect(["jpeg", "png"]).toContain(firstImg?.format);
 
     await expect(extractImagesFromPdf(new Uint8Array(0))).rejects.toThrow("DOCUMENTO_VAZIO");
@@ -305,7 +312,7 @@ describe("operações PDF no navegador", () => {
     const { inspectPdfFormFields } = await import("./pdf-engine");
 
     // Teste com documento vazio ou sem campos
-    expect(await inspectPdfFormFields(new Uint8Array(0))).toEqual([]);
+    await expect(inspectPdfFormFields(new Uint8Array(0))).rejects.toThrow("EMPTY_DOCUMENT");
     const blankPdf = await makePdf(1);
     expect(await inspectPdfFormFields(blankPdf)).toEqual([]);
 
@@ -421,11 +428,7 @@ describe("operações PDF no navegador", () => {
     const { checkPdfProtection, unlockPdfDocument } = await import("./pdf-engine");
 
     // 1. Documento vazio ou sem proteções
-    expect(await checkPdfProtection(new Uint8Array(0))).toEqual({
-      isProtected: false,
-      needsPassword: false,
-      hasPermissionsRestriction: false,
-    });
+    await expect(checkPdfProtection(new Uint8Array(0))).rejects.toThrow("EMPTY_DOCUMENT");
     const blank = await makePdf(1);
     expect(await checkPdfProtection(blank)).toEqual({
       isProtected: false,
@@ -435,13 +438,11 @@ describe("operações PDF no navegador", () => {
     const identical = await unlockPdfDocument(blank);
     expect(identical).toEqual(blank);
 
-    // 2. Documento com restrições /Encrypt (permissões com senha de proprietário)
-    const pdf = await PDFDocument.create();
-    pdf.addPage([300, 300]);
-    const enc = pdf.context.obj({ Filter: "Standard", V: 2, R: 3, P: -4 });
-    pdf.context.trailerInfo.Encrypt = enc;
-    const protectedBytes = await pdf.save();
-
+    // Documento realmente criptografado, com conteúdo e permissões restritas.
+    const { readFileSync } = await import("node:fs");
+    const protectedBytes = new Uint8Array(
+      readFileSync("src/platform/__fixtures__/pdf-unlock/permissions-only.pdf"),
+    );
     const status = await checkPdfProtection(protectedBytes);
     expect(status.isProtected).toBe(true);
     expect(status.hasPermissionsRestriction).toBe(true);

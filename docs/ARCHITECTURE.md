@@ -63,12 +63,18 @@ O `@nexohub/tool-registry` é o catálogo canônico consumido pelas superfícies
 `@nexohub/tool-sdk` valida manifestos, antecipa indisponibilidade e encaminha execuções canceláveis
 ao adapter declarado.
 
-O ecossistema conta com 13 ferramentas plenamente integradas e executáveis na vitrine do Launcher:
+O ecossistema conta com 19 ferramentas executáveis no website na vitrine do Launcher:
 - **Manipulação documental de PDF:** `pdf-organize`, `pdf-merge`, `pdf-split`, `pdf-rotate`, `pdf-compress`,
   `images-to-pdf`, `pdf-to-jpg`, `pdf-watermark` e `pdf-page-numbers` (executores em `pdf-lib` no
   navegador e motor nativo Rust no desktop com persistência e controle de integridade).
-- **Análise e inteligência textual:** `text-compare` (diff semântico), `text-review` (revisão ortográfica e
+- **Análise e inteligência textual:** `text-compare` (diff textual), `text-review` (revisão ortográfica e
   morfológica contextual), `pdf-ocr` (extração óptica local de texto) e `text-translate` (tradução offline entre múltiplos idiomas).
+
+As seis adições web são `pdf-to-markdown`, `pdf-crop`, `pdf-sign`, `pdf-extract-images`,
+`pdf-form-fill` e `pdf-unlock`. Seus módulos locais se integram ao executor compartilhado;
+`pdf-engine` reexporta as operações para manter os consumidores existentes. O desbloqueio usa
+uma ponte interna versionada do PDF.js, descrita em [PDF-UNLOCK.md](PDF-UNLOCK.md).
+Esta entrega não homologa o desktop.
 
 O Studio inicia como uma superfície do mesmo client, composta por árvore documental, abas, canvas e
 Inspector. O client depende de `DocumentCorePort`, tipada pelos contratos compartilhados; adapters

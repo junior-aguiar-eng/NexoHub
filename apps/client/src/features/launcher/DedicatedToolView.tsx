@@ -11,7 +11,7 @@ import {
   RefreshCw,
   Upload,
 } from "lucide-react";
-import { type DragEvent, useEffect, useRef, useState } from "react";
+import { type DragEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import type { DocumentCorePort } from "@/platform/document-core";
@@ -22,6 +22,7 @@ import {
   checkPdfProtection,
   type ExtractedImage,
   type FormFieldDescriptor,
+  type FormFieldValue,
   getPdfPageCount,
   inspectPdfFormFields,
   type PdfProtectionStatus,
@@ -80,24 +81,14 @@ function formatFileSize(bytes: number): string {
 
 function parseSelectedPages(input: string, maxPages: number): number[] {
   const pages = new Set<number>();
-  const parts = input.split(",").map((p) => p.trim());
-  for (const part of parts) {
-    if (!part) continue;
-    if (part.includes("-")) {
-      const [startStr, endStr] = part.split("-");
-      const start = Number.parseInt(startStr || "", 10);
-      const end = Number.parseInt(endStr || "", 10);
-      if (!Number.isNaN(start) && !Number.isNaN(end)) {
-        for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
-          if (i >= 1 && i <= maxPages) pages.add(i);
-        }
-      }
-    } else {
-      const num = Number.parseInt(part, 10);
-      if (!Number.isNaN(num) && num >= 1 && num <= maxPages) {
-        pages.add(num);
-      }
-    }
+  if (!input.trim() || !Number.isSafeInteger(maxPages) || maxPages < 1) return [];
+  for (const part of input.split(",").map((value) => value.trim())) {
+    if (!/^\d+(?:\s*-\s*\d+)?$/.test(part)) return [];
+    const [first, last = first] = part.split("-").map(Number);
+    if (![first, last].every((page) => Number.isSafeInteger(page) && page >= 1 && page <= maxPages))
+      return [];
+    // A faixa é validada antes de expandir: nunca itera além das páginas existentes.
+    for (let page = Math.min(first, last); page <= Math.max(first, last); page++) pages.add(page);
   }
   return Array.from(pages).sort((a, b) => a - b);
 }
@@ -190,7 +181,7 @@ export function DedicatedToolView({
   // Estados de Preenchimento de Formulário (Form Fill)
   const [formFields, setFormFields] = useState<readonly FormFieldDescriptor[]>([]);
   const [isLoadingFormFields, setIsLoadingFormFields] = useState<boolean>(false);
-  const [formValues, setFormValues] = useState<Record<string, string | boolean>>({});
+  const [formValues, setFormValues] = useState<Record<string, FormFieldValue>>({});
   const [formFlatten, setFormFlatten] = useState<boolean>(false);
 
   // Estados de Desbloqueio de PDF (Unlock)
@@ -251,6 +242,43 @@ export function DedicatedToolView({
 
   const isImageTool = tool.id === "images-to-pdf";
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const previewFiles = useRef(new WeakMap<File, Map<number, Promise<string>>>());
+  const activePreviewFile = useRef(files[0]);
+  useEffect(() => {
+    activePreviewFile.current = files[0];
+  }, [files]);
+  const handlePreviewPageChange = useCallback(
+    (pageNumber: number) => {
+      const file = files[0];
+      if (!file || !Number.isInteger(pageNumber) || pageNumber < 1) return;
+      let cache = previewFiles.current.get(file);
+      if (!cache) {
+        cache = new Map();
+        previewFiles.current.set(file, cache);
+      }
+      let pending = cache.get(pageNumber);
+      if (!pending) {
+        pending = file
+          .arrayBuffer()
+          .then((bytes) => renderPdfPageToDataUrl(new Uint8Array(bytes), pageNumber, 0.6));
+        cache.set(pageNumber, pending);
+      }
+      void pending
+        .then((thumbnail) => {
+          if (activePreviewFile.current !== file) return;
+          setAllPageThumbnails((previous) => {
+            if (previous[pageNumber - 1] === thumbnail) return previous;
+            const next = [...previous];
+            next[pageNumber - 1] = thumbnail;
+            return next;
+          });
+        })
+        .catch(() => {
+          cache?.delete(pageNumber);
+        });
+    },
+    [files],
+  );
   const fileInput = (
     <input
       ref={fileInputRef}
@@ -287,6 +315,20 @@ export function DedicatedToolView({
       ) {
         try {
           const buffer = new Uint8Array(await files[0].arrayBuffer());
+          if (tool.id === "pdf-unlock") {
+            setIsCheckingProtection(true);
+            try {
+              const protection = await checkPdfProtection(buffer);
+              if (isCancelled) return;
+              setProtectionStatus(protection);
+              if (protection.needsPassword) {
+                setPdfPageCount(0);
+                return;
+              }
+            } finally {
+              if (!isCancelled) setIsCheckingProtection(false);
+            }
+          }
           const count = await getPdfPageCount(buffer);
           if (isCancelled) return;
 
@@ -320,6 +362,14 @@ export function DedicatedToolView({
 
           setFirstPageThumb(thumb1);
           setLastPageThumb(thumbLast);
+          if (!isGridTool) {
+            setAllPageThumbnails((previous) => {
+              const next = [...previous];
+              next[0] = thumb1;
+              next[count - 1] = thumbLast;
+              return next;
+            });
+          }
           setFileThumbnails((prev) => new Map(prev).set(files[0], thumb1));
 
           if (isGridTool) {
@@ -353,7 +403,7 @@ export function DedicatedToolView({
               const fields = await inspectPdfFormFields(buffer);
               if (!isCancelled) {
                 setFormFields(fields);
-                const initialVals: Record<string, string | boolean> = {};
+                const initialVals: Record<string, FormFieldValue> = {};
                 for (const f of fields) {
                   initialVals[f.name] = f.currentValue;
                 }
@@ -365,27 +415,8 @@ export function DedicatedToolView({
               if (!isCancelled) setIsLoadingFormFields(false);
             }
           }
-
-          if (tool.id === "pdf-unlock") {
-            setIsCheckingProtection(true);
-            try {
-              const status = await checkPdfProtection(buffer);
-              if (!isCancelled) {
-                setProtectionStatus(status);
-              }
-            } catch {
-              if (!isCancelled) {
-                setProtectionStatus({
-                  isProtected: false,
-                  needsPassword: false,
-                  hasPermissionsRestriction: false,
-                });
-              }
-            } finally {
-              if (!isCancelled) setIsCheckingProtection(false);
-            }
-          }
         } catch (err) {
+          if (!isCancelled) setErrorMessage(translate("toolQuality.invalidDocument"));
           console.error("Falha ao analisar PDF:", err);
         }
       }
@@ -396,6 +427,32 @@ export function DedicatedToolView({
       isCancelled = true;
     };
   }, [files, tool.id]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: troca de arquivo/ferramenta invalida os resultados associados.
+  useEffect(() => {
+    setMarkdownResult("");
+    setFormFields([]);
+    setFormValues({});
+    setUnlockPassword("");
+    setProtectionStatus({
+      isProtected: false,
+      needsPassword: false,
+      hasPermissionsRestriction: false,
+    });
+    setFirstPageThumb("");
+    setLastPageThumb("");
+    setAllPageThumbnails([]);
+  }, [files, tool.id]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: opções de extração invalidam a galeria e o download anterior.
+  useEffect(() => {
+    setExtractedImages([]);
+    setSelectedImageIds([]);
+    if (tool.id === "pdf-extract-images") {
+      setDownloadUrl(null);
+      setOutputBlob(null);
+    }
+  }, [files, tool.id, extractImageScope, extractImagePagesText, ignoreSmallImages]);
 
   // Se a ferramenta for Imagem para PDF, cria miniaturas a partir dos arquivos de imagem
   useEffect(() => {
@@ -671,7 +728,7 @@ export function DedicatedToolView({
         extractImageScope,
         extractImagePages: parseSelectedPages(extractImagePagesText, pdfPageCount),
         ignoreSmallImages,
-        selectedImageIds,
+        selectedImageIds: extractedImages.length > 0 ? selectedImageIds : undefined,
         formValues,
         formFlatten,
         unlockPassword,
@@ -957,6 +1014,8 @@ export function DedicatedToolView({
     if (tool.id === "pdf-crop") {
       return (
         <CropPdfPanel
+          key={`${files[0]?.name}-${files[0]?.size}-${files[0]?.lastModified}`}
+          onPreviewPageChange={handlePreviewPageChange}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
@@ -976,6 +1035,8 @@ export function DedicatedToolView({
     if (tool.id === "pdf-sign") {
       return (
         <SignPdfPanel
+          key={`${files[0]?.name}-${files[0]?.size}-${files[0]?.lastModified}`}
+          onPreviewPageChange={handlePreviewPageChange}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
@@ -996,22 +1057,34 @@ export function DedicatedToolView({
     // EXTRAIR IMAGENS
     if (tool.id === "pdf-extract-images") {
       return (
-        <ExtractImagesPanel
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          totalPages={pdfPageCount}
-          thumbnailUrl={firstPageThumb}
-          scope={extractImageScope}
-          onScopeChange={setExtractImageScope}
-          selectedPagesText={extractImagePagesText}
-          onSelectedPagesTextChange={setExtractImagePagesText}
-          ignoreSmall={ignoreSmallImages}
-          onIgnoreSmallChange={setIgnoreSmallImages}
-          extractedImages={extractedImages}
-          selectedImageIds={selectedImageIds}
-          onSelectedImageIdsChange={setSelectedImageIds}
-          isExtracting={status === "running"}
-        />
+        <div>
+          <ExtractImagesPanel
+            fileName={files[0]?.name || "documento.pdf"}
+            fileSizeBytes={files[0]?.size || 0}
+            totalPages={pdfPageCount}
+            thumbnailUrl={firstPageThumb}
+            scope={extractImageScope}
+            onScopeChange={setExtractImageScope}
+            selectedPagesText={extractImagePagesText}
+            onSelectedPagesTextChange={setExtractImagePagesText}
+            ignoreSmall={ignoreSmallImages}
+            onIgnoreSmallChange={setIgnoreSmallImages}
+            extractedImages={extractedImages}
+            selectedImageIds={selectedImageIds}
+            onSelectedImageIdsChange={(ids) => {
+              setSelectedImageIds(ids);
+              setDownloadUrl(null);
+              setOutputBlob(null);
+            }}
+            isExtracting={status === "running"}
+          />
+          {downloadUrl && (
+            <a className="ilovepdf-big-download-btn" href={downloadUrl} download={outputFileName}>
+              <Download size={20} />
+              {translate("extractImages.downloadSelection")}
+            </a>
+          )}
+        </div>
       );
     }
 
@@ -1019,6 +1092,8 @@ export function DedicatedToolView({
     if (tool.id === "pdf-form-fill") {
       return (
         <FormFillPdfPanel
+          key={`${files[0]?.name}-${files[0]?.size}-${files[0]?.lastModified}`}
+          onPreviewPageChange={handlePreviewPageChange}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
@@ -1041,6 +1116,8 @@ export function DedicatedToolView({
     if (tool.id === "pdf-unlock") {
       return (
         <UnlockPdfPanel
+          key={`${files[0]?.name}-${files[0]?.size}-${files[0]?.lastModified}`}
+          onPreviewPageChange={handlePreviewPageChange}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
@@ -1050,7 +1127,6 @@ export function DedicatedToolView({
           isCheckingStatus={isCheckingProtection}
           passwordValue={unlockPassword}
           onPasswordChange={setUnlockPassword}
-          errorMessage={errorMessage}
           onGoToCompress={() => {
             window.location.hash = "#/comprimir-pdf";
           }}

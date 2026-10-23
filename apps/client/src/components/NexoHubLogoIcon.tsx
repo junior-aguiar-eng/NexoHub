@@ -3,43 +3,40 @@ export interface NexoHubLogoIconProps {
   readonly className?: string;
   readonly zone?: "pdf" | "img";
 }
-
-export function NexoHubLogoIcon({ size = 34, className = "", zone = "pdf" }: NexoHubLogoIconProps) {
-  const accentColor = zone === "img" ? "#2563eb" : "#e11d48";
-
+export function NexoHubLogoIcon({ size = 44, className = "", zone = "pdf" }: NexoHubLogoIconProps) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 34 34"
+      viewBox="12 32 232 208"
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 rounded-[8px] overflow-hidden ${className}`}
+      className={`brand-mark ${className}`}
+      data-mode={zone}
       aria-hidden="true"
+      focusable="false"
     >
-      {/* Background container */}
-      <rect width="34" height="34" rx="8" fill="#0f172a" />
-
-      {/* Left vertical stem (White) */}
-      <rect x="7" y="7" width="5.5" height="20" rx="1.5" fill="#ffffff" />
-
-      {/* Diagonal stem (White) */}
       <path
-        d="M8 8L24.5 25.5C25.5 26.5 27 25.8 27 24.5V23L10.5 7H8V8Z"
-        fill="#ffffff"
-        opacity="0.95"
+        d="M68.00,140.00 60.29,141.29 52.97,143.75 46.24,147.29 40.23,151.77 35.08,157.08 30.89,163.04 27.74,169.49 25.68,176.25 24.73,183.15 24.88,190.00 26.08,196.64 28.29,202.90 31.41,208.64 35.34,213.73 39.94,218.06 45.08,221.55 50.61,224.14 56.37,225.78 62.22,226.48 68.00,226.25 73.56,225.12 78.78,223.17 83.52,220.46 87.69,217.10 91.20,213.20 93.99,208.88 96.01,204.27 97.24,199.50 97.69,194.70 97.38,190.00 96.33,185.51 94.63,181.35 92.34,177.60 89.54,174.35 86.34,171.66 82.84,169.57 79.15,168.11 75.38,167.29 71.63,167.10 68.00,167.50 64.59,168.46 61.47,169.91 58.72,171.79 56.39,174.02 54.52,176.52 53.13,179.20 52.24,181.97 51.83,184.75 51.89,187.45 52.38,190.00 53.25,192.34 54.45,194.40 55.92,196.16 57.58,197.57 59.38,198.62 61.24,199.30 63.09,199.63 64.87,199.63 66.52,199.32 68.00,198.75 69.26,197.96 70.28,197.01 71.04,195.96 71.53,194.85"
+        fill="none"
+        stroke="var(--brand-body, #202936)"
+        strokeWidth="16"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
-
-      {/* Right vertical stem (Dynamic: Red in PDF, Blue in Imagem) */}
-      <rect
-        x="21.5"
-        y="7"
-        width="5.5"
-        height="20"
-        rx="1.5"
-        fill={accentColor}
-        className="transition-colors duration-300"
+      <path
+        d="M41 141C48 109 82 84 116 75C138 68 157 68 178 76L174 47Q172 34 183 42C206 60 226 82 234 103Q241 118 223 126C207 134 187 134 170 129C163 130 160 136 164 143L177 154Q183 164 174 169H162Q157 169 153 163L139 145Q130 135 137 123C114 125 96 135 84 150L94 155H113Q121 155 121 163Q121 170 113 170H85Q78 170 77 163L70 148L51 157Z"
+        fill="var(--brand-body, #202936)"
       />
+      <path
+        d="M39 115C60 70 105 43 150 54C108 55 72 81 39 115Z"
+        fill={zone === "img" ? "#2563eb" : "#e11d48"}
+        className="brand-mark__accent"
+      />
+      <circle cx="209" cy="105" r="11" fill="#ffffff" />
+      <circle cx="213" cy="104" r="4" fill="var(--brand-body, #202936)" />
+      {zone === "img" && (
+        <path d="M88 74Q116 54 146 56" stroke="#22d3ee" strokeWidth="4" strokeLinecap="round" />
+      )}
     </svg>
   );
 }

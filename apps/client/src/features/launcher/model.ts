@@ -39,4 +39,5 @@ export type LauncherTool = {
   icon: LucideIcon;
   accentColor?: string;
   badge?: string;
+  searchAliases?: readonly string[];
 };

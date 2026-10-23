@@ -3,10 +3,12 @@ import { ArrowRight, Search, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
-import { launcherTools, suites } from "./data";
+import { imageSuites, launcherTools, pdfSuites } from "./data";
 import type { LauncherTool, SuiteId } from "./model";
+import type { WorkZone } from "./SegmentedZoneToggle";
 
 type CommandPaletteProps = {
+  currentZone?: WorkZone;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectSuite: (suite: SuiteId) => void;
@@ -22,24 +24,28 @@ function normalize(value: string) {
 }
 
 export function CommandPalette({
+  currentZone = "pdf",
   open,
   onOpenChange,
   onSelectSuite,
   onSelectTool,
   tools,
 }: CommandPaletteProps) {
+  const suites = currentZone === "img" ? imageSuites : pdfSuites;
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const normalizedQuery = normalize(query.trim());
   const visibleSuites = useMemo(
     () => suites.filter((suite) => normalize(translate(suite.labelKey)).includes(normalizedQuery)),
-    [normalizedQuery],
+    [normalizedQuery, suites],
   );
   const availableTools = tools ?? launcherTools;
   const visibleTools = useMemo(
     () =>
       availableTools.filter((tool) =>
-        normalize(translate(tool.titleKey)).includes(normalizedQuery),
+        normalize(
+          `${translate(tool.titleKey)} ${translate(tool.descriptionKey)} ${tool.searchAliases?.join(" ") ?? ""}`,
+        ).includes(normalizedQuery),
       ),
     [availableTools, normalizedQuery],
   );
@@ -76,6 +82,8 @@ export function CommandPalette({
             <label className="command-search">
               <Search size={19} aria-hidden="true" />
               <input
+                type="search"
+                aria-label={translate("hero.searchLabel")}
                 ref={inputRef}
                 value={query}
                 onChange={(event) => setQuery(event.currentTarget.value)}

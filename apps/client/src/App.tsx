@@ -1,6 +1,6 @@
 import { Database, FileCheck, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import nexohubIcon from "@/assets/nexohub-icon.png";
+import { NexoHubLogoIcon } from "@/components/NexoHubLogoIcon";
 import { CommandPalette } from "@/features/launcher/CommandPalette";
 import { DedicatedToolView } from "@/features/launcher/DedicatedToolView";
 import { imageSuites, pdfSuites, resolveLauncherTools } from "@/features/launcher/data";
@@ -14,13 +14,6 @@ import { useRecentOperations } from "@/features/launcher/useRecentOperations";
 import { translate } from "@/i18n";
 import { createDocumentCorePort } from "@/platform/document-core";
 import { allowToolNavigation } from "@/platform/tool-navigation-guard";
-
-function normalize(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLocaleLowerCase("pt-BR");
-}
 
 const ROUTE_TOOL_MAP: Record<string, string> = {
   "/remover-paginas": "pdf-remove-pages",
@@ -193,7 +186,6 @@ export function App() {
 
   const [initialFilesForTool, setInitialFilesForTool] = useState<File[]>([]);
   const [activeSuite, setActiveSuite] = useState<SuiteId>("overview");
-  const [searchQuery, setSearchQuery] = useState("");
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const activePath = useRef(window.location.pathname);
 
@@ -311,7 +303,6 @@ export function App() {
   }, [dynamicTools, workZone]);
 
   const filteredTools = useMemo(() => {
-    const normalizedQuery = normalize(searchQuery.trim());
     return zoneTools.filter((tool) => {
       const matchesSuite =
         activeSuite === "overview" ||
@@ -327,10 +318,9 @@ export function App() {
         (activeSuite === "img-edit" && tool.suite === "img-edit") ||
         (activeSuite === "img-convert" && tool.suite === "img-convert") ||
         (activeSuite === "img-security" && tool.suite === "img-security");
-      const searchableText = `${translate(tool.titleKey)} ${translate(tool.descriptionKey)}`;
-      return matchesSuite && normalize(searchableText).includes(normalizedQuery);
+      return matchesSuite;
     });
-  }, [zoneTools, activeSuite, searchQuery]);
+  }, [zoneTools, activeSuite]);
 
   return (
     <div
@@ -341,7 +331,7 @@ export function App() {
         {translate("app.skip")}
       </a>
       <Header
-        tools={dynamicTools}
+        tools={zoneTools}
         activeSuite={activeSuite}
         onSelectSuite={(suite) => {
           setActiveSuite(suite);
@@ -357,7 +347,6 @@ export function App() {
           setActiveSuite("overview");
         }}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-        searchQuery={searchQuery}
         currentZone={workZone}
         onZoneChange={handleZoneChange}
       />
@@ -383,17 +372,10 @@ export function App() {
           <div
             id={workZone === "img" ? "panel-zone-img" : "panel-zone-pdf"}
             data-testid={workZone === "img" ? "panel-zone-img" : "panel-zone-pdf"}
-            role="tabpanel"
-            aria-labelledby={workZone === "img" ? "tab-zone-img" : "tab-zone-pdf"}
             className="launcher-zone-container"
           >
             <div className="launcher-welcome-container">
-              <Hero
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-                currentZone={workZone}
-              />
+              <Hero currentZone={workZone} />
               <div className="launcher-suites-center">
                 <SuiteNavigation
                   activeSuite={activeSuite}
@@ -418,15 +400,11 @@ export function App() {
 
       <footer className="app-footer">
         <div className="app-footer__brand">
-          <img className="app-footer__logo-img" src={nexohubIcon} alt="" aria-hidden="true" />
+          <NexoHubLogoIcon zone={workZone} size={44} />
           <div className="app-footer__brand-text">
             <span className="app-footer__brand-title">
               <strong>NEXO</strong>
-              <span
-                className={`brand-logo-accent ${workZone === "img" ? "text-blue-600 dark:text-blue-400" : ""}`}
-              >
-                HUB
-              </span>
+              <span className="brand-logo-accent">HUB</span>
             </span>
             <small>{translate("brand.footerTagline")}</small>
           </div>
@@ -451,19 +429,22 @@ export function App() {
           </div>
         </div>
 
+        <p className="catalog-privacy">{translate("hero.securityBadge")}</p>
         <div className="app-footer__signature">
           <span>— {translate("footer.tagline")}</span>
         </div>
       </footer>
 
       <CommandPalette
+        key={workZone}
+        currentZone={workZone}
         open={commandPaletteOpen}
         onOpenChange={setCommandPaletteOpen}
         onSelectSuite={(suite) => {
           setActiveSuite(suite);
           selectToolWithUrl(null);
         }}
-        tools={dynamicTools}
+        tools={zoneTools}
         onSelectTool={(tool) => selectToolWithUrl(tool)}
       />
     </div>

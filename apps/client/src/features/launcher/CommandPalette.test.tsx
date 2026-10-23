@@ -30,4 +30,11 @@ describe("CommandPalette", () => {
     expect(onSelectTool).toHaveBeenCalledWith(expect.objectContaining({ id: "pdf-merge" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
+  it("encontra termos da descrição e ações alternativas sem acentos", () => {
+    render(
+      <CommandPalette open onOpenChange={vi.fn()} onSelectSuite={vi.fn()} tools={launcherTools} />,
+    );
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "reduzir" } });
+    expect(screen.getByRole("button", { name: /Comprimir PDF/ })).toBeInTheDocument();
+  });
 });

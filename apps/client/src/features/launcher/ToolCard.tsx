@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { type DragEvent, useState } from "react";
 import { translate } from "@/i18n";
 import type { LauncherTool } from "./model";
+import { ToolArtwork } from "./ToolArtwork";
 
 type ToolCardProps = {
   tool: LauncherTool;
@@ -13,17 +14,23 @@ type ToolCardProps = {
 export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
   const reduceMotion = useReducedMotion();
   const [isDragOver, setIsDragOver] = useState(false);
-  const Icon = tool.icon;
+  const zone = tool.manifest.category === "image" ? "img" : "pdf";
   const tone =
-    tool.id === "pdf-unlock" || tool.id === "pdf-protect"
-      ? "rose"
-      : tool.id === "pdf-form-fill" || tool.suite === "security" || tool.suite === "optimize"
-        ? "emerald"
-        : tool.suite === "convert" || tool.suite === "extraction"
-          ? "amber"
-          : tool.suite === "text" || tool.suite === "review"
-            ? "indigo"
-            : "coral";
+    zone === "img"
+      ? tool.suite === "img-edit"
+        ? "violet"
+        : tool.suite === "img-security"
+          ? "teal"
+          : "blue"
+      : tool.id === "pdf-unlock" || tool.id === "pdf-protect"
+        ? "rose"
+        : tool.id === "pdf-form-fill" || tool.suite === "security" || tool.suite === "optimize"
+          ? "emerald"
+          : tool.suite === "convert" || tool.suite === "extraction"
+            ? "amber"
+            : tool.suite === "text" || tool.suite === "review"
+              ? "indigo"
+              : "coral";
   const accent = `var(--catalog-${tone}-ink)`;
   const isAvailable = tool.availability.available;
 
@@ -95,7 +102,7 @@ export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
     >
       <div className="tool-card__topline">
         <span className="tool-card__icon" aria-hidden="true">
-          <Icon size={24} />
+          <ToolArtwork toolId={tool.id} zone={zone} />
         </span>
       </div>
 

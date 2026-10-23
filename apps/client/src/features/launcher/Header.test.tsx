@@ -62,7 +62,7 @@ describe("Header", () => {
     const onZoneChange = vi.fn();
     renderHeader({ currentZone: "pdf", onZoneChange });
 
-    const imgTab = screen.getAllByRole("tab", { name: /alternar para modo imagem/i })[0];
+    const imgTab = screen.getAllByRole("button", { name: /alternar para modo imagem/i })[0];
     fireEvent.click(imgTab);
 
     expect(onZoneChange).toHaveBeenCalledWith("img");
@@ -70,8 +70,12 @@ describe("Header", () => {
 
   it("adapta a barra de navegação no Modo Imagem", () => {
     renderHeader({ currentZone: "img" });
-    expect(screen.getAllByText("IMAGEM")[0]).toBeInTheDocument();
-    // No modo imagem puro, links de ferramentas PDF de topo não são exibidos
+    expect(screen.getAllByText("Imagem")[0]).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Todas as ferramentas de imagem" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Comprimir imagem" })).toBeInTheDocument();
+    // Ferramentas PDF não aparecem no catálogo Imagem
     expect(
       screen.queryByRole("button", { name: "Todas as ferramentas PDF" }),
     ).not.toBeInTheDocument();

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { registerToolNavigationGuard } from "./platform/tool-navigation-guard";
 import { App } from "./App";
+import { registerToolNavigationGuard } from "./platform/tool-navigation-guard";
 
 describe("App", () => {
   beforeEach(() => {
@@ -12,7 +12,7 @@ describe("App", () => {
   it("renderiza o Hub de ferramentas práticas estilo iLovePDF", () => {
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: /Olá, o que faremos hoje/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Seus PDFs, prontos/ })).toBeInTheDocument();
     expect(screen.getByText(/Seus arquivos nunca saem deste dispositivo/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Organizar PDF" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Comprimir PDF" })).toBeInTheDocument();
@@ -22,17 +22,26 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Comparar textos" })).toBeInTheDocument();
   });
 
-  it("busca ferramentas por ação, sem acentos, e permite limpar com Escape", () => {
+  it("busca apenas pelo cabeçalho, encontra ações e respeita o modo ativo", () => {
     render(<App />);
-    const search = screen.getByRole("searchbox", { name: "Buscar ferramentas" });
-    fireEvent.change(search, { target: { value: " rotacionar " } });
-    expect(screen.getByRole("heading", { name: "Rotacionar PDF" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Juntar PDF" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Buscar no NexoHub" }));
+    const dialog = screen.getByRole("dialog");
+    const search = within(dialog).getByRole("searchbox");
+    fireEvent.change(search, { target: { value: "rotacionar" } });
+    expect(within(dialog).getByRole("button", { name: /Rotacionar PDF/ })).toBeInTheDocument();
+    expect(within(dialog).queryByRole("button", { name: /Juntar PDF/ })).not.toBeInTheDocument();
     fireEvent.change(search, { target: { value: "inexistente123" } });
-    expect(screen.getByText(/Nenhuma ferramenta/i)).toBeInTheDocument();
-    fireEvent.keyDown(search, { key: "Escape" });
-    expect(search).toHaveValue("");
-    expect(screen.getByRole("heading", { name: "Juntar PDF" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("status")).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: /Fechar/ }));
+    fireEvent.click(screen.getByRole("button", { name: /alternar para modo imagem/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Buscar no NexoHub" }));
+    expect(
+      within(screen.getByRole("dialog")).queryByRole("button", { name: /Juntar PDF/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole("dialog")).getByRole("button", { name: /Redimensionar imagem/ }),
+    ).toBeInTheDocument();
   });
 
   it("abre a tela dedicada ao clicar em uma ferramenta e retorna ao hub", () => {
@@ -50,7 +59,7 @@ describe("App", () => {
 
     // Retorna ao Hub
     fireEvent.click(within(main).getByRole("button", { name: /Todas as ferramentas/i }));
-    expect(screen.getByRole("heading", { name: /Olá, o que faremos hoje/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Seus PDFs, prontos/ })).toBeInTheDocument();
   });
 
   it("filtra as ferramentas pelas categorias do topo", () => {
@@ -134,12 +143,12 @@ describe("App", () => {
     expect(appShell).toHaveAttribute("data-zone", "pdf");
 
     // Alterna para o Modo Imagem
-    const imgTabs = screen.getAllByRole("tab", { name: /alternar para modo imagem/i });
+    const imgTabs = screen.getAllByRole("button", { name: /alternar para modo imagem/i });
     fireEvent.click(imgTabs[0]);
 
     expect(appShell).toHaveAttribute("data-zone", "img");
     expect(
-      screen.getByRole("heading", { name: "Todas as ferramentas necessárias para editar imagens" }),
+      screen.getByRole("heading", { name: "Suas imagens, do jeito que você precisa." }),
     ).toBeInTheDocument();
     expect(
       screen.getByTestId("panel-zone-img") || screen.getByRole("tabpanel"),
@@ -147,13 +156,11 @@ describe("App", () => {
     expect(window.location.pathname).toBe("/img");
 
     // Retorna para o Modo PDF
-    const pdfTabs = screen.getAllByRole("tab", { name: /alternar para modo pdf/i });
+    const pdfTabs = screen.getAllByRole("button", { name: /alternar para modo pdf/i });
     fireEvent.click(pdfTabs[0]);
 
     expect(appShell).toHaveAttribute("data-zone", "pdf");
-    expect(
-      screen.getByRole("heading", { name: /Olá, o que faremos hoje no seu PDF\?/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Seus PDFs, prontos/ })).toBeInTheDocument();
     expect(window.location.pathname).toBe("/pdf");
   });
 
@@ -161,10 +168,12 @@ describe("App", () => {
     render(<App />);
     const release = registerToolNavigationGuard(() => false);
     try {
-      fireEvent.click(screen.getAllByRole("tab", { name: /alternar para modo imagem/i })[0]);
+      fireEvent.click(screen.getAllByRole("button", { name: /alternar para modo imagem/i })[0]);
       expect(window.location.pathname).toBe("/");
       expect(screen.getByTestId("panel-zone-pdf")).toBeInTheDocument();
-    } finally { release(); }
+    } finally {
+      release();
+    }
   });
 
   it("inicializa no Modo Imagem diretamente quando a rota inicial é /img", () => {
@@ -174,7 +183,7 @@ describe("App", () => {
     const appShell = container.querySelector(".app-shell");
     expect(appShell).toHaveAttribute("data-zone", "img");
     expect(
-      screen.getByRole("heading", { name: "Todas as ferramentas necessárias para editar imagens" }),
+      screen.getByRole("heading", { name: "Suas imagens, do jeito que você precisa." }),
     ).toBeInTheDocument();
   });
 });

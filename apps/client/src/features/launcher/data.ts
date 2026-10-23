@@ -112,6 +112,7 @@ const presentation = {
     accentColor: "#EA580C", // Laranja Abrasivo
   },
   "pdf-compress": {
+    searchAliases: ["reduzir", "diminuir", "compactar"],
     suite: "optimize" as const,
     titleKey: "tool.pdfCompress.title" as const,
     descriptionKey: "tool.pdfCompress.description" as const,
@@ -292,6 +293,7 @@ const presentation = {
     accentColor: "#0284C7", // Azul Céu / Scanner
   },
   "image-compress": {
+    searchAliases: ["reduzir", "diminuir", "compactar"],
     suite: "img-optimize" as const,
     titleKey: "tool.imageCompress.title" as const,
     descriptionKey: "tool.imageCompress.description" as const,

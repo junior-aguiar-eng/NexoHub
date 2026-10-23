@@ -227,6 +227,7 @@ export const ptBR = {
   "header.primaryNavigation": "Navegação Principal",
   "header.searchLabel": "Buscar no NexoHub",
   "header.searchTitle": "Buscar no NexoHub (Ctrl+K)",
+  "header.allImageTools": "Todas as ferramentas de imagem",
   "header.allTools": "Todas as ferramentas PDF",
   "header.toolsCompact": "Ferramentas",
   "header.searchShortcut": "Ctrl K",
@@ -251,15 +252,14 @@ export const ptBR = {
   "suite.flow": "NexoFlow",
   "hero.welcome": "Olá, vamos começar",
   "hero.welcomeQuestion": "Olá, o que faremos hoje?",
-  "hero.welcomeQuestionPdf": "Olá, o que faremos hoje no seu PDF?",
-  "hero.welcomeQuestionImage": "Todas as ferramentas necessárias para editar imagens",
+  "hero.welcomeQuestionPdf": "Seus PDFs, prontos para o próximo passo.",
+  "hero.welcomeQuestionImage": "Suas imagens, do jeito que você precisa.",
   "hero.eyebrow": "Ferramentas de PDF práticas e 100% gratuitas",
   "hero.titlePrefix": "Todas as ferramentas de PDF",
   "hero.titleAccent": "em um só lugar.",
   "hero.description": "Todas as ferramentas para simplificar seus documentos, em um só lugar.",
-  "hero.descriptionPdf":
-    "Todas as ferramentas para simplificar seus documentos PDF, em um só lugar.",
-  "hero.descriptionImage": "Manipulação e edição visual de imagens sem enviar dados para a nuvem.",
+  "hero.descriptionPdf": "Organize, transforme e cuide dos seus documentos em um só lugar.",
+  "hero.descriptionImage": "Ajuste tamanho, formato e composição com ferramentas simples e locais.",
   "hero.securityBadge": "Processado localmente • Seus arquivos nunca saem deste dispositivo",
   "hero.searchLabel": "Buscar ferramentas",
   "hero.searchPlaceholder": "Buscar ferramenta por nome ou ação (ex: juntar, assinar, ocr)...",
@@ -663,11 +663,11 @@ export const ptBR = {
   "dedicated.actionPdfToMarkdown": "Converter para Markdown",
   "dedicated.actionFormFill": "Preencher PDF",
   "dedicated.actionUnlock": "Desbloquear PDF",
-  "dedicated.actionImageCompress": "Comprimir IMAGEM",
-  "dedicated.actionImageResize": "Redimensionar IMAGEM",
-  "dedicated.actionImageCrop": "Recortar IMAGEM",
-  "dedicated.actionImageConvert": "Converter IMAGEM",
-  "dedicated.actionImageRotate": "Girar IMAGEM",
+  "dedicated.actionImageCompress": "Comprimir imagem",
+  "dedicated.actionImageResize": "Redimensionar imagem",
+  "dedicated.actionImageCrop": "Recortar imagem",
+  "dedicated.actionImageConvert": "Converter imagem",
+  "dedicated.actionImageRotate": "Girar imagem",
   "dedicated.actionImageWatermark": "Inserir Marca d'água",
   "dedicated.genericVisualTitle": "Espaço de Visualização Documental",
   "dedicated.genericVisualDesc": "Arquivo selecionado e pronto para processamento imediato.",
@@ -1275,8 +1275,16 @@ export const ptBR = {
   "scanToPdf.noPages": "Capture ou carregue ao menos uma página para gerar o PDF.",
 
   // ZONAS DE TRABALHO (MODO PDF E MODO IMAGEM)
+  "imageProcessing.leaveConfirm": "Sair desta ferramenta? Os arquivos e ajustes desta sessão serão descartados.",
+  "imageProcessing.running": "Processando no seu dispositivo…",
+  "imageProcessing.cancel": "Cancelar processamento",
+  "imageProcessing.limit": "Use imagens JPG, PNG ou WebP estáticas, de até 24 megapixels e 64 MiB por arquivo.",
+  "imageProcessing.errorLarge": "A imagem excede 24 megapixels, 16.384 pixels por lado ou 64 MiB. Reduza as dimensões antes de continuar.",
+  "imageProcessing.errorFormat": "Este formato ou animação não é compatível. Use JPG, PNG ou WebP estático.",
+  "imageProcessing.errorExport": "Não foi possível exportar a imagem. Tente outro formato ou um arquivo menor.",
+  "imageProcessing.errorOptions": "Confira as dimensões, coordenadas e qualidade informadas.",
   "zone.pdf": "PDF",
-  "zone.image": "IMAGEM",
+  "zone.image": "Imagem",
   "zone.pdfFull": "NEXOHUB PDF",
   "zone.imageFull": "NEXOHUB IMAGEM",
   "zone.toggleAria": "Alternar zona de trabalho",
@@ -1309,35 +1317,35 @@ export const ptBR = {
   "suite.imgSecurity": "Marca d'água",
 
   // FERRAMENTAS DE IMAGEM
-  "tool.imageCompress.title": "Comprimir IMAGEM",
+  "tool.imageCompress.title": "Comprimir imagem",
   "tool.imageCompress.description":
-    "Comprima imagens JPG, PNG ou WebP com a melhor qualidade e menor tamanho de arquivo.",
-  "tool.imageCompress.tagline": "Menos espaço, mesma nitidez visual.",
+    "Reduza o peso de fotos JPG, PNG e WebP para compartilhar com mais facilidade.",
+  "tool.imageCompress.tagline": "Menos peso para compartilhar suas imagens.",
 
-  "tool.imageResize.title": "Redimensionar IMAGEM",
+  "tool.imageResize.title": "Redimensionar imagem",
   "tool.imageResize.description":
     "Redimensione imagens por porcentagem ou definindo dimensões exatas em pixels.",
   "tool.imageResize.tagline": "Ajuste dimensões e proporção com precisão.",
 
-  "tool.imageCrop.title": "Recortar IMAGEM",
+  "tool.imageCrop.title": "Recortar imagem",
   "tool.imageCrop.description":
     "Recorte fotos e gráficos definindo um retângulo em pixels ou proporções como 1:1, 4:3 e 16:9.",
   "tool.imageCrop.tagline": "Foque no que realmente importa.",
 
-  "tool.imageConvert.title": "Converter IMAGEM",
+  "tool.imageConvert.title": "Converter imagem",
   "tool.imageConvert.description":
-    "Converta imagens entre JPG, PNG e WebP mantendo fidelidade visual e transparências.",
-  "tool.imageConvert.tagline": "Transforme formatos com total compatibilidade.",
+    "Troque entre JPG, PNG e WebP. Para JPG, áreas transparentes recebem fundo branco.",
+  "tool.imageConvert.tagline": "O formato certo para o seu próximo uso.",
 
-  "tool.imageRotate.title": "Girar IMAGEM",
+  "tool.imageRotate.title": "Girar imagem",
   "tool.imageRotate.description":
     "Gire imagens em 90°, 180° ou 270° e aplique espelhamento horizontal ou vertical.",
   "tool.imageRotate.tagline": "Orientação perfeita em um clique.",
 
-  "tool.imageWatermark.title": "Marca d'água em IMAGEM",
+  "tool.imageWatermark.title": "Marca d’água em imagem",
   "tool.imageWatermark.description":
     "Estampe texto ou logotipo sobre suas imagens com controle de opacidade, rotação e posição.",
-  "tool.imageWatermark.tagline": "Proteja seus direitos autorais e identidade.",
+  "tool.imageWatermark.tagline": "Sua assinatura visual, na posição certa.",
 
   // OPÇÕES - COMPRIMIR IMAGEM
   "imageCompress.levelRecommended": "Recomendada",
@@ -1346,7 +1354,7 @@ export const ptBR = {
   "imageCompress.levelExtremeDesc": "Menor qualidade visual, máxima redução de tamanho.",
   "imageCompress.levelLess": "Baixa",
   "imageCompress.levelLessDesc": "Alta qualidade visual, compressão leve.",
-  "imageCompress.action": "Comprimir IMAGEM",
+  "imageCompress.action": "Comprimir imagem",
   "imageCompress.actionRunning": "Comprimindo...",
 
   // OPÇÕES - REDIMENSIONAR IMAGEM
@@ -1359,7 +1367,7 @@ export const ptBR = {
   "imageResize.pct25": "25% menor",
   "imageResize.pct50": "50% menor",
   "imageResize.pct75": "75% menor",
-  "imageResize.action": "Redimensionar IMAGEM",
+  "imageResize.action": "Redimensionar imagem",
   "imageResize.actionRunning": "Redimensionando...",
 
   // OPÇÕES - RECORTAR IMAGEM
@@ -1368,13 +1376,13 @@ export const ptBR = {
   "imageCrop.ratio4_3": "4:3 (Padrão)",
   "imageCrop.ratio16_9": "16:9 (Widescreen)",
   "imageCrop.ratio3_2": "3:2 (Fotografia)",
-  "imageCrop.action": "Recortar IMAGEM",
+  "imageCrop.action": "Recortar imagem",
   "imageCrop.actionRunning": "Recortando...",
 
   // OPÇÕES - CONVERTER IMAGEM
   "imageConvert.format": "Formato de destino",
   "imageConvert.quality": "Qualidade de saída",
-  "imageConvert.action": "Converter IMAGEM",
+  "imageConvert.action": "Converter imagem",
   "imageConvert.actionRunning": "Convertendo...",
 
   // OPÇÕES - GIRAR IMAGEM
@@ -1383,7 +1391,7 @@ export const ptBR = {
   "imageRotate.rotate180": "Girar 180°",
   "imageRotate.flipH": "Inverter horizontal",
   "imageRotate.flipV": "Inverter vertical",
-  "imageRotate.action": "Girar IMAGEM",
+  "imageRotate.action": "Girar imagem",
   "imageRotate.actionRunning": "Girando...",
 
   // OPÇÕES - MARCA D'ÁGUA EM IMAGEM

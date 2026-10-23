@@ -15,7 +15,12 @@ export type SuiteId =
   | "compliance"
   | "extraction"
   | "flow"
-  | "pdf";
+  | "pdf"
+  | "img-optimize"
+  | "img-edit"
+  | "img-convert"
+  | "img-security"
+  | "image";
 
 export type Suite = {
   id: SuiteId;

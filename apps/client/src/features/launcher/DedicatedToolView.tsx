@@ -18,6 +18,11 @@ import type { TranslationProgressInfo } from "@/platform/browser-translator";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { readDocumentText } from "@/platform/document-reader";
 import { extractPdfSpreadsheetData } from "@/platform/excel-converter";
+import {
+  getImageMetadata,
+  type ImageCompressionLevel,
+  type WatermarkPosition,
+} from "@/platform/image-engine";
 import { runLauncherTool } from "@/platform/launcher-tool-runner";
 import {
   type CropMargins,
@@ -42,7 +47,13 @@ import { ExtractImagesPanel } from "./ExtractImagesPanel";
 import { ExtractPagesPanel } from "./ExtractPagesPanel";
 import { FormFillPdfPanel } from "./FormFillPdfPanel";
 import { HtmlToPdfPanel } from "./HtmlToPdfPanel";
+import { ImageCompressPanel } from "./ImageCompressPanel";
+import { ImageConvertPanel, type ImageTargetFormat } from "./ImageConvertPanel";
+import { type CropRatioPreset, ImageCropPanel } from "./ImageCropPanel";
+import { ImageResizePanel } from "./ImageResizePanel";
+import { ImageRotatePanel } from "./ImageRotatePanel";
 import { ImagesToPdfPanel } from "./ImagesToPdfPanel";
+import { ImageWatermarkPanel } from "./ImageWatermarkPanel";
 import { MergePdfPanel } from "./MergePdfPanel";
 import type { LauncherTool } from "./model";
 import { OcrScannerPanel } from "./OcrScannerPanel";
@@ -347,6 +358,37 @@ export function DedicatedToolView({
     savedPercent: number;
   } | null>(null);
 
+  // Estados de Ferramentas de Imagem (Modo Imagem)
+  const [imageCompressionLevel, setImageCompressionLevel] =
+    useState<ImageCompressionLevel>("recommended");
+  const [imageResizeMode, setImageResizeMode] = useState<"percentage" | "pixels">("percentage");
+  const [imageResizePercentage, setImageResizePercentage] = useState<number>(50);
+  const [imageResizeWidth, setImageResizeWidth] = useState<number>(1200);
+  const [imageResizeHeight, setImageResizeHeight] = useState<number>(800);
+  const [imageMaintainAspect, setImageMaintainAspect] = useState<boolean>(true);
+  const [imageDoNotEnlarge, setImageDoNotEnlarge] = useState<boolean>(false);
+  const [imageCropPreset, setImageCropPreset] = useState<CropRatioPreset>("free");
+  const [imageCropX, setImageCropX] = useState<number>(0);
+  const [imageCropY, setImageCropY] = useState<number>(0);
+  const [imageCropWidth, setImageCropWidth] = useState<number>(800);
+  const [imageCropHeight, setImageCropHeight] = useState<number>(600);
+  const [imageTargetFormat, setImageTargetFormat] = useState<ImageTargetFormat>("jpeg");
+  const [imageConvertQuality, setImageConvertQuality] = useState<number>(85);
+  const [imageRotateAngle, setImageRotateAngle] = useState<90 | 180 | 270>(90);
+  const [imageFlipHorizontal, setImageFlipHorizontal] = useState<boolean>(false);
+  const [imageFlipVertical, setImageFlipVertical] = useState<boolean>(false);
+  const [imageWatermarkType, setImageWatermarkType] = useState<"text" | "image">("text");
+  const [imageWatermarkText, setImageWatermarkText] = useState<string>("NexoHub");
+  const [imageWatermarkColor, setImageWatermarkColor] = useState<string>("#ffffff");
+  const [imageWatermarkOpacity, setImageWatermarkOpacity] = useState<number>(50);
+  const [imageWatermarkRotation, setImageWatermarkRotation] = useState<number>(0);
+  const [imageWatermarkPosition, setImageWatermarkPosition] = useState<WatermarkPosition>("center");
+  const [imageOriginalDimensions, setImageOriginalDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+
   useEffect(
     () => () => {
       if (downloadUrl) URL.revokeObjectURL(downloadUrl);
@@ -354,7 +396,7 @@ export function DedicatedToolView({
     [downloadUrl],
   );
 
-  const isImageTool = tool.id === "images-to-pdf";
+  const isImageTool = tool.id === "images-to-pdf" || tool.manifest.category === "image";
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const previewFiles = useRef(new WeakMap<File, Map<number, Promise<string>>>());
   const activePreviewFile = useRef(files[0]);
@@ -405,11 +447,13 @@ export function DedicatedToolView({
         isImageTool
       }
       accept={
-        isImageTool || tool.id === "pdf-ocr"
-          ? ".pdf,application/pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-          : tool.suite === "text"
-            ? ".txt,.md,.pdf,.docx"
-            : ".pdf,application/pdf"
+        isImageTool
+          ? ".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
+          : tool.id === "pdf-ocr"
+            ? ".pdf,application/pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+            : tool.suite === "text"
+              ? ".txt,.md,.pdf,.docx"
+              : ".pdf,application/pdf"
       }
       onChange={handleFileInput}
     />
@@ -546,6 +590,48 @@ export function DedicatedToolView({
       isCancelled = true;
     };
   }, [files, tool.id]);
+
+  // Inspeciona dimensões e miniatura de imagem no Modo Imagem
+  useEffect(() => {
+    let isCancelled = false;
+    let objectUrl: string | null = null;
+
+    async function inspectImage() {
+      if (files.length === 0) {
+        setImageOriginalDimensions(null);
+        setImagePreviewUrl(null);
+        return;
+      }
+      const file = files[0];
+      const isImg = file.type.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
+      if (!isImg) return;
+
+      objectUrl = URL.createObjectURL(file);
+      if (!isCancelled) {
+        setImagePreviewUrl(objectUrl);
+      }
+
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const meta = await getImageMetadata(bytes);
+        if (isCancelled) return;
+        setImageOriginalDimensions({ width: meta.width, height: meta.height });
+        setImageResizeWidth(meta.width);
+        setImageResizeHeight(meta.height);
+        setImageCropWidth(Math.min(meta.width, 800));
+        setImageCropHeight(Math.min(meta.height, 600));
+      } catch (err) {
+        console.warn("Could not inspect image metadata", err);
+      }
+    }
+
+    inspectImage();
+
+    return () => {
+      isCancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [files]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: troca de arquivo/ferramenta invalida os resultados associados.
   useEffect(() => {
@@ -907,6 +993,28 @@ export function DedicatedToolView({
         pages: pageItems,
         rotateAngle,
         compressionLevel,
+        imageCompressionLevel,
+        imageResizeMode,
+        imageResizePercentage,
+        imageResizeWidth,
+        imageResizeHeight,
+        imageResizeMaintainAspectRatio: imageMaintainAspect,
+        imageResizeDoNotEnlarge: imageDoNotEnlarge,
+        imageCropX,
+        imageCropY,
+        imageCropWidth,
+        imageCropHeight,
+        imageTargetFormat,
+        imageCustomQuality: imageConvertQuality,
+        imageRotateAngle,
+        imageFlipHorizontal,
+        imageFlipVertical,
+        imageWatermarkType,
+        imageWatermarkText,
+        imageWatermarkColor,
+        imageWatermarkOpacity,
+        imageWatermarkRotation,
+        imageWatermarkPosition,
         firstText: inputTab === "text" ? directText : doc1Text,
         secondText: doc2Text,
         imageOrientation,
@@ -999,7 +1107,7 @@ export function DedicatedToolView({
       const outName = output.fileName;
       const categoryKey = output.categoryKey;
       const resultSizeBytes = outputBlob.size;
-      if (tool.id === "pdf-compress") {
+      if (tool.id === "pdf-compress" || tool.id === "image-compress") {
         setCompressionResult({
           originalBytes: primaryFile.size,
           compressedBytes: resultSizeBytes,
@@ -1097,6 +1205,8 @@ export function DedicatedToolView({
     setReviewedText("");
     setReviewFindings([]);
     setCompressionResult(null);
+    setImagePreviewUrl(null);
+    setImageOriginalDimensions(null);
   }
 
   async function handleSaveOutput() {
@@ -1136,6 +1246,12 @@ export function DedicatedToolView({
     if (tool.id === "pdf-ocr") return translate("dedicated.actionOcr");
     if (tool.id === "text-compare") return translate("dedicated.actionCompare");
     if (tool.id === "text-review") return translate("dedicated.actionReview");
+    if (tool.id === "image-compress") return translate("dedicated.actionImageCompress");
+    if (tool.id === "image-resize") return translate("dedicated.actionImageResize");
+    if (tool.id === "image-crop") return translate("dedicated.actionImageCrop");
+    if (tool.id === "image-convert") return translate("dedicated.actionImageConvert");
+    if (tool.id === "image-rotate") return translate("dedicated.actionImageRotate");
+    if (tool.id === "image-watermark") return translate("dedicated.actionImageWatermark");
     return translate("dedicated.actionRun");
   }
 
@@ -1676,6 +1792,119 @@ export function DedicatedToolView({
       );
     }
 
+    // PAINÉIS DE FERRAMENTAS DE IMAGEM
+    if (tool.id === "image-compress") {
+      return (
+        <ImageCompressPanel
+          fileName={files[0]?.name || "imagem.jpg"}
+          fileSizeBytes={files[0]?.size || 0}
+          thumbnailUrl={imagePreviewUrl ?? undefined}
+          dimensions={imageOriginalDimensions ?? undefined}
+          level={imageCompressionLevel}
+          onLevelChange={setImageCompressionLevel}
+        />
+      );
+    }
+
+    if (tool.id === "image-resize") {
+      return (
+        <ImageResizePanel
+          fileName={files[0]?.name || "imagem.jpg"}
+          fileSizeBytes={files[0]?.size || 0}
+          thumbnailUrl={imagePreviewUrl ?? undefined}
+          originalDimensions={imageOriginalDimensions ?? undefined}
+          mode={imageResizeMode}
+          onModeChange={setImageResizeMode}
+          percentage={imageResizePercentage}
+          onPercentageChange={setImageResizePercentage}
+          width={imageResizeWidth}
+          onWidthChange={setImageResizeWidth}
+          height={imageResizeHeight}
+          onHeightChange={setImageResizeHeight}
+          maintainAspectRatio={imageMaintainAspect}
+          onMaintainAspectRatioChange={setImageMaintainAspect}
+          doNotEnlarge={imageDoNotEnlarge}
+          onDoNotEnlargeChange={setImageDoNotEnlarge}
+        />
+      );
+    }
+
+    if (tool.id === "image-crop") {
+      return (
+        <ImageCropPanel
+          fileName={files[0]?.name || "imagem.jpg"}
+          fileSizeBytes={files[0]?.size || 0}
+          thumbnailUrl={imagePreviewUrl ?? undefined}
+          originalDimensions={imageOriginalDimensions ?? undefined}
+          ratio={imageCropPreset}
+          onRatioChange={setImageCropPreset}
+          cropX={imageCropX}
+          onCropXChange={setImageCropX}
+          cropY={imageCropY}
+          onCropYChange={setImageCropY}
+          cropWidth={imageCropWidth}
+          onCropWidthChange={setImageCropWidth}
+          cropHeight={imageCropHeight}
+          onCropHeightChange={setImageCropHeight}
+        />
+      );
+    }
+
+    if (tool.id === "image-convert") {
+      return (
+        <ImageConvertPanel
+          fileName={files[0]?.name || "imagem.jpg"}
+          fileSizeBytes={files[0]?.size || 0}
+          thumbnailUrl={imagePreviewUrl ?? undefined}
+          originalDimensions={imageOriginalDimensions ?? undefined}
+          targetFormat={imageTargetFormat}
+          onTargetFormatChange={setImageTargetFormat}
+          quality={imageConvertQuality}
+          onQualityChange={setImageConvertQuality}
+        />
+      );
+    }
+
+    if (tool.id === "image-rotate") {
+      return (
+        <ImageRotatePanel
+          fileName={files[0]?.name || "imagem.jpg"}
+          fileSizeBytes={files[0]?.size || 0}
+          thumbnailUrl={imagePreviewUrl ?? undefined}
+          originalDimensions={imageOriginalDimensions ?? undefined}
+          angle={imageRotateAngle}
+          onAngleChange={setImageRotateAngle}
+          flipHorizontal={imageFlipHorizontal}
+          onFlipHorizontalChange={setImageFlipHorizontal}
+          flipVertical={imageFlipVertical}
+          onFlipVerticalChange={setImageFlipVertical}
+        />
+      );
+    }
+
+    if (tool.id === "image-watermark") {
+      return (
+        <ImageWatermarkPanel
+          fileName={files[0]?.name || "imagem.jpg"}
+          fileSizeBytes={files[0]?.size || 0}
+          thumbnailUrl={imagePreviewUrl ?? undefined}
+          originalDimensions={imageOriginalDimensions ?? undefined}
+          watermarkType={imageWatermarkType}
+          onWatermarkTypeChange={setImageWatermarkType}
+          text={imageWatermarkText}
+          onTextChange={setImageWatermarkText}
+          color={imageWatermarkColor}
+          onColorChange={setImageWatermarkColor}
+          opacity={imageWatermarkOpacity}
+          onOpacityChange={setImageWatermarkOpacity}
+          rotation={imageWatermarkRotation}
+          onRotationChange={setImageWatermarkRotation}
+          position={imageWatermarkPosition}
+          onPositionChange={setImageWatermarkPosition}
+        />
+      );
+    }
+
     return (
       <div className="generic-tool-visual-panel">
         <div className="generic-tool-hero-box">
@@ -1855,7 +2084,7 @@ export function DedicatedToolView({
             <span>
               {isTextTool
                 ? "Selecionar arquivo de texto"
-                : isImageTool
+                : isImageTool || tool.manifest.category === "image"
                   ? translate("dedicated.selectImages")
                   : translate("dedicated.selectFiles")}
             </span>
@@ -1937,12 +2166,13 @@ export function DedicatedToolView({
           renderVisualPanel()
         )}
 
-        {/* Barra de Ação Inferior Fixa com Botão Vermelho Estilo iLovePDF */}
+        {/* Barra de Ação Inferior Fixa com Botão Estilo iLovePDF / iLoveIMG */}
         <div className="dedicated-tool-bottom-bar" style={{ marginTop: "1.5rem" }}>
           {errorMessage && <p role="alert">{errorMessage}</p>}
           <button
             type="button"
             className="ilovepdf-action-red-btn"
+            style={tool.manifest.category === "image" ? { backgroundColor: "#2563eb" } : undefined}
             disabled={
               status === "running" ||
               (!hasFilesOrText && tool.id !== "text-compare") ||

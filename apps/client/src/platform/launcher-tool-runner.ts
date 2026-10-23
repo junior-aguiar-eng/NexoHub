@@ -20,6 +20,15 @@ import {
 import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
 import { convertHtmlToPdfDocument } from "./html-to-pdf-converter";
+import {
+  compressImage,
+  convertImage,
+  cropImage,
+  resizeImage,
+  rotateImage,
+  type WatermarkPosition,
+  watermarkImage,
+} from "./image-engine";
 import { performBrowserPdfComparison } from "./pdf-comparison-client";
 import type { PdfComparisonProgress, PdfComparisonResult } from "./pdf-comparison-types";
 import { reviseBrowserPdf } from "./pdf-editor-client";
@@ -155,6 +164,29 @@ export interface LauncherToolInput {
   readonly scanPageSize?: "A4" | "Letter" | "fit";
   readonly scanOrientation?: "portrait" | "landscape" | "auto";
   readonly scanMargin?: "none" | "small" | "normal";
+  readonly imageCompressionLevel?: "less" | "recommended" | "extreme";
+  readonly imageCustomQuality?: number;
+  readonly imageResizeMode?: "percentage" | "pixels";
+  readonly imageResizePercentage?: number;
+  readonly imageResizeWidth?: number;
+  readonly imageResizeHeight?: number;
+  readonly imageResizeMaintainAspectRatio?: boolean;
+  readonly imageResizeDoNotEnlarge?: boolean;
+  readonly imageCropX?: number;
+  readonly imageCropY?: number;
+  readonly imageCropWidth?: number;
+  readonly imageCropHeight?: number;
+  readonly imageTargetFormat?: "jpeg" | "png" | "webp";
+  readonly imageRotateAngle?: 90 | 180 | 270;
+  readonly imageFlipHorizontal?: boolean;
+  readonly imageFlipVertical?: boolean;
+  readonly imageWatermarkType?: "text" | "image";
+  readonly imageWatermarkText?: string;
+  readonly imageWatermarkColor?: string;
+  readonly imageWatermarkOpacity?: number;
+  readonly imageWatermarkRotation?: number;
+  readonly imageWatermarkPosition?: WatermarkPosition;
+  readonly imageWatermarkFile?: File;
 }
 
 export interface LauncherToolOutput {
@@ -199,6 +231,12 @@ const supportedIds = new Set([
   "pdf-extract-pages",
   "html-to-pdf",
   "scan-to-pdf",
+  "image-compress",
+  "image-resize",
+  "image-crop",
+  "image-convert",
+  "image-rotate",
+  "image-watermark",
 ]);
 
 function pdfBlob(bytes: Uint8Array): Blob {
@@ -1041,6 +1079,101 @@ async function executeTool(
         blob: pdfBlob(resultBytes),
         fileName: `${resolvedName}.pdf`,
         categoryKey: "recent.type.pdf",
+      };
+    }
+    case "image-compress": {
+      if (!first) throw new Error("INVALID_INPUT");
+      const compResult = await compressImage(first, {
+        level: input.imageCompressionLevel,
+        customQuality: input.imageCustomQuality,
+      });
+      const ext =
+        compResult.mimeType === "image/png"
+          ? "png"
+          : compResult.mimeType === "image/webp"
+            ? "webp"
+            : "jpg";
+      return {
+        blob: compResult.blob,
+        fileName: `${baseName}_comprimido.${ext}`,
+        categoryKey: "recent.type.document",
+      };
+    }
+    case "image-resize": {
+      if (!first) throw new Error("INVALID_INPUT");
+      const blob = await resizeImage(first, {
+        mode: input.imageResizeMode ?? "percentage",
+        percentage: input.imageResizePercentage,
+        width: input.imageResizeWidth,
+        height: input.imageResizeHeight,
+        maintainAspectRatio: input.imageResizeMaintainAspectRatio,
+        doNotEnlarge: input.imageResizeDoNotEnlarge,
+      });
+      const ext = first.name.includes(".") ? first.name.split(".").pop() || "jpg" : "jpg";
+      return {
+        blob,
+        fileName: `${baseName}_redimensionado.${ext}`,
+        categoryKey: "recent.type.document",
+      };
+    }
+    case "image-crop": {
+      if (!first) throw new Error("INVALID_INPUT");
+      const blob = await cropImage(first, {
+        x: input.imageCropX ?? 0,
+        y: input.imageCropY ?? 0,
+        width: input.imageCropWidth ?? 100,
+        height: input.imageCropHeight ?? 100,
+      });
+      const ext = first.name.includes(".") ? first.name.split(".").pop() || "jpg" : "jpg";
+      return {
+        blob,
+        fileName: `${baseName}_recortado.${ext}`,
+        categoryKey: "recent.type.document",
+      };
+    }
+    case "image-convert": {
+      if (!first) throw new Error("INVALID_INPUT");
+      const targetFormat = input.imageTargetFormat ?? "jpeg";
+      const blob = await convertImage(first, {
+        targetFormat,
+      });
+      const ext = targetFormat === "jpeg" ? "jpg" : targetFormat;
+      return {
+        blob,
+        fileName: `${baseName}.${ext}`,
+        categoryKey: "recent.type.document",
+      };
+    }
+    case "image-rotate": {
+      if (!first) throw new Error("INVALID_INPUT");
+      const blob = await rotateImage(first, {
+        angle: input.imageRotateAngle ?? 90,
+        flipHorizontal: input.imageFlipHorizontal,
+        flipVertical: input.imageFlipVertical,
+      });
+      const ext = first.name.includes(".") ? first.name.split(".").pop() || "jpg" : "jpg";
+      return {
+        blob,
+        fileName: `${baseName}_girado.${ext}`,
+        categoryKey: "recent.type.document",
+      };
+    }
+    case "image-watermark": {
+      if (!first) throw new Error("INVALID_INPUT");
+      const blob = await watermarkImage(first, {
+        type: input.imageWatermarkType ?? "text",
+        text: input.imageWatermarkText,
+        color: input.imageWatermarkColor,
+        opacity: input.imageWatermarkOpacity,
+        rotation: input.imageWatermarkRotation,
+        position: input.imageWatermarkPosition,
+        watermarkBlob: input.imageWatermarkFile,
+      });
+      const ext = first.name.includes(".") ? first.name.split(".").pop() || "jpg" : "jpg";
+      return {
+        blob,
+        fileName: `${baseName}_marca_dagua.${ext}`,
+        categoryKey: "recent.type.document",
       };
     }
     default:

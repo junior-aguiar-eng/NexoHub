@@ -3,11 +3,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import nexohubIcon from "@/assets/nexohub-icon.png";
 import { CommandPalette } from "@/features/launcher/CommandPalette";
 import { DedicatedToolView } from "@/features/launcher/DedicatedToolView";
-import { resolveLauncherTools } from "@/features/launcher/data";
+import { imageSuites, pdfSuites, resolveLauncherTools } from "@/features/launcher/data";
 import { Header } from "@/features/launcher/Header";
 import { Hero } from "@/features/launcher/Hero";
 import type { LauncherTool, SuiteId } from "@/features/launcher/model";
 import { QuickToolGrid } from "@/features/launcher/QuickToolGrid";
+import type { WorkZone } from "@/features/launcher/SegmentedZoneToggle";
 import { SuiteNavigation } from "@/features/launcher/SuiteNavigation";
 import { useRecentOperations } from "@/features/launcher/useRecentOperations";
 import { translate } from "@/i18n";
@@ -81,6 +82,30 @@ const ROUTE_TOOL_MAP: Record<string, string> = {
   "/pdf-para-excel": "pdf-to-excel",
   "/pdf-to-excel": "pdf-to-excel",
   "/excel-pdf": "pdf-to-excel",
+  "/remover-paginas": "pdf-remove-pages",
+  "/remover-paginas-pdf": "pdf-remove-pages",
+  "/pdf-remove-pages": "pdf-remove-pages",
+  "/extrair-paginas": "pdf-extract-pages",
+  "/extrair-paginas-pdf": "pdf-extract-pages",
+  "/pdf-extract-pages": "pdf-extract-pages",
+  "/html-para-pdf": "html-to-pdf",
+  "/html-to-pdf": "html-to-pdf",
+  "/converter-html-pdf": "html-to-pdf",
+  "/digitalizar-para-pdf": "scan-to-pdf",
+  "/scan-to-pdf": "scan-to-pdf",
+  "/escanear-pdf": "scan-to-pdf",
+  "/comprimir-imagem": "image-compress",
+  "/compress-image": "image-compress",
+  "/redimensionar-imagem": "image-resize",
+  "/resize-image": "image-resize",
+  "/recortar-imagem": "image-crop",
+  "/crop-image": "image-crop",
+  "/converter-imagem": "image-convert",
+  "/convert-image": "image-convert",
+  "/girar-imagem": "image-rotate",
+  "/rotate-image": "image-rotate",
+  "/marca-dagua-imagem": "image-watermark",
+  "/watermark-image": "image-watermark",
 };
 
 const TOOL_ROUTE_MAP: Record<string, string> = {
@@ -107,9 +132,19 @@ const TOOL_ROUTE_MAP: Record<string, string> = {
   "pdf-redact": "/ocultar-pdf",
   "pdf-to-excel": "/pdf-para-excel",
   "pdf-extract-images": "/extrair-imagens",
+  "pdf-remove-pages": "/remover-paginas",
+  "pdf-extract-pages": "/extrair-paginas",
+  "html-to-pdf": "/html-para-pdf",
+  "scan-to-pdf": "/digitalizar-para-pdf",
   "text-compare": "/comparar-textos",
   "text-review": "/revisar-texto",
   "text-translate": "/traduzir-texto",
+  "image-compress": "/comprimir-imagem",
+  "image-resize": "/redimensionar-imagem",
+  "image-crop": "/recortar-imagem",
+  "image-convert": "/converter-imagem",
+  "image-rotate": "/girar-imagem",
+  "image-watermark": "/marca-dagua-imagem",
 };
 
 export function App() {
@@ -119,6 +154,30 @@ export function App() {
   const dynamicTools = useMemo(() => {
     return resolveLauncherTools([], documentCore);
   }, [documentCore]);
+
+  // Estado da zona de trabalho: "pdf" | "img"
+  const [workZone, setWorkZone] = useState<WorkZone>(() => {
+    if (typeof window !== "undefined") {
+      const pathname = window.location.pathname.replace(/\/$/, "");
+      if (pathname === "/img" || pathname.startsWith("/img/")) {
+        return "img";
+      }
+      const matchedToolId = ROUTE_TOOL_MAP[pathname];
+      if (matchedToolId) {
+        const found = dynamicTools.find((t) => t.id === matchedToolId);
+        if (found?.manifest.category === "image") return "img";
+      }
+      try {
+        const saved = localStorage.getItem("nexohub_work_zone");
+        if (saved === "img" && (pathname === "" || pathname === "/")) {
+          return "img";
+        }
+      } catch {
+        // Ignora indisponibilidade do localStorage
+      }
+    }
+    return "pdf";
+  });
 
   const [activeDedicatedTool, setActiveDedicatedTool] = useState<LauncherTool | null>(() => {
     if (typeof window !== "undefined") {
@@ -135,10 +194,9 @@ export function App() {
   const [activeSuite, setActiveSuite] = useState<SuiteId>("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-
   const activePath = useRef(window.location.pathname);
 
-  // Sincroniza a URL do navegador com a ferramenta ativa
+  // Sincroniza a URL do navegador com a zona ativa e ferramenta
   useEffect(() => {
     function handlePopState() {
       if (window.location.pathname !== activePath.current && !allowToolNavigation()) {
@@ -150,10 +208,28 @@ export function App() {
         window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       }
       const pathname = window.location.pathname.replace(/\/$/, "");
+
+      if (pathname === "/img" || pathname.startsWith("/img/")) {
+        setWorkZone("img");
+        setActiveDedicatedTool(null);
+        return;
+      }
+
+      if (pathname === "/pdf" || pathname === "") {
+        setWorkZone("pdf");
+        setActiveDedicatedTool(null);
+        return;
+      }
+
       const matchedToolId = ROUTE_TOOL_MAP[pathname];
       if (matchedToolId) {
         const found = dynamicTools.find((t) => t.id === matchedToolId);
         if (found) {
+          if (found.manifest.category === "image") {
+            setWorkZone("img");
+          } else {
+            setWorkZone("pdf");
+          }
           setActiveDedicatedTool(found);
           return;
         }
@@ -165,6 +241,24 @@ export function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [dynamicTools]);
 
+  const handleZoneChange = (nextZone: WorkZone) => {
+    setWorkZone(nextZone);
+    setActiveDedicatedTool(null);
+    setActiveSuite("overview");
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("nexohub_work_zone", nextZone);
+      } catch {
+        // Ignora erros
+      }
+      const targetRoute = nextZone === "img" ? "/img" : "/pdf";
+      if (window.location.pathname !== targetRoute) {
+        window.history.pushState({ zone: nextZone }, "", targetRoute);
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+  };
+
   const selectToolWithUrl = (tool: LauncherTool | null, files?: File[]) => {
     if (!allowToolNavigation()) return;
     setInitialFilesForTool(files || []);
@@ -173,13 +267,19 @@ export function App() {
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     }
     if (tool) {
+      if (tool.manifest.category === "image") {
+        setWorkZone("img");
+      } else {
+        setWorkZone("pdf");
+      }
       const targetRoute = TOOL_ROUTE_MAP[tool.id] || `/${tool.id}`;
       if (window.location.pathname !== targetRoute) {
         window.history.pushState({ toolId: tool.id }, "", targetRoute);
       }
     } else {
-      if (window.location.pathname !== "/") {
-        window.history.pushState({}, "", "/");
+      const defaultRoute = workZone === "img" ? "/img" : "/pdf";
+      if (window.location.pathname !== defaultRoute && window.location.pathname !== "/") {
+        window.history.pushState({}, "", defaultRoute);
       }
     }
     activePath.current = window.location.pathname;
@@ -197,9 +297,18 @@ export function App() {
     return () => window.removeEventListener("keydown", handleShortcut);
   }, []);
 
+  const zoneTools = useMemo(() => {
+    return dynamicTools.filter((tool) => {
+      if (workZone === "img") {
+        return tool.manifest.category === "image";
+      }
+      return tool.manifest.category !== "image";
+    });
+  }, [dynamicTools, workZone]);
+
   const filteredTools = useMemo(() => {
     const normalizedQuery = normalize(searchQuery.trim());
-    return dynamicTools.filter((tool) => {
+    return zoneTools.filter((tool) => {
       const matchesSuite =
         activeSuite === "overview" ||
         activeSuite === tool.suite ||
@@ -209,14 +318,21 @@ export function App() {
         (activeSuite === "convert" && tool.suite === "convert") ||
         (activeSuite === "text" &&
           (tool.suite === "text" || (tool.suite as string) === "review")) ||
-        (activeSuite === "security" && tool.suite === "security");
+        (activeSuite === "security" && tool.suite === "security") ||
+        (activeSuite === "img-optimize" && tool.suite === "img-optimize") ||
+        (activeSuite === "img-edit" && tool.suite === "img-edit") ||
+        (activeSuite === "img-convert" && tool.suite === "img-convert") ||
+        (activeSuite === "img-security" && tool.suite === "img-security");
       const searchableText = `${translate(tool.titleKey)} ${translate(tool.descriptionKey)}`;
       return matchesSuite && normalize(searchableText).includes(normalizedQuery);
     });
-  }, [dynamicTools, activeSuite, searchQuery]);
+  }, [zoneTools, activeSuite, searchQuery]);
 
   return (
-    <div className={`app-shell ${activeDedicatedTool ? "" : "app-shell--catalog"}`}>
+    <div
+      data-zone={workZone}
+      className={`app-shell ${activeDedicatedTool ? "" : "app-shell--catalog"} app-shell--zone-${workZone}`}
+    >
       <a className="skip-link" href="#main-content">
         {translate("app.skip")}
       </a>
@@ -235,9 +351,17 @@ export function App() {
         onLogoClick={() => {
           selectToolWithUrl(null);
           setActiveSuite("overview");
+          if (typeof window !== "undefined") {
+            const defaultRoute = workZone === "img" ? "/img" : "/pdf";
+            if (window.location.pathname !== defaultRoute) {
+              window.history.pushState({}, "", defaultRoute);
+            }
+          }
         }}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
         searchQuery={searchQuery}
+        currentZone={workZone}
+        onZoneChange={handleZoneChange}
       />
       <main id="main-content" className="launcher-content launcher-content--full">
         {activeDedicatedTool ? (
@@ -258,18 +382,26 @@ export function App() {
             }}
           />
         ) : (
-          <>
+          <div
+            id={workZone === "img" ? "panel-zone-img" : "panel-zone-pdf"}
+            data-testid={workZone === "img" ? "panel-zone-img" : "panel-zone-pdf"}
+            role="tabpanel"
+            aria-labelledby={workZone === "img" ? "tab-zone-img" : "tab-zone-pdf"}
+            className="launcher-zone-container"
+          >
             <div className="launcher-welcome-container">
               <Hero
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+                currentZone={workZone}
               />
               <div className="launcher-suites-center">
                 <SuiteNavigation
                   activeSuite={activeSuite}
                   onSelect={setActiveSuite}
-                  tools={dynamicTools}
+                  tools={zoneTools}
+                  suitesList={workZone === "img" ? imageSuites : pdfSuites}
                 />
               </div>
             </div>
@@ -282,7 +414,7 @@ export function App() {
                 }}
               />
             </div>
-          </>
+          </div>
         )}
       </main>
 
@@ -292,7 +424,11 @@ export function App() {
           <div className="app-footer__brand-text">
             <span className="app-footer__brand-title">
               <strong>NEXO</strong>
-              <span className="brand-logo-accent">HUB</span>
+              <span
+                className={`brand-logo-accent ${workZone === "img" ? "text-blue-600 dark:text-blue-400" : ""}`}
+              >
+                HUB
+              </span>
             </span>
             <small>{translate("brand.footerTagline")}</small>
           </div>

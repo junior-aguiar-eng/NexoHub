@@ -40,6 +40,12 @@ export class HttpDocumentCorePort implements DocumentCorePort {
     "pdf-extract-pages",
     "html-to-pdf",
     "scan-to-pdf",
+    "image-compress",
+    "image-resize",
+    "image-crop",
+    "image-convert",
+    "image-rotate",
+    "image-watermark",
   ]);
 
   private project: { path: string; name: string } | null = null;

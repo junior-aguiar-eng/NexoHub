@@ -10,7 +10,7 @@ describe("App", () => {
   it("renderiza o Hub de ferramentas práticas estilo iLovePDF", () => {
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: /Olá, o que faremos hoje\?/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Olá, o que faremos hoje/i })).toBeInTheDocument();
     expect(screen.getByText(/Seus arquivos nunca saem deste dispositivo/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Organizar PDF" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Comprimir PDF" })).toBeInTheDocument();
@@ -48,7 +48,7 @@ describe("App", () => {
 
     // Retorna ao Hub
     fireEvent.click(within(main).getByRole("button", { name: /Todas as ferramentas/i }));
-    expect(screen.getByRole("heading", { name: /Olá, o que faremos hoje\?/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Olá, o que faremos hoje/i })).toBeInTheDocument();
   });
 
   it("filtra as ferramentas pelas categorias do topo", () => {
@@ -123,5 +123,46 @@ describe("App", () => {
     expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, left: 0, behavior: "instant" });
 
     scrollToSpy.mockRestore();
+  });
+
+  it("suporta alternância entre Modo PDF e Modo Imagem via SegmentedZoneToggle com atualização de data-zone e rota", () => {
+    const { container } = render(<App />);
+
+    const appShell = container.querySelector(".app-shell");
+    expect(appShell).toHaveAttribute("data-zone", "pdf");
+
+    // Alterna para o Modo Imagem
+    const imgTabs = screen.getAllByRole("tab", { name: /alternar para modo imagem/i });
+    fireEvent.click(imgTabs[0]);
+
+    expect(appShell).toHaveAttribute("data-zone", "img");
+    expect(
+      screen.getByRole("heading", { name: "Todas as ferramentas necessárias para editar imagens" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("panel-zone-img") || screen.getByRole("tabpanel"),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/img");
+
+    // Retorna para o Modo PDF
+    const pdfTabs = screen.getAllByRole("tab", { name: /alternar para modo pdf/i });
+    fireEvent.click(pdfTabs[0]);
+
+    expect(appShell).toHaveAttribute("data-zone", "pdf");
+    expect(
+      screen.getByRole("heading", { name: /Olá, o que faremos hoje no seu PDF\?/i }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/pdf");
+  });
+
+  it("inicializa no Modo Imagem diretamente quando a rota inicial é /img", () => {
+    window.history.pushState({}, "", "/img");
+    const { container } = render(<App />);
+
+    const appShell = container.querySelector(".app-shell");
+    expect(appShell).toHaveAttribute("data-zone", "img");
+    expect(
+      screen.getByRole("heading", { name: "Todas as ferramentas necessárias para editar imagens" }),
+    ).toBeInTheDocument();
   });
 });

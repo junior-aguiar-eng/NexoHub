@@ -1,8 +1,9 @@
 import { ChevronDown, Search } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
-import nexohubIcon from "@/assets/nexohub-icon.png";
+import { NexoHubLogoIcon } from "@/components/NexoHubLogoIcon";
 import { translate } from "@/i18n";
 import type { LauncherTool, SuiteId } from "./model";
+import { SegmentedZoneToggle, type WorkZone } from "./SegmentedZoneToggle";
 
 type HeaderProps = {
   activeSuite: SuiteId;
@@ -13,6 +14,8 @@ type HeaderProps = {
   onLogoClick?: () => void;
   onOpenCommandPalette: () => void;
   searchQuery?: string;
+  currentZone?: WorkZone;
+  onZoneChange?: (zone: WorkZone) => void;
 };
 
 const groups = [
@@ -23,12 +26,20 @@ const groups = [
   { suite: "security", labelKey: "suite.security" },
 ] as const;
 
-export function Header({ tools, onSelectTool, onLogoClick, onOpenCommandPalette }: HeaderProps) {
+export function Header({
+  tools,
+  onSelectTool,
+  onLogoClick,
+  onOpenCommandPalette,
+  currentZone = "pdf",
+  onZoneChange,
+}: HeaderProps) {
   const [allToolsMenuOpen, setAllToolsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuId = useId();
   const availableTools = tools.filter((tool) => tool.availability.available);
+  const isImageZone = currentZone === "img";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -48,7 +59,6 @@ export function Header({ tools, onSelectTool, onLogoClick, onOpenCommandPalette 
       }
     }
     function handleFocusOutside(event: FocusEvent) {
-      // Focar outro controle fecha; clicar em títulos internos não remove o catálogo.
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setAllToolsMenuOpen(false);
       }
@@ -69,78 +79,106 @@ export function Header({ tools, onSelectTool, onLogoClick, onOpenCommandPalette 
   }
 
   return (
-    <header className="app-header app-header--ilovepdf">
-      <div className="header-left">
+    <header
+      className={`app-header app-header--ilovepdf ${isImageZone ? "app-header--zone-img" : "app-header--zone-pdf"}`}
+    >
+      <div className="header-left flex items-center gap-3">
         <button
           type="button"
-          className="brand brand-btn ilovepdf-brand"
+          className="brand brand-btn ilovepdf-brand flex items-center gap-2"
           onClick={onLogoClick}
           aria-label={translate("header.homeLabel")}
         >
-          <img className="brand-app-icon" src={nexohubIcon} alt="" aria-hidden="true" />
-          <span className="brand-logo-text">
+          <NexoHubLogoIcon zone={currentZone} size={32} />
+          <span className="brand-logo-text flex items-center">
             <strong>NEXO</strong>
-            <span className="brand-logo-accent">HUB</span>
+            <span
+              className={`brand-logo-accent transition-colors duration-300 ${
+                isImageZone ? "text-blue-600 dark:text-blue-400" : ""
+              }`}
+            >
+              HUB
+            </span>
           </span>
         </button>
+
+        {/* Global Segmented Control Toggle */}
+        {onZoneChange && (
+          <div className="header-zone-toggle hidden sm:flex items-center ml-2">
+            <SegmentedZoneToggle currentZone={currentZone} onZoneChange={onZoneChange} />
+          </div>
+        )}
       </div>
+
       <nav className="header-main-nav" aria-label={translate("header.primaryNavigation")}>
-        {availableTools
-          .filter((tool) => ["pdf-merge", "pdf-split", "pdf-compress"].includes(tool.id))
-          .map((tool) => (
-            <button
-              key={tool.id}
-              type="button"
-              className="nav-link-btn"
-              onClick={() => openTool(tool.id)}
-            >
-              {translate(tool.titleKey)}
-            </button>
-          ))}
-        <div className="nav-dropdown-wrapper" ref={menuRef}>
-          <button
-            ref={triggerRef}
-            type="button"
-            className={`nav-link-btn nav-link-btn--dropdown ${allToolsMenuOpen ? "nav-link-btn--active" : ""}`}
-            aria-label={translate("header.allTools")}
-            aria-expanded={allToolsMenuOpen}
-            aria-controls={allToolsMenuOpen ? menuId : undefined}
-            onClick={() => setAllToolsMenuOpen(!allToolsMenuOpen)}
-          >
-            <span className="nav-link-label--full">{translate("header.allTools")}</span>
-            <span className="nav-link-label--compact">{translate("header.toolsCompact")}</span>
-            <ChevronDown
-              size={14}
-              className={`dropdown-chevron ${allToolsMenuOpen ? "dropdown-chevron--open" : ""}`}
-            />
-          </button>
-          {allToolsMenuOpen && (
-            <div id={menuId} className="megamenu-panel megamenu-panel--all">
-              {groups.map((group) => {
-                const groupTools = availableTools.filter((tool) => tool.suite === group.suite);
-                if (groupTools.length === 0) return null;
-                return (
-                  <div className="megamenu-column" key={group.suite}>
-                    <span className="megamenu-col-title">{translate(group.labelKey)}</span>
-                    {groupTools.map((tool) => (
-                      <button
-                        key={tool.id}
-                        type="button"
-                        className="megamenu-item"
-                        onClick={() => openTool(tool.id)}
-                      >
-                        <tool.icon size={15} style={{ color: tool.accentColor }} />
-                        <span>{translate(tool.titleKey)}</span>
-                      </button>
-                    ))}
-                  </div>
-                );
-              })}
+        {!isImageZone && (
+          <>
+            {availableTools
+              .filter((tool) => ["pdf-merge", "pdf-split", "pdf-compress"].includes(tool.id))
+              .map((tool) => (
+                <button
+                  key={tool.id}
+                  type="button"
+                  className="nav-link-btn"
+                  onClick={() => openTool(tool.id)}
+                >
+                  {translate(tool.titleKey)}
+                </button>
+              ))}
+            <div className="nav-dropdown-wrapper" ref={menuRef}>
+              <button
+                ref={triggerRef}
+                type="button"
+                className={`nav-link-btn nav-link-btn--dropdown ${allToolsMenuOpen ? "nav-link-btn--active" : ""}`}
+                aria-label={translate("header.allTools")}
+                aria-expanded={allToolsMenuOpen}
+                aria-controls={allToolsMenuOpen ? menuId : undefined}
+                onClick={() => setAllToolsMenuOpen(!allToolsMenuOpen)}
+              >
+                <span className="nav-link-label--full">{translate("header.allTools")}</span>
+                <span className="nav-link-label--compact">{translate("header.toolsCompact")}</span>
+                <ChevronDown
+                  size={14}
+                  className={`dropdown-chevron ${allToolsMenuOpen ? "dropdown-chevron--open" : ""}`}
+                />
+              </button>
+              {allToolsMenuOpen && (
+                <div id={menuId} className="megamenu-panel megamenu-panel--all">
+                  {groups.map((group) => {
+                    const groupTools = availableTools.filter((tool) => tool.suite === group.suite);
+                    if (groupTools.length === 0) return null;
+                    return (
+                      <div className="megamenu-column" key={group.suite}>
+                        <span className="megamenu-col-title">{translate(group.labelKey)}</span>
+                        {groupTools.map((tool) => (
+                          <button
+                            key={tool.id}
+                            type="button"
+                            className="megamenu-item"
+                            onClick={() => openTool(tool.id)}
+                          >
+                            <tool.icon size={15} style={{ color: tool.accentColor }} />
+                            <span>{translate(tool.titleKey)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </nav>
-      <div className="header-actions">
+
+      <div className="header-actions flex items-center gap-2">
+        {/* Mobile Segmented Toggle */}
+        {onZoneChange && (
+          <div className="header-zone-toggle flex sm:hidden items-center">
+            <SegmentedZoneToggle currentZone={currentZone} onZoneChange={onZoneChange} />
+          </div>
+        )}
+
         <button
           type="button"
           className="header-search-icon-btn"

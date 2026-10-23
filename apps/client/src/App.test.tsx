@@ -11,13 +11,26 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByRole("heading", { name: /Olá, o que faremos hoje\?/i })).toBeInTheDocument();
-    expect(screen.getByText(/ferramentas disponíveis neste dispositivo/i)).toBeInTheDocument();
+    expect(screen.getByText(/Seus arquivos nunca saem deste dispositivo/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Organizar PDF" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Comprimir PDF" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Extrair Imagens" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "PDF para Word" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Revisar texto" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Comparar textos" })).toBeInTheDocument();
+  });
+
+  it("busca ferramentas por ação, sem acentos, e permite limpar com Escape", () => {
+    render(<App />);
+    const search = screen.getByRole("searchbox", { name: "Buscar ferramentas" });
+    fireEvent.change(search, { target: { value: " rotacionar " } });
+    expect(screen.getByRole("heading", { name: "Rotacionar PDF" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Juntar PDF" })).not.toBeInTheDocument();
+    fireEvent.change(search, { target: { value: "inexistente123" } });
+    expect(screen.getByText(/Nenhuma ferramenta/i)).toBeInTheDocument();
+    fireEvent.keyDown(search, { key: "Escape" });
+    expect(search).toHaveValue("");
+    expect(screen.getByRole("heading", { name: "Juntar PDF" })).toBeInTheDocument();
   });
 
   it("abre a tela dedicada ao clicar em uma ferramenta e retorna ao hub", () => {
@@ -86,14 +99,11 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Juntar PDF" })).toBeInTheDocument();
   });
 
-  it("renderiza o plano de fundo parallax com nomes reais e o rodapé uniformizado", () => {
+  it("mantém o fundo limpo e o rodapé uniformizado", () => {
     const { container } = render(<App />);
 
-    // Parallax backdrop existe e contém rótulos reais de ferramentas
     const backdrop = container.querySelector(".parallax-backdrop");
-    expect(backdrop).toBeInTheDocument();
-    expect(backdrop?.textContent).toContain("Organizar PDF");
-    expect(backdrop?.textContent).toContain("Juntar PDF");
+    expect(backdrop).not.toBeInTheDocument();
 
     // Rodapé está uniformizado com a logo oficial e o novo layout
     const footer = container.querySelector(".app-footer");

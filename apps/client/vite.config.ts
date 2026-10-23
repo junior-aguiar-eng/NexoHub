@@ -44,8 +44,12 @@ export default defineConfig({
   },
   // Estes módulos ESM antigos tratam imports namespace como funções.
   // A transformação acima precisa ocorrer antes de qualquer pré-bundle.
-  optimizeDeps: { exclude: ["hunspell-asm", "emscripten-wasm-loader"] },
+  optimizeDeps: {
+    include: ["@huggingface/transformers"],
+    exclude: ["hunspell-asm", "emscripten-wasm-loader"],
+  },
   clearScreen: false,
+  worker: { format: "es" },
   server: {
     host: tauriHost || false,
     port: 5180,

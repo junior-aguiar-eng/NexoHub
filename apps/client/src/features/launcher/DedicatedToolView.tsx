@@ -14,6 +14,7 @@ import {
 import { type DragEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
+import type { TranslationProgressInfo } from "@/platform/browser-translator";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { readDocumentText } from "@/platform/document-reader";
 import { runLauncherTool } from "@/platform/launcher-tool-runner";
@@ -128,6 +129,20 @@ export function DedicatedToolView({
   const [translationSourceLang, setTranslationSourceLang] = useState<string>("en");
   const [translationTargetLang, setTranslationTargetLang] = useState<string>("pt");
   const [translationProgressStatus, setTranslationProgressStatus] = useState<string>("");
+  const [translationProgress, setTranslationProgress] = useState<TranslationProgressInfo | null>(
+    null,
+  );
+  const translationController = useRef<AbortController | null>(null);
+  const translationRun = useRef(0);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: trocar o arquivo/ferramenta encerra o trabalho associado.
+  useEffect(
+    () => () => {
+      translationRun.current++;
+      translationController.current?.abort();
+      translationController.current = null;
+    },
+    [files, tool.id],
+  );
   const [reviewProgressStatus, setReviewProgressStatus] = useState<string>("");
   const [rotateAngle, setRotateAngle] = useState<number>(0);
   const [imageOrientation, setImageOrientation] = useState<"portrait" | "landscape" | "auto">(
@@ -431,6 +446,9 @@ export function DedicatedToolView({
   // biome-ignore lint/correctness/useExhaustiveDependencies: troca de arquivo/ferramenta invalida os resultados associados.
   useEffect(() => {
     setMarkdownResult("");
+    setTranslatedText("");
+    setTranslationProgress(null);
+    setTranslationProgressStatus("");
     setFormFields([]);
     setFormValues({});
     setUnlockPassword("");
@@ -664,7 +682,27 @@ export function DedicatedToolView({
     );
   }
 
+  function cancelTranslation() {
+    translationRun.current++;
+    translationController.current?.abort();
+    translationController.current = null;
+    setStatus("idle");
+    setProgress(0);
+    setTranslationProgress(null);
+    setTranslationProgressStatus("");
+    setErrorMessage(null);
+  }
+
+  function clearTranslationResult() {
+    setTranslatedText("");
+    setOutputBlob(null);
+    setDownloadUrl(null);
+    setOutputFileName("");
+  }
+
   function handleSwapLanguages() {
+    cancelTranslation();
+    clearTranslationResult();
     const temp = translationSourceLang;
     setTranslationSourceLang(translationTargetLang);
     setTranslationTargetLang(temp);
@@ -677,9 +715,18 @@ export function DedicatedToolView({
     const isDirectTextInput = inputTab === "text" && directText.trim().length > 0;
     if (files.length === 0 && !isDirectTextInput && tool.id !== "text-compare") return;
 
+    const isTranslation = tool.id === "text-translate";
+    const run = isTranslation ? ++translationRun.current : 0;
+    if (isTranslation) {
+      translationController.current?.abort();
+      translationController.current = new AbortController();
+      clearTranslationResult();
+      setTranslationProgress(null);
+      setTranslationProgressStatus(translate("workspace.translate.preparing"));
+    }
     setStatus("running");
     setErrorMessage(null);
-    setProgress(20);
+    setProgress(isTranslation ? 0 : 20);
 
     const primaryFile =
       files.length > 0
@@ -690,7 +737,7 @@ export function DedicatedToolView({
       if (!documentCore.supportedToolIds.has(tool.id)) {
         throw new Error("TOOL_UNAVAILABLE");
       }
-      setProgress(40);
+      if (!isTranslation) setProgress(40);
       const output = await runLauncherTool(documentCore, tool.id, {
         files: files.length > 0 ? files : [primaryFile],
         splitMode,
@@ -741,15 +788,29 @@ export function DedicatedToolView({
         },
         translationSourceLang: translationSourceLang as "en" | "pt" | "es",
         translationTargetLang: translationTargetLang as "en" | "pt" | "es",
+        translationSignal: isTranslation ? translationController.current?.signal : undefined,
         onTranslationProgress: (info) => {
+          if (run !== translationRun.current) return;
           setProgress(info.progress);
-          setTranslationProgressStatus(info.message || `${info.progress}%`);
+          setTranslationProgress(info);
+          const message =
+            info.status === "downloading"
+              ? translate("workspace.translate.downloading")
+              : info.status === "initializing"
+                ? translate("workspace.translate.initializing")
+                : info.status === "ready"
+                  ? translate("workspace.translate.ready")
+                  : translate("workspace.translate.blockProgress")
+                      .replace("{current}", String(info.currentChunk ?? 0))
+                      .replace("{total}", String(info.totalChunks ?? 0));
+          setTranslationProgressStatus(message);
         },
         onReviewProgress: (info) => {
           setProgress(info.progress);
           setReviewProgressStatus(info.message || `${info.progress}%`);
         },
       });
+      if (isTranslation && run !== translationRun.current) return;
       const outputBlob = output.blob;
       const outName = output.fileName;
       const categoryKey = output.categoryKey;
@@ -768,6 +829,7 @@ export function DedicatedToolView({
       }
       if (tool.id === "text-translate") {
         const text = await outputBlob.text();
+        if (run !== translationRun.current) return;
         setTranslatedText(text);
       }
       if (tool.id === "text-review") {
@@ -810,6 +872,12 @@ export function DedicatedToolView({
       });
     } catch (err) {
       if (
+        isTranslation &&
+        (run !== translationRun.current ||
+          (err instanceof ToolRunError && err.code === "CANCELLED"))
+      )
+        return;
+      if (
         !(
           err instanceof ToolRunError &&
           (err.code === "INVALID_INPUT" || err.code === "TOOL_UNAVAILABLE")
@@ -827,6 +895,8 @@ export function DedicatedToolView({
               : translate("dedicated.errorProcessing"),
       );
       setStatus("error");
+    } finally {
+      if (isTranslation && run === translationRun.current) translationController.current = null;
     }
   }
 
@@ -1245,14 +1315,26 @@ export function DedicatedToolView({
         <TranslateDocumentPanel
           sourceLang={translationSourceLang as "en" | "pt" | "es"}
           targetLang={translationTargetLang as "en" | "pt" | "es"}
-          onSourceLangChange={(l) => setTranslationSourceLang(l)}
-          onTargetLangChange={(l) => setTranslationTargetLang(l)}
+          onSourceLangChange={(l) => {
+            cancelTranslation();
+            clearTranslationResult();
+            setTranslationSourceLang(l);
+          }}
+          onTargetLangChange={(l) => {
+            cancelTranslation();
+            clearTranslationResult();
+            setTranslationTargetLang(l);
+          }}
           onSwapLanguages={handleSwapLanguages}
           translatedText={translatedText}
           onTranslatedTextChange={setTranslatedText}
           isRunning={status === "running"}
           progressPercent={progress}
           progressStatusMessage={translationProgressStatus}
+          progressPhase={translationProgress?.status}
+          loadedBytes={translationProgress?.loadedBytes}
+          totalBytes={translationProgress?.totalBytes}
+          onCancel={cancelTranslation}
           accentColor={accent}
           outputFileName={
             outputFileName ||
@@ -1378,6 +1460,9 @@ export function DedicatedToolView({
 
         <section className="ilovepdf-hero-section">
           <h1 className="dedicated-tool-title">{translate(tool.titleKey)}</h1>
+          {tool.uploadTaglineKey && (
+            <p className="dedicated-tool-tagline">{translate(tool.uploadTaglineKey)}</p>
+          )}
           <p className="dedicated-tool-desc">{translate(tool.descriptionKey)}</p>
         </section>
 
@@ -1473,6 +1558,10 @@ export function DedicatedToolView({
                   className="dedicated-tool-direct-textarea"
                   value={directText}
                   onChange={(e) => {
+                    if (tool.id === "text-translate") {
+                      cancelTranslation();
+                      clearTranslationResult();
+                    }
                     setDirectText(e.target.value);
                     if (tool.id === "text-review") {
                       try {

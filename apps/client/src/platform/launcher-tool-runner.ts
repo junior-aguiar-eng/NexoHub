@@ -12,7 +12,11 @@ import { translate } from "@/i18n";
 import { performBrowserOcr } from "./browser-ocr";
 import { createZipArchive } from "./browser-pdf-utils";
 import { performBrowserReview } from "./browser-reviewer";
-import { performBrowserTranslation, type TranslationLanguage } from "./browser-translator";
+import {
+  performBrowserTranslation,
+  type TranslationLanguage,
+  type TranslationProgressInfo,
+} from "./browser-translator";
 import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
 import {
@@ -88,11 +92,8 @@ export interface LauncherToolInput {
   readonly onOcrTextExtracted?: (text: string) => void;
   readonly translationSourceLang?: TranslationLanguage;
   readonly translationTargetLang?: TranslationLanguage;
-  readonly onTranslationProgress?: (info: {
-    status: string;
-    progress: number;
-    message?: string;
-  }) => void;
+  readonly onTranslationProgress?: (info: TranslationProgressInfo) => void;
+  readonly translationSignal?: AbortSignal;
   readonly onReviewProgress?: (info: { progress: number; message: string }) => void;
   readonly detectHeadings?: boolean;
   readonly detectTables?: boolean;
@@ -548,7 +549,7 @@ async function executeTool(
       const sourceLang = input.translationSourceLang || "en";
       const targetLang = input.translationTargetLang || "pt";
 
-      if (documentCore.invoke) {
+      if (documentCore.invoke && documentCore.translationEngine !== "browser") {
         try {
           const res = await documentCore.invoke("translate_text", {
             text: rawText,
@@ -580,6 +581,7 @@ async function executeTool(
       const translationResult = await performBrowserTranslation(rawText, {
         sourceLang,
         targetLang,
+        signal: input.translationSignal,
         onProgress: (info) => {
           input.onTranslationProgress?.(info);
         },
@@ -829,7 +831,15 @@ export async function runLauncherTool(
         const output = await executeTool(documentCore, request);
         return { artifacts: [output] };
       } catch (error) {
+        if (error instanceof Error && error.message === "OPERACAO_CANCELADA") {
+          throw new ToolRunError("CANCELLED", translate("workspace.translate.cancelled"));
+        }
         const messages = {
+          TRADUCAO_DOWNLOAD_TIMEOUT: "workspace.translate.downloadTimeout",
+          TRADUCAO_REDE_INDISPONIVEL: "workspace.translate.networkError",
+          TRADUCAO_WORKER_INDISPONIVEL: "workspace.translate.workerError",
+          TRADUCAO_INICIALIZACAO_FALHOU: "workspace.translate.initializationError",
+          TRADUCAO_SEM_RESULTADO: "workspace.translate.emptyResult",
           PDF_SEM_TEXTO_SELECIONAVEL: "toolQuality.noText",
           SENHA_OBRIGATORIA: "toolQuality.passwordRequired",
           SENHA_INCORRETA: "toolQuality.passwordIncorrect",
@@ -862,7 +872,7 @@ export async function runLauncherTool(
     { get: () => ({ available: documentCore.supportedToolIds.has(toolId) }) },
     [executor("browser"), executor("native")],
   );
-  const result = await runner.run({ toolId, input });
+  const result = await runner.run({ toolId, input, signal: input.translationSignal });
   const output = result.artifacts[0] as LauncherToolOutput | undefined;
   if (!output?.blob || !output.fileName) throw new Error("EXECUTION_FAILED");
   if (!documentCore.persistLauncherResult) return output;

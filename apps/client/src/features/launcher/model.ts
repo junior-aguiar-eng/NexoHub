@@ -30,6 +30,7 @@ export type LauncherTool = {
   suite: Exclude<SuiteId, "overview">;
   titleKey: MessageKey;
   descriptionKey: MessageKey;
+  uploadTaglineKey?: MessageKey;
   icon: LucideIcon;
   accentColor?: string;
   badge?: string;

@@ -14,7 +14,17 @@ export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
   const reduceMotion = useReducedMotion();
   const [isDragOver, setIsDragOver] = useState(false);
   const Icon = tool.icon;
-  const accent = tool.accentColor || "var(--color-brand)";
+  const tone =
+    tool.id === "pdf-unlock" || tool.id === "pdf-protect"
+      ? "rose"
+      : tool.id === "pdf-form-fill" || tool.suite === "security" || tool.suite === "optimize"
+        ? "emerald"
+        : tool.suite === "convert" || tool.suite === "extraction"
+          ? "amber"
+          : tool.suite === "text" || tool.suite === "review"
+            ? "indigo"
+            : "coral";
+  const accent = `var(--catalog-${tone}-ink)`;
   const isAvailable = tool.availability.available;
 
   function handleMouseEnter() {
@@ -52,6 +62,7 @@ export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
 
   return (
     <motion.article
+      data-tone={tone}
       className={`tool-card ${isDragOver ? "tool-card--drag-over" : ""}`}
       initial={reduceMotion ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -63,6 +74,7 @@ export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
         {
           cursor: isAvailable ? "pointer" : "default",
           "--tool-accent": accent,
+          "--tool-tint": `var(--catalog-${tone}-surface)`,
         } as React.CSSProperties
       }
       onMouseEnter={handleMouseEnter}

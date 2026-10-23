@@ -2,7 +2,7 @@ import { ArrowRightLeft, Check, Copy, Download, Languages, Sparkles } from "luci
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
-import type { TranslationLanguage } from "@/platform/browser-translator";
+import type { TranslationLanguage, TranslationProgressInfo } from "@/platform/browser-translator";
 
 type TranslateDocumentPanelProps = {
   sourceLang: TranslationLanguage;
@@ -18,6 +18,10 @@ type TranslateDocumentPanelProps = {
   accentColor?: string;
   outputFileName?: string;
   outputBlob?: Blob;
+  progressPhase?: TranslationProgressInfo["status"];
+  loadedBytes?: number;
+  totalBytes?: number;
+  onCancel?: () => void;
 };
 
 export function TranslateDocumentPanel({
@@ -33,7 +37,10 @@ export function TranslateDocumentPanel({
   progressStatusMessage,
   accentColor = "#06b6d4",
   outputFileName = "documento_traduzido.txt",
-  outputBlob,
+  progressPhase,
+  loadedBytes,
+  totalBytes,
+  onCancel,
 }: TranslateDocumentPanelProps) {
   const [copied, setCopied] = useState(false);
 
@@ -48,7 +55,7 @@ export function TranslateDocumentPanel({
 
   function handleDownload() {
     if (!translatedText) return;
-    const blob = outputBlob || new Blob([translatedText], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([translatedText], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -202,6 +209,11 @@ export function TranslateDocumentPanel({
           </div>
 
           <div
+            role="progressbar"
+            aria-label={progressStatusMessage || translate("workspace.translate.preparing")}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progressPercent}
             style={{
               width: "100%",
               height: "6px",
@@ -220,9 +232,24 @@ export function TranslateDocumentPanel({
             />
           </div>
 
-          <span style={{ fontSize: "0.75rem", color: "#15803d" }}>
-            {translate("workspace.translate.downloadNotice")}
-          </span>
+          {progressPhase === "downloading" && (
+            <span style={{ fontSize: "0.75rem", color: "#15803d" }}>
+              {translate("workspace.translate.downloadNotice")}
+            </span>
+          )}
+          {typeof loadedBytes === "number" && loadedBytes > 0 && (
+            <span style={{ fontSize: "0.75rem", color: "#15803d" }}>
+              {(loadedBytes / 1024 / 1024).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MB
+              {typeof totalBytes === "number" && totalBytes > 0
+                ? ` / ${(totalBytes / 1024 / 1024).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MB`
+                : ""}
+            </span>
+          )}
+          {onCancel && (
+            <Button variant="secondary" onClick={onCancel}>
+              {translate("workspace.translate.cancel")}
+            </Button>
+          )}
         </div>
       )}
 
@@ -261,8 +288,8 @@ export function TranslateDocumentPanel({
               variant="ghost"
               size="compact"
               onClick={handleCopy}
-              disabled={!translatedText}
-              title="Copiar texto traduzido"
+              disabled={!translatedText || isRunning}
+              title={translate("workspace.translate.copyTooltip")}
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
               <span style={{ marginLeft: "0.3rem" }}>
@@ -274,11 +301,13 @@ export function TranslateDocumentPanel({
               variant="ghost"
               size="compact"
               onClick={handleDownload}
-              disabled={!translatedText}
-              title="Baixar arquivo de texto"
+              disabled={!translatedText || isRunning}
+              title={translate("workspace.translate.downloadTooltip")}
             >
               <Download size={14} />
-              <span style={{ marginLeft: "0.3rem" }}>Baixar .txt</span>
+              <span style={{ marginLeft: "0.3rem" }}>
+                {translate("workspace.translate.download")}
+              </span>
             </Button>
           </div>
         </div>
@@ -286,6 +315,8 @@ export function TranslateDocumentPanel({
         <textarea
           className="text-translate-output-textarea"
           value={translatedText}
+          disabled={isRunning}
+          aria-label={translate("workspace.translate.outputLabel")}
           onChange={(e) => onTranslatedTextChange(e.target.value)}
           placeholder={
             isRunning

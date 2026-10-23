@@ -113,7 +113,12 @@ materializa um novo documento a partir de conteúdo validado. O original importa
 novamente. Antes do parsing, o engine rejeita caminhos internos inseguros, links simbólicos,
 criptografia e arquivos que excedam os limites de tamanho, itens ou compressão.
 
-A tradução documental usa CTranslate2 em CPU com modelos instalados explicitamente em uma raiz
+No website, a tradução usa NLLB q8 com Transformers.js em um worker dedicado e reutilizável.
+O texto permanece no navegador; apenas os recursos do modelo são baixados. Cancelamento encerra
+o worker e downloads sem atividade possuem prazo de 60 segundos. O fluxo está descrito em
+[TRADUCAO-WEB.md](TRADUCAO-WEB.md).
+
+A tradução documental nativa usa CTranslate2 em CPU com modelos instalados explicitamente em uma raiz
 configurada pelo runtime. A UI nunca escolhe caminhos: solicita um `modelId`, e o sidecar valida que
 o diretório resolvido permaneça dentro da raiz permitida, contenha modelo válido, tokenizers e
 licença declarada. O pipeline segmenta entradas limitadas, protege placeholders e preserva quebras

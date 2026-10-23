@@ -53,8 +53,11 @@ export const ptBR = {
   "hero.eyebrow": "Ferramentas de PDF práticas e 100% gratuitas",
   "hero.titlePrefix": "Todas as ferramentas de PDF",
   "hero.titleAccent": "em um só lugar.",
-  "hero.description":
-    "Organize e processe documentos com as ferramentas disponíveis neste dispositivo, sem enviar seus arquivos ao NexoHub.",
+  "hero.description": "Todas as ferramentas para simplificar seus documentos, em um só lugar.",
+  "hero.securityBadge": "Processado localmente • Seus arquivos nunca saem deste dispositivo",
+  "hero.searchLabel": "Buscar ferramentas",
+  "hero.searchPlaceholder": "Buscar ferramenta por nome ou ação (ex: juntar, assinar, ocr)...",
+  "hero.commandShortcut": "Abrir busca rápida (Ctrl + K ou ⌘K)",
   "hero.trust.local": "Processamento 100% local",
   "hero.trust.privacy": "Seus arquivos nunca saem do PC",
   "hero.trust.traceability": "Sem filas de processamento remoto",
@@ -80,37 +83,48 @@ export const ptBR = {
   "tools.unavailable.review": "Ative o corretor gramatical em Superpoderes.",
   "tools.unavailable.translation": "Ative o módulo de tradução em Superpoderes.",
   "tools.unavailable.extract": "Extração inteligente em preparação.",
+  "tool.pdfOrganize.tagline": "Cada página no seu lugar.",
   "tool.pdfOrganize.title": "Organizar PDF",
   "tool.pdfOrganize.description": "Reordenar, combinar ou separar páginas de arquivos PDF.",
+  "tool.pdfMerge.tagline": "Seus arquivos, juntos em um só PDF.",
   "tool.pdfMerge.title": "Juntar PDF",
   "tool.pdfMerge.description":
     "Mesclar múltiplos arquivos PDF em um só documento na ordem desejada.",
+  "tool.pdfSplit.tagline": "Só as páginas que você precisa. Do seu jeito.",
   "tool.pdfSplit.title": "Dividir PDF",
   "tool.pdfSplit.description":
     "Extrair páginas ou separar o arquivo PDF em documentos independentes.",
+  "tool.pdfCompress.tagline": "Menos espaço, mais praticidade.",
   "tool.pdfCompress.title": "Comprimir PDF",
   "tool.pdfCompress.description":
     "Otimizar a estrutura do PDF e mostrar a variação real do tamanho.",
+  "tool.pdfExtractImages.tagline": "As imagens do seu PDF, prontas para novos usos.",
   "tool.pdfExtractImages.title": "Extrair Imagens",
   "tool.pdfExtractImages.description":
     "Extrair todas as fotos e ilustrações contidas no PDF em alta resolução.",
+  "tool.pdfOcr.tagline": "Da imagem para um texto que você pode usar.",
   "tool.pdfOcr.title": "Reconhecer texto",
   "tool.pdfOcr.description":
     "Converter documentos escaneados e imagens em texto selecionável e pesquisável.",
+  "tool.textCompare.tagline": "Encontre o que mudou entre duas versões.",
   "tool.textCompare.title": "Comparar textos",
   "tool.textCompare.description":
     "Identificar diferenças e alterações entre duas versões de um texto ou documento.",
+  "tool.textReview.tagline": "Suas ideias, com mais clareza.",
   "tool.textReview.title": "Revisar texto",
   "tool.textReview.description":
     "Verificar ortografia, gramática e estilo com sugestões inteligentes e instantâneas.",
+  "tool.textTranslate.tagline": "Suas palavras em outro idioma.",
   "tool.textTranslate.title": "Traduzir Texto",
   "tool.textTranslate.description":
     "Traduzir textos e documentos entre múltiplos idiomas de forma rápida e offline.",
   "tool.intelligenceExtract.title": "Extrair Informações",
   "tool.intelligenceExtract.description":
     "Detectar e extrair dados estruturados como e-mails, telefones, tabelas e valores.",
+  "tool.pdfRotate.tagline": "Coloque suas páginas na direção certa.",
   "tool.pdfRotate.title": "Rotacionar PDF",
   "tool.pdfRotate.description": "Girar páginas de arquivos PDF no sentido horário ou anti-horário.",
+  "tool.pdfCrop.tagline": "Destaque o que importa. Ajuste as margens.",
   "tool.pdfCrop.title": "Recortar PDF",
   "tool.pdfCrop.description":
     "Recortar as margens de páginas de um arquivo PDF ajustando a área visível e o tamanho das páginas.",
@@ -132,26 +146,35 @@ export const ptBR = {
   "crop.dimensionLabel": "Área visível aproximada:",
   "crop.selectedPagesPlaceholder": "Ex: 1, 3, 5-8",
   "crop.selectedPagesHint": "Digite números separados por vírgula ou intervalos com hífen.",
+  "tool.pdfToWord.tagline": "Do PDF para um documento pronto para editar.",
   "tool.pdfToWord.title": "PDF para Word",
   "tool.pdfToWord.description": "Converter documentos PDF em arquivos DOCX editáveis com precisão.",
+  "tool.wordToPdf.tagline": "Seu documento, pronto para compartilhar.",
   "tool.wordToPdf.title": "Word para PDF",
   "tool.wordToPdf.description": "Converter documentos DOCX e DOC para PDF de alta qualidade.",
+  "tool.imagesToPdf.tagline": "Transforme suas imagens em um documento.",
   "tool.imagesToPdf.title": "Imagem para PDF",
   "tool.imagesToPdf.description":
     "Transformar fotos JPG, PNG e WEBP em documentos PDF consolidados.",
+  "tool.pdfToJpg.tagline": "Cada página, uma imagem pronta para usar.",
   "tool.pdfToJpg.title": "PDF para JPG",
   "tool.pdfToJpg.description":
     "Converter cada página do seu documento PDF em imagens JPG de alta qualidade.",
+  "tool.pdfWatermark.tagline": "Deixe sua marca em cada página.",
   "tool.pdfWatermark.title": "Inserir Marca d'água",
   "tool.pdfWatermark.description":
     "Adicionar estampa de texto ou carimbo personalizado nas páginas do PDF.",
+  "tool.pdfPageNumbers.tagline": "Uma sequência clara, da primeira à última página.",
   "tool.pdfPageNumbers.title": "Número de Páginas",
   "tool.pdfPageNumbers.description":
     "Inserir numeração de páginas e rodapés automáticos no documento PDF.",
+  "tool.pdfProtect.tagline": "Mais controle sobre o acesso ao seu PDF.",
   "tool.pdfProtect.title": "Proteger PDF",
   "tool.pdfProtect.description": "Adicionar senha e proteger documentos confidenciais.",
+  "tool.pdfUnlock.tagline": "Seu acesso de volta, com a senha certa.",
   "tool.pdfUnlock.title": "Desbloquear PDF",
   "tool.pdfUnlock.description": "Remover senha e restrições de edição ou impressão de PDFs.",
+  "tool.pdfSign.tagline": "Sua assinatura, no lugar certo.",
   "tool.pdfSign.title": "Assinar PDF",
   "tool.pdfSign.description":
     "Adicionar assinatura visual desenhada, digitada ou imagem com data e posicionamento livre.",
@@ -189,6 +212,7 @@ export const ptBR = {
   "extractImages.downloadSingle": "Baixar imagem",
   "extractImages.noImagesFound": "Nenhuma imagem embutida foi encontrada neste documento.",
   "extractImages.page": "Página",
+  "tool.pdfToMarkdown.tagline": "Do PDF para um texto mais fácil de trabalhar.",
   "tool.pdfToMarkdown.title": "PDF para Markdown",
   "tool.pdfToMarkdown.description":
     "Converter documentos PDF em arquivos Markdown preservando títulos, formatação e tabelas.",
@@ -202,6 +226,7 @@ export const ptBR = {
   "pdfToMarkdown.includePageBreaks": "Incluir separadores de página",
   "pdfToMarkdown.includePageBreaksDesc":
     "Adiciona divisores horizontais (---) e marcador entre as páginas.",
+  "tool.pdfFormFill.tagline": "Preencha os campos. Deixe seu documento pronto.",
   "tool.pdfFormFill.title": "Preencher Formulário PDF",
   "tool.pdfFormFill.description":
     "Preencha formulários interativos PDF (AcroForms) diretamente no navegador com opção de achatamento.",
@@ -697,6 +722,26 @@ export const ptBR = {
   "workspace.review.rule.ACCENTUATION": "Acentuação",
   "workspace.review.rule.PLEONASM_REDUNDANCY": "Pleonasmo",
   "workspace.translate.title": "Tradutor Inteligente",
+  "workspace.translate.preparing": "Preparando tradução...",
+  "workspace.translate.downloading": "Baixando os recursos do modelo...",
+  "workspace.translate.initializing": "Inicializando o modelo no dispositivo...",
+  "workspace.translate.blockProgress": "Traduzindo bloco {current} de {total}...",
+  "workspace.translate.ready": "Tradução concluída.",
+  "workspace.translate.cancel": "Cancelar tradução",
+  "workspace.translate.cancelled": "Tradução cancelada.",
+  "workspace.translate.copyTooltip": "Copiar texto traduzido",
+  "workspace.translate.downloadTooltip": "Baixar o texto atual em formato .txt",
+  "workspace.translate.download": "Baixar .txt",
+  "workspace.translate.outputLabel": "Texto traduzido",
+  "workspace.translate.downloadTimeout":
+    "O download do modelo ficou sem receber dados. Confira a conexão e tente novamente.",
+  "workspace.translate.networkError":
+    "Não foi possível baixar os recursos da tradução. Confira a conexão e tente novamente.",
+  "workspace.translate.workerError":
+    "Não foi possível iniciar o tradutor neste navegador. Atualize a página e tente novamente.",
+  "workspace.translate.initializationError":
+    "O modelo não conseguiu iniciar neste dispositivo. Feche outras abas pesadas e tente novamente.",
+  "workspace.translate.emptyResult": "O modelo não retornou uma tradução válida. Tente novamente.",
   "workspace.translate.swap": "Inverter Idiomas",
   "workspace.translate.swapTitle": "Inverter idiomas de origem e destino",
   "workspace.translate.translating": "Traduzindo texto...",
@@ -709,7 +754,7 @@ export const ptBR = {
   "workspace.translate.lang.es": "Espanhol",
   "workspace.translate.offlineBadge": "Tradução no Navegador • Total Privacidade",
   "workspace.translate.downloadNotice":
-    "Preparando tradução direta — processamento seguro no seu dispositivo.",
+    "O primeiro uso pode exigir um download grande. Recursos disponíveis no cache são reutilizados. Você pode cancelar a qualquer momento.",
   "workspace.compress.title": "Resultado da Compressão",
   "workspace.compress.savings": "de economia alcançada",
   "compress.methodTitle": "Otimização da estrutura",

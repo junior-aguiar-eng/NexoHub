@@ -3,6 +3,7 @@ import { PDFDocument } from "pdf-lib";
 import { describe, expect, it, vi } from "vitest";
 import { BrowserDocumentCorePort } from "./browser-document-core";
 import * as browserReviewer from "./browser-reviewer";
+import * as browserTranslator from "./browser-translator";
 import { HttpDocumentCorePort } from "./http-document-core";
 import { type LauncherToolInput, runLauncherTool } from "./launcher-tool-runner";
 
@@ -290,12 +291,24 @@ describe("Tool Runner do Launcher", () => {
     expect(text).toContain("CONTRATO SOCIAL");
   });
 
-  it("executa tradução neural no navegador gerando arquivo traduzido com progresso", async () => {
+  it("monta o arquivo e encaminha o progresso do motor de tradução", async () => {
     const port = new BrowserDocumentCorePort();
     const progressList: number[] = [];
     const textFile = new File(["This is a legal service agreement."], "agreement.txt", {
       type: "text/plain",
     });
+    // O worker e seu carregamento são validados separadamente; aqui conferimos a saída do runner.
+    const engine = vi
+      .spyOn(browserTranslator, "performBrowserTranslation")
+      .mockImplementationOnce(async (_text, options) => {
+        options.onProgress?.({ status: "ready", progress: 100 });
+        return {
+          translatedText: "Este é um contrato de prestação de serviços.",
+          sourceLang: "en",
+          targetLang: "pt",
+          engine: "transformers.js-nllb-200",
+        };
+      });
 
     const result = await runLauncherTool(port, "text-translate", {
       ...input([textFile]),
@@ -307,9 +320,9 @@ describe("Tool Runner do Launcher", () => {
     expect(result.fileName).toBe("agreement_en_para_pt.txt");
     expect(result.blob.type).toBe("text/plain;charset=utf-8");
     const translated = await result.blob.text();
-    expect(translated).toContain("[PT]");
-    expect(translated).toContain("This is a legal service agreement.");
+    expect(translated).toBe("Este é um contrato de prestação de serviços.");
     expect(progressList.at(-1)).toBe(100);
+    engine.mockRestore();
   });
 
   it("rejeita tradução sem texto de entrada", async () => {

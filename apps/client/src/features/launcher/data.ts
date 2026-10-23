@@ -39,6 +39,7 @@ const presentation = {
     suite: "organize" as const,
     titleKey: "tool.pdfOrganize.title" as const,
     descriptionKey: "tool.pdfOrganize.description" as const,
+    uploadTaglineKey: "tool.pdfOrganize.tagline" as const,
     icon: BetweenHorizontalStart,
     accentColor: "#EF4444", // Vermelho Coral
   },
@@ -46,6 +47,7 @@ const presentation = {
     suite: "organize" as const,
     titleKey: "tool.pdfMerge.title" as const,
     descriptionKey: "tool.pdfMerge.description" as const,
+    uploadTaglineKey: "tool.pdfMerge.tagline" as const,
     icon: FolderInput,
     accentColor: "#E11D48", // Rosa Rubi
   },
@@ -53,6 +55,7 @@ const presentation = {
     suite: "organize" as const,
     titleKey: "tool.pdfSplit.title" as const,
     descriptionKey: "tool.pdfSplit.description" as const,
+    uploadTaglineKey: "tool.pdfSplit.tagline" as const,
     icon: Scissors,
     accentColor: "#EA580C", // Laranja Vivo
   },
@@ -60,6 +63,7 @@ const presentation = {
     suite: "organize" as const,
     titleKey: "tool.pdfRotate.title" as const,
     descriptionKey: "tool.pdfRotate.description" as const,
+    uploadTaglineKey: "tool.pdfRotate.tagline" as const,
     icon: RotateCw,
     accentColor: "#D97706", // Ouro Âmbar
   },
@@ -67,6 +71,7 @@ const presentation = {
     suite: "organize" as const,
     titleKey: "tool.pdfCrop.title" as const,
     descriptionKey: "tool.pdfCrop.description" as const,
+    uploadTaglineKey: "tool.pdfCrop.tagline" as const,
     icon: Crop,
     accentColor: "#EA580C", // Laranja Abrasivo
   },
@@ -74,6 +79,7 @@ const presentation = {
     suite: "optimize" as const,
     titleKey: "tool.pdfCompress.title" as const,
     descriptionKey: "tool.pdfCompress.description" as const,
+    uploadTaglineKey: "tool.pdfCompress.tagline" as const,
     icon: FileArchive,
     accentColor: "#00875F", // Verde Esmeralda
   },
@@ -81,6 +87,7 @@ const presentation = {
     suite: "convert" as const,
     titleKey: "tool.pdfToWord.title" as const,
     descriptionKey: "tool.pdfToWord.description" as const,
+    uploadTaglineKey: "tool.pdfToWord.tagline" as const,
     icon: FileType,
     accentColor: "#2563EB", // Azul Royal
   },
@@ -88,6 +95,7 @@ const presentation = {
     suite: "convert" as const,
     titleKey: "tool.wordToPdf.title" as const,
     descriptionKey: "tool.wordToPdf.description" as const,
+    uploadTaglineKey: "tool.wordToPdf.tagline" as const,
     icon: FileCode2,
     accentColor: "#0284C7", // Azul Céu
   },
@@ -95,6 +103,7 @@ const presentation = {
     suite: "convert" as const,
     titleKey: "tool.imagesToPdf.title" as const,
     descriptionKey: "tool.imagesToPdf.description" as const,
+    uploadTaglineKey: "tool.imagesToPdf.tagline" as const,
     icon: Image,
     accentColor: "#059669", // Verde Jade
   },
@@ -102,6 +111,7 @@ const presentation = {
     suite: "convert" as const,
     titleKey: "tool.pdfToJpg.title" as const,
     descriptionKey: "tool.pdfToJpg.description" as const,
+    uploadTaglineKey: "tool.pdfToJpg.tagline" as const,
     icon: Images,
     accentColor: "#B77900", // Âmbar Dourado
   },
@@ -109,6 +119,7 @@ const presentation = {
     suite: "security" as const,
     titleKey: "tool.pdfWatermark.title" as const,
     descriptionKey: "tool.pdfWatermark.description" as const,
+    uploadTaglineKey: "tool.pdfWatermark.tagline" as const,
     icon: Stamp,
     accentColor: "#0284C7", // Azul Oceano
   },
@@ -116,6 +127,7 @@ const presentation = {
     suite: "organize" as const,
     titleKey: "tool.pdfPageNumbers.title" as const,
     descriptionKey: "tool.pdfPageNumbers.description" as const,
+    uploadTaglineKey: "tool.pdfPageNumbers.tagline" as const,
     icon: Hash,
     accentColor: "#6366F1", // Índigo
   },
@@ -123,6 +135,7 @@ const presentation = {
     suite: "security" as const,
     titleKey: "tool.pdfProtect.title" as const,
     descriptionKey: "tool.pdfProtect.description" as const,
+    uploadTaglineKey: "tool.pdfProtect.tagline" as const,
     icon: Lock,
     accentColor: "#475569", // Ardósia
   },
@@ -130,6 +143,7 @@ const presentation = {
     suite: "security" as const,
     titleKey: "tool.pdfSign.title" as const,
     descriptionKey: "tool.pdfSign.description" as const,
+    uploadTaglineKey: "tool.pdfSign.tagline" as const,
     icon: PenTool,
     accentColor: "#059669", // Esmeralda Seguro
   },
@@ -137,6 +151,7 @@ const presentation = {
     suite: "convert" as const,
     titleKey: "tool.pdfExtractImages.title" as const,
     descriptionKey: "tool.pdfExtractImages.description" as const,
+    uploadTaglineKey: "tool.pdfExtractImages.tagline" as const,
     icon: Images,
     accentColor: "#B77900", // Âmbar com contraste no cartão claro
   },
@@ -144,6 +159,7 @@ const presentation = {
     suite: "text" as const,
     titleKey: "tool.pdfOcr.title" as const,
     descriptionKey: "tool.pdfOcr.description" as const,
+    uploadTaglineKey: "tool.pdfOcr.tagline" as const,
     icon: FileScan,
     accentColor: "#8B5CF6", // Violeta Moderno
   },
@@ -151,6 +167,7 @@ const presentation = {
     suite: "text" as const,
     titleKey: "tool.textCompare.title" as const,
     descriptionKey: "tool.textCompare.description" as const,
+    uploadTaglineKey: "tool.textCompare.tagline" as const,
     icon: GitCompareArrows,
     accentColor: "#3B82F6", // Azul Real
   },
@@ -158,6 +175,7 @@ const presentation = {
     suite: "text" as const,
     titleKey: "tool.textReview.title" as const,
     descriptionKey: "tool.textReview.description" as const,
+    uploadTaglineKey: "tool.textReview.tagline" as const,
     icon: SpellCheck2,
     accentColor: "#6366F1", // Índigo
   },
@@ -165,6 +183,7 @@ const presentation = {
     suite: "text" as const,
     titleKey: "tool.textTranslate.title" as const,
     descriptionKey: "tool.textTranslate.description" as const,
+    uploadTaglineKey: "tool.textTranslate.tagline" as const,
     icon: Languages,
     accentColor: "#0891B2", // Ciano / Turquesa
   },
@@ -172,6 +191,7 @@ const presentation = {
     suite: "convert" as const,
     titleKey: "tool.pdfToMarkdown.title" as const,
     descriptionKey: "tool.pdfToMarkdown.description" as const,
+    uploadTaglineKey: "tool.pdfToMarkdown.tagline" as const,
     icon: FileText,
     accentColor: "#9333EA", // Roxo Ametista
   },
@@ -179,6 +199,7 @@ const presentation = {
     suite: "text" as const,
     titleKey: "tool.pdfFormFill.title" as const,
     descriptionKey: "tool.pdfFormFill.description" as const,
+    uploadTaglineKey: "tool.pdfFormFill.tagline" as const,
     icon: FormInput,
     accentColor: "#2563EB", // Azul Cobalto
   },
@@ -186,6 +207,7 @@ const presentation = {
     suite: "security" as const,
     titleKey: "tool.pdfUnlock.title" as const,
     descriptionKey: "tool.pdfUnlock.description" as const,
+    uploadTaglineKey: "tool.pdfUnlock.tagline" as const,
     icon: Unlock,
     accentColor: "#E11D48", // Rosa Rubi Segurança
   },

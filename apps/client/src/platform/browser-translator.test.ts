@@ -1,10 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { segmentTextForTranslation, type TranslationProgressInfo } from "./browser-translator";
 import {
-  performBrowserTranslation,
-  resetTranslatorCache,
-  segmentTextForTranslation,
-  type TranslationProgressInfo,
-} from "./browser-translator";
+  performRuntimeTranslation as performBrowserTranslation,
+  resetRuntimeCache as resetTranslatorCache,
+} from "./translation-runtime";
 
 const neuralBlock = vi.hoisted(() => vi.fn(async (text: string) => [{ translation_text: text }]));
 vi.mock("@huggingface/transformers", () => ({
@@ -12,7 +11,6 @@ vi.mock("@huggingface/transformers", () => ({
   pipeline: vi.fn(async () => neuralBlock),
 }));
 afterEach(() => {
-  vi.unstubAllEnvs();
   resetTranslatorCache();
   neuralBlock.mockReset();
   neuralBlock.mockImplementation(async (text: string) => [{ translation_text: text }]);
@@ -76,7 +74,7 @@ describe("browser-translator", () => {
       ).rejects.toThrow("PAR_DE_IDIOMAS_NAO_SUPORTADO");
     });
 
-    it("executa tradução com sucesso e emite progresso em ambiente de teste", async () => {
+    it("executa tradução com sucesso e emite progresso usando pipeline neural isolado", async () => {
       const progressList: TranslationProgressInfo[] = [];
       const result = await performBrowserTranslation("Contrato de prestação de serviços", {
         sourceLang: "pt",
@@ -84,7 +82,7 @@ describe("browser-translator", () => {
         onProgress: (info) => progressList.push(info),
       });
 
-      expect(result.translatedText).toBe("[EN] Contrato de prestação de serviços");
+      expect(result.translatedText).toBe("Contrato de prestação de serviços");
       expect(result.engine).toBe("transformers.js-nllb-200");
       expect(progressList.length).toBeGreaterThan(0);
       expect(progressList.at(-1)?.status).toBe("ready");
@@ -130,9 +128,8 @@ describe("segmentação sem perda", () => {
   });
 });
 
-describe("montagem da tradução fora do atalho de teste", () => {
+describe("montagem neural e preservação literal", () => {
   it("preserva links e marcadores maiores que o limite sem enviá-los ao modelo", async () => {
-    vi.stubEnv("NODE_ENV", "production");
     neuralBlock.mockImplementation(async () => [{ translation_text: "Translated" }]);
     const url = `https://example.com/${"a".repeat(600)}`;
     const placeholder = `{{${"campo".repeat(100)}}}`;
@@ -144,7 +141,6 @@ describe("montagem da tradução fora do atalho de teste", () => {
     expect(result.translatedText).toBe(`Translated ${url}\n${placeholder} Translated`);
   });
   it("mantém quebras, recuos, marcadores e separadores de blocos", async () => {
-    vi.stubEnv("NODE_ENV", "production");
     const text = `  Olá {{nome}}!\r\n\t${"Documento válido. ".repeat(40)}\nhttps://example.com  `;
     const result = await performBrowserTranslation(text, { sourceLang: "pt", targetLang: "en" });
     expect(neuralBlock).toHaveBeenCalled();
@@ -156,7 +152,6 @@ describe("montagem da tradução fora do atalho de teste", () => {
     expect(result.translatedText).toBe(text);
   });
   it("rejeita saída neural vazia em vez de anunciar tradução do original", async () => {
-    vi.stubEnv("NODE_ENV", "production");
     neuralBlock.mockResolvedValueOnce([{ translation_text: "" }]);
     await expect(
       performBrowserTranslation("Olá", { sourceLang: "pt", targetLang: "en" }),

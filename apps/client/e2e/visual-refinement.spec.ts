@@ -21,10 +21,10 @@ for (const [width, columns] of [
           .evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(" ").length),
       )
       .toBe(columns);
-    await expect(page.locator(".tool-card__icon").first()).toHaveCSS("width", "48px");
-    await expect(cards.first()).toHaveCSS("padding", "20px");
-    await expect(cards.first()).toHaveCSS("border-radius", "14px");
-    await expect(page.locator(".tool-grid")).toHaveCSS("gap", "16px");
+    await expect(page.locator(".tool-card__icon").first()).toHaveCSS("width", "44px");
+    await expect(cards.first()).toHaveCSS("padding", "24px");
+    await expect(cards.first()).toHaveCSS("border-radius", "16px");
+    await expect(page.locator(".tool-grid")).toHaveCSS("gap", "20px");
     const layout = await cards.evaluateAll((elements) =>
       elements.map((card) => {
         const rect = card.getBoundingClientRect();
@@ -107,12 +107,13 @@ test("cartão tem foco visível, abre pelo teclado e aceita arquivos arrastados"
   await transfer.dispose();
 });
 
-test("parallax permanece estático com movimento reduzido", async ({ page }) => {
+test("catálogo mantém fundo limpo e cards estáticos com movimento reduzido", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await page.mouse.move(1200, 700);
-  await expect(page.locator(".parallax-backdrop")).toHaveCSS("--parallax-x", "0px");
-  await expect(page.locator(".parallax-backdrop")).toHaveCSS("--parallax-y", "0px");
+  await expect(page.locator(".parallax-backdrop")).toHaveCount(0);
+  await page.locator(".tool-card").first().hover();
+  await expect(page.locator(".tool-card").first()).toHaveCSS("translate", "none");
 });
 
 test("mantém contraste de textos, filtros e ícones", async ({ page }) => {
@@ -228,4 +229,28 @@ test("clique interno no catálogo preserva a seleção da ferramenta", async ({ 
   await panel.getByRole("button", { name: "Juntar PDF", exact: true }).click();
   await expect(page.locator(".dedicated-tool-page")).toBeVisible();
   await expect(panel).toHaveCount(0);
+});
+
+test("busca do catálogo combina categorias, limpa com Escape e abre a paleta pelo atalho", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const search = page.getByRole("searchbox", { name: "Buscar ferramentas" });
+  await search.fill("juntar");
+  await expect(page.locator(".tool-card")).toHaveCount(1);
+  await expect(page.locator(".tool-card")).toHaveAttribute("data-tone", "coral");
+  await page
+    .getByRole("navigation", { name: "Categorias de ferramentas" })
+    .getByRole("button", { name: "Converter PDF", exact: true })
+    .click();
+  await expect(page.locator(".tool-card")).toHaveCount(0);
+  await search.focus();
+  await search.press("Escape");
+  await expect(search).toHaveValue("");
+  await expect(page.locator(".tool-card").first()).toHaveAttribute("data-tone", "amber");
+  await page.keyboard.press("Control+k");
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Abrir busca rápida (Ctrl + K ou ⌘K)" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
 });

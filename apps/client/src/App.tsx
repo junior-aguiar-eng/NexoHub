@@ -1,7 +1,6 @@
 import { Database, FileCheck, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import nexohubIcon from "@/assets/nexohub-icon.png";
-import { ParallaxBackground } from "@/components/ParallaxBackground";
 import { CommandPalette } from "@/features/launcher/CommandPalette";
 import { DedicatedToolView } from "@/features/launcher/DedicatedToolView";
 import { resolveLauncherTools } from "@/features/launcher/data";
@@ -118,7 +117,7 @@ export function App() {
 
   const [initialFilesForTool, setInitialFilesForTool] = useState<File[]>([]);
   const [activeSuite, setActiveSuite] = useState<SuiteId>("overview");
-  const [searchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   // Sincroniza a URL do navegador com a ferramenta ativa
@@ -192,8 +191,7 @@ export function App() {
   }, [dynamicTools, activeSuite, searchQuery]);
 
   return (
-    <div className="app-shell">
-      <ParallaxBackground tools={dynamicTools} />
+    <div className={`app-shell ${activeDedicatedTool ? "" : "app-shell--catalog"}`}>
       <a className="skip-link" href="#main-content">
         {translate("app.skip")}
       </a>
@@ -233,7 +231,11 @@ export function App() {
         ) : (
           <>
             <div className="launcher-welcome-container">
-              <Hero />
+              <Hero
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+              />
               <div className="launcher-suites-center">
                 <SuiteNavigation
                   activeSuite={activeSuite}

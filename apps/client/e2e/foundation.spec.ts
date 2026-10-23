@@ -121,7 +121,7 @@ test("abre o Launcher compartilhado com vitrine de ferramentas", async ({ page }
       name: "Olá, o que faremos hoje?",
     }),
   ).toBeVisible();
-  await expect(page.getByText(/ferramentas disponíveis neste dispositivo/)).toBeVisible();
+  await expect(page.getByText(/Seus arquivos nunca saem deste dispositivo/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Organizar PDF" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Comprimir PDF" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Juntar PDF" })).toBeVisible();

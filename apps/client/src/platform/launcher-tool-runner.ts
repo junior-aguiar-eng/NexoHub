@@ -19,6 +19,8 @@ import {
 } from "./browser-translator";
 import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
+import { performBrowserPdfComparison } from "./pdf-comparison-client";
+import type { PdfComparisonProgress, PdfComparisonResult } from "./pdf-comparison-types";
 import {
   addPageNumbersToPdfDocument,
   addWatermarkToPdfDocument,
@@ -58,6 +60,8 @@ export interface LauncherInterval {
 }
 
 export interface LauncherToolInput {
+  readonly comparisonSignal?: AbortSignal;
+  readonly onComparisonProgress?: (info: PdfComparisonProgress) => void;
   readonly files: readonly File[];
   readonly splitMode: "interval" | "pages";
   readonly splitIntervals: readonly LauncherInterval[];
@@ -133,6 +137,7 @@ export interface LauncherToolInput {
 }
 
 export interface LauncherToolOutput {
+  readonly comparison?: PdfComparisonResult;
   readonly blob: Blob;
   readonly fileName: string;
   readonly categoryKey: "recent.type.pdf" | "recent.type.document";
@@ -144,6 +149,7 @@ export interface LauncherToolOutput {
 }
 
 const supportedIds = new Set([
+  "pdf-compare",
   "pdf-organize",
   "pdf-merge",
   "pdf-split",
@@ -374,6 +380,30 @@ async function executeTool(
         categoryKey: "recent.type.pdf",
       };
     }
+    case "pdf-compare": {
+      if (input.files.length !== 2)
+        throw new ToolRunError("INVALID_INPUT", translate("pdfCompare.errorTwoFiles"));
+      const [left, right] = await Promise.all(
+        input.files.map(async (file) => new Uint8Array(await file.arrayBuffer())),
+      );
+      const bundle = await performBrowserPdfComparison(
+        left,
+        right,
+        input.files.map((file) => file.name),
+        {
+          signal: input.comparisonSignal,
+          onProgress: input.onComparisonProgress,
+        },
+      );
+      return {
+        blob: pdfBlob(bundle.report),
+        fileName: `${baseName}_comparacao.pdf`,
+        categoryKey: "recent.type.document",
+        secondaryBlob: new Blob([bundle.json], { type: "application/json;charset=utf-8" }),
+        secondaryFileName: `${baseName}_comparacao.json`,
+        comparison: bundle.comparison,
+      };
+    }
     case "text-compare": {
       const left = input.firstText || (first ? await readDocumentText(first) : "");
       const right =
@@ -601,7 +631,7 @@ async function executeTool(
       const translationResult = await performBrowserTranslation(rawText, {
         sourceLang,
         targetLang,
-        signal: input.translationSignal,
+        signal: input.translationSignal ?? input.comparisonSignal,
         onProgress: (info) => {
           input.onTranslationProgress?.(info);
         },
@@ -902,6 +932,12 @@ export async function runLauncherTool(
           throw new ToolRunError("CANCELLED", translate("workspace.translate.cancelled"));
         }
         const messages = {
+          PDF_COMPARACAO_LIMITE_EXCEDIDO: "pdfCompare.errorLimit",
+          PDF_COMPARACAO_TEXTO_LIMITE_EXCEDIDO: "pdfCompare.errorTextLimit",
+          PDF_COMPARACAO_PDF_INVALIDO: "pdfCompare.errorInvalid",
+          PDF_COMPARACAO_SENHA_NECESSARIA: "pdfCompare.errorPassword",
+          PDF_COMPARACAO_RENDERIZACAO_INDISPONIVEL: "pdfCompare.errorWorker",
+          PDF_COMPARACAO_WORKER_INDISPONIVEL: "pdfCompare.errorWorker",
           TRADUCAO_DOWNLOAD_TIMEOUT: "workspace.translate.downloadTimeout",
           TRADUCAO_REDE_INDISPONIVEL: "workspace.translate.networkError",
           TRADUCAO_WORKER_INDISPONIVEL: "workspace.translate.workerError",
@@ -945,7 +981,11 @@ export async function runLauncherTool(
     { get: () => ({ available: documentCore.supportedToolIds.has(toolId) }) },
     [executor("browser"), executor("native")],
   );
-  const result = await runner.run({ toolId, input, signal: input.translationSignal });
+  const result = await runner.run({
+    toolId,
+    input,
+    signal: input.translationSignal ?? input.comparisonSignal,
+  });
   const output = result.artifacts[0] as LauncherToolOutput | undefined;
   if (!output?.blob || !output.fileName) throw new Error("EXECUTION_FAILED");
   if (!documentCore.persistLauncherResult) return output;

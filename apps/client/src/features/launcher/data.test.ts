@@ -23,7 +23,7 @@ describe("Strict Functional Tools Catalog", () => {
     ]) {
       expect(ids).toContain(id);
     }
-    expect(ids).toHaveLength(22);
+    expect(ids).toHaveLength(23);
   });
   it("não oferece conversões e proteção sem executor", () => {
     const tools = resolveLauncherTools();

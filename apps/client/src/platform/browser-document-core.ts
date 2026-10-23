@@ -78,6 +78,7 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
   readonly ocrEngine = "browser" as const;
   readonly translationEngine = "browser" as const;
   readonly supportedToolIds: ReadonlySet<string> = new Set([
+    "pdf-compare",
     "pdf-organize",
     "pdf-merge",
     "pdf-split",

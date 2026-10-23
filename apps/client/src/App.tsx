@@ -21,6 +21,9 @@ function normalize(value: string) {
 }
 
 const ROUTE_TOOL_MAP: Record<string, string> = {
+  "/comparar-pdf": "pdf-compare",
+  "/compare-pdf": "pdf-compare",
+  "/pdf-compare": "pdf-compare",
   "/juntar-pdf": "pdf-merge",
   "/merge-pdf": "pdf-merge",
   "/dividir-pdf": "pdf-split",
@@ -78,6 +81,7 @@ const ROUTE_TOOL_MAP: Record<string, string> = {
 };
 
 const TOOL_ROUTE_MAP: Record<string, string> = {
+  "pdf-compare": "/comparar-pdf",
   "pdf-merge": "/juntar-pdf",
   "pdf-split": "/dividir-pdf",
   "pdf-rotate": "/rotacionar-pdf",

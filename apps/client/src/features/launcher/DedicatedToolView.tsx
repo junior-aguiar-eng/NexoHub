@@ -44,6 +44,7 @@ import { MergePdfPanel } from "./MergePdfPanel";
 import type { LauncherTool } from "./model";
 import { OcrScannerPanel } from "./OcrScannerPanel";
 import { PageNumbersPdfPanel } from "./PageNumbersPdfPanel";
+import { PdfComparePanel } from "./PdfComparePanel";
 import { PdfPageGridPanel, type PdfPageItem } from "./PdfPageGridPanel";
 import { PdfToExcelPanel } from "./PdfToExcelPanel";
 import { PdfToJpgPanel } from "./PdfToJpgPanel";
@@ -397,6 +398,7 @@ export function DedicatedToolView({
     let isCancelled = false;
 
     async function inspectPdf() {
+      if (tool.id === "pdf-compare") return;
       if (
         files.length > 0 &&
         (files[0].type.includes("pdf") || files[0].name.toLowerCase().endsWith(".pdf"))
@@ -1612,6 +1614,12 @@ export function DedicatedToolView({
           </div>
         </div>
       </div>
+    );
+  }
+
+  if (tool.id === "pdf-compare") {
+    return (
+      <PdfComparePanel documentCore={documentCore} onBack={onBack} initialFiles={initialFiles} />
     );
   }
 

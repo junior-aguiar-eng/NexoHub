@@ -1,4 +1,84 @@
 export const ptBR = {
+  "pdfCompare.reportAdded": "Texto inserido",
+  "pdfCompare.reportRemoved": "Texto removido",
+  "pdfCompare.limits": "Até 40 páginas e 64 MiB por PDF.",
+  "pdfCompare.fileTooLarge": "O PDF excede o limite de 64 MiB.",
+  "pdfCompare.geometryChanged": "O tamanho ou a orientação das páginas é diferente.",
+  "pdfCompare.title": "Comparar PDF",
+  "pdfCompare.subtitle": "Compare texto e aparência de dois PDFs no seu navegador.",
+  "pdfCompare.back": "Voltar às ferramentas",
+  "pdfCompare.local": "Processamento local · nenhum arquivo é enviado",
+  "pdfCompare.original": "PDF original",
+  "pdfCompare.revised": "PDF revisado",
+  "pdfCompare.choose": "Selecionar PDF ou arrastar aqui",
+  "pdfCompare.replace": "Substituir PDF",
+  "pdfCompare.swap": "Inverter documentos",
+  "pdfCompare.run": "Comparar PDFs",
+  "pdfCompare.cancel": "Cancelar comparação",
+  "pdfCompare.cancelled": "Comparação cancelada.",
+  "pdfCompare.invalidFile": "Selecione um arquivo PDF.",
+  "pdfCompare.error":
+    "Não foi possível comparar estes PDFs. Confira os arquivos e tente novamente.",
+  "pdfCompare.reading": "Lendo PDFs",
+  "pdfCompare.aligning": "Alinhando páginas",
+  "pdfCompare.comparing": "Comparando páginas",
+  "pdfCompare.done": "Comparação concluída",
+  "pdfCompare.text": "Texto",
+  "pdfCompare.visual": "Visual",
+  "pdfCompare.scanned":
+    "Texto indisponível em um dos PDFs. Use a comparação visual; nenhum OCR foi aplicado.",
+  "pdfCompare.pageTextUnavailable":
+    "Esta página não contém texto extraível. Consulte o modo visual.",
+  "pdfCompare.alignmentNotice":
+    "O alinhamento é heurístico. Confira os pares em mudanças extensas de paginação.",
+  "pdfCompare.changes": "Alterações",
+  "pdfCompare.search": "Buscar texto nas alterações",
+  "pdfCompare.noChanges": "Nenhuma alteração encontrada para este filtro.",
+  "pdfCompare.unchanged": "Sem alterações",
+  "pdfCompare.modified": "Alterada",
+  "pdfCompare.added": "Inserida",
+  "pdfCompare.removed": "Removida",
+  "pdfCompare.page": "Página",
+  "pdfCompare.pair": "Par",
+  "pdfCompare.of": "de",
+  "pdfCompare.missingPage": "Página ausente neste documento",
+  "pdfCompare.previous": "Par anterior",
+  "pdfCompare.next": "Próximo par",
+  "pdfCompare.zoomOut": "Reduzir zoom",
+  "pdfCompare.zoomIn": "Ampliar zoom",
+  "pdfCompare.sync": "Sincronizar rolagem",
+  "pdfCompare.overlay": "Sobrepor revisado ao original",
+  "pdfCompare.opacity": "Opacidade da sobreposição",
+  "pdfCompare.legend":
+    "Verde: texto inserido · vermelho: texto removido. Contornos indicam regiões com diferenças visuais.",
+  "pdfCompare.report": "Baixar relatório PDF",
+  "pdfCompare.json": "Baixar dados JSON",
+  "pdfCompare.previewUnavailable": "Prévia indisponível",
+  "pdfCompare.toolDescription":
+    "Compare alterações de texto e de aparência entre dois PDFs, no seu navegador.",
+  "pdfCompare.tagline": "Descubra o que mudou entre duas versões.",
+  "pdfCompare.reportTitle": "Relatório de comparação de PDF",
+  "pdfCompare.reportOriginal": "Original",
+  "pdfCompare.reportRevised": "Revisado",
+  "pdfCompare.reportSummary":
+    "Pares analisados: {pairs} • Com alterações de texto: {text} • Com alterações visuais: {visual}",
+  "pdfCompare.reportPair": "Par {pair} — Original: {left} • Revisado: {right}",
+  "pdfCompare.reportAbsent": "ausente",
+  "pdfCompare.reportLegend":
+    "As regiões destacadas representam diferenças visuais. A comparação de texto é independente.",
+  "pdfCompare.reportNoText":
+    "Há documento sem texto selecionável. A comparação visual continua disponível.",
+  "pdfCompare.reportLimitations":
+    "A correspondência de páginas é heurística. Confira mudanças de paginação e documentos digitalizados. O relatório JSON preserva os textos Unicode completos.",
+  "pdfCompare.errorLimit":
+    "O limite é de 40 páginas e 64 MiB por PDF. A resolução e a memória da análise também são limitadas. Divida documentos grandes e tente novamente.",
+  "pdfCompare.errorTextLimit":
+    "O texto excede o limite desta comparação local. Divida os PDFs em partes menores e tente novamente.",
+  "pdfCompare.errorInvalid": "Não foi possível ler os PDFs. Verifique se os arquivos são válidos.",
+  "pdfCompare.errorPassword": "Um dos PDFs exige senha. Desbloqueie-o antes de comparar.",
+  "pdfCompare.errorWorker":
+    "Não foi possível iniciar a comparação neste navegador. Atualize a página e tente novamente.",
+  "pdfCompare.errorTwoFiles": "Selecione exatamente dois arquivos PDF para comparar.",
   "protect.rc4UnsupportedPassword":
     "Esta senha contém caracteres incompatíveis com RC4. Selecione AES-256 para usar a senha completa.",
   "excel.previewScope":

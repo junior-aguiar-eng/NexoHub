@@ -17,7 +17,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @huggingface/jinja | 0.5.10 | MIT |
 | JavaScript | @huggingface/tokenizers | 0.2.0 | Apache-2.0 |
 | JavaScript | @huggingface/transformers | 4.3.1 | Apache-2.0 |
-| JavaScript | @napi-rs/canvas-win32-x64-msvc | 1.0.9 | MIT |
+| JavaScript | @napi-rs/canvas-linux-x64-gnu | 1.0.9 | MIT |
 | JavaScript | @napi-rs/canvas | 1.0.9 | MIT |
 | JavaScript | @pdf-lib/standard-fonts | 1.0.0 | MIT |
 | JavaScript | @pdf-lib/upng | 1.0.1 | MIT |
@@ -78,9 +78,11 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | pako | 1.0.11 | (MIT AND Zlib) |
 | JavaScript | pdf-lib | 1.17.1 | MIT |
 | JavaScript | pdfjs-dist | 6.3.289 | Apache-2.0 |
+| JavaScript | pixelmatch | 8.0.0 | ISC |
 | JavaScript | platform | 1.3.6 | MIT |
 | JavaScript | playwright-core | 1.63.0 | Apache-2.0 |
 | JavaScript | playwright | 1.63.0 | Apache-2.0 |
+| JavaScript | pngjs | 7.0.0 | MIT |
 | JavaScript | protobufjs | 7.6.6 | BSD-3-Clause |
 | JavaScript | react-dom | 19.2.8 | MIT |
 | JavaScript | react | 19.2.8 | MIT |
@@ -107,7 +109,6 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Python | antlr4-python3-runtime | 4.9.3 | BSD |
 | Python | certifi | 2026.10.19 | MPL-2.0 |
 | Python | charset-normalizer | 3.5.1 | MIT |
-| Python | colorama | 0.4.6 | BSD-3-Clause |
 | Python | colorlog | 6.12.0 | MIT License |
 | Python | ctranslate2 | 4.8.1 | MIT |
 | Python | flatbuffers | 25.12.19 | Apache 2.0 |

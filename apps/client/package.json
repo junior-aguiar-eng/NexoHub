@@ -35,6 +35,7 @@
     "nspell": "^2.1.5",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "6.3.289",
+    "pixelmatch": "8.0.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "tailwind-merge": "3.3.1",

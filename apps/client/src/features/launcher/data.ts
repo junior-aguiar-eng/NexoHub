@@ -37,6 +37,14 @@ export const suites: readonly Suite[] = [
 ];
 
 const presentation = {
+  "pdf-compare": {
+    suite: "text" as const,
+    titleKey: "pdfCompare.title" as const,
+    descriptionKey: "pdfCompare.toolDescription" as const,
+    uploadTaglineKey: "pdfCompare.tagline" as const,
+    icon: GitCompareArrows,
+    accentColor: "#4f46e5",
+  },
   "pdf-organize": {
     suite: "organize" as const,
     titleKey: "tool.pdfOrganize.title" as const,
@@ -235,6 +243,7 @@ import type { CapabilityProvider } from "@nexohub/tool-sdk";
 import type { DocumentCorePort } from "@/platform/document-core";
 
 const browserSupportedToolIds = new Set([
+  "pdf-compare",
   "pdf-organize",
   "pdf-merge",
   "pdf-split",

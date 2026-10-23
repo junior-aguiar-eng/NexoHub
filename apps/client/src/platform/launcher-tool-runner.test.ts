@@ -494,4 +494,99 @@ describe("Tool Runner do Launcher", () => {
     expect(resultCsv.blob.type).toContain("text/csv");
     expect(resultCsv.blob.size).toBeGreaterThan(0);
   });
+
+  it("executa remoção de páginas com pdf-remove-pages", async () => {
+    const port = new BrowserDocumentCorePort();
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.addPage([200, 200]);
+    pdfDoc.addPage([200, 200]);
+    pdfDoc.addPage([200, 200]);
+    const pdfFile = new File([(await pdfDoc.save()) as unknown as BlobPart], "relatorio.pdf", {
+      type: "application/pdf",
+    });
+
+    const result = await runLauncherTool(port, "pdf-remove-pages", {
+      ...input([pdfFile]),
+      pagesToRemove: [2],
+    });
+
+    expect(result.fileName).toBe("relatorio_paginas_removidas.pdf");
+    expect(result.blob.type).toBe("application/pdf");
+    const doc = await PDFDocument.load(new Uint8Array(await result.blob.arrayBuffer()));
+    expect(doc.getPageCount()).toBe(2);
+  });
+
+  it("executa extração de páginas em PDF e ZIP com pdf-extract-pages", async () => {
+    const port = new BrowserDocumentCorePort();
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.addPage([200, 200]);
+    pdfDoc.addPage([200, 200]);
+    pdfDoc.addPage([200, 200]);
+    pdfDoc.addPage([200, 200]);
+    const pdfFile = new File([(await pdfDoc.save()) as unknown as BlobPart], "apostila.pdf", {
+      type: "application/pdf",
+    });
+
+    // Modo Single PDF
+    const resultPdf = await runLauncherTool(port, "pdf-extract-pages", {
+      ...input([pdfFile]),
+      pagesToExtract: [1, 3],
+      extractPagesMode: "single-pdf",
+    });
+    expect(resultPdf.fileName).toBe("apostila_paginas_extraidas.pdf");
+    const doc = await PDFDocument.load(new Uint8Array(await resultPdf.blob.arrayBuffer()));
+    expect(doc.getPageCount()).toBe(2);
+
+    // Modo ZIP
+    const resultZip = await runLauncherTool(port, "pdf-extract-pages", {
+      ...input([pdfFile]),
+      pagesToExtract: [2, 4],
+      extractPagesMode: "zip-split",
+    });
+    expect(resultZip.fileName).toBe("apostila_paginas_extraidas.zip");
+    expect(resultZip.blob.type).toBe("application/zip");
+  });
+
+  it("executa conversão de HTML para PDF com html-to-pdf", async () => {
+    const port = new BrowserDocumentCorePort();
+    const result = await runLauncherTool(port, "html-to-pdf", {
+      ...input([]),
+      htmlContent: "<h1>Documento de Teste</h1><p>Convertido via NexoHub</p>",
+      htmlPageSize: "A4",
+    });
+
+    expect(result.fileName).toBe("documento.pdf");
+    expect(result.blob.type).toBe("application/pdf");
+    const doc = await PDFDocument.load(new Uint8Array(await result.blob.arrayBuffer()));
+    expect(doc.getPageCount()).toBe(1);
+  });
+
+  it("executa digitalização para PDF com scan-to-pdf", async () => {
+    const port = new BrowserDocumentCorePort();
+    const minimalPng = new Uint8Array([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+      0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f,
+      0x15, 0xc4, 0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00,
+      0x01, 0x00, 0x00, 0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
+      0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+    ]);
+
+    const result = await runLauncherTool(port, "scan-to-pdf", {
+      ...input([]),
+      scannedPages: [
+        {
+          id: "page-1",
+          imageBytes: minimalPng,
+          mimeType: "image/png",
+          filter: "original",
+        },
+      ],
+      scanPageSize: "A4",
+    });
+
+    expect(result.fileName).toBe("documento_digitalizado.pdf");
+    expect(result.blob.type).toBe("application/pdf");
+    const doc = await PDFDocument.load(new Uint8Array(await result.blob.arrayBuffer()));
+    expect(doc.getPageCount()).toBe(1);
+  });
 });

@@ -295,4 +295,73 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     expect(screen.getByTestId("format-xlsx-btn")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Converter para Excel/i })).toBeInTheDocument();
   });
+
+  it("renderiza o painel de Remover Páginas com miniaturas e seletores de intervalo", async () => {
+    const mockTool = launcherTools.find((t) => t.id === "pdf-remove-pages") ?? mockPdfCompressTool;
+    const pdf = await PDFDocument.create();
+    pdf.addPage([100, 100]);
+    pdf.addPage([100, 100]);
+    const file = new File([(await pdf.save()) as unknown as BlobPart], "arquivo.pdf", {
+      type: "application/pdf",
+    });
+    render(
+      <DedicatedToolView
+        tool={mockTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[file]}
+      />,
+    );
+    expect(screen.getByTestId("remove-pages-panel")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Remover Páginas/i })).toBeInTheDocument();
+  });
+
+  it("renderiza o painel de Extrair Páginas com alternador de modo e miniaturas", async () => {
+    const mockTool = launcherTools.find((t) => t.id === "pdf-extract-pages") ?? mockPdfCompressTool;
+    const pdf = await PDFDocument.create();
+    pdf.addPage([100, 100]);
+    pdf.addPage([100, 100]);
+    const file = new File([(await pdf.save()) as unknown as BlobPart], "arquivo.pdf", {
+      type: "application/pdf",
+    });
+    render(
+      <DedicatedToolView
+        tool={mockTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[file]}
+      />,
+    );
+    expect(screen.getByTestId("extract-pages-panel")).toBeInTheDocument();
+    expect(screen.getByText(/Extrair em um único PDF/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Extrair Páginas$/i })).toBeInTheDocument();
+  });
+
+  it("renderiza o painel de HTML para PDF com editor e prévia", async () => {
+    const mockTool = launcherTools.find((t) => t.id === "html-to-pdf") ?? mockPdfCompressTool;
+    render(
+      <DedicatedToolView
+        tool={mockTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[]}
+      />,
+    );
+    expect(screen.getByTestId("html-to-pdf-panel")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Converter HTML para PDF/i })).toBeInTheDocument();
+  });
+
+  it("renderiza o painel de Digitalizar para PDF com opções de câmera e páginas", async () => {
+    const mockTool = launcherTools.find((t) => t.id === "scan-to-pdf") ?? mockPdfCompressTool;
+    render(
+      <DedicatedToolView
+        tool={mockTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[]}
+      />,
+    );
+    expect(screen.getByTestId("scan-to-pdf-panel")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Gerar PDF Digitalizado/i })).toBeInTheDocument();
+  });
 });

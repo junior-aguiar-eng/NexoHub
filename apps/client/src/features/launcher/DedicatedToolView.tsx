@@ -33,12 +33,15 @@ import {
   renderPdfPageToDataUrl,
   type SignaturePlacement,
 } from "@/platform/pdf-engine";
+import type { ScannedPageItem } from "@/platform/scan-to-pdf-engine";
 import { addCustomWord, ignoreWordInSession } from "@/platform/user-vocabulary";
 import { CompressPdfPanel } from "./CompressPdfPanel";
 import { CropPdfPanel } from "./CropPdfPanel";
 import { DocumentComparePanel } from "./DocumentComparePanel";
 import { ExtractImagesPanel } from "./ExtractImagesPanel";
+import { ExtractPagesPanel } from "./ExtractPagesPanel";
 import { FormFillPdfPanel } from "./FormFillPdfPanel";
+import { HtmlToPdfPanel } from "./HtmlToPdfPanel";
 import { ImagesToPdfPanel } from "./ImagesToPdfPanel";
 import { MergePdfPanel } from "./MergePdfPanel";
 import type { LauncherTool } from "./model";
@@ -52,8 +55,10 @@ import { PdfToJpgPanel } from "./PdfToJpgPanel";
 import { PdfToMarkdownPanel } from "./PdfToMarkdownPanel";
 import { ProtectPdfPanel } from "./ProtectPdfPanel";
 import { RedactPdfPanel } from "./RedactPdfPanel";
+import { RemovePagesPanel } from "./RemovePagesPanel";
 import { ReviewDocumentPanel } from "./ReviewDocumentPanel";
 import { RotatePdfPanel } from "./RotatePdfPanel";
+import { ScanToPdfPanel } from "./ScanToPdfPanel";
 import { SignPdfPanel } from "./SignPdfPanel";
 import { type SplitInterval, SplitPdfPanel } from "./SplitPdfPanel";
 import { TranslateDocumentPanel } from "./TranslateDocumentPanel";
@@ -235,6 +240,25 @@ export function DedicatedToolView({
   const [excelSheetMode, setExcelSheetMode] = useState<"per-page" | "single-sheet">("per-page");
   const [excelCsvDelimiter, setExcelCsvDelimiter] = useState<"," | ";" | "\t">(";");
   const [excelDetectTablesOnly, setExcelDetectTablesOnly] = useState<boolean>(false);
+
+  // Estados de Remoção e Extração de Páginas
+  const [removePagesSelection, setRemovePagesSelection] = useState<number[]>([]);
+  const [extractPagesSelection, setExtractPagesSelection] = useState<number[]>([1]);
+  const [extractPagesMode, setExtractPagesMode] = useState<"single-pdf" | "zip-split">(
+    "single-pdf",
+  );
+
+  // Estados de HTML para PDF
+  const [htmlCodeContent, setHtmlCodeContent] = useState<string>("");
+  const [htmlPageSize, setHtmlPageSize] = useState<"A4" | "Letter" | "A3">("A4");
+  const [htmlOrientation, setHtmlOrientation] = useState<"portrait" | "landscape">("portrait");
+  const [htmlMargin, setHtmlMargin] = useState<"none" | "small" | "normal" | "wide">("normal");
+
+  // Estados de Digitalização para PDF
+  const [scannedPages, setScannedPages] = useState<ScannedPageItem[]>([]);
+  const [scanPageSize, setScanPageSize] = useState<"A4" | "Letter" | "fit">("A4");
+  const [scanOrientation, setScanOrientation] = useState<"portrait" | "landscape" | "auto">("auto");
+  const [scanMargin, setScanMargin] = useState<"none" | "small" | "normal">("small");
 
   // Estados de Páginas (Organizador e Extrator)
   const [excelPreviewRows, setExcelPreviewRows] = useState<string[][] | undefined>();
@@ -428,7 +452,11 @@ export function DedicatedToolView({
           setSplitSelectedPages([1]);
 
           // Renderiza miniaturas compartilhando a mesma instância de parsing
-          const isGridTool = tool.id === "pdf-organize" || tool.id === "pdf-extract";
+          const isGridTool =
+            tool.id === "pdf-organize" ||
+            tool.id === "pdf-extract" ||
+            tool.id === "pdf-remove-pages" ||
+            tool.id === "pdf-extract-pages";
           const maxGrid = isGridTool ? Math.min(count, 48) : 0;
           const pageNumbersToRender = isGridTool
             ? Array.from({ length: maxGrid }, (_, i) => i + 1)
@@ -793,7 +821,9 @@ export function DedicatedToolView({
   // =========================================================================
   async function handleExecute() {
     const isDirectTextInput = inputTab === "text" && directText.trim().length > 0;
-    if (files.length === 0 && !isDirectTextInput && tool.id !== "text-compare") return;
+    const isDocless =
+      tool.id === "text-compare" || tool.id === "html-to-pdf" || tool.id === "scan-to-pdf";
+    if (files.length === 0 && !isDirectTextInput && !isDocless) return;
 
     const isTranslation = tool.id === "text-translate";
     const run = isTranslation ? ++translationRun.current : 0;
@@ -813,6 +843,43 @@ export function DedicatedToolView({
       if (protectPassword !== protectConfirmPassword) {
         setStatus("idle");
         setErrorMessage(translate("protect.passwordMismatch"));
+        return;
+      }
+    }
+
+    if (tool.id === "pdf-remove-pages") {
+      if (removePagesSelection.length === 0) {
+        setStatus("idle");
+        setErrorMessage(translate("removePages.noSelection"));
+        return;
+      }
+      if (removePagesSelection.length >= pdfPageCount) {
+        setStatus("idle");
+        setErrorMessage(translate("removePages.cannotRemoveAll"));
+        return;
+      }
+    }
+
+    if (tool.id === "pdf-extract-pages") {
+      if (extractPagesSelection.length === 0) {
+        setStatus("idle");
+        setErrorMessage(translate("extractPages.noSelection"));
+        return;
+      }
+    }
+
+    if (tool.id === "html-to-pdf") {
+      if (!htmlCodeContent.trim() && files.length === 0) {
+        setStatus("idle");
+        setErrorMessage(translate("htmlToPdf.emptyHtml"));
+        return;
+      }
+    }
+
+    if (tool.id === "scan-to-pdf") {
+      if (scannedPages.length === 0 && files.length === 0) {
+        setStatus("idle");
+        setErrorMessage(translate("scanToPdf.noPages"));
         return;
       }
     }
@@ -885,6 +952,17 @@ export function DedicatedToolView({
         excelSheetMode,
         excelCsvDelimiter,
         excelDetectTablesOnly,
+        pagesToRemove: removePagesSelection,
+        extractPagesMode,
+        pagesToExtract: extractPagesSelection,
+        htmlContent: htmlCodeContent,
+        htmlPageSize,
+        htmlOrientation,
+        htmlMargin,
+        scannedPages,
+        scanPageSize,
+        scanOrientation,
+        scanMargin,
         onOcrProgress: (info) => {
           setProgress(info.progress);
           setOcrProgressStatus(`Pág. ${info.page}/${info.totalPages} - ${info.status}`);
@@ -1044,6 +1122,10 @@ export function DedicatedToolView({
     if (tool.id === "pdf-protect") return translate("protect.actionSubmit");
     if (tool.id === "pdf-redact") return translate("redact.actionSubmit");
     if (tool.id === "pdf-to-excel") return translate("excel.actionSubmit");
+    if (tool.id === "pdf-remove-pages") return translate("removePages.confirmButton");
+    if (tool.id === "pdf-extract-pages") return translate("extractPages.confirmButton");
+    if (tool.id === "html-to-pdf") return translate("htmlToPdf.confirmButton");
+    if (tool.id === "scan-to-pdf") return translate("scanToPdf.confirmButton");
     if (tool.id === "pdf-organize") return translate("dedicated.actionOrganize");
     if (tool.id === "images-to-pdf") return translate("dedicated.actionImagesToPdf");
     if (tool.id === "pdf-extract-images") return translate("dedicated.actionExtractImages");
@@ -1392,6 +1474,70 @@ export function DedicatedToolView({
       );
     }
 
+    // REMOVER PÁGINAS
+    if (tool.id === "pdf-remove-pages") {
+      return (
+        <RemovePagesPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          totalPages={pdfPageCount}
+          pageThumbnails={allPageThumbnails}
+          pagesToRemove={removePagesSelection}
+          onPagesToRemoveChange={setRemovePagesSelection}
+        />
+      );
+    }
+
+    // EXTRAIR PÁGINAS
+    if (tool.id === "pdf-extract-pages") {
+      return (
+        <ExtractPagesPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          totalPages={pdfPageCount}
+          pageThumbnails={allPageThumbnails}
+          selectedPages={extractPagesSelection}
+          onSelectedPagesChange={setExtractPagesSelection}
+          mode={extractPagesMode}
+          onModeChange={setExtractPagesMode}
+        />
+      );
+    }
+
+    // HTML PARA PDF
+    if (tool.id === "html-to-pdf") {
+      return (
+        <HtmlToPdfPanel
+          fileName={files[0]?.name}
+          htmlContent={htmlCodeContent}
+          onHtmlContentChange={setHtmlCodeContent}
+          onFileUpload={(f) => setFiles([f])}
+          pageSize={htmlPageSize}
+          onPageSizeChange={setHtmlPageSize}
+          orientation={htmlOrientation}
+          onOrientationChange={setHtmlOrientation}
+          margin={htmlMargin}
+          onMarginChange={setHtmlMargin}
+        />
+      );
+    }
+
+    // DIGITALIZAR PARA PDF
+    if (tool.id === "scan-to-pdf") {
+      return (
+        <ScanToPdfPanel
+          pages={scannedPages}
+          onPagesChange={setScannedPages}
+          pageSize={scanPageSize}
+          onPageSizeChange={setScanPageSize}
+          orientation={scanOrientation}
+          onOrientationChange={setScanOrientation}
+          margin={scanMargin}
+          onMarginChange={setScanMargin}
+        />
+      );
+    }
+
     // MARCA D'ÁGUA
     if (tool.id === "pdf-watermark") {
       return (
@@ -1541,8 +1687,17 @@ export function DedicatedToolView({
     );
   }
 
-  const isWorkspaceMode = files.length > 0 || inputTab === "text" || tool.id === "text-compare";
-  const hasFilesOrText = files.length > 0 || (inputTab === "text" && directText.trim().length > 0);
+  const isWorkspaceMode =
+    files.length > 0 ||
+    inputTab === "text" ||
+    tool.id === "text-compare" ||
+    tool.id === "html-to-pdf" ||
+    tool.id === "scan-to-pdf";
+  const hasFilesOrText =
+    files.length > 0 ||
+    (inputTab === "text" && directText.trim().length > 0) ||
+    (tool.id === "html-to-pdf" && htmlCodeContent.trim().length > 0) ||
+    (tool.id === "scan-to-pdf" && scannedPages.length > 0);
 
   // FASE 3: SUCESSO E DOWNLOAD
   if (status === "success") {

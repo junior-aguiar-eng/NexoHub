@@ -102,6 +102,10 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
     "pdf-protect",
     "pdf-redact",
     "pdf-to-excel",
+    "pdf-remove-pages",
+    "pdf-extract-pages",
+    "html-to-pdf",
+    "scan-to-pdf",
   ]);
   private projectData: Map<string, StoredProjectData> = new Map();
   private pendingFiles: Map<string, File> = new Map();

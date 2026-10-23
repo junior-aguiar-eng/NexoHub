@@ -2,17 +2,21 @@ import { coreToolRegistry } from "@nexohub/tool-registry";
 import { resolveToolAvailability } from "@nexohub/tool-sdk";
 import {
   BetweenHorizontalStart,
+  Camera,
   Crop,
   EyeOff,
   FileArchive,
   FileCode2,
+  FileOutput,
   FileScan,
   FileSpreadsheet,
   FileText,
   FileType,
+  FileX2,
   FolderInput,
   FormInput,
   GitCompareArrows,
+  Globe,
   Hash,
   Image,
   Images,
@@ -246,6 +250,34 @@ const presentation = {
     icon: FileSpreadsheet,
     accentColor: "#107C41", // Verde Esmeralda Excel
   },
+  "pdf-remove-pages": {
+    suite: "organize" as const,
+    titleKey: "tool.pdfRemovePages.title" as const,
+    descriptionKey: "tool.pdfRemovePages.description" as const,
+    icon: FileX2,
+    accentColor: "#DC2626", // Vermelho Alerta / Remoção
+  },
+  "pdf-extract-pages": {
+    suite: "organize" as const,
+    titleKey: "tool.pdfExtractPages.title" as const,
+    descriptionKey: "tool.pdfExtractPages.description" as const,
+    icon: FileOutput,
+    accentColor: "#EA580C", // Laranja Extração
+  },
+  "html-to-pdf": {
+    suite: "convert" as const,
+    titleKey: "tool.htmlToPdf.title" as const,
+    descriptionKey: "tool.htmlToPdf.description" as const,
+    icon: Globe,
+    accentColor: "#D97706", // Âmbar Ouro Web
+  },
+  "scan-to-pdf": {
+    suite: "convert" as const,
+    titleKey: "tool.scanToPdf.title" as const,
+    descriptionKey: "tool.scanToPdf.description" as const,
+    icon: Camera,
+    accentColor: "#0284C7", // Azul Céu / Scanner
+  },
 } as const;
 
 import type { CapabilityProvider } from "@nexohub/tool-sdk";
@@ -276,6 +308,10 @@ const browserSupportedToolIds = new Set([
   "pdf-protect",
   "pdf-redact",
   "pdf-to-excel",
+  "pdf-remove-pages",
+  "pdf-extract-pages",
+  "html-to-pdf",
+  "scan-to-pdf",
 ]);
 
 export function createDynamicCapabilitiesProvider(

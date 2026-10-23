@@ -2,8 +2,10 @@ import { PDFDocument } from "pdf-lib";
 import { describe, expect, it, vi } from "vitest";
 import {
   compressPdfDocument,
+  extractPdfPagesToZipOrCombined,
   extractPdfSelectedPages,
   mergePdfDocuments,
+  removePdfPages,
   splitPdfByInterval,
 } from "./pdf-engine";
 
@@ -537,6 +539,57 @@ describe("operações PDF no navegador", () => {
         redactions: [],
       }),
     ).rejects.toThrow("EMPTY_DOCUMENT");
+  });
+
+  it("remove páginas selecionadas e recusa remover todas as páginas", async () => {
+    const source = await makePdf(4);
+
+    // Remove páginas 2 e 4
+    const modified = await removePdfPages(source, [2, 4]);
+    const reloaded = await PDFDocument.load(modified);
+    expect(reloaded.getPageCount()).toBe(2);
+
+    // Validações
+    await expect(removePdfPages(source, [])).rejects.toThrow("NENHUMA_PAGINA_SELECIONADA");
+    await expect(removePdfPages(source, [5])).rejects.toThrow("SELECAO_DE_PAGINAS_INVALIDA");
+    await expect(removePdfPages(source, [1, 2, 3, 4])).rejects.toThrow(
+      "NAO_E_POSSIVEL_REMOVER_TODAS_AS_PAGINAS",
+    );
+  });
+
+  it("extrai páginas em modo PDF combinado e em modo ZIP individual", async () => {
+    const source = await makePdf(5);
+
+    // Modo single-pdf (páginas 1, 3 e 5)
+    const singleResult = await extractPdfPagesToZipOrCombined(source, {
+      pages: [1, 3, 5],
+      mode: "single-pdf",
+      baseName: "meu_relatorio",
+    });
+    expect(singleResult.isZip).toBe(false);
+    expect(singleResult.fileName).toBe("meu_relatorio_paginas_extraidas.pdf");
+    expect(singleResult.pageCount).toBe(3);
+    const reloaded = await PDFDocument.load(singleResult.bytes);
+    expect(reloaded.getPageCount()).toBe(3);
+
+    // Modo zip-split
+    const zipResult = await extractPdfPagesToZipOrCombined(source, {
+      pages: [2, 4],
+      mode: "zip-split",
+      baseName: "meu_relatorio",
+    });
+    expect(zipResult.isZip).toBe(true);
+    expect(zipResult.fileName).toBe("meu_relatorio_paginas_extraidas.zip");
+    expect(zipResult.pageCount).toBe(2);
+    expect(zipResult.bytes.length).toBeGreaterThan(100);
+
+    // Validação de entrada inválida
+    await expect(
+      extractPdfPagesToZipOrCombined(source, { pages: [], mode: "single-pdf" }),
+    ).rejects.toThrow("SELECAO_DE_PAGINAS_INVALIDA");
+    await expect(
+      extractPdfPagesToZipOrCombined(source, { pages: [99], mode: "single-pdf" }),
+    ).rejects.toThrow("SELECAO_DE_PAGINAS_INVALIDA");
   });
 });
 

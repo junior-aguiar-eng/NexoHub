@@ -36,6 +36,10 @@ export class HttpDocumentCorePort implements DocumentCorePort {
     "pdf-protect",
     "pdf-redact",
     "pdf-to-excel",
+    "pdf-remove-pages",
+    "pdf-extract-pages",
+    "html-to-pdf",
+    "scan-to-pdf",
   ]);
 
   private project: { path: string; name: string } | null = null;

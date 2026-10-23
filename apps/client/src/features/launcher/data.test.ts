@@ -20,10 +20,14 @@ describe("Strict Functional Tools Catalog", () => {
       "pdf-protect",
       "pdf-redact",
       "pdf-to-excel",
+      "pdf-remove-pages",
+      "pdf-extract-pages",
+      "html-to-pdf",
+      "scan-to-pdf",
     ]) {
       expect(ids).toContain(id);
     }
-    expect(ids).toHaveLength(24);
+    expect(ids).toHaveLength(28);
   });
   it("não oferece conversões e proteção sem executor", () => {
     const tools = resolveLauncherTools();

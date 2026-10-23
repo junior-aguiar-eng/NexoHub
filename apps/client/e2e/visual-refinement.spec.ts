@@ -197,3 +197,35 @@ test("download final mantém destaque e contraste da ação principal", async ({
   await expect(download).toHaveCSS("background-color", "rgb(225, 29, 72)");
   await expect(download).toHaveCSS("color", "rgb(255, 255, 255)");
 });
+
+test("catálogo fecha por Escape e Tab sem perder o foco de teclado", async ({ page }) => {
+  await page.goto("/");
+  const trigger = page.getByRole("button", { name: "Todas as ferramentas PDF" });
+  const panel = page.locator(".megamenu-panel--all");
+  await trigger.focus();
+  await page.keyboard.press("Enter");
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Tab");
+  await expect(panel.getByRole("button").first()).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(panel).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await page.keyboard.press("Enter");
+  await panel.getByRole("button").last().focus();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Buscar no NexoHub" })).toBeFocused();
+  await expect(panel).toHaveCount(0);
+});
+
+test("clique interno no catálogo preserva a seleção da ferramenta", async ({ page }) => {
+  await page.goto("/");
+  const trigger = page.getByRole("button", { name: "Todas as ferramentas PDF" });
+  const panel = page.locator(".megamenu-panel--all");
+  await trigger.click();
+  await panel.locator(".megamenu-col-title").first().click();
+  await expect(panel).toBeVisible();
+  await panel.getByRole("button", { name: "Juntar PDF", exact: true }).click();
+  await expect(page.locator(".dedicated-tool-page")).toBeVisible();
+  await expect(panel).toHaveCount(0);
+});

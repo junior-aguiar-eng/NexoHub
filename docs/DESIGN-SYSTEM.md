@@ -21,7 +21,9 @@ web de ferramentas. O catálogo `pt-BR` é a fonte de verdade dos textos da inte
 ## Página inicial e cartões
 
 - Cabeçalho de 74px; em telas menores os atalhos individuais cedem espaço ao menu completo e à
-  busca. Abaixo de 760px, o menu usa o rótulo curto “Ferramentas”.
+  busca. Abaixo de 760px, o menu usa o rótulo curto “Ferramentas”. O gatilho anuncia o estado
+  expandido e referencia o catálogo aberto. Escape fecha o catálogo e devolve o foco ao gatilho;
+  Tab mantém a ordem natural dos controles e fecha o catálogo ao sair dele.
 - Conteúdo central com largura máxima de 1320px, incluindo margens internas de 24px; abaixo de
   760px, margens internas de 16px. Título, descrição e filtros formam um bloco compacto.
 - Grade com intervalo de 16px: uma coluna abaixo de 520px, duas de 520 a 759px, três de 760 a

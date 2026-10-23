@@ -1,5 +1,5 @@
 import { ChevronDown, Search } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import nexohubIcon from "@/assets/nexohub-icon.png";
 import { translate } from "@/i18n";
 import type { LauncherTool, SuiteId } from "./model";
@@ -26,6 +26,8 @@ const groups = [
 export function Header({ tools, onSelectTool, onLogoClick, onOpenCommandPalette }: HeaderProps) {
   const [allToolsMenuOpen, setAllToolsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuId = useId();
   const availableTools = tools.filter((tool) => tool.availability.available);
 
   useEffect(() => {
@@ -34,9 +36,32 @@ export function Header({ tools, onSelectTool, onLogoClick, onOpenCommandPalette 
         setAllToolsMenuOpen(false);
       }
     }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (
+        event.key === "Escape" &&
+        allToolsMenuOpen &&
+        menuRef.current?.contains(event.target as Node)
+      ) {
+        event.preventDefault();
+        setAllToolsMenuOpen(false);
+        triggerRef.current?.focus();
+      }
+    }
+    function handleFocusOutside(event: FocusEvent) {
+      // Focar outro controle fecha; clicar em títulos internos não remove o catálogo.
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setAllToolsMenuOpen(false);
+      }
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("focusin", handleFocusOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("focusin", handleFocusOutside);
+    };
+  }, [allToolsMenuOpen]);
 
   function openTool(toolId: string) {
     setAllToolsMenuOpen(false);
@@ -50,7 +75,7 @@ export function Header({ tools, onSelectTool, onLogoClick, onOpenCommandPalette 
           type="button"
           className="brand brand-btn ilovepdf-brand"
           onClick={onLogoClick}
-          aria-label="NexoHub - Página Inicial"
+          aria-label={translate("header.homeLabel")}
         >
           <img className="brand-app-icon" src={nexohubIcon} alt="" aria-hidden="true" />
           <span className="brand-logo-text">
@@ -59,7 +84,7 @@ export function Header({ tools, onSelectTool, onLogoClick, onOpenCommandPalette 
           </span>
         </button>
       </div>
-      <nav className="header-main-nav" aria-label="Navegação Principal">
+      <nav className="header-main-nav" aria-label={translate("header.primaryNavigation")}>
         {availableTools
           .filter((tool) => ["pdf-merge", "pdf-split", "pdf-compress"].includes(tool.id))
           .map((tool) => (
@@ -74,9 +99,12 @@ export function Header({ tools, onSelectTool, onLogoClick, onOpenCommandPalette 
           ))}
         <div className="nav-dropdown-wrapper" ref={menuRef}>
           <button
+            ref={triggerRef}
             type="button"
             className={`nav-link-btn nav-link-btn--dropdown ${allToolsMenuOpen ? "nav-link-btn--active" : ""}`}
             aria-label={translate("header.allTools")}
+            aria-expanded={allToolsMenuOpen}
+            aria-controls={allToolsMenuOpen ? menuId : undefined}
             onClick={() => setAllToolsMenuOpen(!allToolsMenuOpen)}
           >
             <span className="nav-link-label--full">{translate("header.allTools")}</span>
@@ -87,7 +115,7 @@ export function Header({ tools, onSelectTool, onLogoClick, onOpenCommandPalette 
             />
           </button>
           {allToolsMenuOpen && (
-            <div className="megamenu-panel megamenu-panel--all">
+            <div id={menuId} className="megamenu-panel megamenu-panel--all">
               {groups.map((group) => {
                 const groupTools = availableTools.filter((tool) => tool.suite === group.suite);
                 if (groupTools.length === 0) return null;
@@ -117,8 +145,8 @@ export function Header({ tools, onSelectTool, onLogoClick, onOpenCommandPalette 
           type="button"
           className="header-search-icon-btn"
           onClick={onOpenCommandPalette}
-          aria-label="Buscar no NexoHub"
-          title="Buscar no NexoHub (Ctrl+K)"
+          aria-label={translate("header.searchLabel")}
+          title={translate("header.searchTitle")}
         >
           <Search size={18} />
         </button>

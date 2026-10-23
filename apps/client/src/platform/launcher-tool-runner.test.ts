@@ -282,4 +282,50 @@ describe("Tool Runner do Launcher", () => {
       }),
     ).rejects.toThrow();
   });
+
+  it("executa preenchimento de formulário PDF gerando documento preenchido", async () => {
+    const port = new BrowserDocumentCorePort();
+    const { PDFDocument } = await import("pdf-lib");
+    const doc = await PDFDocument.create();
+    const page = doc.addPage([300, 300]);
+    const form = doc.getForm();
+    const tf = form.createTextField("usuario");
+    tf.addToPage(page, { x: 20, y: 20, width: 100, height: 20 });
+    const bytes = await doc.save();
+    const pdfFile = new File([bytes as unknown as BlobPart], "formulario.pdf", {
+      type: "application/pdf",
+    });
+
+    const result = await runLauncherTool(port, "pdf-form-fill", {
+      ...input([pdfFile]),
+      formValues: { usuario: "Maria" },
+      formFlatten: false,
+    });
+
+    expect(result.fileName).toBe("formulario_preenchido.pdf");
+    expect(result.blob.type).toBe("application/pdf");
+    expect(result.blob.size).toBeGreaterThan(0);
+  });
+
+  it("executa desbloqueio de PDF removendo restrições criptográficas", async () => {
+    const port = new BrowserDocumentCorePort();
+    const { PDFDocument } = await import("pdf-lib");
+    const doc = await PDFDocument.create();
+    doc.addPage([300, 300]);
+    const enc = doc.context.obj({ Filter: "Standard", V: 2, R: 3, P: -4 });
+    doc.context.trailerInfo.Encrypt = enc;
+    const bytes = await doc.save();
+    const pdfFile = new File([bytes as unknown as BlobPart], "bloqueado.pdf", {
+      type: "application/pdf",
+    });
+
+    const result = await runLauncherTool(port, "pdf-unlock", {
+      ...input([pdfFile]),
+      unlockPassword: "",
+    });
+
+    expect(result.fileName).toBe("bloqueado_desbloqueado.pdf");
+    expect(result.blob.type).toBe("application/pdf");
+    expect(result.blob.size).toBeGreaterThan(0);
+  });
 });

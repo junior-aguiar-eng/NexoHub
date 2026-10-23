@@ -6,16 +6,17 @@ import { afterEach } from "vitest";
 
 afterEach(() => cleanup());
 
-const originalWarn = console.warn;
-console.warn = (...args: unknown[]) => {
-  if (
-    typeof args[0] === "string" &&
-    args[0].includes("Please use the `legacy` build in Node.js environments")
-  ) {
-    return;
-  }
-  originalWarn(...args);
-};
+// Polyfill de Uint8Array.prototype.toHex exigido por pdfjs-dist em ambientes Node.js/Vitest
+const uint8Proto = Uint8Array.prototype as unknown as { toHex?: () => string };
+if (typeof uint8Proto.toHex !== "function") {
+  Object.defineProperty(Uint8Array.prototype, "toHex", {
+    value: function toHex(this: Uint8Array): string {
+      return Array.from(this, (byte) => byte.toString(16).padStart(2, "0")).join("");
+    },
+    writable: true,
+    configurable: true,
+  });
+}
 
 // Carregador de dicionários pt-BR para ambiente Vitest/jsdom
 (

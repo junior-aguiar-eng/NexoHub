@@ -18,13 +18,23 @@ import type { DocumentCorePort } from "@/platform/document-core";
 import { readDocumentText } from "@/platform/document-reader";
 import { runLauncherTool } from "@/platform/launcher-tool-runner";
 import {
+  type CropMargins,
+  checkPdfProtection,
+  type ExtractedImage,
+  type FormFieldDescriptor,
   getPdfPageCount,
+  inspectPdfFormFields,
+  type PdfProtectionStatus,
   renderPdfPagesThumbnails,
   renderPdfPageToDataUrl,
+  type SignaturePlacement,
 } from "@/platform/pdf-engine";
 import { addCustomWord, ignoreWordInSession } from "@/platform/user-vocabulary";
 import { CompressPdfPanel } from "./CompressPdfPanel";
+import { CropPdfPanel } from "./CropPdfPanel";
 import { DocumentComparePanel } from "./DocumentComparePanel";
+import { ExtractImagesPanel } from "./ExtractImagesPanel";
+import { FormFillPdfPanel } from "./FormFillPdfPanel";
 import { ImagesToPdfPanel } from "./ImagesToPdfPanel";
 import { MergePdfPanel } from "./MergePdfPanel";
 import type { LauncherTool } from "./model";
@@ -32,10 +42,13 @@ import { OcrScannerPanel } from "./OcrScannerPanel";
 import { PageNumbersPdfPanel } from "./PageNumbersPdfPanel";
 import { PdfPageGridPanel, type PdfPageItem } from "./PdfPageGridPanel";
 import { PdfToJpgPanel } from "./PdfToJpgPanel";
+import { PdfToMarkdownPanel } from "./PdfToMarkdownPanel";
 import { ReviewDocumentPanel } from "./ReviewDocumentPanel";
 import { RotatePdfPanel } from "./RotatePdfPanel";
+import { SignPdfPanel } from "./SignPdfPanel";
 import { type SplitInterval, SplitPdfPanel } from "./SplitPdfPanel";
 import { TranslateDocumentPanel } from "./TranslateDocumentPanel";
+import { UnlockPdfPanel } from "./UnlockPdfPanel";
 import { WatermarkPdfPanel } from "./WatermarkPdfPanel";
 
 type DedicatedToolViewProps = {
@@ -63,6 +76,30 @@ function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function parseSelectedPages(input: string, maxPages: number): number[] {
+  const pages = new Set<number>();
+  const parts = input.split(",").map((p) => p.trim());
+  for (const part of parts) {
+    if (!part) continue;
+    if (part.includes("-")) {
+      const [startStr, endStr] = part.split("-");
+      const start = Number.parseInt(startStr || "", 10);
+      const end = Number.parseInt(endStr || "", 10);
+      if (!Number.isNaN(start) && !Number.isNaN(end)) {
+        for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
+          if (i >= 1 && i <= maxPages) pages.add(i);
+        }
+      }
+    } else {
+      const num = Number.parseInt(part, 10);
+      if (!Number.isNaN(num) && num >= 1 && num <= maxPages) {
+        pages.add(num);
+      }
+    }
+  }
+  return Array.from(pages).sort((a, b) => a - b);
 }
 
 export function DedicatedToolView({
@@ -122,6 +159,48 @@ export function DedicatedToolView({
   const [ocrOutputMode, setOcrOutputMode] = useState<"searchable-pdf" | "text">("searchable-pdf");
   const [ocrEnhanceContrast, setOcrEnhanceContrast] = useState<boolean>(true);
   const [ocrProgressStatus, setOcrProgressStatus] = useState<string>("");
+  const [markdownDetectHeadings, setMarkdownDetectHeadings] = useState<boolean>(true);
+  const [markdownDetectTables, setMarkdownDetectTables] = useState<boolean>(true);
+  const [markdownIncludePageBreaks, setMarkdownIncludePageBreaks] = useState<boolean>(true);
+  const [markdownResult, setMarkdownResult] = useState<string>("");
+  const [cropMargins, setCropMargins] = useState<CropMargins>({
+    top: 10,
+    bottom: 10,
+    left: 10,
+    right: 10,
+  });
+  const [cropScope, setCropScope] = useState<"all" | "selected">("all");
+  const [cropSelectedPagesText, setCropSelectedPagesText] = useState<string>("");
+  const [signaturePlacement, setSignaturePlacement] = useState<SignaturePlacement>({
+    page: "last",
+    xPercent: 65,
+    yPercent: 8,
+    widthPercent: 28,
+    heightPercent: 12,
+  });
+  const [signatureImageBytes, setSignatureImageBytes] = useState<Uint8Array | undefined>(undefined);
+  const [signerName, setSignerName] = useState<string>("");
+  const [includeSignatureDate, setIncludeSignatureDate] = useState<boolean>(true);
+  const [extractedImages, setExtractedImages] = useState<readonly ExtractedImage[]>([]);
+  const [selectedImageIds, setSelectedImageIds] = useState<readonly string[]>([]);
+  const [extractImageScope, setExtractImageScope] = useState<"all" | "selected">("all");
+  const [extractImagePagesText, setExtractImagePagesText] = useState<string>("");
+  const [ignoreSmallImages, setIgnoreSmallImages] = useState<boolean>(true);
+
+  // Estados de Preenchimento de Formulário (Form Fill)
+  const [formFields, setFormFields] = useState<readonly FormFieldDescriptor[]>([]);
+  const [isLoadingFormFields, setIsLoadingFormFields] = useState<boolean>(false);
+  const [formValues, setFormValues] = useState<Record<string, string | boolean>>({});
+  const [formFlatten, setFormFlatten] = useState<boolean>(false);
+
+  // Estados de Desbloqueio de PDF (Unlock)
+  const [protectionStatus, setProtectionStatus] = useState<PdfProtectionStatus>({
+    isProtected: false,
+    needsPassword: false,
+    hasPermissionsRestriction: false,
+  });
+  const [isCheckingProtection, setIsCheckingProtection] = useState<boolean>(false);
+  const [unlockPassword, setUnlockPassword] = useState<string>("");
 
   // Estados de Páginas (Organizador e Extrator)
   const [pdfPageCount, setPdfPageCount] = useState<number>(() =>
@@ -267,6 +346,45 @@ export function DedicatedToolView({
           }));
           setPageItems(items);
           setSelectedPageIndices(items.map((it) => it.originalIndex));
+
+          if (tool.id === "pdf-form-fill") {
+            setIsLoadingFormFields(true);
+            try {
+              const fields = await inspectPdfFormFields(buffer);
+              if (!isCancelled) {
+                setFormFields(fields);
+                const initialVals: Record<string, string | boolean> = {};
+                for (const f of fields) {
+                  initialVals[f.name] = f.currentValue;
+                }
+                setFormValues(initialVals);
+              }
+            } catch {
+              if (!isCancelled) setFormFields([]);
+            } finally {
+              if (!isCancelled) setIsLoadingFormFields(false);
+            }
+          }
+
+          if (tool.id === "pdf-unlock") {
+            setIsCheckingProtection(true);
+            try {
+              const status = await checkPdfProtection(buffer);
+              if (!isCancelled) {
+                setProtectionStatus(status);
+              }
+            } catch {
+              if (!isCancelled) {
+                setProtectionStatus({
+                  isProtected: false,
+                  needsPassword: false,
+                  hasPermissionsRestriction: false,
+                });
+              }
+            } finally {
+              if (!isCancelled) setIsCheckingProtection(false);
+            }
+          }
         } catch (err) {
           console.error("Falha ao analisar PDF:", err);
         }
@@ -503,6 +621,23 @@ export function DedicatedToolView({
         ocrLanguage,
         ocrEnhanceContrast,
         ocrOutputMode,
+        detectHeadings: markdownDetectHeadings,
+        detectTables: markdownDetectTables,
+        includePageBreaks: markdownIncludePageBreaks,
+        cropMargins,
+        cropScope,
+        cropSelectedPages: parseSelectedPages(cropSelectedPagesText, pdfPageCount),
+        signaturePlacement,
+        signatureImageBytes,
+        signerName,
+        includeDate: includeSignatureDate,
+        extractImageScope,
+        extractImagePages: parseSelectedPages(extractImagePagesText, pdfPageCount),
+        ignoreSmallImages,
+        selectedImageIds,
+        formValues,
+        formFlatten,
+        unlockPassword,
         onOcrProgress: (info) => {
           setProgress(info.progress);
           setOcrProgressStatus(`Pág. ${info.page}/${info.totalPages} - ${info.status}`);
@@ -533,6 +668,10 @@ export function DedicatedToolView({
           savedPercent: Math.round(((primaryFile.size - resultSizeBytes) / primaryFile.size) * 100),
         });
       }
+      if (tool.id === "pdf-to-markdown") {
+        const mdText = output.extractedText || (await outputBlob.text());
+        setMarkdownResult(mdText);
+      }
       if (tool.id === "text-translate") {
         const text = await outputBlob.text();
         setTranslatedText(text);
@@ -557,6 +696,10 @@ export function DedicatedToolView({
       if (tool.id === "pdf-ocr" && output.extractedText) {
         setRecognizedOcrText(output.extractedText);
       }
+      if (tool.id === "pdf-extract-images" && output.extractedImages) {
+        setExtractedImages(output.extractedImages);
+        setSelectedImageIds(output.extractedImages.map((img) => img.id));
+      }
       setProgress(100);
       setOutputFileName(outName);
 
@@ -565,7 +708,10 @@ export function DedicatedToolView({
       setOutputBlob(outputBlob);
 
       const shouldStayInWorkspace =
-        tool.id === "text-translate" || (tool.id === "text-review" && inputTab === "text");
+        tool.id === "text-translate" ||
+        (tool.id === "text-review" && inputTab === "text") ||
+        tool.id === "pdf-to-markdown" ||
+        tool.id === "pdf-extract-images";
 
       if (shouldStayInWorkspace) {
         setStatus("idle");
@@ -634,9 +780,15 @@ export function DedicatedToolView({
     if (tool.id === "pdf-compress") return translate("dedicated.actionCompress");
     if (tool.id === "pdf-merge") return translate("dedicated.actionMerge");
     if (tool.id === "pdf-rotate") return translate("dedicated.actionRotate");
+    if (tool.id === "pdf-crop") return translate("dedicated.actionCrop");
+    if (tool.id === "pdf-sign") return translate("dedicated.actionSign");
+    if (tool.id === "pdf-form-fill") return translate("dedicated.actionFormFill");
+    if (tool.id === "pdf-unlock") return translate("dedicated.actionUnlock");
     if (tool.id === "pdf-organize") return translate("dedicated.actionOrganize");
     if (tool.id === "images-to-pdf") return translate("dedicated.actionImagesToPdf");
+    if (tool.id === "pdf-extract-images") return translate("dedicated.actionExtractImages");
     if (tool.id === "pdf-to-jpg") return translate("dedicated.actionPdfToJpg");
+    if (tool.id === "pdf-to-markdown") return translate("dedicated.actionPdfToMarkdown");
     if (tool.id === "pdf-watermark") return translate("dedicated.actionWatermark");
     if (tool.id === "pdf-page-numbers") return translate("dedicated.actionPageNumbers");
     if (tool.id === "pdf-ocr") return translate("dedicated.actionOcr");
@@ -752,6 +904,135 @@ export function DedicatedToolView({
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
           thumbnailUrl={firstPageThumb}
+        />
+      );
+    }
+
+    // PDF PARA MARKDOWN
+    if (tool.id === "pdf-to-markdown") {
+      return (
+        <PdfToMarkdownPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          pageCount={pdfPageCount}
+          thumbnailUrl={firstPageThumb}
+          detectHeadings={markdownDetectHeadings}
+          onDetectHeadingsChange={setMarkdownDetectHeadings}
+          detectTables={markdownDetectTables}
+          onDetectTablesChange={setMarkdownDetectTables}
+          includePageBreaks={markdownIncludePageBreaks}
+          onIncludePageBreaksChange={setMarkdownIncludePageBreaks}
+          markdownResult={markdownResult}
+          onMarkdownResultChange={setMarkdownResult}
+          isConverting={status === "running"}
+        />
+      );
+    }
+
+    // RECORTAR PDF
+    if (tool.id === "pdf-crop") {
+      return (
+        <CropPdfPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          totalPages={pdfPageCount}
+          thumbnailUrl={firstPageThumb}
+          pageThumbnails={allPageThumbnails}
+          margins={cropMargins}
+          onMarginsChange={setCropMargins}
+          scope={cropScope}
+          onScopeChange={setCropScope}
+          selectedPagesText={cropSelectedPagesText}
+          onSelectedPagesTextChange={setCropSelectedPagesText}
+        />
+      );
+    }
+
+    // ASSINAR PDF
+    if (tool.id === "pdf-sign") {
+      return (
+        <SignPdfPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          totalPages={pdfPageCount}
+          thumbnailUrl={firstPageThumb}
+          pageThumbnails={allPageThumbnails}
+          placement={signaturePlacement}
+          onPlacementChange={setSignaturePlacement}
+          signatureImageBytes={signatureImageBytes}
+          onSignatureImageChange={setSignatureImageBytes}
+          signerName={signerName}
+          onSignerNameChange={setSignerName}
+          includeDate={includeSignatureDate}
+          onIncludeDateChange={setIncludeSignatureDate}
+        />
+      );
+    }
+
+    // EXTRAIR IMAGENS
+    if (tool.id === "pdf-extract-images") {
+      return (
+        <ExtractImagesPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          totalPages={pdfPageCount}
+          thumbnailUrl={firstPageThumb}
+          scope={extractImageScope}
+          onScopeChange={setExtractImageScope}
+          selectedPagesText={extractImagePagesText}
+          onSelectedPagesTextChange={setExtractImagePagesText}
+          ignoreSmall={ignoreSmallImages}
+          onIgnoreSmallChange={setIgnoreSmallImages}
+          extractedImages={extractedImages}
+          selectedImageIds={selectedImageIds}
+          onSelectedImageIdsChange={setSelectedImageIds}
+          isExtracting={status === "running"}
+        />
+      );
+    }
+
+    // PREENCHER FORMULÁRIO PDF
+    if (tool.id === "pdf-form-fill") {
+      return (
+        <FormFillPdfPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          totalPages={pdfPageCount}
+          thumbnailUrl={firstPageThumb}
+          pageThumbnails={allPageThumbnails}
+          fields={formFields}
+          isLoadingFields={isLoadingFormFields}
+          values={formValues}
+          onValuesChange={setFormValues}
+          flatten={formFlatten}
+          onFlattenChange={setFormFlatten}
+          onGoToSign={() => {
+            window.location.hash = "#/assinar-pdf";
+          }}
+        />
+      );
+    }
+
+    // DESBLOQUEAR PDF
+    if (tool.id === "pdf-unlock") {
+      return (
+        <UnlockPdfPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          totalPages={pdfPageCount}
+          thumbnailUrl={firstPageThumb}
+          pageThumbnails={allPageThumbnails}
+          protectionStatus={protectionStatus}
+          isCheckingStatus={isCheckingProtection}
+          passwordValue={unlockPassword}
+          onPasswordChange={setUnlockPassword}
+          errorMessage={errorMessage}
+          onGoToCompress={() => {
+            window.location.hash = "#/comprimir-pdf";
+          }}
+          onGoToOrganize={() => {
+            window.location.hash = "#/organizar-pdf";
+          }}
         />
       );
     }

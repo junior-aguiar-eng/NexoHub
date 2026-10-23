@@ -13,7 +13,7 @@ describe("Strict Functional Tools Catalog", () => {
     expect(ids).toContain("pdf-watermark");
     expect(ids).toContain("pdf-page-numbers");
     expect(ids).toContain("pdf-ocr");
-    expect(ids).not.toContain("pdf-extract-images");
+    expect(ids).toContain("pdf-extract-images");
     expect(ids).toContain("text-compare");
     expect(ids).not.toContain("pdf-to-word");
     expect(ids).not.toContain("word-to-pdf");

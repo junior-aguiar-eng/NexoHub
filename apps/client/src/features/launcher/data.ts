@@ -2,21 +2,26 @@ import { coreToolRegistry } from "@nexohub/tool-registry";
 import { resolveToolAvailability } from "@nexohub/tool-sdk";
 import {
   BetweenHorizontalStart,
+  Crop,
   FileArchive,
   FileCode2,
   FileScan,
+  FileText,
   FileType,
   FolderInput,
+  FormInput,
   GitCompareArrows,
   Hash,
   Image,
   Images,
   Languages,
   Lock,
+  PenTool,
   RotateCw,
   Scissors,
   SpellCheck2,
   Stamp,
+  Unlock,
 } from "lucide-react";
 import type { LauncherTool, Suite } from "./model";
 
@@ -57,6 +62,13 @@ const presentation = {
     descriptionKey: "tool.pdfRotate.description" as const,
     icon: RotateCw,
     accentColor: "#D97706", // Ouro Âmbar
+  },
+  "pdf-crop": {
+    suite: "organize" as const,
+    titleKey: "tool.pdfCrop.title" as const,
+    descriptionKey: "tool.pdfCrop.description" as const,
+    icon: Crop,
+    accentColor: "#EA580C", // Laranja Abrasivo
   },
   "pdf-compress": {
     suite: "optimize" as const,
@@ -114,6 +126,13 @@ const presentation = {
     icon: Lock,
     accentColor: "#475569", // Ardósia
   },
+  "pdf-sign": {
+    suite: "security" as const,
+    titleKey: "tool.pdfSign.title" as const,
+    descriptionKey: "tool.pdfSign.description" as const,
+    icon: PenTool,
+    accentColor: "#059669", // Esmeralda Seguro
+  },
   "pdf-extract-images": {
     suite: "convert" as const,
     titleKey: "tool.pdfExtractImages.title" as const,
@@ -149,6 +168,27 @@ const presentation = {
     icon: Languages,
     accentColor: "#06B6D4", // Ciano / Turquesa
   },
+  "pdf-to-markdown": {
+    suite: "convert" as const,
+    titleKey: "tool.pdfToMarkdown.title" as const,
+    descriptionKey: "tool.pdfToMarkdown.description" as const,
+    icon: FileText,
+    accentColor: "#9333EA", // Roxo Ametista
+  },
+  "pdf-form-fill": {
+    suite: "text" as const,
+    titleKey: "tool.pdfFormFill.title" as const,
+    descriptionKey: "tool.pdfFormFill.description" as const,
+    icon: FormInput,
+    accentColor: "#2563EB", // Azul Cobalto
+  },
+  "pdf-unlock": {
+    suite: "security" as const,
+    titleKey: "tool.pdfUnlock.title" as const,
+    descriptionKey: "tool.pdfUnlock.description" as const,
+    icon: Unlock,
+    accentColor: "#E11D48", // Rosa Rubi Segurança
+  },
 } as const;
 
 import type { CapabilityProvider } from "@nexohub/tool-sdk";
@@ -159,15 +199,21 @@ const browserSupportedToolIds = new Set([
   "pdf-merge",
   "pdf-split",
   "pdf-rotate",
+  "pdf-crop",
+  "pdf-sign",
   "pdf-compress",
   "text-compare",
   "images-to-pdf",
   "pdf-to-jpg",
+  "pdf-to-markdown",
+  "pdf-extract-images",
   "pdf-watermark",
   "pdf-page-numbers",
   "pdf-ocr",
   "text-translate",
   "text-review",
+  "pdf-form-fill",
+  "pdf-unlock",
 ]);
 
 export function createDynamicCapabilitiesProvider(

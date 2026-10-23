@@ -8,7 +8,7 @@ import {
   Sparkles,
   Table as TableIcon,
 } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { translate } from "@/i18n";
 
 export interface PdfToExcelPanelProps {
@@ -17,6 +17,7 @@ export interface PdfToExcelPanelProps {
   readonly totalPages: number;
   readonly thumbnailUrl?: string;
   readonly pageThumbnails?: readonly string[];
+  readonly onPreviewPageChange?: (page: number) => void;
   readonly outputFormat: "xlsx" | "csv";
   readonly onOutputFormatChange: (format: "xlsx" | "csv") => void;
   readonly sheetMode: "per-page" | "single-sheet";
@@ -27,6 +28,7 @@ export interface PdfToExcelPanelProps {
   readonly onDetectTablesOnlyChange: (val: boolean) => void;
   readonly previewRows?: Array<string[]>;
   readonly isConverting?: boolean;
+  readonly previewError?: string;
 }
 
 function formatSize(bytes: number): string {
@@ -41,6 +43,7 @@ export function PdfToExcelPanel({
   totalPages,
   thumbnailUrl,
   pageThumbnails,
+  onPreviewPageChange,
   outputFormat,
   onOutputFormatChange,
   sheetMode,
@@ -49,24 +52,21 @@ export function PdfToExcelPanel({
   onCsvDelimiterChange,
   detectTablesOnly,
   onDetectTablesOnlyChange,
-  previewRows = [],
+  previewRows,
   isConverting = false,
+  previewError,
 }: PdfToExcelPanelProps) {
   const detectTablesInputId = useId();
   const [activePageIndex, setActivePageIndex] = useState<number>(0);
 
-  const activeThumbnail = pageThumbnails?.[activePageIndex] ?? thumbnailUrl;
+  useEffect(() => {
+    onPreviewPageChange?.(activePageIndex + 1);
+  }, [onPreviewPageChange, activePageIndex]);
 
-  const mockDefaultPreview = [
-    ["Código", "Descrição do Item", "Quantidade", "Valor Unitário (R$)", "Total (R$)"],
-    ["INF-01", "Servidor Dell PowerEdge R650", "2", "14.500,00", "29.000,00"],
-    ["INF-02", "Switch Gerenciável 24p Gigabit", "4", "1.250,00", "5.000,00"],
-    ["INF-03", "Nobreak Senoidal 3kVA", "2", "3.800,00", "7.600,00"],
-    ["INF-04", "Roteador Corporativo Dual-WAN", "1", "2.100,00", "2.100,00"],
-    ["INF-05", "Licença Sistema Operacional", "2", "950,00", "1.900,00"],
-  ];
+  const activeThumbnail =
+    pageThumbnails?.[activePageIndex] ?? (activePageIndex === 0 ? thumbnailUrl : undefined);
 
-  const displayRows = previewRows.length > 0 ? previewRows : mockDefaultPreview;
+  const displayRows = previewRows ?? [];
 
   return (
     <div className="pdf-excel-container" data-testid="pdf-to-excel-panel">
@@ -86,26 +86,28 @@ export function PdfToExcelPanel({
                 type="button"
                 className={`pdf-excel-format-btn ${outputFormat === "xlsx" ? "active" : ""}`}
                 onClick={() => onOutputFormatChange("xlsx")}
+                aria-pressed={outputFormat === "xlsx"}
                 data-testid="format-xlsx-btn"
               >
                 <div className="format-btn-header">
                   <FileSpreadsheet size={18} className="text-emerald-400" />
                   <span className="format-title">{translate("excel.formatXlsx")}</span>
                 </div>
-                <span className="format-desc">OpenXML nativo com formatação e abas</span>
+                <span className="format-desc">{translate("excel.formatXlsxHint")}</span>
               </button>
 
               <button
                 type="button"
                 className={`pdf-excel-format-btn ${outputFormat === "csv" ? "active" : ""}`}
                 onClick={() => onOutputFormatChange("csv")}
+                aria-pressed={outputFormat === "csv"}
                 data-testid="format-csv-btn"
               >
                 <div className="format-btn-header">
                   <TableIcon size={18} className="text-amber-400" />
                   <span className="format-title">{translate("excel.formatCsv")}</span>
                 </div>
-                <span className="format-desc">Texto delimitado com BOM UTF-8</span>
+                <span className="format-desc">{translate("excel.formatCsvHint")}</span>
               </button>
             </div>
           </div>
@@ -118,6 +120,7 @@ export function PdfToExcelPanel({
                 type="button"
                 className={`pdf-excel-mode-btn ${sheetMode === "per-page" ? "active" : ""}`}
                 onClick={() => onSheetModeChange("per-page")}
+                aria-pressed={sheetMode === "per-page"}
                 data-testid="mode-per-page-btn"
               >
                 <Layers size={16} />
@@ -127,6 +130,7 @@ export function PdfToExcelPanel({
                 type="button"
                 className={`pdf-excel-mode-btn ${sheetMode === "single-sheet" ? "active" : ""}`}
                 onClick={() => onSheetModeChange("single-sheet")}
+                aria-pressed={sheetMode === "single-sheet"}
                 data-testid="mode-single-btn"
               >
                 <Database size={16} />
@@ -144,28 +148,31 @@ export function PdfToExcelPanel({
                   type="button"
                   className={`delimiter-btn ${csvDelimiter === ";" ? "active" : ""}`}
                   onClick={() => onCsvDelimiterChange(";")}
+                  aria-pressed={csvDelimiter === ";"}
                   data-testid="delimiter-semicolon-btn"
                 >
                   <span>;</span>
-                  <small>Ponto e vírgula</small>
+                  <small>{translate("excel.csvDelimiterSemicolon")}</small>
                 </button>
                 <button
                   type="button"
                   className={`delimiter-btn ${csvDelimiter === "," ? "active" : ""}`}
                   onClick={() => onCsvDelimiterChange(",")}
+                  aria-pressed={csvDelimiter === ","}
                   data-testid="delimiter-comma-btn"
                 >
                   <span>,</span>
-                  <small>Vírgula</small>
+                  <small>{translate("excel.csvDelimiterComma")}</small>
                 </button>
                 <button
                   type="button"
                   className={`delimiter-btn ${csvDelimiter === "\t" ? "active" : ""}`}
                   onClick={() => onCsvDelimiterChange("\t")}
+                  aria-pressed={csvDelimiter === "\t"}
                   data-testid="delimiter-tab-btn"
                 >
                   <span>Tab</span>
-                  <small>Tabulação</small>
+                  <small>{translate("excel.csvDelimiterTab")}</small>
                 </button>
               </div>
             </div>
@@ -221,7 +228,8 @@ export function PdfToExcelPanel({
               <div className="file-badges">
                 <span className="file-badge">{formatSize(fileSizeBytes)}</span>
                 <span className="file-badge">
-                  {totalPages} {totalPages === 1 ? "página" : "páginas"}
+                  {totalPages}{" "}
+                  {translate(totalPages === 1 ? "unlock.pageSingular" : "unlock.pagePlural")}
                 </span>
                 <span className="file-badge file-badge-emerald">
                   {outputFormat === "xlsx" ? "XLSX OpenXML" : "CSV UTF-8"}
@@ -230,22 +238,26 @@ export function PdfToExcelPanel({
             </div>
           </div>
 
-          {pageThumbnails && pageThumbnails.length > 1 && (
+          {totalPages > 1 && (
             <div className="file-pagination">
               <button
                 type="button"
                 className="page-nav-btn"
+                aria-label={translate("unlock.previousPage")}
                 disabled={activePageIndex === 0}
                 onClick={() => setActivePageIndex((prev) => Math.max(0, prev - 1))}
               >
                 <ChevronLeft size={16} />
               </button>
               <span className="page-counter">
-                Página {activePageIndex + 1} de {totalPages}
+                {translate("redact.pageOfTotal")
+                  .replace("{page}", String(activePageIndex + 1))
+                  .replace("{total}", String(totalPages))}
               </span>
               <button
                 type="button"
                 className="page-nav-btn"
+                aria-label={translate("unlock.nextPage")}
                 disabled={activePageIndex >= totalPages - 1}
                 onClick={() => setActivePageIndex((prev) => Math.min(totalPages - 1, prev + 1))}
               >
@@ -263,15 +275,29 @@ export function PdfToExcelPanel({
               <h3>{translate("excel.tablePreviewTitle")}</h3>
             </div>
             <span className="preview-status-badge">
-              {isConverting ? translate("excel.loadingPreview") : `${displayRows.length} linhas`}
+              {isConverting
+                ? translate("excel.loadingPreview")
+                : translate("excel.rowCount").replace("{count}", String(displayRows.length))}
             </span>
           </div>
 
+          <p className="info-card-text" style={{ padding: "12px 18px", margin: 0 }}>
+            {translate("excel.previewScope")}
+          </p>
           <div className="preview-table-wrapper">
-            {displayRows.length === 0 ? (
+            {isConverting || previewError || displayRows.length === 0 ? (
               <div className="preview-empty-state">
                 <AlertCircle size={32} className="text-slate-500" />
-                <p>{translate("excel.emptyTable")}</p>
+                <p role="status">
+                  {previewError ??
+                    translate(
+                      isConverting
+                        ? "excel.loadingPreview"
+                        : previewRows === undefined
+                          ? "excel.previewPending"
+                          : "excel.emptyTable",
+                    )}
+                </p>
               </div>
             ) : (
               <table className="excel-preview-table" data-testid="excel-preview-table">
@@ -317,6 +343,12 @@ export function PdfToExcelPanel({
           margin: 0 auto;
         }
 
+        .pdf-excel-sidebar, .pdf-excel-main { min-width: 0; }
+        .file-card-meta { min-width: 0; }
+        .file-name { overflow-wrap: anywhere; }
+        .file-badges { flex-wrap: wrap; }
+        .pdf-excel-file-card { flex-wrap: wrap; gap: 12px; }
+        .pdf-excel-container button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
         .pdf-excel-sidebar {
           display: flex;
           flex-direction: column;

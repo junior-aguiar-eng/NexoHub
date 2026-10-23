@@ -8,7 +8,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type React from "react";
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { translate } from "@/i18n";
 import type { RedactionArea } from "@/platform/pdf-engine";
 
@@ -18,6 +18,7 @@ export interface RedactPdfPanelProps {
   readonly totalPages: number;
   readonly thumbnailUrl?: string;
   readonly pageThumbnails?: readonly string[];
+  readonly onPreviewPageChange?: (page: number) => void;
   readonly redactions: readonly RedactionArea[];
   readonly onRedactionsChange: (redactions: readonly RedactionArea[]) => void;
 }
@@ -28,13 +29,14 @@ export function RedactPdfPanel({
   totalPages,
   thumbnailUrl,
   pageThumbnails,
+  onPreviewPageChange,
   redactions,
   onRedactionsChange,
 }: RedactPdfPanelProps) {
   const labelInputId = useId();
   const [previewPage, setPreviewPage] = useState<number>(1);
   const [selectedColor, setSelectedColor] = useState<"black" | "white" | "gray">("black");
-  const [defaultLabel, setDefaultLabel] = useState<string>("[CONFIDENCIAL]");
+  const [defaultLabel, setDefaultLabel] = useState<string>(() => translate("redact.defaultLabel"));
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
   const [currentPoint, setCurrentPoint] = useState<{ x: number; y: number } | null>(null);
@@ -46,16 +48,25 @@ export function RedactPdfPanel({
       ? `${(fileSizeBytes / (1024 * 1024)).toFixed(1)} MB`
       : `${Math.round(fileSizeBytes / 1024)} KB`;
 
+  useEffect(() => {
+    onPreviewPageChange?.(previewPage);
+  }, [onPreviewPageChange, previewPage]);
+
   const activeThumbnail =
-    pageThumbnails && pageThumbnails.length >= previewPage
-      ? pageThumbnails[previewPage - 1]
-      : thumbnailUrl;
+    pageThumbnails?.[previewPage - 1] ?? (previewPage === 1 ? thumbnailUrl : undefined);
 
   const currentPageIndex = previewPage - 1;
   const currentPageRedactions = redactions.filter((r) => r.pageIndex === currentPageIndex);
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (
+      !activeThumbnail ||
+      !containerRef.current ||
+      e.button !== 0 ||
+      (e.target as HTMLElement).closest("button")
+    )
+      return;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
     const rect = containerRef.current.getBoundingClientRect();
     const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100));
     const y = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100));
@@ -65,7 +76,7 @@ export function RedactPdfPanel({
     setCurrentPoint({ x, y });
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDrawing || !containerRef.current || !startPoint) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100));
@@ -74,7 +85,7 @@ export function RedactPdfPanel({
     setCurrentPoint({ x, y });
   };
 
-  const handleMouseUp = () => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDrawing || !startPoint || !currentPoint) {
       setIsDrawing(false);
       setStartPoint(null);
@@ -82,12 +93,17 @@ export function RedactPdfPanel({
       return;
     }
 
-    const widthPercent = Math.abs(currentPoint.x - startPoint.x);
-    const heightPercent = Math.abs(currentPoint.y - startPoint.y);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const endPoint = {
+      x: Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100)),
+      y: Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100)),
+    };
+    const widthPercent = Math.abs(endPoint.x - startPoint.x);
+    const heightPercent = Math.abs(endPoint.y - startPoint.y);
 
     if (widthPercent > 2 && heightPercent > 1) {
-      const xPercent = Math.min(startPoint.x, currentPoint.x);
-      const yPercent = Math.min(startPoint.y, currentPoint.y);
+      const xPercent = Math.min(startPoint.x, endPoint.x);
+      const yPercent = Math.min(startPoint.y, endPoint.y);
 
       const newArea: RedactionArea = {
         id: `redact-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -166,7 +182,8 @@ export function RedactPdfPanel({
                 <span>{formattedSize}</span>
                 <span>•</span>
                 <span>
-                  {totalPages} {totalPages === 1 ? "página" : "páginas"}
+                  {totalPages}{" "}
+                  {translate(totalPages === 1 ? "unlock.pageSingular" : "unlock.pagePlural")}
                 </span>
                 <span>•</span>
                 <span className="redact-badge-count">
@@ -193,6 +210,7 @@ export function RedactPdfPanel({
                 type="button"
                 className={`redact-color-btn ${selectedColor === "black" ? "selected" : ""}`}
                 onClick={() => setSelectedColor("black")}
+                aria-pressed={selectedColor === "black"}
               >
                 <span className="redact-swatch" style={{ background: "#000000" }} />
                 <span>{translate("redact.colorBlack")}</span>
@@ -201,6 +219,7 @@ export function RedactPdfPanel({
                 type="button"
                 className={`redact-color-btn ${selectedColor === "white" ? "selected" : ""}`}
                 onClick={() => setSelectedColor("white")}
+                aria-pressed={selectedColor === "white"}
               >
                 <span
                   className="redact-swatch"
@@ -212,6 +231,7 @@ export function RedactPdfPanel({
                 type="button"
                 className={`redact-color-btn ${selectedColor === "gray" ? "selected" : ""}`}
                 onClick={() => setSelectedColor("gray")}
+                aria-pressed={selectedColor === "gray"}
               >
                 <span className="redact-swatch" style={{ background: "#6b7280" }} />
                 <span>{translate("redact.colorGray")}</span>
@@ -275,10 +295,15 @@ export function RedactPdfPanel({
                     data-testid="redact-area-item"
                   >
                     <div className="redact-item-top">
-                      <span className="redact-item-badge">
+                      <button
+                        type="button"
+                        className="redact-item-badge"
+                        onClick={() => setPreviewPage(item.pageIndex + 1)}
+                        aria-pressed={isCurrentPage}
+                      >
                         {translate("redact.page").replace("{page}", String(item.pageIndex + 1))} • #
                         {idx + 1}
-                      </span>
+                      </button>
                       <button
                         type="button"
                         className="redact-item-remove"
@@ -301,7 +326,14 @@ export function RedactPdfPanel({
                                 c === "black" ? "#000000" : c === "white" ? "#ffffff" : "#6b7280",
                             }}
                             onClick={() => handleUpdateRedactionColor(item.id, c)}
-                            aria-label={`Cor ${c}`}
+                            aria-label={translate(
+                              c === "black"
+                                ? "redact.colorBlack"
+                                : c === "white"
+                                  ? "redact.colorWhite"
+                                  : "redact.colorGray",
+                            )}
+                            aria-pressed={(item.color || "black") === c}
                           />
                         ))}
                       </div>
@@ -310,9 +342,64 @@ export function RedactPdfPanel({
                         type="text"
                         className="redact-item-label-input"
                         value={item.label || ""}
-                        placeholder="Texto sobre a tarja..."
+                        placeholder={translate("redact.labelPlaceholder")}
+                        aria-label={translate("redact.labelOptional")}
                         onChange={(e) => handleUpdateRedactionLabel(item.id, e.target.value)}
                       />
+                    </div>
+                    <div className="redact-coordinate-grid">
+                      {(["xPercent", "yPercent", "widthPercent", "heightPercent"] as const).map(
+                        (field) => (
+                          <label key={field} className="redact-field-label">
+                            {translate(
+                              field === "xPercent"
+                                ? "redact.areaX"
+                                : field === "yPercent"
+                                  ? "redact.areaY"
+                                  : field === "widthPercent"
+                                    ? "redact.areaWidth"
+                                    : "redact.areaHeight",
+                            )}
+                            <input
+                              type="number"
+                              className="redact-text-input"
+                              min={field === "xPercent" || field === "yPercent" ? 0 : 0.1}
+                              max={100}
+                              step={0.1}
+                              value={item[field]}
+                              onChange={(event) => {
+                                if (event.target.value === "") return;
+                                const value = Number(event.target.value);
+                                if (!Number.isFinite(value)) return;
+                                const updated = { ...item };
+                                if (field === "xPercent")
+                                  updated.xPercent = Math.max(
+                                    0,
+                                    Math.min(100 - item.widthPercent, value),
+                                  );
+                                if (field === "yPercent")
+                                  updated.yPercent = Math.max(
+                                    0,
+                                    Math.min(100 - item.heightPercent, value),
+                                  );
+                                if (field === "widthPercent")
+                                  updated.widthPercent = Math.max(
+                                    0.1,
+                                    Math.min(100 - item.xPercent, value),
+                                  );
+                                if (field === "heightPercent")
+                                  updated.heightPercent = Math.max(
+                                    0.1,
+                                    Math.min(100 - item.yPercent, value),
+                                  );
+                                onRedactionsChange(
+                                  redactions.map((area) => (area.id === item.id ? updated : area)),
+                                );
+                              }}
+                            />
+                          </label>
+                        ),
+                      )}
                     </div>
                   </div>
                 );
@@ -336,7 +423,7 @@ export function RedactPdfPanel({
                   className="redact-nav-btn"
                   disabled={previewPage <= 1}
                   onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
-                  aria-label="Página anterior"
+                  aria-label={translate("unlock.previousPage")}
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -348,7 +435,7 @@ export function RedactPdfPanel({
                   className="redact-nav-btn"
                   disabled={previewPage >= totalPages}
                   onClick={() => setPreviewPage((p) => Math.min(totalPages, p + 1))}
-                  aria-label="Próxima página"
+                  aria-label={translate("unlock.nextPage")}
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -359,26 +446,30 @@ export function RedactPdfPanel({
           <div className="redact-draw-hint">{translate("redact.drawHint")}</div>
 
           <div className="redact-preview-area">
-            {/* biome-ignore lint/a11y/noStaticElementInteractions: canvas overlay interativo para desenhar tarjas com mouse */}
             <div
               ref={containerRef}
               className="redact-preview-canvas-wrapper"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={() => {
+                setIsDrawing(false);
+                setStartPoint(null);
+                setCurrentPoint(null);
+              }}
               data-testid="redact-preview-canvas"
             >
               {activeThumbnail ? (
                 <img
                   src={activeThumbnail}
-                  alt={`Página ${previewPage}`}
+                  alt={translate("unlock.previewAlt").replace("{page}", String(previewPage))}
                   className="redact-thumb-image"
                   draggable={false}
                 />
               ) : (
                 <div className="redact-thumb-placeholder">
                   <EyeOff size={48} color="#64748b" />
-                  <span>Página {previewPage}</span>
+                  <span>{translate("common.previewUnavailable")}</span>
                 </div>
               )}
 
@@ -401,7 +492,7 @@ export function RedactPdfPanel({
                       backgroundColor: bg,
                       color: textColor,
                     }}
-                    title={area.label || "Tarja"}
+                    title={area.label || translate("redact.removeArea")}
                   >
                     {area.label && <span className="redact-box-label">{area.label}</span>}
                     <button
@@ -411,7 +502,7 @@ export function RedactPdfPanel({
                         e.stopPropagation();
                         handleRemoveRedaction(area.id);
                       }}
-                      aria-label="Remover tarja"
+                      aria-label={translate("redact.removeArea")}
                     >
                       ×
                     </button>
@@ -447,6 +538,10 @@ export function RedactPdfPanel({
       </div>
 
       <style>{`
+        button.redact-item-badge { cursor: pointer; border: 1px solid #475569; }
+        .redact-coordinate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .redact-controls-pane, .redact-preview-pane { min-width: 0; }
+        .redact-container button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
         .redact-container {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -772,6 +867,8 @@ export function RedactPdfPanel({
           cursor: crosshair;
           user-select: none;
           max-height: 520px;
+          touch-action: none;
+          max-width: 100%;
         }
         .redact-thumb-image {
           display: block;

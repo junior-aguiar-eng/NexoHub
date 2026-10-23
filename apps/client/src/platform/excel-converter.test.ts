@@ -1,4 +1,4 @@
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { degrees, PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 import { convertPdfToExcelDocument, getExcelColumnLetter } from "./excel-converter";
 
@@ -138,4 +138,108 @@ describe("excel-converter", () => {
     expect(result.totalSheets).toBe(1);
     expect(result.totalRows).toBeGreaterThanOrEqual(4);
   });
+});
+
+async function tablePdf(rows: string[][]): Promise<Uint8Array> {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([600, 800]);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  rows.forEach((row, r) => {
+    row.forEach((value, c) => {
+      if (value) page.drawText(value, { x: 40 + c * 180, y: 740 - r * 30, size: 11, font });
+    });
+  });
+  return doc.save();
+}
+
+it("mantém células vazias alinhadas com as colunas das outras linhas", async () => {
+  const result = await convertPdfToExcelDocument(
+    await tablePdf([
+      ["Código", "Produto", "Preço"],
+      ["00123", "", "15.50"],
+      ["00234", "Teclado", "25.00"],
+    ]),
+  );
+  expect(result.previewRows[1]).toEqual(["00123", "", "15.50"]);
+});
+
+it("XLSX preserva identificadores com zeros e mais de 15 dígitos como texto", async () => {
+  const result = await convertPdfToExcelDocument(
+    await tablePdf([["00123", "12345678901234567890"]]),
+  );
+  const { unzipSync, strFromU8 } = await import("fflate");
+  const xml = strFromU8(unzipSync(result.data)["xl/worksheets/sheet1.xml"]);
+  expect(xml).toContain('<c r="A1" t="inlineStr"><is><t>00123</t>');
+  expect(xml).toContain('<c r="B1" t="inlineStr"><is><t>12345678901234567890</t>');
+});
+
+it("CSV impede fórmulas vindas do texto do PDF, preservando números negativos", async () => {
+  const result = await convertPdfToExcelDocument(await tablePdf([["=1+1", "-42"]]), {
+    outputFormat: "csv",
+  });
+  const csv = new TextDecoder().decode(result.data);
+  expect(csv).toContain("'=1+1");
+  expect(csv).toContain(";-42");
+});
+
+it("recusa sucesso com planilha vazia quando o PDF precisa de OCR", async () => {
+  await expect(convertPdfToExcelDocument(await tablePdf([]))).rejects.toThrow(
+    "PDF_SEM_TEXTO_SELECIONAVEL",
+  );
+});
+
+it("informa ausência de tabela em vez de gerar arquivo vazio", async () => {
+  await expect(
+    convertPdfToExcelDocument(await tablePdf([["Um parágrafo sem colunas"]]), {
+      detectTablesOnly: true,
+    }),
+  ).rejects.toThrow("PDF_SEM_TABELAS");
+});
+
+it("mantém pontuação original e a tabela lógica em páginas com rotação", async () => {
+  for (const angle of [0, 90, 180, 270]) {
+    const doc = await PDFDocument.load(
+      await tablePdf([
+        ["Nome", "Observação"],
+        ["001", "“Válido” — sim"],
+      ]),
+    );
+    doc.getPage(0).setRotation(degrees(angle));
+    const result = await convertPdfToExcelDocument(await doc.save());
+    expect(result.previewRows).toEqual([
+      ["Nome", "Observação"],
+      ["001", "“Válido” — sim"],
+    ]);
+  }
+});
+
+it("planilha única e CSV não inserem rótulos artificiais nas linhas de dados", async () => {
+  const source = await PDFDocument.load(await tablePdf([["001", "Produto"]]));
+  const [copy] = await source.copyPages(source, [0]);
+  source.addPage(copy);
+  const input = await source.save();
+  const xlsx = await convertPdfToExcelDocument(input, { sheetMode: "single-sheet" });
+  const { unzipSync, strFromU8 } = await import("fflate");
+  const xml = strFromU8(unzipSync(xlsx.data)["xl/worksheets/sheet1.xml"]);
+  expect(xml.match(/<row /g)).toHaveLength(xlsx.totalRows);
+  expect(xml).not.toContain("===");
+  const csv = await convertPdfToExcelDocument(input, { outputFormat: "csv" });
+  expect(new TextDecoder().decode(csv.data).split("\r\n")).toHaveLength(csv.totalRows);
+  expect(csv.totalSheets).toBe(1);
+});
+
+it("mantém valores alinhados à direita e células ausentes em suas colunas", async () => {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([600, 800]);
+  for (const [text, x, y] of [
+    ["Produto", 40, 740],
+    ["Preço", 400, 740],
+    ["Teclado", 40, 710],
+    ["12345.67", 370, 710],
+    ["99999.99", 370, 680],
+  ] as const)
+    page.drawText(text, { x, y, size: 12 });
+  const result = await convertPdfToExcelDocument(await doc.save());
+  expect(result.previewRows[1]).toEqual(["Teclado", "12345.67"]);
+  expect(result.previewRows[2]).toEqual(["", "99999.99"]);
 });

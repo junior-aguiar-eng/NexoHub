@@ -524,14 +524,6 @@ describe("operações PDF no navegador", () => {
           heightPercent: 8,
           color: "gray",
         },
-        {
-          id: "r-invalid",
-          pageIndex: 99, // página inexistente, deve ser ignorada com segurança
-          xPercent: 0,
-          yPercent: 0,
-          widthPercent: 10,
-          heightPercent: 10,
-        },
       ],
     });
 

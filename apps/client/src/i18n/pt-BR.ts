@@ -1,4 +1,31 @@
 export const ptBR = {
+  "protect.rc4UnsupportedPassword":
+    "Esta senha contém caracteres incompatíveis com RC4. Selecione AES-256 para usar a senha completa.",
+  "excel.previewScope":
+    "Amostra das primeiras linhas do documento completo. A navegação acima altera apenas a miniatura do PDF.",
+  "excel.formatXlsxHint": "Planilha XLSX com abas",
+  "excel.formatCsvHint": "Texto delimitado em UTF-8",
+  "excel.rowCount": "Linhas na prévia: {count}",
+  "common.pageCount": "{count} páginas",
+  "common.pagePreview": "Página {page}",
+  "common.previewUnavailable": "Pré-visualização indisponível",
+  "protect.encryptionPreview": "Configuração: {algorithm}",
+  "redact.defaultLabel": "[CONFIDENCIAL]",
+  "redact.areaX": "Posição horizontal (%)",
+  "redact.areaY": "Posição vertical (%)",
+  "redact.areaWidth": "Largura (%)",
+  "redact.areaHeight": "Altura (%)",
+  "redact.areaCoordinates": "Posição e tamanho da tarja",
+  "redact.pageOfTotal": "Página {page} de {total}",
+  "excel.previewPending": "A prévia dos dados será exibida após a análise do PDF.",
+  "excel.noTables":
+    "Não foram encontradas linhas de tabela. Desative o filtro de tabelas para extrair o texto disponível.",
+  "excel.previewError":
+    "Não foi possível analisar os dados deste PDF. Verifique o arquivo e tente novamente.",
+  "redact.areaRequired": "Marque pelo menos uma área antes de ocultar o conteúdo.",
+  "redact.areaInvalid": "Há uma área inválida. Confira a página, a posição e o tamanho das tarjas.",
+  "redact.limitExceeded":
+    "Este PDF excede o limite de resolução para ocultação segura. Divida o documento em arquivos menores e tente novamente.",
   "document.errorPdfNoText":
     "Este PDF não contém texto selecionável. Use Reconhecer texto para digitalizações e imagens.",
   "document.errorPdfTextExtraction":
@@ -365,7 +392,8 @@ export const ptBR = {
   "protect.alreadyProtectedDesc":
     "Este PDF já possui criptografia ou senha ativa. Se deseja trocar a senha, desbloqueie-o primeiro.",
   "protect.goToUnlock": "Ir para Desbloquear PDF",
-  "protect.successNotice": "O arquivo será criptografado diretamente no seu dispositivo.",
+  "protect.successNotice":
+    "O arquivo será criptografado no seu dispositivo. As permissões de impressão, cópia e edição dependem do suporte do leitor de PDF. Prefira AES-256; RC4 é um formato legado.",
   "redact.title": "Ocultar e Tarjar PDF (Privacidade & LGPD)",
   "redact.optionsTitle": "Configurações de Tarja",
   "redact.instruction":
@@ -385,7 +413,7 @@ export const ptBR = {
   "redact.clearAll": "Limpar Todas",
   "redact.actionSubmit": "Aplicar Tarjas e Salvar PDF",
   "redact.privacyNotice":
-    "As tarjas são aplicadas permanentemente com preenchimento vetorial opaco, garantindo total conformidade com a LGPD.",
+    "A saída reconstrói todas as páginas como imagens com as áreas ocultadas. Texto selecionável, busca, links, formulários e anexos não são mantidos. O arquivo original permanece intacto.",
   "redact.drawHint": "Clique e arraste sobre o documento para selecionar a área a ser ocultada.",
   "pdfToMarkdown.viewRendered": "Visualização",
   "pdfToMarkdown.viewRaw": "Código Markdown",

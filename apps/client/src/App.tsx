@@ -229,6 +229,10 @@ export function App() {
             tool={activeDedicatedTool}
             documentCore={documentCore}
             initialFiles={initialFilesForTool}
+            onOpenTool={(toolId, files) => {
+              const found = dynamicTools.find((candidate) => candidate.id === toolId);
+              if (found) selectToolWithUrl(found, files);
+            }}
             onBack={() => {
               selectToolWithUrl(null);
             }}

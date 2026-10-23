@@ -33,9 +33,9 @@ describe("PdfToExcelPanel", () => {
     expect(screen.getByTestId("mode-single-btn")).toBeInTheDocument();
     expect(screen.getByTestId("detect-tables-only-checkbox")).not.toBeChecked();
 
-    // Valida tabela de pré-visualização renderizada
-    expect(screen.getByTestId("excel-preview-table")).toBeInTheDocument();
-    expect(screen.getByText("Servidor Dell PowerEdge R650")).toBeInTheDocument();
+    // Uma prévia vazia nunca inventa conteúdo do documento.
+    expect(screen.queryByTestId("excel-preview-table")).not.toBeInTheDocument();
+    expect(screen.queryByText("Servidor Dell PowerEdge R650")).not.toBeInTheDocument();
   });
 
   it("dispara callbacks de alteração de formato, modo e opções", () => {
@@ -96,4 +96,52 @@ describe("PdfToExcelPanel", () => {
     fireEvent.click(screen.getByTestId("delimiter-comma-btn"));
     expect(onDelimChange).toHaveBeenCalledWith(",");
   });
+});
+
+it("exibe apenas as linhas reais fornecidas", () => {
+  render(
+    <PdfToExcelPanel
+      fileName="real.pdf"
+      fileSizeBytes={100}
+      totalPages={1}
+      outputFormat="xlsx"
+      onOutputFormatChange={vi.fn()}
+      sheetMode="per-page"
+      onSheetModeChange={vi.fn()}
+      csvDelimiter=";"
+      onCsvDelimiterChange={vi.fn()}
+      detectTablesOnly={false}
+      onDetectTablesOnlyChange={vi.fn()}
+      previewRows={[
+        ["Nome", "Valor"],
+        ["Dado real", "42"],
+      ]}
+    />,
+  );
+  expect(screen.getByText("Dado real")).toBeInTheDocument();
+  expect(screen.queryByText("Servidor Dell PowerEdge R650")).not.toBeInTheDocument();
+});
+
+it("oculta linhas antigas durante a análise de novas opções", () => {
+  render(
+    <PdfToExcelPanel
+      fileName="real.pdf"
+      fileSizeBytes={100}
+      totalPages={1}
+      outputFormat="xlsx"
+      onOutputFormatChange={vi.fn()}
+      sheetMode="per-page"
+      onSheetModeChange={vi.fn()}
+      csvDelimiter=";"
+      onCsvDelimiterChange={vi.fn()}
+      detectTablesOnly={false}
+      onDetectTablesOnlyChange={vi.fn()}
+      isConverting
+      previewRows={[["Antigo"], ["Dado antigo"]]}
+    />,
+  );
+  expect(screen.queryByText("Dado antigo")).not.toBeInTheDocument();
+  expect(
+    screen.getAllByText("Analisando estrutura tabular do documento...").length,
+  ).toBeGreaterThan(0);
 });

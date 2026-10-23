@@ -38,7 +38,10 @@ describe("ProtectPdfPanel", () => {
     );
 
     expect(screen.getByText("contrato.pdf")).toBeDefined();
-    expect(screen.getByText("Senha de abertura do documento")).toBeDefined();
+    expect(screen.getByLabelText("Senha de abertura do documento")).toHaveAttribute(
+      "type",
+      "password",
+    );
     expect(screen.getByText("Padrão de Criptografia")).toBeDefined();
     expect(screen.getByText("Permissões de Uso do Documento")).toBeDefined();
     expect(screen.getByText("Permitir impressão do documento")).toBeDefined();

@@ -17,6 +17,7 @@ import { translate } from "@/i18n";
 import type { TranslationProgressInfo } from "@/platform/browser-translator";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { readDocumentText } from "@/platform/document-reader";
+import { extractPdfSpreadsheetData } from "@/platform/excel-converter";
 import { runLauncherTool } from "@/platform/launcher-tool-runner";
 import {
   type CropMargins,
@@ -61,6 +62,7 @@ type DedicatedToolViewProps = {
   tool: LauncherTool;
   documentCore: DocumentCorePort;
   onBack: () => void;
+  onOpenTool?: (toolId: string, files?: File[]) => void;
   initialFiles?: File[];
   onOperationComplete?: (op: {
     documentName: string;
@@ -102,6 +104,7 @@ export function DedicatedToolView({
   tool,
   documentCore,
   onBack,
+  onOpenTool,
   initialFiles,
   onOperationComplete,
 }: DedicatedToolViewProps) {
@@ -232,6 +235,53 @@ export function DedicatedToolView({
   const [excelDetectTablesOnly, setExcelDetectTablesOnly] = useState<boolean>(false);
 
   // Estados de Páginas (Organizador e Extrator)
+  const [excelPreviewRows, setExcelPreviewRows] = useState<string[][] | undefined>();
+  const [excelPreviewError, setExcelPreviewError] = useState<string>();
+  const [isAnalyzingExcel, setIsAnalyzingExcel] = useState(false);
+  const [previewEpoch, setPreviewEpoch] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setExcelPreviewRows(undefined);
+    setExcelPreviewError(undefined);
+    const file = files[0];
+    if (tool.id !== "pdf-to-excel" || !file) {
+      setIsAnalyzingExcel(false);
+      return;
+    }
+    setIsAnalyzingExcel(true);
+    void file
+      .arrayBuffer()
+      .then((bytes) =>
+        extractPdfSpreadsheetData(new Uint8Array(bytes), {
+          detectTablesOnly: excelDetectTablesOnly,
+        }),
+      )
+      .then((result) => {
+        if (!cancelled) setExcelPreviewRows(result.previewRows);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        setExcelPreviewRows([]);
+        const code = error instanceof Error ? error.message : "";
+        setExcelPreviewError(
+          translate(
+            code === "PDF_SEM_TEXTO_SELECIONAVEL"
+              ? "document.errorPdfNoText"
+              : code === "PDF_SEM_TABELAS"
+                ? "excel.noTables"
+                : "excel.previewError",
+          ),
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setIsAnalyzingExcel(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [files, tool.id, excelDetectTablesOnly]);
+
   const [pdfPageCount, setPdfPageCount] = useState<number>(() =>
     initialFiles && initialFiles.length > 0 ? 1 : 1,
   );
@@ -353,7 +403,7 @@ export function DedicatedToolView({
       ) {
         try {
           const buffer = new Uint8Array(await files[0].arrayBuffer());
-          if (tool.id === "pdf-unlock") {
+          if (tool.id === "pdf-unlock" || tool.id === "pdf-protect") {
             setIsCheckingProtection(true);
             try {
               const protection = await checkPdfProtection(buffer);
@@ -375,11 +425,7 @@ export function DedicatedToolView({
           setSplitSelectedPages([1]);
 
           // Renderiza miniaturas compartilhando a mesma instância de parsing
-          const isGridTool =
-            tool.id === "pdf-organize" ||
-            tool.id === "pdf-extract" ||
-            tool.id === "pdf-protect" ||
-            tool.id === "pdf-redact";
+          const isGridTool = tool.id === "pdf-organize" || tool.id === "pdf-extract";
           const maxGrid = isGridTool ? Math.min(count, 48) : 0;
           const pageNumbersToRender = isGridTool
             ? Array.from({ length: maxGrid }, (_, i) => i + 1)
@@ -457,26 +503,6 @@ export function DedicatedToolView({
               if (!isCancelled) setIsLoadingFormFields(false);
             }
           }
-
-          if (tool.id === "pdf-unlock" || tool.id === "pdf-protect") {
-            setIsCheckingProtection(true);
-            try {
-              const status = await checkPdfProtection(buffer);
-              if (!isCancelled) {
-                setProtectionStatus(status);
-              }
-            } catch {
-              if (!isCancelled) {
-                setProtectionStatus({
-                  isProtected: false,
-                  needsPassword: false,
-                  hasPermissionsRestriction: false,
-                });
-              }
-            } finally {
-              if (!isCancelled) setIsCheckingProtection(false);
-            }
-          }
         } catch (err) {
           if (!isCancelled) setErrorMessage(translate("toolQuality.invalidDocument"));
           console.error("Falha ao analisar PDF:", err);
@@ -493,6 +519,10 @@ export function DedicatedToolView({
   // biome-ignore lint/correctness/useExhaustiveDependencies: troca de arquivo/ferramenta invalida os resultados associados.
   useEffect(() => {
     setMarkdownResult("");
+    setPreviewEpoch((epoch) => epoch + 1);
+    setRedactionAreas([]);
+    setProtectPassword("");
+    setProtectConfirmPassword("");
     setTranslatedText("");
     setTranslationProgress(null);
     setTranslationProgressStatus("");
@@ -772,7 +802,7 @@ export function DedicatedToolView({
       setTranslationProgressStatus(translate("workspace.translate.preparing"));
     }
     if (tool.id === "pdf-protect") {
-      if (!protectPassword.trim()) {
+      if (!protectPassword) {
         setStatus("idle");
         setErrorMessage(translate("protect.passwordRequired"));
         return;
@@ -1287,6 +1317,8 @@ export function DedicatedToolView({
     if (tool.id === "pdf-protect") {
       return (
         <ProtectPdfPanel
+          key={previewEpoch}
+          onPreviewPageChange={handlePreviewPageChange}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
@@ -1309,9 +1341,7 @@ export function DedicatedToolView({
           onAllowAnnotatingChange={setProtectAllowAnnotating}
           allowFillingForms={protectAllowFillingForms}
           onAllowFillingFormsChange={setProtectAllowFillingForms}
-          onGoToUnlock={() => {
-            window.location.hash = "#/desbloquear-pdf";
-          }}
+          onGoToUnlock={onOpenTool ? () => onOpenTool("pdf-unlock", files) : undefined}
         />
       );
     }
@@ -1320,6 +1350,8 @@ export function DedicatedToolView({
     if (tool.id === "pdf-redact") {
       return (
         <RedactPdfPanel
+          key={previewEpoch}
+          onPreviewPageChange={handlePreviewPageChange}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
@@ -1335,11 +1367,16 @@ export function DedicatedToolView({
     if (tool.id === "pdf-to-excel") {
       return (
         <PdfToExcelPanel
+          key={previewEpoch}
+          onPreviewPageChange={handlePreviewPageChange}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
           thumbnailUrl={firstPageThumb}
           pageThumbnails={allPageThumbnails}
+          previewRows={excelPreviewRows}
+          previewError={excelPreviewError}
+          isConverting={isAnalyzingExcel || status === "running"}
           outputFormat={excelOutputFormat}
           onOutputFormatChange={setExcelOutputFormat}
           sheetMode={excelSheetMode}
@@ -1737,7 +1774,13 @@ export function DedicatedToolView({
           <button
             type="button"
             className="ilovepdf-action-red-btn"
-            disabled={status === "running" || (!hasFilesOrText && tool.id !== "text-compare")}
+            disabled={
+              status === "running" ||
+              (!hasFilesOrText && tool.id !== "text-compare") ||
+              (tool.id === "pdf-protect" && protectionStatus.isProtected) ||
+              (tool.id === "pdf-redact" && redactionAreas.length === 0) ||
+              (tool.id === "pdf-to-excel" && (isAnalyzingExcel || Boolean(excelPreviewError)))
+            }
             onClick={handleExecute}
           >
             {status === "running" ? (

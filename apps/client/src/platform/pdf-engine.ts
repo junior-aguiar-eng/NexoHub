@@ -1004,15 +1004,18 @@ export async function protectPdfDocument(
     throw new Error("EMPTY_DOCUMENT");
   }
 
-  const password = options.password?.trim() ?? "";
-  const ownerPassword = options.ownerPassword?.trim() || undefined;
+  // Espaços integram a credencial. Um titular aleatório impede que a senha de
+  // abertura também conceda implicitamente todas as permissões de proprietário.
+  const password = options.password ?? "";
+  const requestedOwnerPassword = options.ownerPassword ?? "";
 
-  if (!password && !ownerPassword) {
+  if (!password && !requestedOwnerPassword) {
     throw new Error("SENHA_OBRIGATORIA");
   }
 
+  const ownerPassword = requestedOwnerPassword || crypto.randomUUID();
   try {
-    return await encryptPDF(pdfBytes, password, {
+    return await encryptPDF(pdfBytes.slice(), password, {
       ownerPassword,
       algorithm: options.algorithm ?? "AES-256",
       allowPrinting: options.allowPrinting ?? true,
@@ -1020,8 +1023,17 @@ export async function protectPdfDocument(
       allowCopying: options.allowCopying ?? false,
       allowAnnotating: options.allowAnnotating ?? false,
       allowFillingForms: options.allowFillingForms ?? true,
+      allowAssembly: options.allowModifying ?? false,
+      allowHighQualityPrint: options.allowPrinting ?? true,
     });
   } catch (err: unknown) {
+    if (
+      options.algorithm === "RC4" &&
+      (err as { code?: string })?.code === "UNSUPPORTED_PASSWORD_CHARACTER"
+    ) {
+      // A mensagem da dependência inclui o caractere rejeitado da senha.
+      throw new Error("SENHA_RC4_NAO_SUPORTADA");
+    }
     if (
       err instanceof AlreadyEncryptedError ||
       (err as { code?: string })?.code === "ALREADY_ENCRYPTED"
@@ -1058,59 +1070,114 @@ export async function redactPdfDocument(
     throw new Error("EMPTY_DOCUMENT");
   }
 
-  const doc = await PDFDocument.load(pdfBytes);
-  const pages = doc.getPages();
-  const font = await doc.embedFont(StandardFonts.HelveticaBold);
-
-  const resolveColor = (c?: string) => {
-    if (c === "white") return rgb(1, 1, 1);
-    if (c === "gray") return rgb(0.5, 0.5, 0.5);
-    return rgb(0, 0, 0);
-  };
-
-  for (const area of options.redactions) {
-    if (area.pageIndex < 0 || area.pageIndex >= pages.length) {
-      continue;
+  if (!options.redactions.length) throw new Error("AREA_OCULTACAO_OBRIGATORIA");
+  const loadingTask = pdfjsLib.getDocument({
+    data: pdfBytes.slice(),
+    useSystemFonts: true,
+    standardFontDataUrl: STANDARD_FONT_DATA_URL,
+    stopAtErrors: true,
+  });
+  try {
+    const source = await loadingTask.promise;
+    for (const area of options.redactions) {
+      if (
+        !Number.isInteger(area.pageIndex) ||
+        area.pageIndex < 0 ||
+        area.pageIndex >= source.numPages ||
+        ![area.xPercent, area.yPercent, area.widthPercent, area.heightPercent].every(
+          Number.isFinite,
+        ) ||
+        area.xPercent < 0 ||
+        area.yPercent < 0 ||
+        area.widthPercent <= 0 ||
+        area.heightPercent <= 0 ||
+        area.xPercent + area.widthPercent > 100 ||
+        area.yPercent + area.heightPercent > 100
+      )
+        throw new Error("AREA_OCULTACAO_INVALIDA");
     }
-    const page = pages[area.pageIndex];
-    const { width, height } = page.getSize();
 
-    const rectWidth = Math.max(1, (area.widthPercent / 100) * width);
-    const rectHeight = Math.max(1, (area.heightPercent / 100) * height);
-    const rectX = Math.max(0, (area.xPercent / 100) * width);
-    const rectY = Math.max(0, height - (area.yPercent / 100) * height - rectHeight);
-
-    const fillColor = resolveColor(area.color);
-
-    page.drawRectangle({
-      x: rectX,
-      y: rectY,
-      width: rectWidth,
-      height: rectHeight,
-      color: fillColor,
-      opacity: 1,
-    });
-
-    if (area.label?.trim()) {
-      const labelText = area.label.trim();
-      const textColor = area.color === "white" ? rgb(0, 0, 0) : rgb(1, 1, 1);
-      const fontSize = Math.min(10, Math.max(6, Math.floor(rectHeight * 0.5)));
-      const textWidth = font.widthOfTextAtSize(labelText, fontSize);
-      if (textWidth < rectWidth) {
-        const textX = rectX + (rectWidth - textWidth) / 2;
-        const textY = rectY + (rectHeight - fontSize) / 2;
-        page.drawText(labelText, {
-          x: textX,
-          y: textY,
-          size: fontSize,
-          font,
-          color: textColor,
+    // Um documento novo recebe somente pixels já ocultados. Não copiar páginas,
+    // recursos, anexos, metadados ou streams do original: um overlay é reversível.
+    const output = await PDFDocument.create();
+    const factory = source.canvasFactory as {
+      create(
+        width: number,
+        height: number,
+      ): { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D };
+      destroy(target: { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D }): void;
+    };
+    let totalPixels = 0;
+    for (let pageIndex = 0; pageIndex < source.numPages; pageIndex++) {
+      const page = await source.getPage(pageIndex + 1);
+      const visible = page.getViewport({ scale: 1 });
+      // 216 DPI, com limites explícitos de memória e dimensões de canvas.
+      const scale = Math.min(
+        3,
+        8192 / Math.max(visible.width, visible.height),
+        Math.sqrt(24_000_000 / (visible.width * visible.height)),
+      );
+      if (!Number.isFinite(scale) || scale <= 0) throw new Error("PDF_OCULTACAO_LIMITE_EXCEDIDO");
+      const viewport = page.getViewport({ scale });
+      const width = Math.ceil(viewport.width);
+      const height = Math.ceil(viewport.height);
+      totalPixels += width * height;
+      if (totalPixels > 96_000_000) throw new Error("PDF_OCULTACAO_LIMITE_EXCEDIDO");
+      const target = factory.create(width, height);
+      try {
+        await page.render({
+          canvas: target.canvas,
+          canvasContext: target.context,
+          viewport,
+          background: "rgb(255,255,255)",
+        }).promise;
+        const ctx = target.context;
+        for (const area of options.redactions.filter((area) => area.pageIndex === pageIndex)) {
+          // Arredondar para fora cobre integralmente os pixels das bordas.
+          const x = Math.floor((area.xPercent * viewport.width) / 100);
+          const y = Math.floor((area.yPercent * viewport.height) / 100);
+          const right = Math.ceil(((area.xPercent + area.widthPercent) * viewport.width) / 100);
+          const bottom = Math.ceil(((area.yPercent + area.heightPercent) * viewport.height) / 100);
+          ctx.fillStyle =
+            area.color === "white" ? "#ffffff" : area.color === "gray" ? "#808080" : "#000000";
+          ctx.fillRect(x, y, right - x, bottom - y);
+          if (area.label?.trim()) {
+            ctx.save();
+            try {
+              ctx.beginPath();
+              ctx.rect(x, y, right - x, bottom - y);
+              ctx.clip();
+              const fontSize = Math.min(10 * scale, (bottom - y) * 0.5);
+              ctx.font = `bold ${fontSize}px sans-serif`;
+              ctx.textAlign = "center";
+              ctx.textBaseline = "middle";
+              ctx.fillStyle = area.color === "white" ? "#000000" : "#ffffff";
+              if (ctx.measureText(area.label.trim()).width < right - x)
+                ctx.fillText(area.label.trim(), (x + right) / 2, (y + bottom) / 2);
+            } finally {
+              ctx.restore();
+            }
+          }
+        }
+        const image = await output.embedPng(target.canvas.toDataURL("image/png"));
+        // O canvas inclui eventual pixel de arredondamento; preservar a escala
+        // exata impede deslocamento da tarja em páginas fracionárias.
+        const outputPage = output.addPage([visible.width, visible.height]);
+        outputPage.drawImage(image, {
+          x: 0,
+          y: visible.height - height / scale,
+          width: width / scale,
+          height: height / scale,
         });
+      } finally {
+        factory.destroy(target);
+        page.cleanup();
       }
     }
+    return await output.save({ useObjectStreams: true });
+  } finally {
+    await loadingTask.destroy();
   }
-
-  return await doc.save({ useObjectStreams: true });
 }
 
 export {

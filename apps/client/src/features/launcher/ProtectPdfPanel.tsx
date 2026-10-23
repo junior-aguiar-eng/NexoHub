@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   Unlock,
 } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { translate } from "@/i18n";
 import type { PdfProtectionStatus } from "@/platform/pdf-engine";
 
@@ -21,6 +21,7 @@ export interface ProtectPdfPanelProps {
   readonly totalPages: number;
   readonly thumbnailUrl?: string;
   readonly pageThumbnails?: readonly string[];
+  readonly onPreviewPageChange?: (page: number) => void;
   readonly protectionStatus?: PdfProtectionStatus;
   readonly passwordValue: string;
   readonly onPasswordChange: (password: string) => void;
@@ -47,6 +48,7 @@ export function ProtectPdfPanel({
   totalPages,
   thumbnailUrl,
   pageThumbnails,
+  onPreviewPageChange,
   protectionStatus,
   passwordValue,
   onPasswordChange,
@@ -77,10 +79,12 @@ export function ProtectPdfPanel({
       ? `${(fileSizeBytes / (1024 * 1024)).toFixed(1)} MB`
       : `${Math.round(fileSizeBytes / 1024)} KB`;
 
+  useEffect(() => {
+    onPreviewPageChange?.(previewPage);
+  }, [onPreviewPageChange, previewPage]);
+
   const activeThumbnail =
-    pageThumbnails && pageThumbnails.length >= previewPage
-      ? pageThumbnails[previewPage - 1]
-      : thumbnailUrl;
+    pageThumbnails?.[previewPage - 1] ?? (previewPage === 1 ? thumbnailUrl : undefined);
 
   const isMismatch = confirmPasswordValue.length > 0 && passwordValue !== confirmPasswordValue;
 
@@ -137,7 +141,8 @@ export function ProtectPdfPanel({
                 <span>{formattedSize}</span>
                 <span>•</span>
                 <span>
-                  {totalPages} {totalPages === 1 ? "página" : "páginas"}
+                  {totalPages}{" "}
+                  {translate(totalPages === 1 ? "unlock.pageSingular" : "unlock.pagePlural")}
                 </span>
               </div>
             </div>
@@ -167,7 +172,7 @@ export function ProtectPdfPanel({
         <div className="protect-section-card">
           <div className="protect-section-title">
             <KeyRound size={16} />
-            <span>{translate("protect.passwordLabel")}</span>
+            <label htmlFor={passId}>{translate("protect.passwordLabel")}</label>
           </div>
 
           <div className="protect-input-group">
@@ -223,6 +228,8 @@ export function ProtectPdfPanel({
                 id={confirmPassId}
                 type={showConfirmPassword ? "text" : "password"}
                 className={`protect-input ${isMismatch ? "protect-input-error" : ""}`}
+                aria-invalid={isMismatch}
+                aria-describedby={isMismatch ? `${confirmPassId}-error` : undefined}
                 placeholder={translate("protect.confirmPasswordPlaceholder")}
                 value={confirmPasswordValue}
                 onChange={(e) => onConfirmPasswordChange(e.target.value)}
@@ -242,7 +249,7 @@ export function ProtectPdfPanel({
               </button>
             </div>
             {isMismatch && (
-              <div className="protect-error-text">
+              <div id={`${confirmPassId}-error`} className="protect-error-text" role="status">
                 <AlertCircle size={14} />
                 <span>{translate("protect.passwordMismatch")}</span>
               </div>
@@ -356,7 +363,7 @@ export function ProtectPdfPanel({
                   className="protect-nav-btn"
                   disabled={previewPage <= 1}
                   onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
-                  aria-label="Página anterior"
+                  aria-label={translate("unlock.previousPage")}
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -368,7 +375,7 @@ export function ProtectPdfPanel({
                   className="protect-nav-btn"
                   disabled={previewPage >= totalPages}
                   onClick={() => setPreviewPage((p) => Math.min(totalPages, p + 1))}
-                  aria-label="Próxima página"
+                  aria-label={translate("unlock.nextPage")}
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -381,13 +388,15 @@ export function ProtectPdfPanel({
               <div className="protect-thumb-wrapper">
                 <img
                   src={activeThumbnail}
-                  alt={`Página ${previewPage}`}
+                  alt={translate("unlock.previewAlt").replace("{page}", String(previewPage))}
                   className="protect-thumb-img"
                 />
                 <div className="protect-watermark-overlay">
                   <div className="protect-badge-overlay">
                     <Shield size={16} />
-                    <span>Criptografia {algorithm}</span>
+                    <span>
+                      {translate("protect.encryptionPreview").replace("{algorithm}", algorithm)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -395,7 +404,7 @@ export function ProtectPdfPanel({
               <div className="protect-no-thumb">
                 <Lock size={48} color="#94a3b8" />
                 <span style={{ marginTop: "0.5rem" }}>
-                  Pré-visualização da página {previewPage}
+                  {translate("common.previewUnavailable")}
                 </span>
               </div>
             )}

@@ -56,22 +56,20 @@ interface RawTextItem {
 }
 
 function sanitizeCellText(raw: string): string {
-  return raw
-    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
-    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
-    .replace(/[\u2013\u2014\u2015]/g, "-")
-    .replace(/\u2026/g, "...")
-    .replace(/\u00A0/g, " ")
-    .trim();
+  return raw.replace(/\u00A0/g, " ").trim();
 }
 
 function escapeXml(unsafe: string): string {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+  return (
+    unsafe
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: XML 1.0 rejeita esses caracteres vindos do PDF.
+      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;")
+  );
 }
 
 export function getExcelColumnLetter(colIndex: number): string {
@@ -84,7 +82,9 @@ export function getExcelColumnLetter(colIndex: number): string {
   return letter;
 }
 
-function escapeCsvCell(val: string, delimiter: string): string {
+function escapeCsvCell(raw: string, delimiter: string): string {
+  // Aspas CSV não impedem execução de fórmulas pelos programas de planilha.
+  const val = /^[\s\uFEFF]*[=+@-]/.test(raw) && !isNumericValue(raw) ? `'${raw}` : raw;
   if (val.includes(delimiter) || val.includes('"') || val.includes("\n") || val.includes("\r")) {
     return `"${val.replace(/"/g, '""')}"`;
   }
@@ -95,233 +95,192 @@ function isNumericValue(val: string): boolean {
   if (!val) return false;
   const trimmed = val.trim();
   // Aceita inteiros e decimais regulares (ponto ou vírgula em padrão limpo)
-  return /^-?\d+(\.\d+)?$/.test(trimmed);
+  return (
+    /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(trimmed) &&
+    trimmed.replace(/[-.]/g, "").replace(/^0+/, "").length <= 15
+  );
 }
 
-/**
- * Converte bytes de um documento PDF em planilha Excel (.xlsx) ou arquivo CSV,
- * extraindo coordenadas espaciais para reconstruir linhas e colunas reais.
- */
-export async function convertPdfToExcelDocument(
+export interface PdfSpreadsheetData {
+  readonly sheets: readonly ExtractedSheetData[];
+  readonly totalRows: number;
+  readonly totalColumns: number;
+  readonly previewRows: string[][];
+}
+
+/** Extrai uma prévia real sem gerar nem baixar um arquivo. Colunas são heurísticas espaciais. */
+export async function extractPdfSpreadsheetData(
   pdfBytes: Uint8Array,
-  options: PdfToExcelOptions = {},
-): Promise<PdfToExcelResult> {
-  const {
-    outputFormat = "xlsx",
-    sheetMode = "per-page",
-    csvDelimiter = ";",
-    detectTablesOnly = false,
-  } = options;
-
-  if (pdfBytes.length === 0) {
-    throw new Error("DOCUMENTO_VAZIO");
-  }
-
+  options: Pick<PdfToExcelOptions, "detectTablesOnly"> = {},
+): Promise<PdfSpreadsheetData> {
+  if (!pdfBytes.length) throw new Error("DOCUMENTO_VAZIO");
   const loadingTask = pdfjsLib.getDocument({
     data: pdfBytes.slice(),
     useSystemFonts: true,
     standardFontDataUrl: STANDARD_FONT_DATA_URL,
   });
-
-  const pdf = await loadingTask.promise;
-  const numPages = pdf.numPages;
-
-  if (numPages === 0) {
-    const emptyBytes = outputFormat === "csv" ? new TextEncoder().encode("") : createEmptyXlsx();
-    return {
-      data: emptyBytes,
-      fileName: outputFormat === "csv" ? "planilha.csv" : "planilha.xlsx",
-      mimeType:
-        outputFormat === "csv"
-          ? "text/csv;charset=utf-8;"
-          : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      totalSheets: 0,
-      totalRows: 0,
-      totalColumns: 0,
-      previewRows: [],
-    };
-  }
-
+  let pdf: Awaited<typeof loadingTask.promise> | undefined;
   try {
-    const rawSheets: ExtractedSheetData[] = [];
-    let grandTotalRows = 0;
-    let grandMaxCols = 0;
-    const allPreviewRows: Array<string[]> = [];
-
-    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+    pdf = await loadingTask.promise;
+    const sheets: ExtractedSheetData[] = [];
+    let hasText = false;
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 1, rotation: 0 });
       const content = await page.getTextContent();
-      const rawItems: RawTextItem[] = [];
-
+      const items: RawTextItem[] = [];
       for (const item of content.items) {
-        if (!("str" in item) || typeof item.str !== "string") continue;
-        const text = sanitizeCellText(item.str);
-        if (!text) continue;
-
-        const transform = item.transform || [1, 0, 0, 1, 0, 0];
-        const scaleX = Math.abs(transform[0]) || 12;
-        const scaleY = Math.abs(transform[3]) || 12;
-        const fontSize = Math.max(scaleX, scaleY, item.height || 0);
-        const x = transform[4] || 0;
-        const y = transform[5] || 0;
-
-        rawItems.push({
-          str: text,
-          x,
-          y,
-          width: item.width || 0,
-          height: item.height || fontSize,
-          fontSize,
+        if (!("str" in item)) continue;
+        const str = sanitizeCellText(item.str);
+        if (!str) continue;
+        hasText = true;
+        const transform = pdfjsLib.Util.transform(viewport.transform, item.transform);
+        items.push({
+          str,
+          x: transform[4],
+          y: transform[5],
+          width: item.width,
+          height: item.height,
+          fontSize: Math.hypot(transform[2], transform[3]) || 12,
         });
       }
-
-      // Agrupa itens em linhas baseado na coordenada Y (tolerância de linha de 4px)
-      rawItems.sort((a, b) => b.y - a.y || a.x - b.x);
-
-      const pageRows: Array<string[]> = [];
-      let currentLineItems: RawTextItem[] = [];
-      let currentLineY: number | null = null;
-
-      const processLine = (items: RawTextItem[]) => {
-        if (items.length === 0) return;
-        items.sort((a, b) => a.x - b.x);
-
-        const columns: string[] = [];
-        let currentCellParts: string[] = [];
-        let prevRight = items[0].x;
-
-        for (let idx = 0; idx < items.length; idx++) {
-          const it = items[idx];
-          const gap = it.x - prevRight;
-
-          // Se o espaçamento horizontal for > 18px, quebramos em nova coluna
-          if (idx > 0 && gap > 18) {
-            if (currentCellParts.length > 0) {
-              columns.push(currentCellParts.join(" ").trim());
-              currentCellParts = [];
-            }
+      items.sort((a, b) => a.y - b.y || a.x - b.x);
+      const lines: Array<{ y: number; cells: Array<{ x: number; right: number; text: string }> }> =
+        [];
+      let line: RawTextItem[] = [];
+      const flush = () => {
+        if (!line.length) return;
+        line.sort((a, b) => a.x - b.x);
+        const cells: Array<{ x: number; right: number; text: string }> = [];
+        let right = -Infinity;
+        for (const item of line) {
+          if (!cells.length || item.x - right > 18) {
+            cells.push({ x: item.x, right: item.x + item.width, text: item.str });
+          } else {
+            cells[cells.length - 1].text += ` ${item.str}`;
+            cells[cells.length - 1].right = Math.max(
+              cells[cells.length - 1].right,
+              item.x + item.width,
+            );
           }
-
-          currentCellParts.push(it.str);
-          prevRight = it.x + it.width;
+          right = item.x + item.width;
         }
-
-        if (currentCellParts.length > 0) {
-          columns.push(currentCellParts.join(" ").trim());
-        }
-
-        const filteredColumns = columns.filter((c) => c.length > 0);
-        if (filteredColumns.length === 0) return;
-
-        if (detectTablesOnly && filteredColumns.length < 2) {
-          return;
-        }
-
-        pageRows.push(filteredColumns);
+        lines.push({ y: line[0].y, cells });
+        line = [];
       };
-
-      for (const item of rawItems) {
-        if (currentLineY === null) {
-          currentLineY = item.y;
-          currentLineItems.push(item);
-        } else if (Math.abs(item.y - currentLineY) <= 4.0) {
-          currentLineItems.push(item);
-        } else {
-          processLine(currentLineItems);
-          currentLineY = item.y;
-          currentLineItems = [item];
-        }
+      for (const item of items) {
+        if (line.length && Math.abs(item.y - line[0].y) > 4) flush();
+        line.push(item);
       }
-
-      if (currentLineItems.length > 0) {
-        processLine(currentLineItems);
-      }
-
-      rawSheets.push({
-        name: `Página ${pageNum}`,
-        pageIndex: pageNum - 1,
-        rows: pageRows,
-      });
-
-      grandTotalRows += pageRows.length;
-      for (const r of pageRows) {
-        grandMaxCols = Math.max(grandMaxCols, r.length);
-        if (allPreviewRows.length < 15) {
-          allPreviewRows.push(r);
-        }
-      }
+      flush();
+      const reference = lines.reduce<(typeof lines)[number] | undefined>(
+        (best, candidate) =>
+          !best || candidate.cells.length > best.cells.length ? candidate : best,
+        undefined,
+      );
+      const anchors = reference?.cells.map((cell) => cell.x) ?? [];
+      const tableLines = lines.filter((entry) => entry.cells.length >= 2);
+      const firstTableY = tableLines[0]?.y ?? Infinity;
+      const lastTableY = tableLines.at(-1)?.y ?? -Infinity;
+      const rows = lines
+        .filter(
+          (entry) =>
+            !options.detectTablesOnly ||
+            (anchors.length >= 2 && entry.y >= firstTableY && entry.y <= lastTableY),
+        )
+        .map((entry) => {
+          const row = Array<string>(Math.max(1, anchors.length)).fill("");
+          let previousColumn = -1;
+          entry.cells.forEach((cell, index) => {
+            const lastCandidate = anchors.length - (entry.cells.length - index);
+            let column = previousColumn + 1;
+            let bestDistance = Infinity;
+            // Cada célula ocupa uma coluna distinta. Considerar ambas as bordas
+            // mantém números alinhados à direita junto do cabeçalho correspondente.
+            for (let i = column; i <= lastCandidate; i++) {
+              const referenceCell = reference?.cells[i];
+              if (!referenceCell) continue;
+              const distance = Math.min(
+                Math.abs(cell.x - referenceCell.x),
+                Math.abs(cell.right - referenceCell.right),
+              );
+              if (distance < bestDistance) {
+                bestDistance = distance;
+                column = i;
+              }
+            }
+            row[column] = cell.text;
+            previousColumn = column;
+          });
+          return row;
+        });
+      sheets.push({ name: `Página ${pageNum}`, pageIndex: pageNum - 1, rows });
+      page.cleanup();
     }
-
-    // Organização de planilhas conforme a preferência de modo
-    let sheetsToExport: ExtractedSheetData[];
-    if (sheetMode === "single-sheet" && rawSheets.length > 1) {
-      const combinedRows: Array<string[]> = [];
-      for (const sheet of rawSheets) {
-        combinedRows.push([`=== ${sheet.name} ===`]);
-        for (const row of sheet.rows) {
-          combinedRows.push(row);
-        }
-      }
-      sheetsToExport = [
-        {
-          name: "Dados Consolidados",
-          pageIndex: 0,
-          rows: combinedRows,
-        },
-      ];
-    } else {
-      sheetsToExport = rawSheets;
-    }
-
-    // Exportação em CSV
-    if (outputFormat === "csv") {
-      const csvLines: string[] = [];
-      for (let sIdx = 0; sIdx < sheetsToExport.length; sIdx++) {
-        const sheet = sheetsToExport[sIdx];
-        if (sheetsToExport.length > 1) {
-          csvLines.push(`# --- ${sheet.name} ---`);
-        }
-        for (const row of sheet.rows) {
-          const line = row.map((cell) => escapeCsvCell(cell, csvDelimiter)).join(csvDelimiter);
-          csvLines.push(line);
-        }
-      }
-
-      // Adiciona BOM (\uFEFF) para compatibilidade perfeita com Excel no Windows
-      const csvContent = `\uFEFF${csvLines.join("\r\n")}`;
-      const csvBytes = new TextEncoder().encode(csvContent);
-
-      return {
-        data: csvBytes,
-        fileName: "planilha.csv",
-        mimeType: "text/csv;charset=utf-8;",
-        totalSheets: sheetsToExport.length,
-        totalRows: grandTotalRows,
-        totalColumns: grandMaxCols,
-        previewRows: allPreviewRows,
-      };
-    }
-
-    // Exportação padrão em XLSX (OpenXML real em pacote ZIP)
-    const xlsxBytes = buildOpenXmlWorkbook(sheetsToExport);
-
+    if (!hasText) throw new Error("PDF_SEM_TEXTO_SELECIONAVEL");
+    const rows = sheets.flatMap((sheet) => sheet.rows);
+    if (!rows.length) throw new Error("PDF_SEM_TABELAS");
     return {
-      data: xlsxBytes,
-      fileName: "planilha.xlsx",
-      mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      totalSheets: sheetsToExport.length,
-      totalRows: grandTotalRows,
-      totalColumns: grandMaxCols,
-      previewRows: allPreviewRows,
+      sheets,
+      totalRows: rows.length,
+      totalColumns: sheets.reduce(
+        (maximum, sheet) => sheet.rows.reduce((n, row) => Math.max(n, row.length), maximum),
+        0,
+      ),
+      previewRows: rows.slice(0, 15),
     };
   } finally {
     try {
-      pdf.cleanup();
+      await pdf?.cleanup();
+    } finally {
       await loadingTask.destroy();
-    } catch {
-      // Ignora erro de limpeza
     }
   }
+}
+
+export async function convertPdfToExcelDocument(
+  pdfBytes: Uint8Array,
+  options: PdfToExcelOptions = {},
+): Promise<PdfToExcelResult> {
+  const { outputFormat = "xlsx", sheetMode = "per-page", csvDelimiter = ";" } = options;
+  if (
+    !["xlsx", "csv"].includes(outputFormat) ||
+    !["per-page", "single-sheet"].includes(sheetMode) ||
+    ![",", ";", "\t"].includes(csvDelimiter)
+  ) {
+    throw new Error("OPCOES_PLANILHA_INVALIDAS");
+  }
+  const extracted = await extractPdfSpreadsheetData(pdfBytes, options);
+  const sheets =
+    sheetMode === "single-sheet"
+      ? [
+          {
+            name: "Dados Consolidados",
+            pageIndex: 0,
+            rows: extracted.sheets.flatMap((sheet) => sheet.rows),
+          },
+        ]
+      : extracted.sheets;
+  const csv = outputFormat === "csv";
+  const data = csv
+    ? new TextEncoder().encode(
+        `\uFEFF${sheets
+          .flatMap((sheet) => sheet.rows)
+          .map((row) => row.map((cell) => escapeCsvCell(cell, csvDelimiter)).join(csvDelimiter))
+          .join("\r\n")}`,
+      )
+    : buildOpenXmlWorkbook(sheets);
+  return {
+    data,
+    fileName: csv ? "planilha.csv" : "planilha.xlsx",
+    mimeType: csv
+      ? "text/csv;charset=utf-8;"
+      : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    totalSheets: csv ? 1 : sheets.length,
+    totalRows: extracted.totalRows,
+    totalColumns: extracted.totalColumns,
+    previewRows: extracted.previewRows,
+  };
 }
 
 /**
@@ -449,8 +408,4 @@ function buildOpenXmlWorkbook(sheets: readonly ExtractedSheetData[]): Uint8Array
   }
 
   return createZipArchive(files);
-}
-
-function createEmptyXlsx(): Uint8Array {
-  return buildOpenXmlWorkbook([{ name: "Planilha 1", pageIndex: 0, rows: [] }]);
 }

@@ -76,6 +76,11 @@ As seis adições web são `pdf-to-markdown`, `pdf-crop`, `pdf-sign`, `pdf-extra
 uma ponte interna versionada do PDF.js, descrita em [PDF-UNLOCK.md](PDF-UNLOCK.md).
 Esta entrega não homologa o desktop.
 
+A proteção web usa AES-256 por padrão. Ocultar PDF reconstrói páginas rasterizadas para não
+manter conteúdo recuperável sob as tarjas. A conversão para Excel usa texto local e coordenadas,
+com prévia real e exportação XLSX/CSV. Limitações e evidências estão em
+[AUDITORIA-PROTECAO-TARJA-EXCEL-WEB-2026-10-23.md](AUDITORIA-PROTECAO-TARJA-EXCEL-WEB-2026-10-23.md).
+
 O Studio inicia como uma superfície do mesmo client, composta por árvore documental, abas, canvas e
 Inspector. O client depende de `DocumentCorePort`, tipada pelos contratos compartilhados; adapters
 de plataforma implementam a invocação sem permitir que componentes acessem Tauri, filesystem ou

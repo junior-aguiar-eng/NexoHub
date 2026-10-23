@@ -17,10 +17,13 @@ describe("Strict Functional Tools Catalog", () => {
       "pdf-extract-images",
       "pdf-form-fill",
       "pdf-unlock",
+      "pdf-protect",
+      "pdf-redact",
+      "pdf-to-excel",
     ]) {
       expect(ids).toContain(id);
     }
-    expect(ids).toHaveLength(19);
+    expect(ids).toHaveLength(22);
   });
   it("não oferece conversões e proteção sem executor", () => {
     const tools = resolveLauncherTools();
@@ -37,7 +40,9 @@ describe("Strict Functional Tools Catalog", () => {
     expect(ids).toContain("text-compare");
     expect(ids).not.toContain("pdf-to-word");
     expect(ids).not.toContain("word-to-pdf");
-    expect(ids).not.toContain("pdf-protect");
+    expect(ids).toContain("pdf-protect");
+    expect(ids).toContain("pdf-redact");
+    expect(ids).toContain("pdf-to-excel");
     expect(ids).toContain("text-translate");
 
     // Ferramenta de inteligência jurídica removida do escopo do produto

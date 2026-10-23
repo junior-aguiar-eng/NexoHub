@@ -477,8 +477,9 @@ test("não anuncia conversores ou proteção sem executor", async ({ page }) => 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "PDF para Word" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Word para PDF" })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Proteger PDF" })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "PDF para Excel" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "PowerPoint para PDF" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Proteger PDF" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "PDF para Excel" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Extrair Imagens" })).toBeVisible();
 });
 

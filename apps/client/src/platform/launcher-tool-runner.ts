@@ -26,6 +26,7 @@ import {
   compressPdfDocument,
   convertImagesToPdfDocument,
   convertPdfPagesToJpgImages,
+  convertPdfToExcelDocument,
   convertPdfToMarkdown,
   cropPdfDocument,
   type ExtractedImage,
@@ -34,6 +35,9 @@ import {
   type FormFieldValue,
   fillPdfForm,
   mergePdfDocuments,
+  protectPdfDocument,
+  type RedactionArea,
+  redactPdfDocument,
   reorganizePdfDocument,
   rotatePdfDocument,
   type SignaturePlacement,
@@ -113,6 +117,19 @@ export interface LauncherToolInput {
   readonly formValues?: Record<string, FormFieldValue>;
   readonly formFlatten?: boolean;
   readonly unlockPassword?: string;
+  readonly protectPassword?: string;
+  readonly protectOwnerPassword?: string;
+  readonly protectAlgorithm?: "AES-256" | "RC4";
+  readonly protectAllowPrinting?: boolean;
+  readonly protectAllowModifying?: boolean;
+  readonly protectAllowCopying?: boolean;
+  readonly protectAllowAnnotating?: boolean;
+  readonly protectAllowFillingForms?: boolean;
+  readonly redactionAreas?: readonly RedactionArea[];
+  readonly excelOutputFormat?: "xlsx" | "csv";
+  readonly excelSheetMode?: "per-page" | "single-sheet";
+  readonly excelCsvDelimiter?: "," | ";" | "\t";
+  readonly excelDetectTablesOnly?: boolean;
 }
 
 export interface LauncherToolOutput {
@@ -146,6 +163,9 @@ const supportedIds = new Set([
   "pdf-to-markdown",
   "pdf-form-fill",
   "pdf-unlock",
+  "pdf-protect",
+  "pdf-redact",
+  "pdf-to-excel",
 ]);
 
 function pdfBlob(bytes: Uint8Array): Blob {
@@ -802,6 +822,53 @@ async function executeTool(
         blob: pdfBlob(unlockedBytes),
         fileName: `${baseName}_desbloqueado.pdf`,
         categoryKey: "recent.type.pdf",
+      };
+    }
+    case "pdf-protect": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const protectedBytes = await protectPdfDocument(pdfBytes, {
+        password: input.protectPassword,
+        ownerPassword: input.protectOwnerPassword,
+        algorithm: input.protectAlgorithm,
+        allowPrinting: input.protectAllowPrinting,
+        allowModifying: input.protectAllowModifying,
+        allowCopying: input.protectAllowCopying,
+        allowAnnotating: input.protectAllowAnnotating,
+        allowFillingForms: input.protectAllowFillingForms,
+      });
+      return {
+        blob: pdfBlob(protectedBytes),
+        fileName: `${baseName}_protegido.pdf`,
+        categoryKey: "recent.type.pdf",
+      };
+    }
+    case "pdf-redact": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const redactedBytes = await redactPdfDocument(pdfBytes, {
+        redactions: input.redactionAreas ?? [],
+      });
+      return {
+        blob: pdfBlob(redactedBytes),
+        fileName: `${baseName}_tarjado.pdf`,
+        categoryKey: "recent.type.pdf",
+      };
+    }
+    case "pdf-to-excel": {
+      if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const format = input.excelOutputFormat ?? "xlsx";
+      const result = await convertPdfToExcelDocument(pdfBytes, {
+        outputFormat: format,
+        sheetMode: input.excelSheetMode ?? "per-page",
+        csvDelimiter: input.excelCsvDelimiter ?? ";",
+        detectTablesOnly: input.excelDetectTablesOnly ?? false,
+      });
+      return {
+        blob: new Blob([result.data as unknown as BlobPart], { type: result.mimeType }),
+        fileName: `${baseName}.${format}`,
+        categoryKey: "recent.type.document",
       };
     }
     default:

@@ -3,9 +3,11 @@ import { resolveToolAvailability } from "@nexohub/tool-sdk";
 import {
   BetweenHorizontalStart,
   Crop,
+  EyeOff,
   FileArchive,
   FileCode2,
   FileScan,
+  FileSpreadsheet,
   FileText,
   FileType,
   FolderInput,
@@ -139,6 +141,14 @@ const presentation = {
     icon: Lock,
     accentColor: "#475569", // Ardósia
   },
+  "pdf-redact": {
+    suite: "security" as const,
+    titleKey: "tool.pdfRedact.title" as const,
+    descriptionKey: "tool.pdfRedact.description" as const,
+    uploadTaglineKey: "tool.pdfRedact.tagline" as const,
+    icon: EyeOff,
+    accentColor: "#DC2626", // Vermelho Alerta / Tarja
+  },
   "pdf-sign": {
     suite: "security" as const,
     titleKey: "tool.pdfSign.title" as const,
@@ -211,6 +221,14 @@ const presentation = {
     icon: Unlock,
     accentColor: "#E11D48", // Rosa Rubi Segurança
   },
+  "pdf-to-excel": {
+    suite: "convert" as const,
+    titleKey: "tool.pdfToExcel.title" as const,
+    descriptionKey: "tool.pdfToExcel.description" as const,
+    uploadTaglineKey: "tool.pdfToExcel.tagline" as const,
+    icon: FileSpreadsheet,
+    accentColor: "#107C41", // Verde Esmeralda Excel
+  },
 } as const;
 
 import type { CapabilityProvider } from "@nexohub/tool-sdk";
@@ -236,6 +254,9 @@ const browserSupportedToolIds = new Set([
   "text-review",
   "pdf-form-fill",
   "pdf-unlock",
+  "pdf-protect",
+  "pdf-redact",
+  "pdf-to-excel",
 ]);
 
 export function createDynamicCapabilitiesProvider(

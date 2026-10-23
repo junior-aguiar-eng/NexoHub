@@ -459,6 +459,93 @@ describe("operações PDF no navegador", () => {
     // Teste de rejeição com documento vazio
     await expect(unlockPdfDocument(new Uint8Array(0))).rejects.toThrow("EMPTY_DOCUMENT");
   });
+
+  it("protege um PDF com criptografia e senha, e permite verificação de proteção", async () => {
+    const { checkPdfProtection, protectPdfDocument } = await import("./pdf-engine");
+    const source = await makePdf(1);
+
+    // Proteger PDF com senha e permissões
+    const protectedBytes = await protectPdfDocument(source, {
+      password: "MinhaSenhaForte123!",
+      allowPrinting: true,
+      allowCopying: false,
+    });
+    expect(protectedBytes.byteLength).toBeGreaterThan(0);
+
+    // O status do documento deve acusar proteção ativa
+    const status = await checkPdfProtection(protectedBytes);
+    expect(status.isProtected).toBe(true);
+
+    // Tentativa de proteger arquivo já protegido deve falhar com DOCUMENTO_JA_PROTEGIDO
+    await expect(protectPdfDocument(protectedBytes, { password: "outra" })).rejects.toThrow(
+      "DOCUMENTO_JA_PROTEGIDO",
+    );
+
+    // Rejeição sem nenhuma senha
+    await expect(protectPdfDocument(source, {})).rejects.toThrow("SENHA_OBRIGATORIA");
+
+    // Rejeição com documento vazio
+    await expect(protectPdfDocument(new Uint8Array(0), { password: "123" })).rejects.toThrow(
+      "EMPTY_DOCUMENT",
+    );
+  });
+
+  it("aplica tarjas definitivas de ocultação e privacidade (redaction) no PDF", async () => {
+    const { redactPdfDocument } = await import("./pdf-engine");
+    const source = await makePdf(2);
+
+    const redactedBytes = await redactPdfDocument(source, {
+      redactions: [
+        {
+          id: "r1",
+          pageIndex: 0,
+          xPercent: 10,
+          yPercent: 20,
+          widthPercent: 50,
+          heightPercent: 15,
+          color: "black",
+          label: "[CONFIDENCIAL]",
+        },
+        {
+          id: "r2",
+          pageIndex: 1,
+          xPercent: 20,
+          yPercent: 30,
+          widthPercent: 40,
+          heightPercent: 10,
+          color: "white",
+        },
+        {
+          id: "r3",
+          pageIndex: 0,
+          xPercent: 5,
+          yPercent: 5,
+          widthPercent: 30,
+          heightPercent: 8,
+          color: "gray",
+        },
+        {
+          id: "r-invalid",
+          pageIndex: 99, // página inexistente, deve ser ignorada com segurança
+          xPercent: 0,
+          yPercent: 0,
+          widthPercent: 10,
+          heightPercent: 10,
+        },
+      ],
+    });
+
+    expect(redactedBytes.byteLength).toBeGreaterThan(0);
+    const doc = await PDFDocument.load(redactedBytes);
+    expect(doc.getPageCount()).toBe(2);
+
+    // Rejeição com documento vazio
+    await expect(
+      redactPdfDocument(new Uint8Array(0), {
+        redactions: [],
+      }),
+    ).rejects.toThrow("EMPTY_DOCUMENT");
+  });
 });
 
 import { readFileSync } from "node:fs";

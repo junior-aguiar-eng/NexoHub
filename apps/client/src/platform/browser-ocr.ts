@@ -1,6 +1,7 @@
 import type { OcrLineResult } from "@nexohub/contracts";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import type { Page as TesseractPage } from "tesseract.js";
 import { generateSearchablePdf, type OcrPageData } from "./pdf-engine";
 
 if (typeof window !== "undefined") {
@@ -33,6 +34,18 @@ export interface BrowserOcrOutcome {
   pageResults: OcrPageData[];
   engine: string;
   searchablePdfBytes?: Uint8Array;
+}
+
+function readOcrLines(data: Pick<TesseractPage, "blocks" | "confidence">): OcrPageData["lines"] {
+  return (data.blocks ?? []).flatMap((block) =>
+    block.paragraphs.flatMap((paragraph) =>
+      paragraph.lines.map((line) => ({
+        text: line.text.trim(),
+        confidence: (line.confidence ?? data.confidence) / 100,
+        bbox: line.bbox,
+      })),
+    ),
+  );
 }
 
 /**
@@ -202,26 +215,11 @@ export async function performBrowserOcr(
             applyContrastEnhancement(ctx, width, height);
           }
 
-          const ret = await worker.recognize(canvas);
+          const ret = await worker.recognize(canvas, {}, { blocks: true });
           const pageText = ret.data.text.trim();
           pageTexts.push(pageText);
 
-          const rawLines =
-            (
-              ret.data as unknown as {
-                lines?: Array<{
-                  text: string;
-                  confidence?: number;
-                  bbox?: { x0: number; y0: number; x1: number; y1: number };
-                }>;
-              }
-            ).lines || [];
-
-          const pageLines: OcrPageData["lines"] = rawLines.map((line) => ({
-            text: line.text.trim(),
-            confidence: (line.confidence ?? ret.data.confidence) / 100,
-            bbox: line.bbox ?? { x0: 0, y0: 0, x1: 0, y1: 0 },
-          }));
+          const pageLines = readOcrLines(ret.data);
 
           for (const line of pageLines) {
             const { x0 = 0, y0 = 0, x1 = 0, y1 = 0 } = line.bbox ?? {};
@@ -251,26 +249,11 @@ export async function performBrowserOcr(
           applyContrastEnhancement(ctx, width, height);
         }
 
-        const ret = await worker.recognize(canvas);
+        const ret = await worker.recognize(canvas, {}, { blocks: true });
         const text = ret.data.text.trim();
         pageTexts.push(text);
 
-        const rawLines =
-          (
-            ret.data as unknown as {
-              lines?: Array<{
-                text: string;
-                confidence?: number;
-                bbox?: { x0: number; y0: number; x1: number; y1: number };
-              }>;
-            }
-          ).lines || [];
-
-        const pageLines: OcrPageData["lines"] = rawLines.map((line) => ({
-          text: line.text.trim(),
-          confidence: (line.confidence ?? ret.data.confidence) / 100,
-          bbox: line.bbox ?? { x0: 0, y0: 0, x1: 0, y1: 0 },
-        }));
+        const pageLines = readOcrLines(ret.data);
 
         for (const line of pageLines) {
           const { x0 = 0, y0 = 0, x1 = 0, y1 = 0 } = line.bbox ?? {};

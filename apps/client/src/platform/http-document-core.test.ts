@@ -11,6 +11,117 @@ describe("HttpDocumentCorePort", () => {
     port = new HttpDocumentCorePort(baseUrl);
   });
 
+  it("reutiliza a sessão e envia sua credencial nas chamadas seguintes", async () => {
+    const folder = { path: "/tmp/sessao.nexohub", name: "Sessão Web" };
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(folder), {
+          status: 200,
+          headers: { "X-NexoHub-Session": "credencial-temporaria" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response("[]", { status: 200 }));
+
+    const folders = await Promise.all([
+      port.invoke("pick_project_folder", {}),
+      port.invoke("pick_project_folder", {}),
+    ]);
+    expect(folders).toEqual([folder, folder]);
+    await port.invoke("list_documents", { projectPath: folder.path });
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy).toHaveBeenLastCalledWith(
+      `${baseUrl}/api/v1/invoke/list_documents`,
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: "Bearer credencial-temporaria" }),
+      }),
+    );
+  });
+
+  it("rejeita sessão sem credencial e permite tentar a alocação novamente", async () => {
+    const folder = { path: "/tmp/sessao.nexohub", name: "Sessão Web" };
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(folder), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(folder), {
+          status: 200,
+          headers: { "X-NexoHub-Session": "nova-credencial" },
+        }),
+      );
+    await expect(port.invoke("pick_project_folder", {})).rejects.toThrow(/credencial/i);
+    await expect(port.invoke("pick_project_folder", {})).resolves.toEqual(folder);
+  });
+
+  it("inicializa o projeto uma única vez em chamadas concorrentes", async () => {
+    const folder = { path: "/tmp/projeto-concorrente.nexohub", name: "Sessão Web" };
+    let creations = 0;
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      if (String(url).endsWith("pick_project_folder")) {
+        return new Response(JSON.stringify(folder), {
+          headers: { "X-NexoHub-Session": "credencial-concorrente" },
+        });
+      }
+      if (String(url).endsWith("open_project")) {
+        return new Response(JSON.stringify({ code: "PROJECT_NOT_FOUND" }), { status: 404 });
+      }
+      creations++;
+      return creations === 1
+        ? new Response(JSON.stringify({ id: "projeto-1" }))
+        : new Response(JSON.stringify({ code: "PROJECT_ALREADY_EXISTS" }), { status: 409 });
+    });
+    await expect(Promise.all([port.ensureProject(), port.ensureProject()])).resolves.toEqual([
+      folder,
+      folder,
+    ]);
+    expect(creations).toBe(1);
+  });
+
+  it("permite abrir nova sessão após a credencial da própria sessão ser recusada", async () => {
+    const first = { path: "/tmp/antiga.nexohub", name: "Sessão Web" };
+    const next = { path: "/tmp/nova.nexohub", name: "Sessão Web" };
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(first), {
+          headers: { "X-NexoHub-Session": "credencial-antiga" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "projeto-antigo" })))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ code: "PERMISSION_DENIED" }), { status: 403 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(next), {
+          headers: { "X-NexoHub-Session": "credencial-nova" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "projeto-novo" })));
+    await port.ensureProject();
+    await expect(port.invoke("list_documents", { projectPath: first.path })).rejects.toMatchObject({
+      code: "PERMISSION_DENIED",
+    });
+    await expect(port.ensureProject()).resolves.toEqual(next);
+  });
+
+  it("preserva a própria sessão quando outro projeto tem acesso recusado", async () => {
+    const folder = { path: "/tmp/proprio.nexohub", name: "Sessão Web" };
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(folder), {
+          headers: { "X-NexoHub-Session": "credencial-propria" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ code: "PERMISSION_DENIED" }), { status: 403 }),
+      );
+    await port.invoke("pick_project_folder", {});
+    await expect(
+      port.invoke("list_documents", { projectPath: "/tmp/outro.nexohub" }),
+    ).rejects.toMatchObject({ code: "PERMISSION_DENIED" });
+    await expect(port.invoke("pick_project_folder", {})).resolves.toEqual(folder);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
   it("envia comandos via HTTP POST para /api/v1/invoke/:command e retorna resposta", async () => {
     const fakeResponse = {
       project: { id: "proj-1", name: "Projeto Teste", path: "/tmp/teste" },
@@ -94,7 +205,7 @@ describe("HttpDocumentCorePort", () => {
             path: "/tmp/sessao-1.nexohub",
             name: "Sessão Web",
           }),
-          { status: 200 },
+          { status: 200, headers: { "X-NexoHub-Session": "credencial-do-projeto" } },
         ),
       )
       .mockResolvedValueOnce(

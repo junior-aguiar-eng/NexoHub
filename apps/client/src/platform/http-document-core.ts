@@ -23,6 +23,10 @@ export class HttpDocumentCorePort implements DocumentCorePort {
   ]);
 
   private project: { path: string; name: string } | null = null;
+  private projectRequest: Promise<{ path: string; name: string }> | null = null;
+  private sessionToken: string | null = null;
+  private sessionProjectPath: string | null = null;
+  private sessionRequest: Promise<CommandResponse<"pick_project_folder">> | null = null;
   private readonly pendingFiles = new Map<string, File>();
   private readonly artifactBlobs = new Map<string, Blob>();
   private readonly createdBlobUrls = new Map<string, string>();
@@ -117,6 +121,18 @@ export class HttpDocumentCorePort implements DocumentCorePort {
   }
 
   async ensureProject(): Promise<{ path: string; name: string }> {
+    if (this.project) return this.project;
+    if (this.projectRequest) return this.projectRequest;
+    const pending = this.initializeProject();
+    this.projectRequest = pending;
+    try {
+      return await pending;
+    } finally {
+      if (this.projectRequest === pending) this.projectRequest = null;
+    }
+  }
+
+  private async initializeProject(): Promise<{ path: string; name: string }> {
     if (!this.project) {
       const folder = (await this.invoke("pick_project_folder", {})) as {
         path: string;
@@ -128,7 +144,10 @@ export class HttpDocumentCorePort implements DocumentCorePort {
       const projectPath = folder.path;
       try {
         await this.invoke("open_project", { projectPath });
-      } catch {
+      } catch (error) {
+        if (!(error instanceof Error) || !("code" in error) || error.code !== "PROJECT_NOT_FOUND") {
+          throw error;
+        }
         await this.invoke("create_project", { projectPath, name: folder.name || "NexoHub Web" });
       }
       this.project = { path: projectPath, name: folder.name || "NexoHub Web" };
@@ -261,6 +280,20 @@ export class HttpDocumentCorePort implements DocumentCorePort {
     command: Command,
     request: CommandRequest<Command>,
   ): Promise<CommandResponse<Command>> {
+    if (command === "pick_project_folder") {
+      this.sessionRequest ??= this.invokeHttp("pick_project_folder", {}).catch((error) => {
+        this.sessionRequest = null;
+        throw error;
+      });
+      return this.sessionRequest as Promise<CommandResponse<Command>>;
+    }
+    return this.invokeHttp(command, request);
+  }
+
+  private async invokeHttp<Command extends DocumentCoreCommand>(
+    command: Command,
+    request: CommandRequest<Command>,
+  ): Promise<CommandResponse<Command>> {
     const url = `${this.baseUrl}/api/v1/invoke/${encodeURIComponent(command)}`;
     let response: Response;
     try {
@@ -269,6 +302,7 @@ export class HttpDocumentCorePort implements DocumentCorePort {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
+          ...(this.sessionToken ? { Authorization: `Bearer ${this.sessionToken}` } : {}),
         },
         body: JSON.stringify(request),
       });
@@ -281,6 +315,20 @@ export class HttpDocumentCorePort implements DocumentCorePort {
     }
 
     if (!response.ok) {
+      if (
+        response.status === 403 &&
+        typeof request === "object" &&
+        request !== null &&
+        "projectPath" in request &&
+        request.projectPath === this.sessionProjectPath
+      ) {
+        // A operação falha é preservada como erro; a próxima seleção pode abrir nova sessão.
+        this.sessionToken = null;
+        this.sessionProjectPath = null;
+        this.sessionRequest = null;
+        this.project = null;
+        this.projectRequest = null;
+      }
       let errorData: { code?: string; message?: string } | null = null;
       try {
         errorData = (await response.json()) as { code?: string; message?: string };
@@ -294,6 +342,19 @@ export class HttpDocumentCorePort implements DocumentCorePort {
       throw err;
     }
 
-    return (await response.json()) as CommandResponse<Command>;
+    const result = (await response.json()) as CommandResponse<Command>;
+    if (command === "pick_project_folder") {
+      const token = response.headers.get("X-NexoHub-Session");
+      const folder = result as CommandResponse<"pick_project_folder">;
+      if (!token || !folder?.path) {
+        throw new ToolRunError(
+          "EXECUTION_FAILED",
+          "O servidor não forneceu uma credencial de sessão.",
+        );
+      }
+      this.sessionToken = token;
+      this.sessionProjectPath = folder.path;
+    }
+    return result;
   }
 }

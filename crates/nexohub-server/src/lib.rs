@@ -1,10 +1,11 @@
 pub mod error;
+mod sessions;
 
 use axum::{
     Router,
-    extract::{DefaultBodyLimit, Path as AxumPath},
-    http::StatusCode,
-    response::{IntoResponse, Json},
+    extract::{DefaultBodyLimit, Path as AxumPath, State},
+    http::{HeaderMap, HeaderValue, StatusCode, header},
+    response::{IntoResponse, Json, Response},
     routing::{get, post},
 };
 use error::ApiError;
@@ -28,8 +29,8 @@ use nexohub_core::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use std::path::{Path, PathBuf};
-use std::time::Duration;
+use sessions::{SESSION_HEADER, Sessions};
+use std::path::PathBuf;
 use tower_http::{
     cors::{Any, CorsLayer},
     services::{ServeDir, ServeFile},
@@ -42,76 +43,6 @@ pub async fn health_handler() -> impl IntoResponse {
         "version": env!("CARGO_PKG_VERSION"),
         "platform": "cloud-run"
     }))
-}
-
-/// Remove sessões de trabalho temporárias inativas para evitar esgotamento de memória no Cloud Run.
-pub fn cleanup_stale_sessions(max_age: Duration) {
-    let temp_dir = std::env::temp_dir();
-    let Ok(entries) = std::fs::read_dir(&temp_dir) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let file_name = entry.file_name();
-        let name = file_name.to_string_lossy();
-        let is_target = name.starts_with("nexohub-session-")
-            || name.starts_with("nexohub-web-")
-            || name.starts_with("nexohub-ocr-");
-
-        if is_target {
-            let is_stale = entry
-                .metadata()
-                .ok()
-                .and_then(|meta| meta.modified().ok())
-                .and_then(|mod_time| mod_time.elapsed().ok())
-                .is_some_and(|elapsed| elapsed > max_age);
-
-            if is_stale {
-                let _ = std::fs::remove_dir_all(entry.path());
-            }
-        }
-    }
-}
-
-/// Valida se o caminho do projeto está restrito ao diretório temporário isolado do servidor.
-fn validate_server_session_path(path_str: &str) -> Result<PathBuf, ApiError> {
-    if path_str.is_empty() {
-        return Err(CoreError::new(
-            ErrorCode::InvalidArgument,
-            "Caminho do projeto não pode ser vazio.",
-        )
-        .into());
-    }
-    let path = Path::new(path_str);
-    let canonical = dunce::canonicalize(path).or_else(|_| {
-        if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
-            let canon_parent = dunce::canonicalize(parent).map_err(|_| {
-                CoreError::new(ErrorCode::InvalidArgument, "Diretório pai inválido.")
-            })?;
-            if let Some(name) = path.file_name() {
-                return Ok(canon_parent.join(name));
-            }
-        }
-        Err(CoreError::new(
-            ErrorCode::InvalidArgument,
-            "Caminho inexistente ou inacessível.",
-        ))
-    })?;
-
-    let temp_root = dunce::canonicalize(std::env::temp_dir()).map_err(|_| {
-        CoreError::new(
-            ErrorCode::StorageIo,
-            "Falha ao resolver diretório temporário do sistema.",
-        )
-    })?;
-
-    if !canonical.starts_with(&temp_root) {
-        return Err(CoreError::new(
-            ErrorCode::PermissionDenied,
-            "Acesso negado: projetos no servidor devem residir estritamente no armazenamento temporário de sessão.",
-        ).into());
-    }
-
-    Ok(canonical)
 }
 
 /// Despacha tarefas bloqueantes de CPU e I/O para a threadpool do Tokio.
@@ -131,42 +62,61 @@ where
         .map_err(ApiError::from)
 }
 
-pub async fn invoke_handler(
+async fn invoke_handler(
+    State(sessions): State<Sessions>,
+    headers: HeaderMap,
     AxumPath(command): AxumPath<String>,
     Json(payload): Json<Value>,
-) -> Result<Json<Value>, ApiError> {
-    let payload = if let Some(inner) = payload.get("request") {
-        inner.clone()
+) -> Result<Response, ApiError> {
+    let payload = payload.get("request").cloned().unwrap_or(payload);
+    if command == "pick_project_folder" {
+        let (token, session) = run_blocking(move || sessions.allocate()).await?;
+        let mut response = Json(json!({
+            "path": session.project_path.to_string_lossy(),
+            "name": "Sessão Web"
+        }))
+        .into_response();
+        response.headers_mut().insert(
+            SESSION_HEADER,
+            HeaderValue::from_str(&token)
+                .map_err(|_| CoreError::new(ErrorCode::StorageIo, "Falha ao alocar sessão."))?,
+        );
+        response
+            .headers_mut()
+            .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+        return Ok(response);
+    }
+    // Todos os comandos, inclusive os com contexto opcional, passam pela mesma barreira.
+    let _session = if let Some(path) = payload.get("projectPath").filter(|path| !path.is_null()) {
+        let path = path
+            .as_str()
+            .ok_or_else(|| {
+                CoreError::new(ErrorCode::InvalidArgument, "Caminho do projeto inválido.")
+            })?
+            .to_owned();
+        let token = headers
+            .get(header::AUTHORIZATION)
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| value.strip_prefix("Bearer "))
+            .ok_or_else(|| {
+                CoreError::new(ErrorCode::PermissionDenied, "Credencial de sessão ausente.")
+            })?
+            .to_owned();
+        Some(run_blocking(move || sessions.authorize(&token, &path)).await?)
     } else {
-        payload
+        None
     };
+    dispatch_command(command, payload)
+        .await
+        .map(IntoResponse::into_response)
+}
+
+async fn dispatch_command(command: String, payload: Value) -> Result<Json<Value>, ApiError> {
     match command.as_str() {
         "health" => Ok(Json(json!({ "status": "ok" }))),
-        "pick_project_folder" => {
-            // Limpa sessões expiradas (> 30 minutos)
-            cleanup_stale_sessions(Duration::from_secs(1800));
-
-            let temp_dir = tempfile::Builder::new()
-                .prefix("nexohub-session-")
-                .tempdir()
-                .map_err(|_| {
-                    CoreError::new(ErrorCode::StorageIo, "Falha ao alocar sessão de trabalho.")
-                })?;
-            let temp_path = temp_dir.keep();
-            let project_path = temp_path.join("sessao.nexohub");
-            let _ = nexohub_core::grant_broker::grant_path(&temp_path)?;
-            let _ = nexohub_core::grant_broker::grant_path(&project_path)?;
-            let path_str = project_path.to_string_lossy().to_string();
-            Ok(Json(json!({
-                "path": path_str,
-                "name": "Sessão Web"
-            })))
-        }
         "create_project" => {
             let req: CreateProjectRequest = serde_json::from_value(payload)
                 .map_err(|e| CoreError::new(ErrorCode::InvalidArgument, e.to_string()))?;
-            validate_server_session_path(&req.project_path)?;
-            let _ = nexohub_core::grant_broker::grant_path(&req.project_path)?;
             let res = run_blocking(move || create_project(req)).await?;
             Ok(Json(serde_json::to_value(res).map_err(|e| {
                 CoreError::new(ErrorCode::InvalidArgument, e.to_string())
@@ -175,8 +125,6 @@ pub async fn invoke_handler(
         "open_project" => {
             let req: OpenProjectRequest = serde_json::from_value(payload)
                 .map_err(|e| CoreError::new(ErrorCode::InvalidArgument, e.to_string()))?;
-            validate_server_session_path(&req.project_path)?;
-            let _ = nexohub_core::grant_broker::grant_path(&req.project_path)?;
             let res = run_blocking(move || open_project(req)).await?;
             Ok(Json(serde_json::to_value(res).map_err(|e| {
                 CoreError::new(ErrorCode::InvalidArgument, e.to_string())
@@ -471,6 +419,7 @@ pub fn create_app(static_dir: Option<PathBuf>) -> Router {
     let api_routes = Router::new()
         .route("/health", get(health_handler))
         .route("/invoke/{command}", post(invoke_handler))
+        .with_state(Sessions::default())
         .route("/tools/compress_pdf", post(stateless_compress_handler))
         .route("/tools/ocr", post(stateless_ocr_handler));
 
@@ -481,7 +430,8 @@ pub fn create_app(static_dir: Option<PathBuf>) -> Router {
             CorsLayer::new()
                 .allow_origin(Any)
                 .allow_methods(Any)
-                .allow_headers(Any),
+                .allow_headers(Any)
+                .expose_headers([header::HeaderName::from_static(SESSION_HEADER)]),
         );
 
     if let Some(dir) = static_dir.filter(|d| d.exists()) {

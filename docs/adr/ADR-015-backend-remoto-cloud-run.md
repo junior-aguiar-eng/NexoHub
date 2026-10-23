@@ -37,6 +37,29 @@ Formalizar a arquitetura do **Backend Remoto Stateless (`nexohub-server`)** para
 6. **Princípio de Minimização de Dados e Privacidade:**
    - As requisições executadas no Cloud Run são estritamente efêmeras (stateless): após o encerramento da resposta ou expiração da sessão, todos os artifacts gerados são purgados do storage temporário da instância.
 
+### Acesso às sessões HTTP
+
+`pick_project_folder` aloca o projeto sob `nexohub-sessions` no diretório temporário do sistema
+e devolve uma credencial aleatória no cabeçalho `X-NexoHub-Session`, separada do caminho público.
+O adapter HTTP conserva a credencial somente em memória e a envia como `Authorization: Bearer`
+nas próximas chamadas. A seleção é reutilizada pelo adapter, inclusive em chamadas concorrentes.
+
+Qualquer comando com `projectPath`, incluindo contextos opcionais, exige uma credencial válida
+vinculada exatamente ao caminho canônico alocado. Caminhos de outra sessão, diretórios arbitrários,
+travessias e links simbólicos que saiam desse projeto são recusados antes do despacho ao core.
+Somente a alocação interna concede acesso pelo broker; abrir ou criar um projeto nunca concede
+permissões a partir de um caminho informado no payload.
+
+O registro de sessões pertence à instância do servidor. Após 30 minutos de inatividade, a próxima
+alocação ou autorização remove as entradas expiradas e seus diretórios, preservando requisições
+que ainda estejam em andamento. Reiniciar ou trocar a instância invalida as credenciais, exigindo
+uma nova sessão. As rotas stateless continuam operando em diretórios temporários próprios, com
+remoção ao término da requisição.
+
+Se o servidor recusar a credencial do próprio projeto, o adapter descarta a sessão em memória
+para permitir nova alocação na próxima seleção. A operação recusada continua sendo apresentada
+como erro e não é repetida automaticamente com identificadores de uma sessão anterior.
+
 ## Consequências
 
 - O `ADR-001` permanece válido como o padrão arquitetural primordial do produto (desktop offline), enquanto este ADR delimita o backend remoto como um adapter de suporte restrito à Web;

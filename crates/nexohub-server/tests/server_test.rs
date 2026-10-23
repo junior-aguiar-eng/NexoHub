@@ -8,6 +8,227 @@ use nexohub_server::create_app;
 use serde_json::{Value, json};
 use tower::ServiceExt;
 
+async fn invoke(
+    app: &axum::Router,
+    command: &str,
+    payload: Value,
+    token: Option<&str>,
+) -> axum::response::Response {
+    let mut request = Request::builder()
+        .uri(format!("/api/v1/invoke/{command}"))
+        .method("POST")
+        .header("content-type", "application/json");
+    if let Some(token) = token {
+        request = request.header("authorization", format!("Bearer {token}"));
+    }
+    app.clone()
+        .oneshot(request.body(Body::from(payload.to_string())).unwrap())
+        .await
+        .unwrap()
+}
+
+async fn allocate_session(app: &axum::Router) -> (String, String) {
+    let response = invoke(app, "pick_project_folder", json!({}), None).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let token = response
+        .headers()
+        .get("x-nexohub-session")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or_default()
+        .to_owned();
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let folder: Value = serde_json::from_slice(&body).unwrap();
+    (folder["path"].as_str().unwrap().to_owned(), token)
+}
+
+#[tokio::test]
+async fn test_session_credential_is_separate_from_project_path() {
+    let app = create_app(None);
+    let (path, token) = allocate_session(&app).await;
+    assert!(
+        !token.is_empty(),
+        "A sessão precisa de uma credencial própria."
+    );
+    assert!(!path.contains(&token));
+}
+
+#[tokio::test]
+async fn test_create_project_requires_a_server_allocated_session() {
+    let app = create_app(None);
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("nao-autorizado.nexohub");
+    let response = invoke(
+        &app,
+        "create_project",
+        json!({
+            "projectPath": path,
+            "name": "Não autorizado"
+        }),
+        None,
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    assert!(!path.exists());
+}
+
+#[tokio::test]
+async fn test_session_cannot_read_or_modify_another_session() {
+    let app = create_app(None);
+    let (victim_path, victim_token) = allocate_session(&app).await;
+    let (_, attacker_token) = allocate_session(&app).await;
+    let created = invoke(
+        &app,
+        "create_project",
+        json!({
+            "projectPath": victim_path,
+            "name": "Projeto privado"
+        }),
+        Some(&victim_token),
+    )
+    .await;
+    assert_eq!(created.status(), StatusCode::OK);
+    let imported = invoke(
+        &app,
+        "import_document_bytes",
+        json!({
+            "projectPath": victim_path,
+            "title": "privado.txt",
+            "mimeType": "text/plain",
+            "bytes": b"conteudo privado".to_vec()
+        }),
+        Some(&victim_token),
+    )
+    .await;
+    assert_eq!(imported.status(), StatusCode::OK);
+    let body = imported.into_body().collect().await.unwrap().to_bytes();
+    let document: Value = serde_json::from_slice(&body).unwrap();
+    for token in [
+        None,
+        Some("credencial-invalida"),
+        Some(attacker_token.as_str()),
+    ] {
+        for command in [
+            "create_project",
+            "open_project",
+            "list_documents",
+            "get_document",
+            "list_artifacts",
+            "read_artifact_bytes",
+            "import_document_bytes",
+            "compress_pdf",
+            "organize_pdf",
+            "record_launcher_result",
+            "execute_ocr",
+            "inspect_docx",
+            "create_docx",
+            "translate_text",
+            "list_translation_models",
+            "extract_information",
+            "execute_extract_pdf_images",
+        ] {
+            let response = invoke(
+                &app,
+                command,
+                json!({
+                    "projectPath": victim_path,
+                    "documentId": document["document"]["id"],
+                    "artifactId": document["artifact"]["id"],
+                    "title": "alterado.txt", "mimeType": "text/plain", "bytes": [1],
+                    "compressionLevel": 6, "pageOrder": [1], "text": "teste", "targetLanguage": "pt"
+                }),
+                token,
+            )
+            .await;
+            assert_eq!(
+                response.status(),
+                StatusCode::FORBIDDEN,
+                "Comando: {command}"
+            );
+        }
+    }
+    let wrapped = invoke(
+        &app,
+        "list_documents",
+        json!({
+            "request": { "projectPath": victim_path }
+        }),
+        Some(&attacker_token),
+    )
+    .await;
+    assert_eq!(wrapped.status(), StatusCode::FORBIDDEN);
+    let own = invoke(
+        &app,
+        "list_documents",
+        json!({ "projectPath": victim_path }),
+        Some(&victim_token),
+    )
+    .await;
+    assert_eq!(own.status(), StatusCode::OK);
+    let body = own.into_body().collect().await.unwrap().to_bytes();
+    let documents: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(documents.as_array().unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn test_session_cannot_grant_arbitrary_temporary_paths() {
+    let app = create_app(None);
+    let (_, token) = allocate_session(&app).await;
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("fora-da-sessao.nexohub");
+    for command in ["create_project", "open_project"] {
+        let response = invoke(
+            &app,
+            command,
+            json!({
+                "projectPath": path, "name": "Fora da sessão"
+            }),
+            Some(&token),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    }
+    let response = invoke(
+        &app,
+        "open_project",
+        json!({
+            "projectPath": std::env::temp_dir()
+        }),
+        Some(&token),
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    assert!(!path.exists());
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn test_session_rejects_project_symlink_to_another_session() {
+    let app = create_app(None);
+    let (victim_path, victim_token) = allocate_session(&app).await;
+    let (attacker_path, attacker_token) = allocate_session(&app).await;
+    let created = invoke(
+        &app,
+        "create_project",
+        json!({
+            "projectPath": victim_path, "name": "Projeto privado"
+        }),
+        Some(&victim_token),
+    )
+    .await;
+    assert_eq!(created.status(), StatusCode::OK);
+    std::os::unix::fs::symlink(&victim_path, &attacker_path).unwrap();
+    let response = invoke(
+        &app,
+        "list_documents",
+        json!({
+            "projectPath": attacker_path
+        }),
+        Some(&attacker_token),
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+}
+
 fn sample_pdf() -> Vec<u8> {
     let mut doc = Document::with_version("1.7");
     let pages_id = doc.new_object_id();
@@ -93,50 +314,28 @@ async fn test_invoke_unknown_command_returns_bad_request() {
 #[tokio::test]
 async fn test_invoke_project_lifecycle() {
     let app = create_app(None);
-    let temp_dir = tempfile::tempdir().unwrap();
-    let project_path = temp_dir.path().join("teste_servidor.nexohub");
-    let project_str = project_path.to_string_lossy().to_string();
-
-    let create_payload = json!({
-        "projectPath": project_str,
-        "name": "Projeto Web Integracao"
-    });
-
-    let res = app
-        .clone()
-        .oneshot(
-            Request::builder()
-                .uri("/api/v1/invoke/create_project")
-                .method("POST")
-                .header("content-type", "application/json")
-                .body(Body::from(create_payload.to_string()))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(res.status(), StatusCode::OK);
-    let body = res.into_body().collect().await.unwrap().to_bytes();
-    let json: Value = serde_json::from_slice(&body).unwrap();
-    assert_eq!(json["name"], "Projeto Web Integracao");
-
-    let open_payload = json!({
-        "projectPath": project_str
-    });
-
-    let res_open = app
-        .oneshot(
-            Request::builder()
-                .uri("/api/v1/invoke/open_project")
-                .method("POST")
-                .header("content-type", "application/json")
-                .body(Body::from(open_payload.to_string()))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(res_open.status(), StatusCode::OK);
+    let (path, token) = allocate_session(&app).await;
+    let created = invoke(
+        &app,
+        "create_project",
+        json!({
+            "projectPath": path, "name": "Projeto Web Integracao"
+        }),
+        Some(&token),
+    )
+    .await;
+    assert_eq!(created.status(), StatusCode::OK);
+    let body = created.into_body().collect().await.unwrap().to_bytes();
+    let project: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(project["name"], "Projeto Web Integracao");
+    let opened = invoke(
+        &app,
+        "open_project",
+        json!({ "projectPath": path }),
+        Some(&token),
+    )
+    .await;
+    assert_eq!(opened.status(), StatusCode::OK);
 }
 
 #[tokio::test]
@@ -187,6 +386,13 @@ async fn test_invoke_pick_project_folder_and_import_bytes() {
         .unwrap();
 
     assert_eq!(res.status(), StatusCode::OK);
+    let token = res
+        .headers()
+        .get("x-nexohub-session")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_owned();
     let body = res.into_body().collect().await.unwrap().to_bytes();
     let json: Value = serde_json::from_slice(&body).unwrap();
     let project_path = json["path"].as_str().unwrap().to_string();
@@ -198,6 +404,7 @@ async fn test_invoke_pick_project_folder_and_import_bytes() {
         .oneshot(
             Request::builder()
                 .uri("/api/v1/invoke/create_project")
+                .header("authorization", format!("Bearer {token}"))
                 .method("POST")
                 .header("content-type", "application/json")
                 .body(Body::from(
@@ -219,6 +426,7 @@ async fn test_invoke_pick_project_folder_and_import_bytes() {
         .oneshot(
             Request::builder()
                 .uri("/api/v1/invoke/import_document_bytes")
+                .header("authorization", format!("Bearer {token}"))
                 .method("POST")
                 .header("content-type", "application/json")
                 .body(Body::from(

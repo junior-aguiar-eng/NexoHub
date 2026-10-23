@@ -118,7 +118,7 @@ test("abre o Launcher compartilhado com vitrine de ferramentas", async ({ page }
   await page.goto("/");
   await expect(
     page.getByRole("heading", {
-      name: "Seus PDFs, prontos para o próximo passo.",
+      name: /Seus PDFs, prontos para o próximo passo/i,
     }),
   ).toBeVisible();
   await expect(page.getByText(/Seus arquivos nunca saem deste dispositivo/)).toBeVisible();
@@ -415,7 +415,7 @@ test("abre a tela dedicada de Comprimir PDF e retorna ao Launcher", async ({ pag
   // Retorna ao Launcher via botão Voltar
   await page.getByRole("button", { name: "Todas as ferramentas", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Seus PDFs, prontos para o próximo passo." }),
+    page.getByRole("heading", { name: /Seus PDFs, prontos para o próximo passo/i }),
   ).toBeVisible();
 });
 
@@ -432,7 +432,7 @@ test("abre a tela dedicada de Organizar PDF e retorna clicando no logo NexoHub",
   // Retorna clicando no Logo NexoHub no cabeçalho
   await page.getByRole("button", { name: "NexoHub - Página Inicial" }).click();
   await expect(
-    page.getByRole("heading", { name: "Seus PDFs, prontos para o próximo passo." }),
+    page.getByRole("heading", { name: /Seus PDFs, prontos para o próximo passo/i }),
   ).toBeVisible();
 });
 

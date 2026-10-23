@@ -1,5 +1,4 @@
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import { expect, type Page, test } from "@playwright/test";
 import { degrees, PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
@@ -64,7 +63,7 @@ for (const rotation of [0, 90, 180, 270]) {
     const bytes = await executeAndDownload(page);
     const task = getDocument({
       data: bytes,
-      standardFontDataUrl: fileURLToPath(new URL("../public/standard_fonts/", import.meta.url)),
+      standardFontDataUrl: new URL("../public/standard_fonts/", import.meta.url).href,
     });
     const parsed = await task.promise;
     try {
@@ -106,7 +105,7 @@ test("marca d’água longa cabe na página recortada sem perder o texto origina
   const bytes = await executeAndDownload(page);
   const task = getDocument({
     data: bytes,
-    standardFontDataUrl: fileURLToPath(new URL("../public/standard_fonts/", import.meta.url)),
+    standardFontDataUrl: new URL("../public/standard_fonts/", import.meta.url).href,
   });
   const parsed = await task.promise;
   try {

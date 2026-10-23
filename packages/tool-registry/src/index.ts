@@ -93,31 +93,6 @@ export const coreToolManifests = [
     executor: "native",
   },
   {
-    id: "pdf-to-word",
-    version: "1.0.0",
-    name: "PDF para Word",
-    category: "pdf",
-    surfaces: ["quick", "studio"],
-    accepts: ["application/pdf"],
-    produces: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
-    capabilities: pdfCapabilities,
-    executor: "native",
-  },
-  {
-    id: "word-to-pdf",
-    version: "1.0.0",
-    name: "Word para PDF",
-    category: "pdf",
-    surfaces: ["quick", "studio"],
-    accepts: [
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/msword",
-    ],
-    produces: ["application/pdf"],
-    capabilities: pdfCapabilities,
-    executor: "native",
-  },
-  {
     id: "images-to-pdf",
     version: "1.0.0",
     name: "Imagem para PDF",
@@ -223,7 +198,7 @@ export const coreToolManifests = [
     category: "text",
     surfaces: ["quick", "studio"],
     accepts: ["text/plain", "text/markdown", "application/pdf"],
-    produces: ["text/plain", "application/pdf"],
+    produces: ["text/plain"],
     capabilities: ["documents.read", "documents.write", "translation.execute"],
     executor: "browser",
   },
@@ -412,3 +387,35 @@ export function createCoreToolRegistry(): ToolRegistry {
 }
 
 export const coreToolRegistry = createCoreToolRegistry();
+
+/**
+ * Ferramentas planejadas/pendentes de ADR de motor de documentos complexos (Office/LibreOffice).
+ * Não são registradas no registry ativo até que o executor nativo e ADR estejam consolidados.
+ */
+export const plannedToolManifests = [
+  {
+    id: "pdf-to-word",
+    version: "1.0.0",
+    name: "PDF para Word",
+    category: "pdf",
+    surfaces: ["quick", "studio"],
+    accepts: ["application/pdf"],
+    produces: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+    capabilities: pdfCapabilities,
+    executor: "native",
+  },
+  {
+    id: "word-to-pdf",
+    version: "1.0.0",
+    name: "Word para PDF",
+    category: "pdf",
+    surfaces: ["quick", "studio"],
+    accepts: [
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+    ],
+    produces: ["application/pdf"],
+    capabilities: pdfCapabilities,
+    executor: "native",
+  },
+] as const satisfies readonly ToolManifest[];

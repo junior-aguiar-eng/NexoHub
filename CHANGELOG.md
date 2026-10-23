@@ -3,6 +3,24 @@
 Todas as alterações relevantes serão registradas neste arquivo. O projeto usa versionamento
 semântico e os canais `alpha`, `beta`, `rc` e estável.
 
+## [Não publicado] - 2026-10-23
+
+### Modificado
+
+- **Fonte Única de Disponibilidade (`tool-availability.ts`)**: Eliminação de duplicações de listas de ferramentas entre Runner, Launcher e adaptadores de Document Core (Browser, Tauri e HTTP), garantindo consistência estrita e paridade funcional completa de 34 ferramentas operacionais.
+- **Saneamento de Contratos de Ferramentas**:
+  - Rebaixamento de `word-to-pdf` e `pdf-to-word` do registro ativo para `plannedToolManifests`, aguardando ADR formal de motor de renderização Office.
+  - Correção do contrato de saída de `text-translate` de `["text/plain", "application/pdf"]` para estritamente `["text/plain"]`.
+  - Documentação da semântica de executor preferencial vs. fallback resiliente no `docs/TOOL-SPEC.md`.
+- **Catálogo Canônico de Ferramentas**: Criação de `docs/CATALOGO-FERRAMENTAS.md` mapeando as 34 ferramentas ativas e as 8 ferramentas planejadas/pendentes de especificação ou ADR.
+- **Alinhamento do Roadmap**: Expansão do `docs/ROADMAP.md` com as fases 17 a 20 (Reparação de PDF, Motor Office, PDF/A e PDF Intelligence Local).
+
+### Corrigido
+
+- **Responsividade e Transbordo Mobile (390px)**: Compactação do alternador de zona PDF/Imagem no cabeçalho em telas menores que 480px, eliminando transbordo horizontal de 5px.
+- **Compatibilidade Windows em Testes E2E**: Ajuste na passagem de `standardFontDataUrl` para o motor `pdfjs-dist` em testes Playwright, garantindo URL com trailing slash.
+- **Suíte E2E**: Restauração da aprovação integral de 100% dos testes Playwright (97 aprovados).
+
 ## [0.1.1] - 2026-10-22
 
 ### Adicionado

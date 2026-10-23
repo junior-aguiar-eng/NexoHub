@@ -8537,6 +8537,13 @@ body,
   }
 }
 
+/* Seletor PDF/Imagem compacto: os botões mantêm aria-label, só o rótulo visual sai. */
+@media (max-width: 479px) {
+  .header-zone-toggle [role="tab"] > span {
+    display: none;
+  }
+}
+
 /* ==========================================================================
    iLovePDF Ergonomics - Split, Compress & Merge Real Layouts
    ========================================================================== */

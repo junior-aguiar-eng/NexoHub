@@ -74,45 +74,12 @@ interface StoredProjectData {
   anchors: Anchor[];
 }
 
+import { browserSupportedToolIds } from "./tool-availability";
+
 export class BrowserDocumentCorePort implements DocumentCorePort {
   readonly ocrEngine = "browser" as const;
   readonly translationEngine = "browser" as const;
-  readonly supportedToolIds: ReadonlySet<string> = new Set([
-    "pdf-edit",
-    "pdf-compare",
-    "pdf-organize",
-    "pdf-merge",
-    "pdf-split",
-    "pdf-rotate",
-    "pdf-crop",
-    "pdf-sign",
-    "pdf-compress",
-    "text-compare",
-    "images-to-pdf",
-    "pdf-to-jpg",
-    "pdf-watermark",
-    "pdf-page-numbers",
-    "pdf-ocr",
-    "text-translate",
-    "text-review",
-    "pdf-extract-images",
-    "pdf-to-markdown",
-    "pdf-form-fill",
-    "pdf-unlock",
-    "pdf-protect",
-    "pdf-redact",
-    "pdf-to-excel",
-    "pdf-remove-pages",
-    "pdf-extract-pages",
-    "html-to-pdf",
-    "scan-to-pdf",
-    "image-compress",
-    "image-resize",
-    "image-crop",
-    "image-convert",
-    "image-rotate",
-    "image-watermark",
-  ]);
+  readonly supportedToolIds: ReadonlySet<string> = browserSupportedToolIds;
   private projectData: Map<string, StoredProjectData> = new Map();
   private pendingFiles: Map<string, File> = new Map();
   private artifactBlobs: Map<string, Blob> = new Map();

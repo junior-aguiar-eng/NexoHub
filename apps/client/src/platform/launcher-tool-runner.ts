@@ -197,42 +197,9 @@ export interface LauncherToolOutput {
   readonly extractedImages?: readonly ExtractedImage[];
 }
 
-const supportedIds = new Set([
-  "pdf-edit",
-  "pdf-compare",
-  "pdf-organize",
-  "pdf-merge",
-  "pdf-split",
-  "pdf-rotate",
-  "pdf-crop",
-  "pdf-sign",
-  "pdf-compress",
-  "text-compare",
-  "images-to-pdf",
-  "pdf-to-jpg",
-  "pdf-watermark",
-  "pdf-page-numbers",
-  "pdf-ocr",
-  "text-review",
-  "text-translate",
-  "pdf-extract-images",
-  "pdf-to-markdown",
-  "pdf-form-fill",
-  "pdf-unlock",
-  "pdf-protect",
-  "pdf-redact",
-  "pdf-to-excel",
-  "pdf-remove-pages",
-  "pdf-extract-pages",
-  "html-to-pdf",
-  "scan-to-pdf",
-  "image-compress",
-  "image-resize",
-  "image-crop",
-  "image-convert",
-  "image-rotate",
-  "image-watermark",
-]);
+import { activeToolIds } from "./tool-availability";
+
+const supportedIds = activeToolIds;
 
 function pdfBlob(bytes: Uint8Array): Blob {
   return new Blob([bytes as unknown as BlobPart], { type: "application/pdf" });

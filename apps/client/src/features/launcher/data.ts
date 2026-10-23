@@ -7,12 +7,10 @@ import {
   Crop,
   EyeOff,
   FileArchive,
-  FileCode2,
   FileOutput,
   FileScan,
   FileSpreadsheet,
   FileText,
-  FileType,
   FileX2,
   FolderInput,
   FormInput,
@@ -119,22 +117,6 @@ const presentation = {
     uploadTaglineKey: "tool.pdfCompress.tagline" as const,
     icon: FileArchive,
     accentColor: "#00875F", // Verde Esmeralda
-  },
-  "pdf-to-word": {
-    suite: "convert" as const,
-    titleKey: "tool.pdfToWord.title" as const,
-    descriptionKey: "tool.pdfToWord.description" as const,
-    uploadTaglineKey: "tool.pdfToWord.tagline" as const,
-    icon: FileType,
-    accentColor: "#2563EB", // Azul Royal
-  },
-  "word-to-pdf": {
-    suite: "convert" as const,
-    titleKey: "tool.wordToPdf.title" as const,
-    descriptionKey: "tool.wordToPdf.description" as const,
-    uploadTaglineKey: "tool.wordToPdf.tagline" as const,
-    icon: FileCode2,
-    accentColor: "#0284C7", // Azul Céu
   },
   "images-to-pdf": {
     suite: "convert" as const,
@@ -345,43 +327,7 @@ const presentation = {
 
 import type { CapabilityProvider } from "@nexohub/tool-sdk";
 import type { DocumentCorePort } from "@/platform/document-core";
-
-const browserSupportedToolIds = new Set([
-  "pdf-edit",
-  "pdf-compare",
-  "pdf-organize",
-  "pdf-merge",
-  "pdf-split",
-  "pdf-rotate",
-  "pdf-crop",
-  "pdf-sign",
-  "pdf-compress",
-  "text-compare",
-  "images-to-pdf",
-  "pdf-to-jpg",
-  "pdf-to-markdown",
-  "pdf-extract-images",
-  "pdf-watermark",
-  "pdf-page-numbers",
-  "pdf-ocr",
-  "text-translate",
-  "text-review",
-  "pdf-form-fill",
-  "pdf-unlock",
-  "pdf-protect",
-  "pdf-redact",
-  "pdf-to-excel",
-  "pdf-remove-pages",
-  "pdf-extract-pages",
-  "html-to-pdf",
-  "scan-to-pdf",
-  "image-compress",
-  "image-resize",
-  "image-crop",
-  "image-convert",
-  "image-rotate",
-  "image-watermark",
-]);
+import { browserSupportedToolIds } from "@/platform/tool-availability";
 
 export function createDynamicCapabilitiesProvider(
   supportedToolIds: ReadonlySet<string>,

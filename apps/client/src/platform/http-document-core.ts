@@ -8,45 +8,12 @@ import type { ImportedDocument } from "@nexohub/domain";
 import { ToolRunError } from "@nexohub/tool-sdk";
 import type { DocumentCorePort } from "./document-core";
 
+import { httpSupportedToolIds } from "./tool-availability";
+
 export class HttpDocumentCorePort implements DocumentCorePort {
   readonly ocrEngine = "browser" as const;
   readonly translationEngine = "browser" as const;
-  readonly supportedToolIds: ReadonlySet<string> = new Set([
-    "pdf-edit",
-    "pdf-compare",
-    "pdf-organize",
-    "pdf-merge",
-    "pdf-split",
-    "pdf-rotate",
-    "pdf-crop",
-    "pdf-sign",
-    "pdf-compress",
-    "text-compare",
-    "images-to-pdf",
-    "pdf-to-jpg",
-    "pdf-watermark",
-    "pdf-page-numbers",
-    "pdf-ocr",
-    "text-review",
-    "text-translate",
-    "pdf-extract-images",
-    "pdf-to-markdown",
-    "pdf-form-fill",
-    "pdf-unlock",
-    "pdf-protect",
-    "pdf-redact",
-    "pdf-to-excel",
-    "pdf-remove-pages",
-    "pdf-extract-pages",
-    "html-to-pdf",
-    "scan-to-pdf",
-    "image-compress",
-    "image-resize",
-    "image-crop",
-    "image-convert",
-    "image-rotate",
-    "image-watermark",
-  ]);
+  readonly supportedToolIds: ReadonlySet<string> = httpSupportedToolIds;
 
   private project: { path: string; name: string } | null = null;
   private projectRequest: Promise<{ path: string; name: string }> | null = null;

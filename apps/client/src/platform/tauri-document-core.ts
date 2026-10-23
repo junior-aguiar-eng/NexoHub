@@ -10,37 +10,11 @@ declare global {
   }
 }
 
+import { tauriSupportedToolIds } from "./tool-availability";
+
 export class TauriDocumentCorePort implements DocumentCorePort {
-  readonly supportedToolIds: ReadonlySet<string> = new Set([
-    "pdf-organize",
-    "pdf-merge",
-    "pdf-split",
-    "pdf-rotate",
-    "pdf-crop",
-    "pdf-sign",
-    "pdf-compress",
-    "text-compare",
-    "pdf-ocr",
-    "text-review",
-    "text-translate",
-    "pdf-extract-images",
-    "pdf-to-markdown",
-    "pdf-form-fill",
-    "pdf-unlock",
-    "pdf-protect",
-    "pdf-redact",
-    "pdf-to-excel",
-    "pdf-remove-pages",
-    "pdf-extract-pages",
-    "html-to-pdf",
-    "scan-to-pdf",
-    "image-compress",
-    "image-resize",
-    "image-crop",
-    "image-convert",
-    "image-rotate",
-    "image-watermark",
-  ]);
+  readonly supportedToolIds: ReadonlySet<string> = tauriSupportedToolIds;
+
   private projectPath: string | null = null;
 
   async saveOutputFile(request: { blob: Blob; fileName: string }): Promise<boolean> {

@@ -26,14 +26,23 @@ ou `python`. Capacidades ausentes bloqueiam a execução com `TOOL_UNAVAILABLE`;
 executor ausente, cancelamento e falha de engine também possuem códigos estáveis. Adapters concretos
 fornecem um `CapabilityProvider` sem detecção de sistema operacional nos componentes.
 
+### Semântica de executor (preferencial vs. fallback)
+
+O campo `executor` no manifesto declara o motor preferencial/ótimo da operação:
+- `native`: motor nativo compilado (Rust/Tauri) para alto desempenho e streaming de buffers. No client web puro (onde não há runtime de SO local), ferramentas como `pdf-compress`, `pdf-organize`, `pdf-merge`, `pdf-split` e `pdf-rotate` possuem fallback transparente para o motor WebAssembly/client-side (`pdf-engine.ts`), preservando paridade funcional sem conexões remotas.
+- `browser`: motor local-first executado diretamente no contexto do navegador (WebAssembly/Web Workers/Canvas), como recorte, assinatura, OCR offline (Tesseract.js), tradução neural (Transformers.js) e edição.
+- `python`: sidecars locais voltados a processamentos especializados de texto/DOCX.
+
 Regras: UI chama Tool Runner, nunca engines; inputs e parâmetros são validados; operações longas
 são canceláveis por `AbortSignal`; sucesso devolve artifacts derivados para persistência pelo domínio;
 Quick e Studio reutilizam o mesmo manifesto e executor; indisponibilidade é consultada pela
 Capability Layer antes da execução.
 
 Os manifestos das ferramentas descrevem entradas, saídas, parâmetros e capacidades exigidas. No
-website, 19 ferramentas possuem executores no client (`pdf-engine`,
-`browser-ocr`, `browser-reviewer`, `browser-translator`) e no core nativo.
+catálogo ativo, ferramentas sem executor funcional implementado (como as conversões Office complexas
+`word-to-pdf` e `pdf-to-word`) permanecem rebaixadas para `plannedToolManifests` até a conclusão dos
+respectivos ADRs. A ferramenta `text-translate` possui contrato estrito de saída em `text/plain`,
+restando a preservação de layout em PDF traduzido como evolução planejada futura.
 
 As seis novas operações web são recorte visual, assinatura visual, extração de imagens,
 preenchimento AcroForm, desbloqueio e PDF para Markdown. A assinatura não é criptográfica;

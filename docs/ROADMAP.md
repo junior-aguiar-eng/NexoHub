@@ -19,8 +19,12 @@
 | 14 | Receitas NexoFlow (DAG visual, presets e runner topológico integrados) | Concluída |
 | 15 | Hardening orientado a falhas, limites de segurança e mitigação de vulnerabilidades | Concluída |
 | 16 | Release engineering (Instalador Windows Inno Setup Authenticode, CI multi-job e Deploy Cloud Run contínuo) | Concluída |
+| 17 | Recuperação Estrutural de PDF (`pdf-repair` local-first para reconstrução de xref e trailers corrompidos) | Planejada |
+| 18 | Motor de Documentos Office (ADR e sidecar para conversão fiel bidirecional Word, PowerPoint e Excel) | Planejada |
+| 19 | Arquivamento Padronizado PDF/A (Conversão com conformidade ISO 19005-1/2 e validação estrita) | Planejada |
+| 20 | PDF Intelligence Local (Resumo documental via modelos neurais estritamente locais em WebGPU/ONNX) | Planejada |
 
-Cada fase exige seus próprios gates de qualidade, formatação e cobertura de testes. Commit, publicação e release são decisões separadas.
+O detalhamento de cada ferramenta e seus requisitos técnicos estão registrados no [Catálogo de Ferramentas](CATALOGO-FERRAMENTAS.md). Cada fase exige seus próprios gates de qualidade, formatação e cobertura de testes. Commit, publicação e release são decisões separadas.
 
 ## Escopo de plataforma
 

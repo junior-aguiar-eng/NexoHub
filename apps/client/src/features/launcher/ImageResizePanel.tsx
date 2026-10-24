@@ -1,5 +1,6 @@
 import { Maximize2, Percent, SlidersHorizontal } from "lucide-react";
 import { translate } from "@/i18n";
+import { calculateResizeDimensions } from "@/platform/image-resize-geometry";
 
 interface ImageResizePanelProps {
   readonly fileName: string;
@@ -40,10 +41,22 @@ export function ImageResizePanel({
   const origW = originalDimensions?.width || 800;
   const origH = originalDimensions?.height || 600;
 
-  const calculatedW =
-    mode === "percentage" ? Math.round((origW * percentage) / 100) : width || origW;
-  const calculatedH =
-    mode === "percentage" ? Math.round((origH * percentage) / 100) : height || origH;
+  let resultDimensions: { width: number; height: number } | undefined;
+  try {
+    resultDimensions = calculateResizeDimensions(
+      { width: origW, height: origH },
+      {
+        mode,
+        percentage,
+        width,
+        height,
+        maintainAspectRatio,
+        doNotEnlarge,
+      },
+    );
+  } catch {
+    /* Os campos podem estar temporariamente incompletos durante a digitação. */
+  }
 
   const handleWidthInput = (newW: number) => {
     onWidthChange(newW);
@@ -79,10 +92,12 @@ export function ImageResizePanel({
           </span>
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs text-text-secondary mt-1">
             <span className="px-2 py-0.5 rounded-md bg-surface-muted border border-border font-medium">
-              Original: {origW} × {origH} px
+              {translate("imageResize.originalSize")}: {origW} × {origH} px
             </span>
             <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 border border-blue-500/20 font-bold">
-              Novo: {calculatedW} × {calculatedH} px
+              {resultDimensions
+                ? `${translate("imageResize.resultSize")}: ${resultDimensions.width} × ${resultDimensions.height} px`
+                : translate("imageProcessing.errorOptions")}
             </span>
           </div>
         </div>

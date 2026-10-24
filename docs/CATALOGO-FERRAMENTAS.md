@@ -81,8 +81,9 @@ As ferramentas abaixo compõem o catálogo visual planejado ou dependem de decis
 
 ## 5. Complementação das ferramentas atuais
 
-Índice dos planos responsáveis, adicionado em 24/10/2026. Os complementos são **planejados** e
-não alteram os 34 executores atuais nem indicam homologação adicional de desktop/HTTP.
+Índice dos planos responsáveis, adicionado em 24/10/2026. O estado de cada complemento consta
+no roadmap e no responsável; IM-C1 foi entregue no website. Os complementos não alteram a
+contagem de 34 ferramentas nem indicam homologação adicional de desktop/HTTP.
 Ordem e critérios comuns: [roadmap](ROADMAP.md#complementação-das-ferramentas-atuais--24102026).
 O checklist vive apenas no plano responsável, não nesta matriz.
 

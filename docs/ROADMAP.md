@@ -29,7 +29,7 @@ O detalhamento de cada ferramenta e seus requisitos técnicos estão registrados
 ## Complementação das ferramentas atuais — 24/10/2026
 
 Esta é uma fase adicional das entregas existentes, não uma nova trilha ou um novo catálogo.
-As fases concluídas acima preservam seu histórico; os itens abaixo permanecem **planejados**.
+As fases concluídas acima preservam seu histórico; o estado de cada complemento aparece no índice.
 O adendo organiza a implementação autorizada por etapas; não autoriza ampliar plataformas ou
 publicar. Dependências novas continuam sujeitas aos gates abaixo. Cada item tem um único plano responsável; este
 índice apenas ordena e aponta para ele. Atualizar o checkbox no responsável, sem copiar tarefas
@@ -37,8 +37,8 @@ para relatórios de auditoria ou planos novos.
 
 | Ordem | Complemento | Plano responsável | Estado / dependência |
 | --- | --- | --- | --- |
-| 0 | Q-C0: corpus, licenças e critérios de qualidade comercial | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#fase-de-complementação--24102026) | Planejado; obrigatório antes de adotar qualquer motor |
-| 1 | IM-C1: gestão e inspeção dos lotes nas seis ferramentas de imagem | [PDF e Imagem](superpowers/plans/2026-10-23-unificar-pdf-imagem.md#fase-de-complementação--24102026) | Planejado; reutilizar motores atuais |
+| 0 | Q-C0: corpus, licenças e critérios de qualidade comercial | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#fase-de-complementação--24102026) | Parcial: aplicado à fatia IM-C1; demais ferramentas/motores pendentes |
+| 1 | IM-C1: gestão e inspeção dos lotes nas seis ferramentas de imagem | [PDF e Imagem](superpowers/plans/2026-10-23-unificar-pdf-imagem.md#fase-de-complementação--24102026) | Concluído no website; motores e limites preservados |
 | 2 | IM-C2: recorte com alças, zoom e teclado | Mesmo plano de PDF e Imagem | Planejado; depende de IM-C1 e seleção de uma biblioteca |
 | 3 | UX-C1: controles de visualização PDF reutilizáveis | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#fase-de-complementação--24102026) | Planejado; preservar as coordenadas de cada ferramenta |
 | 4 | DOC-C1: valores de formulário na prévia e navegação por campo | [Quatro ferramentas](superpowers/plans/2026-10-23-corrigir-quatro-ferramentas.md#fase-de-complementação--24102026) | Planejado; consome UX-C1 |

@@ -18,6 +18,7 @@ import type { TranslationProgressInfo } from "@/platform/browser-translator";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { readDocumentText } from "@/platform/document-reader";
 import { extractPdfSpreadsheetData } from "@/platform/excel-converter";
+import { cropBatchConflicts } from "@/platform/image-batch";
 import type { ImageCompressionLevel, WatermarkPosition } from "@/platform/image-engine";
 import { runLauncherTool } from "@/platform/launcher-tool-runner";
 import {
@@ -44,6 +45,7 @@ import { ExtractImagesPanel } from "./ExtractImagesPanel";
 import { ExtractPagesPanel } from "./ExtractPagesPanel";
 import { FormFillPdfPanel } from "./FormFillPdfPanel";
 import { HtmlToPdfPanel } from "./HtmlToPdfPanel";
+import { ImageBatchPanel } from "./ImageBatchPanel";
 import { ImageCompressPanel } from "./ImageCompressPanel";
 import { ImageConvertPanel, type ImageTargetFormat } from "./ImageConvertPanel";
 import { type CropRatioPreset, ImageCropPanel } from "./ImageCropPanel";
@@ -71,7 +73,10 @@ import { SignPdfPanel } from "./SignPdfPanel";
 import { type SplitInterval, SplitPdfPanel } from "./SplitPdfPanel";
 import { TranslateDocumentPanel } from "./TranslateDocumentPanel";
 import { UnlockPdfPanel } from "./UnlockPdfPanel";
+import { useImageBatch } from "./useImageBatch";
 import { WatermarkPdfPanel } from "./WatermarkPdfPanel";
+
+const NO_IMAGE_FILES: readonly File[] = [];
 
 type DedicatedToolViewProps = {
   tool: LauncherTool;
@@ -385,11 +390,40 @@ export function DedicatedToolView({
   const [imageWatermarkOpacity, setImageWatermarkOpacity] = useState<number>(0.5);
   const [imageWatermarkRotation, setImageWatermarkRotation] = useState<number>(0);
   const [imageWatermarkPosition, setImageWatermarkPosition] = useState<WatermarkPosition>("center");
-  const [imageOriginalDimensions, setImageOriginalDimensions] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const imageFiles = tool.manifest.category === "image" ? files : NO_IMAGE_FILES;
+  const imageBatch = useImageBatch(imageFiles, selectedImageIndex);
+  const imagePreviewFile = imageBatch.selected?.file;
+  const imageOriginalDimensions = imageBatch.selected?.metadata;
+  const imagePreviewUrl = imageBatch.previewUrl;
+  const imageOptionsInitialized = useRef(false);
+  const firstImageMetadata = imageBatch.entries[0]?.metadata;
+  useEffect(() => {
+    if (!imageFiles.length) {
+      imageOptionsInitialized.current = false;
+      setSelectedImageIndex(0);
+      return;
+    }
+    if (!imageOptionsInitialized.current && firstImageMetadata) {
+      imageOptionsInitialized.current = true;
+      setImageResizeWidth(firstImageMetadata.width);
+      setImageResizeHeight(firstImageMetadata.height);
+      setImageCropX(0);
+      setImageCropY(0);
+      setImageCropPreset("free");
+      setImageCropWidth(firstImageMetadata.width);
+      setImageCropHeight(firstImageMetadata.height);
+    }
+  }, [imageFiles.length, firstImageMetadata]);
+  const cropConflicts =
+    tool.id === "image-crop" && !imageBatch.pending
+      ? cropBatchConflicts(imageBatch.entries, {
+          x: imageCropX,
+          y: imageCropY,
+          width: imageCropWidth,
+          height: imageCropHeight,
+        })
+      : [];
 
   useEffect(
     () => () => {
@@ -418,6 +452,7 @@ export function DedicatedToolView({
   }, [hasPendingSession, status, tool.id, tool.manifest.category]);
   const isImageTool = tool.id === "images-to-pdf" || tool.manifest.category === "image";
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageUploadButtonRef = useRef<HTMLButtonElement | null>(null);
   const previewQueue = useRef<Promise<void>>(Promise.resolve());
   const previewFiles = useRef(new WeakMap<File, Map<number, Promise<string>>>());
   const activePreviewFile = useRef<File | undefined>(files[0]);
@@ -650,53 +685,6 @@ export function DedicatedToolView({
     };
   }, [files, tool.id]);
 
-  // Inspeciona dimensões e miniatura de imagem no Modo Imagem
-  const primaryImageFile = files[0];
-  useEffect(() => {
-    let isCancelled = false;
-    let objectUrl: string | null = null;
-
-    async function inspectImage() {
-      if (!primaryImageFile) {
-        setImageOriginalDimensions(null);
-        setImagePreviewUrl(null);
-        return;
-      }
-      const file = primaryImageFile;
-      const isImg = file.type.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
-      if (!isImg) return;
-
-      objectUrl = URL.createObjectURL(file);
-      if (!isCancelled) {
-        setImagePreviewUrl(objectUrl);
-      }
-
-      try {
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        const { getImageMetadata } = await import("@/platform/image-engine");
-        const meta = await getImageMetadata(bytes);
-        if (isCancelled) return;
-        setImageOriginalDimensions({ width: meta.width, height: meta.height });
-        setImageResizeWidth(meta.width);
-        setImageResizeHeight(meta.height);
-        setImageCropX(0);
-        setImageCropY(0);
-        setImageCropPreset("free");
-        setImageCropWidth(meta.width);
-        setImageCropHeight(meta.height);
-      } catch (err) {
-        console.warn("Could not inspect image metadata", err);
-      }
-    }
-
-    inspectImage();
-
-    return () => {
-      isCancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [primaryImageFile]);
-
   // biome-ignore lint/correctness/useExhaustiveDependencies: troca de arquivo/ferramenta invalida os resultados associados.
   useEffect(() => {
     setMarkdownResult("");
@@ -847,6 +835,16 @@ export function DedicatedToolView({
   }
 
   function handleRemoveFile(index: number) {
+    if (tool.manifest.category === "image") {
+      setSelectedImageIndex((current) =>
+        index < current ? current - 1 : Math.min(current, Math.max(0, files.length - 2)),
+      );
+      setStatus("idle");
+      setErrorMessage(null);
+      setDownloadUrl(null);
+      setOutputBlob(null);
+      if (files.length === 1) requestAnimationFrame(() => imageUploadButtonRef.current?.focus());
+    }
     setFiles((prev) => prev.filter((_, i) => i !== index));
     if (files.length <= 1) {
       setStatus("idle");
@@ -1299,8 +1297,6 @@ export function DedicatedToolView({
     setReviewedText("");
     setReviewFindings([]);
     setCompressionResult(null);
-    setImagePreviewUrl(null);
-    setImageOriginalDimensions(null);
   }
 
   async function handleSaveOutput() {
@@ -1899,8 +1895,8 @@ export function DedicatedToolView({
     if (tool.id === "image-compress") {
       return (
         <ImageCompressPanel
-          fileName={files[0]?.name || "imagem.jpg"}
-          fileSizeBytes={files[0]?.size || 0}
+          fileName={imagePreviewFile?.name || "imagem.jpg"}
+          fileSizeBytes={imagePreviewFile?.size || 0}
           thumbnailUrl={imagePreviewUrl ?? undefined}
           dimensions={imageOriginalDimensions ?? undefined}
           level={imageCompressionLevel}
@@ -1912,8 +1908,8 @@ export function DedicatedToolView({
     if (tool.id === "image-resize") {
       return (
         <ImageResizePanel
-          fileName={files[0]?.name || "imagem.jpg"}
-          fileSizeBytes={files[0]?.size || 0}
+          fileName={imagePreviewFile?.name || "imagem.jpg"}
+          fileSizeBytes={imagePreviewFile?.size || 0}
           thumbnailUrl={imagePreviewUrl ?? undefined}
           originalDimensions={imageOriginalDimensions ?? undefined}
           mode={imageResizeMode}
@@ -1935,8 +1931,8 @@ export function DedicatedToolView({
     if (tool.id === "image-crop") {
       return (
         <ImageCropPanel
-          fileName={files[0]?.name || "imagem.jpg"}
-          fileSizeBytes={files[0]?.size || 0}
+          fileName={imagePreviewFile?.name || "imagem.jpg"}
+          fileSizeBytes={imagePreviewFile?.size || 0}
           thumbnailUrl={imagePreviewUrl ?? undefined}
           originalDimensions={imageOriginalDimensions ?? undefined}
           ratio={imageCropPreset}
@@ -1956,8 +1952,8 @@ export function DedicatedToolView({
     if (tool.id === "image-convert") {
       return (
         <ImageConvertPanel
-          fileName={files[0]?.name || "imagem.jpg"}
-          fileSizeBytes={files[0]?.size || 0}
+          fileName={imagePreviewFile?.name || "imagem.jpg"}
+          fileSizeBytes={imagePreviewFile?.size || 0}
           thumbnailUrl={imagePreviewUrl ?? undefined}
           originalDimensions={imageOriginalDimensions ?? undefined}
           targetFormat={imageTargetFormat}
@@ -1971,8 +1967,8 @@ export function DedicatedToolView({
     if (tool.id === "image-rotate") {
       return (
         <ImageRotatePanel
-          fileName={files[0]?.name || "imagem.jpg"}
-          fileSizeBytes={files[0]?.size || 0}
+          fileName={imagePreviewFile?.name || "imagem.jpg"}
+          fileSizeBytes={imagePreviewFile?.size || 0}
           thumbnailUrl={imagePreviewUrl ?? undefined}
           originalDimensions={imageOriginalDimensions ?? undefined}
           angle={imageRotateAngle}
@@ -1989,8 +1985,8 @@ export function DedicatedToolView({
       return (
         <ImageWatermarkPanel
           isProcessing={status === "running"}
-          fileName={files[0]?.name || "imagem.jpg"}
-          fileSizeBytes={files[0]?.size || 0}
+          fileName={imagePreviewFile?.name || "imagem.jpg"}
+          fileSizeBytes={imagePreviewFile?.size || 0}
           thumbnailUrl={imagePreviewUrl ?? undefined}
           originalDimensions={imageOriginalDimensions ?? undefined}
           watermarkFile={imageWatermarkFile}
@@ -2184,6 +2180,7 @@ export function DedicatedToolView({
           <button
             type="button"
             className="ilovepdf-main-upload-btn"
+            ref={imageUploadButtonRef}
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload size={24} />
@@ -2232,6 +2229,25 @@ export function DedicatedToolView({
       </div>
 
       <div className="dedicated-tool-workspace-main">
+        {tool.manifest.category === "image" && (
+          <>
+            <ImageBatchPanel
+              entries={imageBatch.entries}
+              selectedIndex={selectedImageIndex}
+              onSelect={setSelectedImageIndex}
+              onRemove={handleRemoveFile}
+              onAdd={() => fileInputRef.current?.click()}
+              disabled={status === "running"}
+              limitExceeded={imageBatch.limitExceeded}
+            />
+            {cropConflicts.length > 0 && !imageBatch.invalid && (
+              <p className="image-batch-warning" role="alert">
+                {translate("imageBatch.cropIncompatible")}{" "}
+                {cropConflicts.map((item) => `${item.index + 1}. ${item.file.name}`).join("; ")}
+              </p>
+            )}
+          </>
+        )}
         {inputTab === "text" && isTextTool && tool.id !== "text-compare" ? (
           <div className="dedicated-tool-workspace-split">
             <div className="dedicated-tool-left-column">
@@ -2299,6 +2315,8 @@ export function DedicatedToolView({
             disabled={
               status === "running" ||
               !pageRangeValid ||
+              (tool.manifest.category === "image" &&
+                (imageBatch.pending || imageBatch.invalid || cropConflicts.length > 0)) ||
               (tool.id === "image-crop" && !imageOriginalDimensions) ||
               (tool.id === "image-watermark" &&
                 imageWatermarkType === "image" &&

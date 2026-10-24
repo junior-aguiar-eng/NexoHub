@@ -1,3 +1,5 @@
+import { calculateResizeDimensions } from "./image-resize-geometry";
+
 /**
  * NexoHub Image Engine - Motor Local de Processamento de Imagens
  * 100% no navegador (Client-Side), local-first, alta performance via Canvas e Web APIs.
@@ -419,58 +421,10 @@ export async function resizeImage(
   let canvas: ImageCanvas | undefined;
 
   try {
-    let targetWidth = loaded.width;
-    let targetHeight = loaded.height;
-
-    validateNumbers(options.percentage, options.width, options.height, options.quality);
-    if (options.percentage === 0 || options.width === 0 || options.height === 0)
-      throw new Error("OPCOES_IMAGEM_INVALIDAS");
-    if (options.mode === "percentage") {
-      const pct = (options.percentage ?? 50) / 100;
-      targetWidth = Math.max(1, Math.round(loaded.width * pct));
-      targetHeight = Math.max(1, Math.round(loaded.height * pct));
-    } else {
-      const reqW = options.width;
-      const reqH = options.height;
-      const maintainAspect = options.maintainAspectRatio ?? true;
-      const doNotEnlarge = options.doNotEnlarge ?? false;
-
-      if (reqW && reqH) {
-        if (maintainAspect) {
-          const ratio = loaded.width / loaded.height;
-          const targetRatio = reqW / reqH;
-          if (targetRatio > ratio) {
-            targetHeight = reqH;
-            targetWidth = Math.round(reqH * ratio);
-          } else {
-            targetWidth = reqW;
-            targetHeight = Math.round(reqW / ratio);
-          }
-        } else {
-          targetWidth = reqW;
-          targetHeight = reqH;
-        }
-      } else if (reqW) {
-        targetWidth = reqW;
-        targetHeight = Math.round((reqW * loaded.height) / loaded.width);
-      } else if (reqH) {
-        targetHeight = reqH;
-        targetWidth = Math.round((reqH * loaded.width) / loaded.height);
-      }
-
-      if (doNotEnlarge) {
-        if (targetWidth > loaded.width) targetWidth = loaded.width;
-        if (targetHeight > loaded.height) targetHeight = loaded.height;
-      }
-    }
-
-    if (options.doNotEnlarge && (targetWidth > loaded.width || targetHeight > loaded.height)) {
-      const ratio = Math.min(loaded.width / targetWidth, loaded.height / targetHeight, 1);
-      targetWidth = Math.round(targetWidth * ratio);
-      targetHeight = Math.round(targetHeight * ratio);
-    }
-    targetWidth = Math.max(1, Math.round(targetWidth));
-    targetHeight = Math.max(1, Math.round(targetHeight));
+    const { width: targetWidth, height: targetHeight } = calculateResizeDimensions(
+      { width: loaded.width, height: loaded.height },
+      options,
+    );
 
     canvas = createCanvas(targetWidth, targetHeight);
     const ctx = context2d(canvas);

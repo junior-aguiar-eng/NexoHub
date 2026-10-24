@@ -35,6 +35,7 @@ it("cancelar e reiniciar não deixa erro da execução anterior interromper a no
       initialFiles={[new File(["fixture"], "foto.png", { type: "image/png" })]}
     />,
   );
+  await waitFor(() => expect(screen.getByRole("button", { name: "Girar imagem" })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: "Girar imagem" }));
   await waitFor(() => expect(engine).toHaveBeenCalledOnce());
   fireEvent.click(screen.getByRole("button", { name: "Cancelar processamento" }));

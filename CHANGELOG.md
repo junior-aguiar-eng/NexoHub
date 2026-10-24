@@ -7,6 +7,10 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 
 ### Modificado
 
+- Complementação integrada aos planos existentes de PDF/Imagem, edição, comparação, estabilização
+  e conversões, com responsáveis e dependências no roadmap. Primeira etapa web: inspeção e remoção
+  de imagens do lote nas seis ferramentas, recorte validado antes do processamento e previsão de
+  redimensionamento coerente com a saída de cada item. Sem novos motores ou dependências.
 - Website publicado em `/hub/`, com base configurável no build, navegação e recursos compatíveis com subpasta e testes nos dois modos de publicação. O subdomínio antigo redireciona com 301, preservando caminhos e parâmetros.
 - Deploy do website direcionado ao serviço `nexohub-hub` no projeto do balanceador, com build `/hub/`, publicação por digest após a CI e conferência automática do website, API e redirecionamentos. Falha na conferência restaura o tráfego anterior.
 

@@ -39,6 +39,44 @@ Complementos planejados (lotes, recorte com alças, composição e formatos) per
 [plano principal de PDF/Imagem](superpowers/plans/2026-10-23-unificar-pdf-imagem.md#fase-de-complementação--24102026).
 Esta página descreve o motor entregue; candidatos pesquisados não contam como capacidade instalada.
 
+## Complementação IM-C1 — gestão de lotes
+
+O lote possui lista com nome/dimensões, seleção para inspeção, adição e remoção individual nas
+seis ferramentas. Seleção altera a prévia; todas as imagens restantes recebem as opções
+compartilhadas. Não há ajustes independentes por arquivo nesta entrega.
+
+A inspeção de metadados é sequencial e libera cada bitmap; resultados são guardados por
+identidade `File`, sem confundir nomes iguais. Só a prévia selecionada mantém object URL.
+Trocar seleção, remover e sair revogam URLs; inspeções obsoletas não publicam seus resultados.
+Os limites de 20 imagens/128 MiB e 24MP/64 MiB por arquivo não foram ampliados.
+
+O recorte faz preflight em todos os arquivos antes de processar e lista os incompatíveis; área
+inválida nunca é reduzida silenciosamente. A previsão de redimensionamento usa a mesma geometria
+do motor, respeitando proporção e limite de ampliação do item selecionado. A exportação mantém
+o ZIP sequencial e nomes únicos, inclusive quando nomes de entrada se repetem.
+
+### Corpus e aceite Q-C0 desta fatia
+
+| Cenário | Origem / evidência | Resultado exigido |
+| --- | --- | --- |
+| 1200×800, 640×960 e 320×240; dois nomes `foto.png` | Canvas sintético em `e2e/image-batch.spec.ts`, sem conteúdo de terceiros | Dimensões da prévia correspondem ao item; seleção não elimina arquivos do ZIP |
+| Recorte comum de 1200×800 em lote de tamanhos diferentes | Mesmo gerador | Identificar itens incompatíveis antes de executar; opções preservadas ao trocar prévia |
+| Caixa 1200×800 aplicada ao retrato 640×960 | Mesmo gerador e leitura real do ZIP | Prévia informa 533×800; bytes exportados decodificam em 533×800 |
+| Alpha, EXIF, animação, 48MP, MIME/extensão e cancelamento | Corpus sintético/licenciado já descrito em `e2e/image-mode-quality.spec.ts` | Preservar regressões anteriores; recusa antecipada anuncia o motivo específico |
+| Remoção, teclado e recursos | E2E e `useImageBatch.test.tsx` | Seleção válida, foco seguinte/retorno ao upload, URLs revogadas e inspeção interrompida |
+
+O teste anexa `corpus-lote` em JSON com nome, MIME, bytes e SHA-256 das entradas geradas em cada
+execução. Isso evita fixar um hash dependente de versão do encoder Canvas como contrato universal.
+O teste do runner demonstra que um segundo arquivo incompatível impede o processamento do primeiro.
+Nenhuma nova biblioteca, peso de IA ou formato foi instalado. Logo, não há benchmark de motor
+candidato nesta fatia; custos e formatos adicionais continuam em IM-C2–IM-C4. As medições de
+23/10 acima são históricas e não são apresentadas como nova medição de desempenho ou memória.
+
+Medição de build desta fatia, no mesmo ambiente: chunk principal de 1.027,45 para 1.033,83 kB
+(gzip 280,95 para 282,97 kB), acréscimo observado de 6,38 kB / 2,02 kB gzip. O motor de imagens
+permanece em importação dinâmica, assim como os codecs. Persistem os avisos anteriores de chunks
+grandes; isso não certifica desempenho em celular nem elimina a necessidade de otimizar o bundle.
+
 No build observado, Pica ocupa aproximadamente 53kB de JS (17kB gzip); os WASM opcionais dos
 codecs variam de 164 a 346kB por arquivo. Algumas variantes alternativas de codec integram o
 dist, mas não são todas baixadas por operação. Não integram a carga inicial do catálogo.

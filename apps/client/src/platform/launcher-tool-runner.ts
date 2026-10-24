@@ -20,6 +20,7 @@ import {
 import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
 import { convertHtmlToPdfDocument } from "./html-to-pdf-converter";
+import { cropBatchConflicts, imageBatchExceedsLimits, inspectImageBatch } from "./image-batch";
 import type { WatermarkPosition } from "./image-engine";
 import { processImage } from "./image-processing";
 import { performBrowserPdfComparison } from "./pdf-comparison-client";
@@ -261,13 +262,23 @@ async function executeTool(
 ): Promise<LauncherToolOutput> {
   const input = request.input as LauncherToolInput;
   if (input.imageSignal?.aborted) throw new Error("OPERACAO_CANCELADA");
-  if (
-    request.toolId.startsWith("image-") &&
-    (input.files.length > 20 ||
-      input.files.reduce((sum, file) => sum + file.size, 0) > 128 * 1024 * 1024)
-  )
+  if (request.toolId.startsWith("image-") && imageBatchExceedsLimits(input.files))
     throw new Error("LOTE_IMAGEM_MUITO_GRANDE");
   if (request.toolId.startsWith("image-") && input.files.length > 1) {
+    if (request.toolId === "image-crop") {
+      const inspected = await inspectImageBatch(input.files, input.imageSignal);
+      const conflicts = cropBatchConflicts(inspected, {
+        x: input.imageCropX ?? 0,
+        y: input.imageCropY ?? 0,
+        width: input.imageCropWidth ?? 100,
+        height: input.imageCropHeight ?? 100,
+      });
+      if (conflicts.length)
+        throw new ToolRunError(
+          "INVALID_INPUT",
+          `${translate("imageBatch.cropIncompatible")} ${conflicts.map((item) => `${item.index + 1}. ${item.file.name}`).join("; ")}`,
+        );
+    }
     const entries: { name: string; data: Uint8Array }[] = [];
     for (const [index, file] of input.files.entries()) {
       const result = await executeTool(documentCore, {

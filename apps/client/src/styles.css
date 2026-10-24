@@ -9984,6 +9984,115 @@ body,
   font-size: 13px;
   color: var(--color-ink-muted);
 }
+.image-batch-panel {
+  padding: 16px;
+  margin-bottom: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface-raised);
+  min-width: 0;
+}
+.image-batch-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.image-batch-heading h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+.image-batch-heading p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+}
+.image-batch-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-raised);
+}
+.image-batch-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 260px;
+  overflow: auto;
+}
+.image-batch-list li {
+  display: flex;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+.image-batch-select {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+  padding: 10px;
+  border-radius: 11px 0 0 11px;
+  background: transparent;
+}
+.image-batch-select[aria-pressed="true"] {
+  background: var(--color-brand-soft);
+  box-shadow: inset 0 0 0 2px var(--color-brand);
+}
+.image-batch-index {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--color-ink-muted);
+}
+.image-batch-file {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+}
+.image-batch-file strong {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.image-batch-file > span {
+  font-size: 12px;
+  color: var(--color-ink-muted);
+}
+.image-batch-remove {
+  flex-shrink: 0;
+  width: 44px;
+  align-self: stretch;
+  border-radius: 0 11px 11px 0;
+  background: transparent;
+}
+.image-batch-panel button {
+  min-height: 44px;
+  cursor: pointer;
+}
+.image-batch-panel button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.image-batch-panel button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.image-batch-warning {
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
 [data-zone="img"] .ilovepdf-action-red-btn {
   background: var(--color-brand);
 }

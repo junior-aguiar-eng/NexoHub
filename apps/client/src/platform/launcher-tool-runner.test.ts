@@ -5,6 +5,7 @@ import { BrowserDocumentCorePort } from "./browser-document-core";
 import * as browserReviewer from "./browser-reviewer";
 import * as browserTranslator from "./browser-translator";
 import { HttpDocumentCorePort } from "./http-document-core";
+import * as imageEngine from "./image-engine";
 import * as imageProcessing from "./image-processing";
 import { type LauncherToolInput, runLauncherTool } from "./launcher-tool-runner";
 
@@ -589,6 +590,30 @@ describe("Tool Runner do Launcher", () => {
     expect(result.blob.type).toBe("application/pdf");
     const doc = await PDFDocument.load(new Uint8Array(await result.blob.arrayBuffer()));
     expect(doc.getPageCount()).toBe(1);
+  });
+
+  it("recusa todo o lote antes de recortar quando uma imagem não comporta a área", async () => {
+    const files = [new File(["a"], "grande.png"), new File(["b"], "pequena.png")];
+    const metadata = vi
+      .spyOn(imageEngine, "getImageMetadata")
+      .mockResolvedValueOnce({ width: 200, height: 200, sizeBytes: 1, mimeType: "image/png" })
+      .mockResolvedValueOnce({ width: 50, height: 50, sizeBytes: 1, mimeType: "image/png" });
+    const process = vi
+      .spyOn(imageProcessing, "processImage")
+      .mockResolvedValue(new Blob(["output"], { type: "image/png" }));
+    try {
+      await expect(
+        runLauncherTool(new BrowserDocumentCorePort(), "image-crop", {
+          ...input(files),
+          imageCropWidth: 100,
+          imageCropHeight: 100,
+        }),
+      ).rejects.toThrow(/2\. pequena.png/);
+      expect(process).not.toHaveBeenCalled();
+    } finally {
+      metadata.mockRestore();
+      process.mockRestore();
+    }
   });
 
   it("executa ferramentas de imagem pelo launcher-tool-runner", async () => {

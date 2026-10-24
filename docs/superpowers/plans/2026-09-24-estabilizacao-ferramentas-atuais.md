@@ -231,3 +231,11 @@ e testes, `translation-segmentation.ts`, `features/launcher/TranslateDocumentPan
 **Entrega de cada complemento:** teste de regressão ou corpus antes, código mínimo, verificação
 da saída, gates do roadmap e evidências aqui. Não reclassificar recursos novos como correções já
 entregues em `43f9c1a`; sem commit/push/deploy implícitos.
+
+### Aplicação incremental do Q-C0 — IM-C1
+
+Critérios web adicionados em `docs/DEFINITION-OF-DONE.md`; corpus sintético, hashes de entrada,
+resultados esperados e medição de bundle registrados em `docs/IMAGE-WEB-QUALITY.md`. Nenhuma
+dependência/modelo novo foi adotado em IM-C1; licenças dos motores candidatos e corpus de
+PDF/OCR/Excel/tradução continuam pendentes nos respectivos complementos. O registro de execução
+e os checkboxes de IM-C1 pertencem ao plano de PDF/Imagem, sem duplicação aqui.

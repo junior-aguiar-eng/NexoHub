@@ -156,10 +156,10 @@ test("rejeita GIF e PNG de 48 megapixels com mensagem clara", async ({ page }) =
         mimeType: kind === "gif" ? "image/gif" : "image/png",
         buffer: bytes,
       });
-    await page.locator(".ilovepdf-action-red-btn").click();
     await expect(page.getByRole("alert")).toContainText(
       kind === "gif" ? "formato" : "24 megapixels",
     );
+    await expect(page.locator(".ilovepdf-action-red-btn")).toBeDisabled();
   }
 });
 test("protege troca de modo com arquivos e permite recusar saída", async ({ page }) => {

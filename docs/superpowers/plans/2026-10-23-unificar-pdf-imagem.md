@@ -182,7 +182,7 @@ Implementado e validado. Evidências e limitações em [resultados](2026-10-23-u
 
 ## Fase de complementação — 24/10/2026
 
-**Estado:** planejada, adicional às etapas 1–6 concluídas. Aplicar as
+**Estado:** IM-C1 concluído no website; IM-C2–IM-C4 planejados, adicionais às etapas 1–6 concluídas. Aplicar as
 [regras comuns](../../ROADMAP.md#regras-comuns-de-execução-e-aceite) e Q-C0 do plano de estabilização.
 As restrições de dependências da entrega original não significam adoção automática dos candidatos
 abaixo. Não refazer a identidade visual nem abrir outro plano de imagens.
@@ -194,18 +194,19 @@ abaixo. Não refazer a identidade visual nem abrir outro plano de imagens.
 **Criar:** `features/launcher/ImageBatchPanel.tsx` e teste próximo.
 **Testar:** `e2e/image-mode-quality.spec.ts`, `e2e/tool-workspace-regressions.spec.ts`.
 
-**Interface proposta:** `ImageBatchPanel({ files, selectedIndex, onSelect, onRemove })`, com
-`readonly File[]`, índice zero-based e callbacks `(index: number) => void`. O estado do lote fica
+**Interface entregue:** `ImageBatchPanel({ entries, selectedIndex, onSelect, onRemove, onAdd, disabled?, limitExceeded? })`, com
+`readonly ImageBatchEntry[]` (arquivo/metadados/erro), índice zero-based e callbacks de seleção/remoção
+`(index: number) => void`. `useImageBatch` inspeciona e mantém a prévia/cache; o estado do lote fica
 na mesa, nunca no motor. Selecionar uma prévia não muda quais arquivos serão processados.
 
-- [ ] Reproduzir em teste lote com nomes repetidos, paisagem/retrato, alpha e remoção do item
+- [x] Reproduzir em teste lote com nomes repetidos, paisagem/retrato, alpha e remoção do item
   selecionado; provar que hoje só a primeira imagem é inspecionável.
-- [ ] Exibir nome, dimensões, seleção e remoção por item; reutilizar a mesma prévia nas seis
+- [x] Exibir nome, dimensões, seleção e remoção por item; reutilizar a mesma prévia nas seis
   ferramentas. Ao remover o selecionado, selecionar o próximo válido; lote vazio retorna ao upload.
-- [ ] Manter opções compartilhadas no primeiro incremento, com indicação clara de aplicação ao
+- [x] Manter opções compartilhadas no primeiro incremento, com indicação clara de aplicação ao
   lote. Recorte deve passar por preflight em **todos** os arquivos; listar incompatíveis antes
   de executar, sem truncar áreas silenciosamente nem remover arquivos do lote sem decisão do usuário.
-- [ ] Conferir ZIP por nomes/quantidade/bytes, preservação das opções ao acrescentar arquivos,
+- [x] Conferir ZIP por nomes/quantidade/bytes, preservação das opções ao acrescentar arquivos,
   cancelamento no meio do lote e liberação das URLs ao remover/sair. Rodar os gates comuns.
 
 ### IM-C2 — Recorte profissional sem mudar a semântica do resultado
@@ -268,3 +269,22 @@ testes e `e2e/image-mode-quality.spec.ts`.
 **Fora desta fase:** TOAST UI arquivado; Filerobot beta como dependência automática; adoção
 simultânea de editores; remoção de fundo AGPL ou pesos de IA sem decisão de licença; Sharp/Node
 no navegador. Fontes da triagem: repositórios vinculados e metadados npm consultados em 24/10/2026.
+
+### Registro da primeira entrega complementar — IM-C1
+
+- Plano integrado commitado em `b9e02ae`, preservando os planos principais; sem push.
+- Q-C0 aplicado à fatia de imagens: critérios em `DEFINITION-OF-DONE.md`, corpus/limites/hashes
+  e medição de bundle em `IMAGE-WEB-QUALITY.md`. Homologação dos demais motores permanece pendente.
+- Lotes nas seis ferramentas, recorte validado antes de processar, seleção só de prévia, remoção
+  individual e foco de teclado. Os ajustes continuam compartilhados, sem editor novo ou dependências.
+- Revisão encontrou divergência na dimensão prevista para retratos, perda de motivos de rejeição
+  e perda de foco. Corrigidos com testes que falharam antes e passaram após os ajustes.
+- 589 testes unitários aprovados (526 client + 63 pacotes), lint/tipagem e builds raiz/`/hub/`
+  aprovados. E2E geral: 171 aprovados, 5 específicos de subpasta ignorados nessa execução; no
+  build final, os dez novos E2E passaram novamente na raiz e os 41 de subpasta foram aprovados.
+- 24 estados visuais conferidos: seis ferramentas em 390/768/1024/1440px, sem overflow externo;
+  captura adicional em tema escuro. Artefatos em `/workspace/artifacts/complementacao-lotes-2026-10-24`.
+- Motor preservado em importação dinâmica, codecs sob demanda. A medição não certifica pico de
+  memória nem desempenho em todos os celulares. Os limites anteriores foram preservados.
+- Implementação desta primeira etapa mantida local para revisão; sem commit de código, push ou
+  deploy implícitos. Próximo complemento: IM-C2, após avaliação de um único candidato de recorte.

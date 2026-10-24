@@ -1281,6 +1281,16 @@ export const ptBR = {
   "imageProcessing.leaveConfirm":
     "Sair desta ferramenta? Os arquivos e ajustes desta sessão serão descartados.",
   "imageProcessing.running": "Processando no seu dispositivo…",
+  "imageBatch.title": "Imagens do lote",
+  "imageBatch.sharedOptions":
+    "As opções se aplicam a todas as imagens. Selecionar um item muda apenas a prévia.",
+  "imageBatch.select": "Visualizar imagem",
+  "imageBatch.remove": "Remover imagem",
+  "imageBatch.add": "Adicionar imagens",
+  "imageBatch.inspecting": "Conferindo imagem…",
+  "imageBatch.invalidFile": "Não foi possível ler a imagem. Confira o formato e os limites.",
+  "imageBatch.cropIncompatible":
+    "O recorte não cabe nestas imagens. Ajuste a área ou remova os itens:",
   "imageProcessing.cancel": "Cancelar processamento",
   "imageProcessing.limit":
     "Use imagens JPG, PNG ou WebP estáticas, de até 24 megapixels e 64 MiB por arquivo. Lotes: até 20 imagens e 128 MiB.",
@@ -1373,6 +1383,8 @@ export const ptBR = {
   "imageResize.modePixels": "Por pixels",
   "imageResize.modePercentage": "Por porcentagem",
   "imageResize.width": "Largura (px)",
+  "imageResize.originalSize": "Original",
+  "imageResize.resultSize": "Novo",
   "imageResize.height": "Altura (px)",
   "imageResize.maintainAspectRatio": "Manter proporção",
   "imageResize.doNotEnlarge": "Não ampliar se for menor",

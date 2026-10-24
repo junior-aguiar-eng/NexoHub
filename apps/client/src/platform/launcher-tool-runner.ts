@@ -58,6 +58,7 @@ import {
   splitPdfByInterval,
   unlockPdfDocument,
 } from "./pdf-engine";
+import { getPdfFormRevisionBytes, matchesPdfFormRevision, type PdfFormRevision } from "./pdf-form";
 import { compileScannedPagesToPdf, type ScannedPageItem } from "./scan-to-pdf-engine";
 
 export interface LauncherPage {
@@ -138,6 +139,7 @@ export interface LauncherToolInput {
   readonly selectedImageIds?: readonly string[];
   readonly formValues?: Record<string, FormFieldValue>;
   readonly formFlatten?: boolean;
+  readonly formRevision?: PdfFormRevision;
   readonly unlockPassword?: string;
   readonly protectPassword?: string;
   readonly protectOwnerPassword?: string;
@@ -957,11 +959,13 @@ async function executeTool(
     }
     case "pdf-form-fill": {
       if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
-      const pdfBytes = new Uint8Array(await first.arrayBuffer());
-      const filledBytes = await fillPdfForm(pdfBytes, {
-        values: input.formValues ?? {},
-        flatten: input.formFlatten ?? false,
-      });
+      const options = { values: input.formValues ?? {}, flatten: input.formFlatten ?? false };
+      if (input.formRevision && !matchesPdfFormRevision(input.formRevision, first, options)) {
+        throw new Error("PDF_FORM_REVISAO_INVALIDA");
+      }
+      const filledBytes = input.formRevision
+        ? getPdfFormRevisionBytes(input.formRevision)
+        : await fillPdfForm(new Uint8Array(await first.arrayBuffer()), options);
       return {
         blob: pdfBlob(filledBytes),
         fileName: `${baseName}_preenchido.pdf`,
@@ -1322,6 +1326,8 @@ export async function runLauncherTool(
           PDF_FORM_CAMPO_NAO_SUPORTADO: "toolQuality.invalidForm",
           PDF_FORM_CAMPO_SOMENTE_LEITURA: "toolQuality.invalidForm",
           PDF_FORM_VALOR_INVALIDO: "toolQuality.invalidForm",
+          PDF_FORM_CARACTERE_NAO_SUPORTADO: "formFill.unsupportedCharacters",
+          PDF_FORM_REVISAO_INVALIDA: "formFill.invalidRevision",
           PDF_XFA_NAO_SUPORTADO: "toolQuality.unsupportedForm",
           PDF_ASSINADO_NAO_SUPORTADO: "toolQuality.signedDocument",
           MARGEM_INVALIDA: "toolQuality.invalidCrop",

@@ -8,6 +8,7 @@ import {
   PDFOptionList,
   PDFRadioGroup,
   PDFRawStream,
+  PDFRef,
   PDFTextField,
 } from "pdf-lib";
 
@@ -19,6 +20,7 @@ export interface FormFieldDescriptor {
   type: FormFieldType;
   currentValue: FormFieldValue;
   isReadOnly: boolean;
+  pages?: readonly number[];
   options?: string[];
   multiSelect?: boolean;
   isEditable?: boolean;
@@ -72,12 +74,27 @@ function describeField(field: PDFField): FormFieldDescriptor | undefined {
 /** Inspects actual AcroForm values without inventing an initial selection. */
 export async function inspectPdfFormFields(bytes: Uint8Array): Promise<FormFieldDescriptor[]> {
   const doc = await loadFormDocument(bytes);
+  const pages = doc.getPages();
+  const byRef = new Map(pages.map((page, index) => [page.ref.toString(), index + 1]));
+  const byWidget = new Map<PDFDict, number>();
+  pages.forEach((page, index) => {
+    for (const reference of page.node.Annots()?.asArray() ?? []) {
+      const annotation = doc.context.lookup(reference);
+      if (annotation instanceof PDFDict) byWidget.set(annotation, index + 1);
+    }
+  });
   return doc
     .getForm()
     .getFields()
     .flatMap((field) => {
       const descriptor = describeField(field);
-      return descriptor ? [descriptor] : [];
+      if (!descriptor) return [];
+      const fieldPages = field.acroField.getWidgets().flatMap((widget) => {
+        const ref = widget.dict.get(PDFName.of("P"));
+        const page = byWidget.get(widget.dict) ?? (ref ? byRef.get(ref.toString()) : undefined);
+        return page ? [page] : [];
+      });
+      return [{ ...descriptor, pages: [...new Set(fieldPages)].sort((a, b) => a - b) }];
     });
 }
 
@@ -142,7 +159,93 @@ export async function fillPdfForm(
   }
   // Encoding, malformed widgets and flatten failures must reject the whole operation.
   // No artifact is exposed until saving finishes successfully.
-  form.updateFieldAppearances();
-  if (options.flatten) form.flatten({ updateFieldAppearances: false });
+  try {
+    form.updateFieldAppearances();
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("WinAnsi cannot encode")) {
+      throw new Error("PDF_FORM_CARACTERE_NAO_SUPORTADO");
+    }
+    throw error;
+  }
+  if (options.flatten) {
+    // pdf-lib removes field/widget objects but can leave their refs in Annots.
+    // Capture only widgets, so links and other unrelated annotations are preserved.
+    const widgets = new Set(
+      form
+        .getFields()
+        .flatMap((field) => field.acroField.getWidgets().map((widget) => widget.dict)),
+    );
+    const widgetRefs = new Set(
+      [...widgets].flatMap((widget) => {
+        const ref = doc.context.getObjectRef(widget);
+        return ref ? [ref.toString()] : [];
+      }),
+    );
+    form.flatten({ updateFieldAppearances: false });
+    for (const page of doc.getPages()) {
+      const annotations = page.node.Annots();
+      if (!annotations) continue;
+      for (let index = annotations.size() - 1; index >= 0; index--) {
+        const entry = annotations.get(index);
+        if (
+          (entry instanceof PDFRef && widgetRefs.has(entry.toString())) ||
+          (entry instanceof PDFDict && widgets.has(entry))
+        )
+          annotations.remove(index);
+      }
+    }
+  }
   return doc.save({ useObjectStreams: true, updateFieldAppearances: false });
+}
+
+/** Opaque handle: bytes and captured values remain private to this module. */
+export interface PdfFormRevision {
+  readonly source: File;
+  readonly flatten: boolean;
+}
+const formRevisions = new WeakMap<PdfFormRevision, { bytes: Uint8Array; valuesKey: string }>();
+function formValuesKey(values: Readonly<Record<string, FormFieldValue>>): string {
+  return JSON.stringify(
+    Object.keys(values)
+      .sort()
+      .map((key) => [key, values[key]]),
+  );
+}
+export async function preparePdfFormRevision(
+  source: File,
+  options: FillPdfFormOptions,
+  signal?: AbortSignal,
+): Promise<PdfFormRevision> {
+  const values = Object.fromEntries(
+    Object.entries(options.values).map(([name, value]) => [
+      name,
+      Array.isArray(value) ? [...value] : value,
+    ]),
+  );
+  const flatten = options.flatten ?? false;
+  const valuesKey = formValuesKey(values);
+  signal?.throwIfAborted();
+  const input = new Uint8Array(await source.arrayBuffer());
+  signal?.throwIfAborted();
+  const bytes = await fillPdfForm(input, { values, flatten });
+  signal?.throwIfAborted();
+  const revision = Object.freeze({ source, flatten });
+  formRevisions.set(revision, { bytes, valuesKey });
+  return revision;
+}
+export function matchesPdfFormRevision(
+  revision: PdfFormRevision,
+  source: File,
+  options: FillPdfFormOptions,
+): boolean {
+  return (
+    revision.source === source &&
+    revision.flatten === (options.flatten ?? false) &&
+    formRevisions.get(revision)?.valuesKey === formValuesKey(options.values)
+  );
+}
+export function getPdfFormRevisionBytes(revision: PdfFormRevision): Uint8Array {
+  const entry = formRevisions.get(revision);
+  if (!entry) throw new Error("PDF_FORM_REVISAO_INVALIDA");
+  return entry.bytes.slice();
 }

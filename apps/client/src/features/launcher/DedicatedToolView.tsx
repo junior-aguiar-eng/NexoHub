@@ -90,6 +90,7 @@ import { SignPdfPanel } from "./SignPdfPanel";
 import { type SplitInterval, SplitPdfPanel } from "./SplitPdfPanel";
 import { TranslateDocumentPanel } from "./TranslateDocumentPanel";
 import { UnlockPdfPanel } from "./UnlockPdfPanel";
+import { useFormPreview } from "./useFormPreview";
 import { useImageBatch } from "./useImageBatch";
 import { WatermarkPdfPanel } from "./WatermarkPdfPanel";
 
@@ -140,6 +141,10 @@ function parseSelectedPages(input: string, maxPages: number): number[] {
 const ImageCompositionPanel = lazy(() =>
   import("./ImageCompositionPanel").then((module) => ({ default: module.ImageCompositionPanel })),
 );
+
+function isPdfCandidate(file: File | undefined): boolean {
+  return Boolean(file && (file.type.includes("pdf") || file.name.toLowerCase().endsWith(".pdf")));
+}
 
 export function DedicatedToolView({
   tool,
@@ -249,6 +254,24 @@ export function DedicatedToolView({
   const [isLoadingFormFields, setIsLoadingFormFields] = useState<boolean>(false);
   const [formValues, setFormValues] = useState<Record<string, FormFieldValue>>({});
   const [formFlatten, setFormFlatten] = useState<boolean>(false);
+  const [formFieldsFile, setFormFieldsFile] = useState<File>();
+  const [formPreviewPage, setFormPreviewPage] = useState(1);
+  const formRunGeneration = useRef(0);
+  const formInputError =
+    tool.id === "pdf-form-fill" && files[0] && !isPdfCandidate(files[0])
+      ? translate("formFill.invalidFile")
+      : undefined;
+  const formPreview = useFormPreview({
+    file: files[0],
+    enabled:
+      tool.id === "pdf-form-fill" &&
+      formFieldsFile === files[0] &&
+      formFields.length > 0 &&
+      !isLoadingFormFields,
+    values: formValues,
+    flatten: formFlatten,
+    page: formPreviewPage,
+  });
 
   // Estados de Desbloqueio de PDF (Unlock)
   const [protectionStatus, setProtectionStatus] = useState<PdfProtectionStatus>({
@@ -570,6 +593,19 @@ export function DedicatedToolView({
     },
     [files, tool.id, pdfPreviewQueue],
   );
+  const formOriginalOnly =
+    tool.id === "pdf-form-fill" &&
+    Boolean(files[0]) &&
+    formFieldsFile === files[0] &&
+    formFields.length === 0 &&
+    !isLoadingFormFields &&
+    !errorMessage &&
+    !formInputError;
+  useEffect(() => {
+    if (formOriginalOnly) handlePreviewPageChange(formPreviewPage);
+  }, [formOriginalOnly, formPreviewPage, handlePreviewPageChange]);
+  const formOriginalThumbnail = allPageThumbnails[formPreviewPage - 1] || undefined;
+
   const fileInput = (
     <input
       ref={fileInputRef}
@@ -598,6 +634,20 @@ export function DedicatedToolView({
   const accent = tool.accentColor || "#e5322d";
   const isTextTool =
     tool.id === "text-review" || tool.id === "text-translate" || tool.id === "text-compare";
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: valores, arquivo e achatamento invalidam exportações em andamento.
+  useEffect(() => {
+    if (tool.id !== "pdf-form-fill") return;
+    formRunGeneration.current++;
+    setDownloadUrl(null);
+    setOutputBlob(null);
+    setOutputFileName("");
+    setStatus("idle");
+    setErrorMessage(null);
+    return () => {
+      formRunGeneration.current++;
+    };
+  }, [files, tool.id, formValues, formFlatten]);
 
   // Quando arquivos PDF são carregados, gera miniaturas reais em canvas com PDF.js
   useEffect(() => {
@@ -633,6 +683,30 @@ export function DedicatedToolView({
           setPageNumbersStartPage((page) => Math.min(page, count));
           setSplitIntervals([{ id: "interval-1", start: 1, end: count }]);
           setSplitSelectedPages([1]);
+          if (tool.id === "pdf-form-fill") {
+            setIsLoadingFormFields(true);
+            try {
+              const fields = await inspectPdfFormFields(buffer);
+              if (!isCancelled) {
+                setFormFields(fields);
+                setFormFieldsFile(files[0]);
+                const initialVals: Record<string, FormFieldValue> = {};
+                for (const f of fields) {
+                  initialVals[f.name] = f.currentValue;
+                }
+                setFormValues(initialVals);
+              }
+            } catch {
+              if (!isCancelled) {
+                setFormFields([]);
+                setFormFieldsFile(files[0]);
+                setErrorMessage(translate("toolQuality.unsupportedForm"));
+              }
+            } finally {
+              if (!isCancelled) setIsLoadingFormFields(false);
+            }
+            return;
+          }
 
           // Renderiza miniaturas compartilhando a mesma instância de parsing
           const isGridTool =
@@ -717,27 +791,14 @@ export function DedicatedToolView({
           }));
           setPageItems(items);
           setSelectedPageIndices(items.map((it) => it.originalIndex));
-
-          if (tool.id === "pdf-form-fill") {
-            setIsLoadingFormFields(true);
-            try {
-              const fields = await inspectPdfFormFields(buffer);
-              if (!isCancelled) {
-                setFormFields(fields);
-                const initialVals: Record<string, FormFieldValue> = {};
-                for (const f of fields) {
-                  initialVals[f.name] = f.currentValue;
-                }
-                setFormValues(initialVals);
-              }
-            } catch {
-              if (!isCancelled) setFormFields([]);
-            } finally {
-              if (!isCancelled) setIsLoadingFormFields(false);
+        } catch (err) {
+          if (!isCancelled) {
+            setErrorMessage(translate("toolQuality.invalidDocument"));
+            if (tool.id === "pdf-form-fill") {
+              setIsLoadingFormFields(false);
+              setFormFieldsFile(files[0]);
             }
           }
-        } catch (err) {
-          if (!isCancelled) setErrorMessage(translate("toolQuality.invalidDocument"));
           console.error("Falha ao analisar PDF:", err);
         }
       }
@@ -750,7 +811,6 @@ export function DedicatedToolView({
     };
   }, [files, tool.id]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: troca de arquivo/ferramenta invalida os resultados associados.
   useEffect(() => {
     setMarkdownResult("");
     setRemovePagesSelection([]);
@@ -764,6 +824,9 @@ export function DedicatedToolView({
     setTranslationProgress(null);
     setTranslationProgressStatus("");
     setFormFields([]);
+    setFormFieldsFile(undefined);
+    setFormPreviewPage(1);
+    setIsLoadingFormFields(tool.id === "pdf-form-fill" && isPdfCandidate(files[0]));
     setFormValues({});
     setUnlockPassword("");
     setProtectionStatus({
@@ -883,6 +946,10 @@ export function DedicatedToolView({
   }
 
   function addFiles(newFiles: File[]) {
+    if (tool.id === "pdf-form-fill" && newFiles[0] && !isPdfCandidate(newFiles[0])) {
+      setErrorMessage(translate("formFill.invalidFile"));
+      return;
+    }
     if (
       tool.id === "pdf-organize" ||
       tool.id === "pdf-merge" ||
@@ -1040,6 +1107,9 @@ export function DedicatedToolView({
     const isDocless =
       tool.id === "text-compare" || tool.id === "html-to-pdf" || tool.id === "scan-to-pdf";
     if (files.length === 0 && !isDirectTextInput && !isDocless) return;
+    const formRevision = tool.id === "pdf-form-fill" ? formPreview.revision : undefined;
+    if (tool.id === "pdf-form-fill" && !formRevision) return;
+    const formGeneration = tool.id === "pdf-form-fill" ? ++formRunGeneration.current : 0;
 
     const isTranslation = tool.id === "text-translate";
     const run = isTranslation ? ++translationRun.current : 0;
@@ -1187,6 +1257,7 @@ export function DedicatedToolView({
         selectedImageIds: extractedImages.length > 0 ? selectedImageIds : undefined,
         formValues,
         formFlatten,
+        formRevision,
         unlockPassword,
         protectPassword,
         protectOwnerPassword: protectPassword,
@@ -1243,6 +1314,7 @@ export function DedicatedToolView({
           setReviewProgressStatus(info.message || `${info.progress}%`);
         },
       });
+      if (tool.id === "pdf-form-fill" && formGeneration !== formRunGeneration.current) return;
       if (isTranslation && run !== translationRun.current) return;
       if (currentImageRun?.signal.aborted) return;
       const outputBlob = output.blob;
@@ -1316,6 +1388,7 @@ export function DedicatedToolView({
         categoryKey,
       });
     } catch (err) {
+      if (tool.id === "pdf-form-fill" && formGeneration !== formRunGeneration.current) return;
       if (
         currentImageRun &&
         (currentImageRun.signal.aborted || currentImageRun !== imageController.current)
@@ -1640,13 +1713,25 @@ export function DedicatedToolView({
       return (
         <FormFillPdfPanel
           key={previewEpoch}
-          onPreviewPageChange={handlePreviewPageChange}
+          onPreviewPageChange={setFormPreviewPage}
+          previewPage={formPreviewPage}
+          revisionPreview={
+            formOriginalOnly
+              ? {
+                  previewUrl: formOriginalThumbnail,
+                  pending: !formOriginalThumbnail,
+                  isOriginal: true,
+                }
+              : { ...formPreview, error: formInputError ?? formPreview.error }
+          }
+          onRetryPreview={formInputError ? undefined : formPreview.retry}
+          onReplaceFile={() => fileInputRef.current?.click()}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
           thumbnailUrl={firstPageThumb}
           pageThumbnails={allPageThumbnails}
-          fields={formFields}
+          fields={formFieldsFile === files[0] ? formFields : []}
           isLoadingFields={isLoadingFormFields}
           values={formValues}
           onValuesChange={setFormValues}
@@ -2334,6 +2419,7 @@ export function DedicatedToolView({
             </span>
           </button>
           <p className="ilovepdf-main-drop-hint">{translate("dedicated.orDragDrop")}</p>
+          {tool.id === "pdf-form-fill" && errorMessage && <p role="alert">{errorMessage}</p>}
         </section>
       </div>
     );
@@ -2469,6 +2555,7 @@ export function DedicatedToolView({
               (!hasFilesOrText && tool.id !== "text-compare") ||
               (tool.id === "pdf-protect" && protectionStatus.isProtected) ||
               (tool.id === "pdf-redact" && redactionAreas.length === 0) ||
+              (tool.id === "pdf-form-fill" && !formPreview.revision) ||
               (tool.id === "pdf-to-excel" && (isAnalyzingExcel || Boolean(excelPreviewError)))
             }
             onClick={handleExecute}

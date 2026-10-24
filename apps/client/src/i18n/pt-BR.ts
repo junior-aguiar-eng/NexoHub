@@ -1,4 +1,26 @@
 export const ptBR = {
+  "formFill.invalidFile": "Selecione um arquivo PDF válido para preencher o formulário.",
+  "formFill.replaceFile": "Selecionar outro PDF",
+  "formFill.replaceFileLabel": "Trocar PDF",
+  "formFill.previewOriginal":
+    "Documento original: não há campos compatíveis para preencher. Você pode abrir o assinador ou trocar o PDF.",
+  "formFill.previewOriginalLoading": "Preparando a visualização do documento original…",
+
+  "formFill.fieldGroup": "Campo: {name}",
+  "formFill.previewWaiting":
+    "A prévia dos valores fica disponível em PDFs com campos de formulário.",
+  "formFill.previewStatus": "Estado da prévia do formulário",
+  "formFill.invalidRevision":
+    "A revisão do formulário mudou. Aguarde a prévia atualizada antes de exportar.",
+  "formFill.previewUpdating": "Atualizando a prévia com seus valores…",
+  "formFill.previewReady": "Prévia atualizada. O download usa esta revisão do formulário.",
+  "formFill.previewError": "Não foi possível atualizar a prévia do formulário. Tente novamente.",
+  "formFill.unsupportedCharacters":
+    "A fonte do formulário não representa um ou mais caracteres. Ajuste o texto para continuar.",
+  "formFill.previewRetry": "Tentar atualizar prévia",
+  "formFill.goToPage": "Ir para {name} na página {page}",
+  "formFill.fieldPage": "Página {page}",
+
   "pdfViewport.controls": "Controles da prévia PDF",
   "pdfViewport.page": "Página da prévia",
   "pdfViewport.zoom": "Zoom da visualização",

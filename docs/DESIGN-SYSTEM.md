@@ -118,3 +118,13 @@ preservando a largura externa da página. Evitar outro scroller que recorte a re
 O zoom é de visualização: opções de saída e percentuais sobre a folha são independentes.
 Prévias continuam limitadas a 1800px/3MP; zoom elevado pode revelar pixels do raster. Não é um
 novo editor vetorial. Editor e comparador preservam suas barras e motores especializados.
+
+### Formulários com revisão atual (DOC-C1)
+
+A mesa reutiliza `PdfViewport`. Campos agrupados têm destinos de página com alvos de 44px;
+o foco na entrada correspondente pode ajustar a página sem sair do controle. O cabeçalho
+permite trocar o PDF. Atualização e erro têm estados explícitos: não apresentar a miniatura
+original como revisão preenchida, nem habilitar exportação enquanto a revisão atual não estiver
+pronta. PDF sem campos tem prévia original identificada e ação de preenchimento desabilitada.
+Nomes longos quebram linha; barra de destinos pode quebrar em várias linhas. Cores e foco seguem
+os tokens existentes. Estados de acentos, erro e teclado foram conferidos nas quatro larguras.

@@ -20,6 +20,15 @@ export interface FormFillPdfPanelProps {
   readonly totalPages: number;
   readonly thumbnailUrl?: string;
   readonly pageThumbnails?: readonly string[];
+  readonly previewPage?: number;
+  readonly revisionPreview?: {
+    readonly previewUrl?: string;
+    readonly isOriginal?: boolean;
+    readonly pending: boolean;
+    readonly error?: string;
+  };
+  readonly onRetryPreview?: () => void;
+  readonly onReplaceFile?: () => void;
   readonly onPreviewPageChange?: (page: number) => void;
   readonly fields: readonly FormFieldDescriptor[];
   readonly isLoadingFields?: boolean;
@@ -37,6 +46,10 @@ export function FormFillPdfPanel({
   thumbnailUrl,
   pageThumbnails,
   onPreviewPageChange,
+  previewPage: selectedPreviewPage,
+  revisionPreview,
+  onRetryPreview,
+  onReplaceFile,
   fields,
   isLoadingFields = false,
   values,
@@ -45,7 +58,8 @@ export function FormFillPdfPanel({
   onFlattenChange,
   onGoToSign,
 }: FormFillPdfPanelProps) {
-  const [previewPage, setPreviewPage] = useState<number>(1);
+  const [localPreviewPage, setPreviewPage] = useState<number>(1);
+  const previewPage = selectedPreviewPage ?? localPreviewPage;
   const baseId = useId();
 
   const formattedSize =
@@ -58,8 +72,13 @@ export function FormFillPdfPanel({
     onPreviewPageChange?.(previewPage);
   }, [onPreviewPageChange, previewPage]);
 
-  const activeThumbnail =
-    pageThumbnails?.[previewPage - 1] || (previewPage === 1 ? thumbnailUrl : undefined);
+  const activeThumbnail = revisionPreview
+    ? revisionPreview.previewUrl
+    : pageThumbnails?.[previewPage - 1] || (previewPage === 1 ? thumbnailUrl : undefined);
+  function navigateToPage(page: number) {
+    setPreviewPage(page);
+    onPreviewPageChange?.(page);
+  }
 
   const effectiveValues = Object.fromEntries(
     fields.map((field) => [field.name, values[field.name] ?? field.currentValue]),
@@ -131,6 +150,17 @@ export function FormFillPdfPanel({
               </div>
             </div>
           </div>
+
+          {onReplaceFile && (
+            <button
+              type="button"
+              className="form-fill-replace-file"
+              onClick={onReplaceFile}
+              aria-label={translate("formFill.replaceFile")}
+            >
+              {translate("formFill.replaceFileLabel")}
+            </button>
+          )}
 
           {!isLoadingFields && fields.length > 0 && (
             <div className="form-fill-progress-tag">
@@ -212,7 +242,20 @@ export function FormFillPdfPanel({
                 const val = effectiveValues[field.name];
 
                 return (
-                  <div key={field.name} className="form-fill-field-card">
+                  <fieldset
+                    key={field.name}
+                    aria-label={translate("formFill.fieldGroup").replace("{name}", field.name)}
+                    className="form-fill-field-card"
+                    onFocus={(event) => {
+                      if (
+                        (event.target instanceof HTMLInputElement ||
+                          event.target instanceof HTMLSelectElement) &&
+                        field.pages?.length &&
+                        !field.pages.includes(previewPage)
+                      )
+                        navigateToPage(field.pages[0]);
+                    }}
+                  >
                     <div className="form-fill-field-header">
                       <label htmlFor={fieldId} className="form-fill-field-name">
                         {field.name}
@@ -227,6 +270,22 @@ export function FormFillPdfPanel({
                       </div>
                     </div>
 
+                    {Boolean(field.pages?.length) && (
+                      <div className="form-fill-field-pages">
+                        {field.pages?.map((page) => (
+                          <button
+                            key={page}
+                            type="button"
+                            onClick={() => navigateToPage(page)}
+                            aria-label={translate("formFill.goToPage")
+                              .replace("{name}", field.name)
+                              .replace("{page}", String(page))}
+                          >
+                            {translate("formFill.fieldPage").replace("{page}", String(page))}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     {/* Inputs de acordo com o tipo */}
                     {field.type === "text" && (
                       <input
@@ -333,7 +392,7 @@ export function FormFillPdfPanel({
                         })}
                       </div>
                     )}
-                  </div>
+                  </fieldset>
                 );
               })}
             </div>
@@ -350,8 +409,8 @@ export function FormFillPdfPanel({
           </div>
         </div>
 
-        <PdfViewport page={previewPage} pageCount={totalPages} onPageChange={setPreviewPage}>
-          <div className="form-fill-preview-canvas-box">
+        <PdfViewport page={previewPage} pageCount={totalPages} onPageChange={navigateToPage}>
+          <div className="form-fill-preview-canvas-box" aria-busy={revisionPreview?.pending}>
             {activeThumbnail ? (
               <img
                 src={activeThumbnail}
@@ -369,10 +428,39 @@ export function FormFillPdfPanel({
           </div>
         </PdfViewport>
 
-        <div className="form-fill-preview-footer-hint">
-          <Info size={14} />
-          <span>{translate("formFill.previewHint")}</span>
-        </div>
+        {revisionPreview?.error ? (
+          <div className="form-fill-preview-error">
+            <p role="alert">{revisionPreview.error}</p>
+            {onRetryPreview && (
+              <button type="button" onClick={onRetryPreview}>
+                {translate("formFill.previewRetry")}
+              </button>
+            )}
+          </div>
+        ) : (
+          <div
+            className="form-fill-preview-footer-hint"
+            role="status"
+            aria-label={translate("formFill.previewStatus")}
+          >
+            <Info size={14} />
+            <span>
+              {translate(
+                revisionPreview?.pending || isLoadingFields
+                  ? revisionPreview?.isOriginal
+                    ? "formFill.previewOriginalLoading"
+                    : "formFill.previewUpdating"
+                  : revisionPreview
+                    ? revisionPreview.isOriginal
+                      ? "formFill.previewOriginal"
+                      : revisionPreview.previewUrl
+                        ? "formFill.previewReady"
+                        : "formFill.previewWaiting"
+                    : "formFill.previewHint",
+              )}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Estilos dedicados ao painel de preenchimento */}

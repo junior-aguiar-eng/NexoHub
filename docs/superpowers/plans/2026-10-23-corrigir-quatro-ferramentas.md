@@ -49,7 +49,7 @@ Pedidos de câmera resolvidos após sair da tela; formulários com campos em vá
 
 ## Fase de complementação — 24/10/2026
 
-**Estado:** planejada, adicional às correções concluídas. O formulário compartilha a preservação
+**Estado:** DOC-C1 concluído e validado no website; demais complementos planejados, adicionais às correções concluídas. O formulário compartilha a preservação
 de campos já tratada neste plano, por isso seu complemento permanece aqui. Aplicar Q-C0 e os
 [gates comuns](../../ROADMAP.md#regras-comuns-de-execução-e-aceite); dependências da nova fase
 exigem avaliação própria, sem alterar o histórico da entrega sem dependências.
@@ -61,14 +61,14 @@ exigem avaliação própria, sem alterar o histórico da entrega sem dependênci
 **Criar:** `features/launcher/useFormPreview.ts` e teste próximo.
 **Testar:** `e2e/new-tools-quality.spec.ts`, `tool-workspace-regressions.spec.ts`.
 
-- [ ] Testar texto, checkbox, rádio e lista em várias páginas: hoje a prévia mostra o original;
+- [x] Testar texto, checkbox, rádio e lista em várias páginas: hoje a prévia mostra o original;
   ao mudar valor, deve mostrar a revisão correspondente. Cobrir fonte/acentos e achatar ou não.
-- [ ] Reutilizar `fillPdfForm` para gerar bytes efêmeros e renderizar a página da revisão,
+- [x] Reutilizar `fillPdfForm` para gerar bytes efêmeros e renderizar a página da revisão,
   com debounce, cancelamento e geração de sessão. O download usa o mesmo snapshot validado.
   Valores não suportados devem gerar erro, nunca desaparecer silenciosamente.
-- [ ] Navegar do campo à página correspondente; consumir UX-C1 sem reconstruir outro viewer.
+- [x] Navegar do campo à página correspondente; consumir UX-C1 sem reconstruir outro viewer.
   Preservar widgets/valores na saída editável e removê-los somente quando achatar for escolhido.
-- [ ] Testar troca de arquivo/saída durante renderização e nomes longos em 390px; revogar URLs
+- [x] Testar troca de arquivo/saída durante renderização e nomes longos em 390px; revogar URLs
   e descartar resultados antigos. Registrar cobertura em `docs/TOOL-SPEC.md`.
 
 ### DOC-C2 — Digitalização com perspectiva e revisão por página
@@ -111,3 +111,41 @@ exigem avaliação própria, sem alterar o histórico da entrega sem dependênci
   já foram corrigidas em `43f9c1a`; não reimplementar esse carregamento.
 - [ ] Preservar cancelamento da fila ao sair e não exigir renderizar o PDF inteiro para
   selecionar/extrair um intervalo. Rodar os gates comuns antes de ampliar limites atuais.
+
+### Registro complementar — DOC-C1 (24/10/2026)
+
+- Base `e0d30ea`, após commit do UX-C1 autorizado pelo usuário; somente website. Esta entrega
+  permanece local, sem commit/push/deploy e sem novas dependências.
+- Inspeção mapeia páginas dos widgets por anotações e `/P`, incluindo campos repetidos e rádio
+  com opções em páginas diferentes. Entradas e seletores preservam foco e valores ao navegar.
+- Hook `useFormPreview` usa o preenchimento existente, com debounce de 300ms, sessão e
+  cancelamento. Uma revisão opaca conserva os bytes validados e a identidade da origem;
+  o runner rejeita revisão incompatível com arquivo/valores/achatamento e exporta os mesmos bytes.
+- Texto com acentos portugueses, checkbox, rádio, dropdown, multiseleção, readonly e modo
+  editável/achatado cobertos. Fonte padrão WinAnsi mantida; glyph incompatível gera erro explícito.
+  A etapa atômica do pdf-lib não é interrompida internamente, mas não publica resultado obsoleto;
+  PDF.js cancela o render ativo. Não foram introduzidas URLs de objeto para as prévias.
+- Achatamento do pdf-lib deixava referências de widgets já apagados em `Annots`; testes
+  reproduziram referências sem objeto. Captura/remoção seletiva das referências corrige a saída
+  sem apagar links ou demais anotações. Aparências e campos da saída editável permanecem.
+- Revisão independente única encontrou carregamento infinito ao arrastar arquivo não PDF.
+  Reproduzido e corrigido: recusa no upload, erro também no encaminhamento inicial e troca por
+  seletor visível. PDF malformado encerra o carregamento e permite recuperação.
+- A suíte geral revelou perda da prévia para PDFs sem campos. Restabelecida a visualização do
+  original, explicitamente identificada, usando a fila limitada existente; exportação desabilitada.
+  A assertion original de legibilidade da mesa foi preservada e passou após a correção.
+- Corpus, limites e cobertura em `docs/TOOL-SPEC.md`. Capturas 390/768/1024/1440px e tema escuro,
+  sem overflow externo, em `/workspace/artifacts/complementacao-formularios-2026-10-24`.
+  Observação neste host Chromium sob verificações concorrentes: 1034ms até primeira revisão e
+  843ms na edição, incluindo debounce. Não é benchmark isolado nem promessa para outros PDFs.
+
+- Validação final: 620 testes unitários (557 client), 76 E2E focados na raiz mais o caso adicional
+  de PDF sem campos, 91 E2E em `/hub/`, formatter/lint, tipagem de todos os pacotes e builds
+  aprovados. A rodada geral anterior teve 217 aprovados/5 restritos à subpasta e falhou em
+  `mesa /preencher-formulario usa a tela larga e apresenta página legível`; esse caso foi corrigido
+  e passou na rodada final de 76 testes, com a assertion anterior preservada.
+- Bundle `/hub/` principal: 1061,50kB / 292,13kB gzip, acréscimo de 7,21kB / 2,20kB gzip sobre
+  UX-C1 no mesmo modo de build. Não houve mudança no inventário de dependências.
+- Revisão única: um achado importante corrigido e verificado; nenhuma pendência concreta de
+  revisão. DOC-C1 permanece local, sem commit/push/deploy. DOC-C2 e demais complementos não
+  foram iniciados nesta entrega.

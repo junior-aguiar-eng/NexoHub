@@ -148,3 +148,78 @@ describe("FormFillPdfPanel", () => {
     });
   });
 });
+
+it("navega do campo para o widget e mantém foco no controle editado", () => {
+  const onPreviewPageChange = vi.fn();
+  render(
+    <FormFillPdfPanel
+      fileName="duas.pdf"
+      fileSizeBytes={500}
+      totalPages={2}
+      fields={[{ name: "nome", type: "text", currentValue: "", isReadOnly: false, pages: [2] }]}
+      values={{}}
+      onValuesChange={vi.fn()}
+      flatten={false}
+      onFlattenChange={vi.fn()}
+      onPreviewPageChange={onPreviewPageChange}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Ir para nome na página 2" }));
+  expect(screen.getByRole("spinbutton", { name: "Página da prévia" })).toHaveValue(2);
+  const field = screen.getByLabelText("nome");
+  field.focus();
+  expect(field).toHaveFocus();
+  expect(onPreviewPageChange).toHaveBeenLastCalledWith(2);
+});
+
+it("não exibe a imagem original como revisão atual durante erro ou atualização", () => {
+  const props = {
+    fileName: "form.pdf",
+    fileSizeBytes: 500,
+    totalPages: 1,
+    fields: samplePreviewFields(),
+    values: {},
+    onValuesChange: vi.fn(),
+    flatten: false,
+    onFlattenChange: vi.fn(),
+    thumbnailUrl: "original.png",
+  };
+  const view = render(<FormFillPdfPanel {...props} revisionPreview={{ pending: true }} />);
+  expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  expect(screen.getByRole("status", { name: "Estado da prévia do formulário" })).toHaveTextContent(
+    "Atualizando",
+  );
+  const retry = vi.fn();
+  view.rerender(
+    <FormFillPdfPanel
+      {...props}
+      revisionPreview={{ pending: false, error: "Falha de prévia" }}
+      onRetryPreview={retry}
+    />,
+  );
+  expect(screen.getByRole("alert")).toHaveTextContent("Falha de prévia");
+  fireEvent.click(screen.getByRole("button", { name: "Tentar atualizar prévia" }));
+  expect(retry).toHaveBeenCalledOnce();
+});
+function samplePreviewFields(): FormFieldDescriptor[] {
+  return [{ name: "nome", type: "text", currentValue: "", isReadOnly: false, pages: [1] }];
+}
+
+it("não anuncia revisão pronta quando o documento não possui campos", () => {
+  render(
+    <FormFillPdfPanel
+      fileName="sem-campos.pdf"
+      fileSizeBytes={100}
+      totalPages={1}
+      fields={[]}
+      values={{}}
+      onValuesChange={vi.fn()}
+      flatten={false}
+      onFlattenChange={vi.fn()}
+      revisionPreview={{ pending: false }}
+    />,
+  );
+  expect(
+    screen.getByRole("status", { name: "Estado da prévia do formulário" }),
+  ).not.toHaveTextContent("Prévia atualizada");
+});

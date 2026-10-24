@@ -68,6 +68,41 @@ o recorte não elimina definitivamente o conteúdo ocultado. Limites e provas es
 - **`pdf-page-numbers`**: Insere numeração tipográfica com formatações variadas (`Página X de Y`, `X/Y`, `X`)
   em posições pré-definidas no cabeçalho ou rodapé.
 
+### Formulários PDF — DOC-C1
+
+`pdf-form-fill` suporta campos AcroForm de texto, checkbox, rádio, dropdown e listas com
+seleção múltipla. A inspeção informa as páginas 1-based de todos os widgets de cada campo,
+resolvendo as anotações da página e a referência `/P`; widgets repetidos não duplicam o destino.
+Campos somente leitura conservam os valores originais. A navegação e o zoom não alteram valores.
+
+A prévia usa `fillPdfForm` e renderiza a revisão atual pelo PDF.js, com debounce de 300ms e
+uma página por vez. Cada revisão privada associa origem por identidade de `File`, valores e
+achatamento. O download reutiliza os mesmos bytes validados; revisões de outro arquivo ou opções
+são rejeitadas. Digitação, mudança de página, arquivo ou achatamento descartam a imagem obsoleta.
+A preparação atômica do pdf-lib termina em memória e seu resultado é descartado se cancelado;
+a renderização PDF.js é interrompida. As prévias usam Data URLs, sem criar Object URLs extras.
+URLs de download mantêm a revogação existente ao trocar resultado ou sair.
+
+A saída editável preserva campos, widgets e seleções. Achatar incorpora as aparências à página
+e remove campos e referências de widgets; links e outras anotações independentes permanecem.
+O original não é alterado. PDF sem campos conserva a visualização do original, identificada como
+tal, e não oferece uma operação fictícia de preenchimento. Arquivos incompatíveis e PDFs inválidos
+informam erro e permitem escolher outro arquivo.
+
+Textos editados usam a fonte padrão existente (WinAnsi): acentos portugueses precompostos foram
+verificados. Caracteres incompatíveis geram erro explícito e bloqueiam prévia/exportação, sem
+substituição ou perda silenciosa. Não há homologação de fontes arbitrárias/Unicode completo.
+XFA e documentos assinados são recusados; falhas de aparência ou de achatamento, inclusive
+o caso de widget malformado coberto, são expostas. Não são convertidas em sucesso vazio.
+
+Cobertura: `pdf-form.test.ts`, `useFormPreview.test.ts`, `FormFillPdfPanel.test.tsx`,
+`DedicatedToolView.test.tsx`, `launcher-tool-runner.test.ts` e `e2e/form-preview.spec.ts`, mais
+as regressões existentes das mesas. Corpus sintético versionado no E2E, três páginas/seis campos,
+sem documentos pessoais ou assets de terceiros; SHA-256 do caso padrão:
+`d2982f4fdd30e89021cfbf3432a31c7f57669a92e839cab27bdb0844bcdf53f2` (7.939 bytes).
+Cada execução anexa o hash do corpus usado. Casos com fontes arbitrárias, arquivos grandes e
+outros dispositivos permanecem sem medição/homologação.
+
 ## Fase 7 — texto
 
 `create_text_revision` recebe `projectPath`, `documentId`, `artifactId` e conteúdo UTF-8. O artifact

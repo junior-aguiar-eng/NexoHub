@@ -365,3 +365,18 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     expect(screen.getByRole("button", { name: /Gerar PDF Digitalizado/i })).toBeInTheDocument();
   });
 });
+
+it("formulário recebido por navegação recusa entrada incompatível sem carregamento permanente", async () => {
+  const tool = launcherTools.find((item) => item.id === "pdf-form-fill");
+  if (!tool) throw new Error("Ferramenta ausente");
+  render(
+    <DedicatedToolView
+      tool={tool}
+      documentCore={new BrowserDocumentCorePort()}
+      onBack={vi.fn()}
+      initialFiles={[new File(["texto"], "entrada.txt", { type: "text/plain" })]}
+    />,
+  );
+  expect(await screen.findByRole("alert")).toHaveTextContent(/PDF|documento/i);
+  expect(screen.queryByText("Carregando campos...", { exact: true })).not.toBeInTheDocument();
+});

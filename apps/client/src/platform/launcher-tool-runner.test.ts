@@ -712,3 +712,41 @@ describe("Tool Runner do Launcher", () => {
     generatedMetadata.mockRestore();
   });
 });
+
+it("exporta os bytes da revisão validada e recusa revisão de outro arquivo/valores", async () => {
+  const { preparePdfFormRevision, getPdfFormRevisionBytes } = await import("./pdf-form");
+  const pdf = await PDFDocument.create();
+  const page = pdf.addPage([300, 300]);
+  pdf.getForm().createTextField("nome").addToPage(page, { x: 20, y: 20, width: 200, height: 30 });
+  const bytes = await pdf.save();
+  const source = new File([bytes as unknown as BlobPart], "revisao.pdf", {
+    type: "application/pdf",
+  });
+  const values = { nome: "José" };
+  const revision = await preparePdfFormRevision(source, { values, flatten: false });
+  const result = await runLauncherTool(new BrowserDocumentCorePort(), "pdf-form-fill", {
+    ...input([source]),
+    formValues: values,
+    formFlatten: false,
+    formRevision: revision,
+  });
+  expect(new Uint8Array(await result.blob.arrayBuffer())).toEqual(
+    getPdfFormRevisionBytes(revision),
+  );
+  const other = new File([bytes as unknown as BlobPart], "revisao.pdf", {
+    type: "application/pdf",
+  });
+  for (const mismatch of [
+    { files: [other], formValues: values, formFlatten: false },
+    { files: [source], formValues: { nome: "Outra" }, formFlatten: false },
+    { files: [source], formValues: values, formFlatten: true },
+  ]) {
+    await expect(
+      runLauncherTool(new BrowserDocumentCorePort(), "pdf-form-fill", {
+        ...input(mismatch.files),
+        ...mismatch,
+        formRevision: revision,
+      }),
+    ).rejects.toThrow(/revisão/i);
+  }
+});

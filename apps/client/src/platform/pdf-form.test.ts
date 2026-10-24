@@ -1,6 +1,13 @@
-import { PDFDocument, PDFName } from "pdf-lib";
+import { PDFDocument, PDFName, PDFString } from "pdf-lib";
 import { describe, expect, it } from "vitest";
-import { type FormFieldValue, fillPdfForm, inspectPdfFormFields } from "./pdf-form";
+import {
+  type FormFieldValue,
+  fillPdfForm,
+  getPdfFormRevisionBytes,
+  inspectPdfFormFields,
+  matchesPdfFormRevision,
+  preparePdfFormRevision,
+} from "./pdf-form";
 
 async function fixture() {
   const doc = await PDFDocument.create();
@@ -134,4 +141,113 @@ describe("preenchimento AcroForm real", () => {
       inspectPdfFormFields(await doc.save({ updateFieldAppearances: false })),
     ).rejects.toThrow("PDF_XFA_NAO_SUPORTADO");
   });
+});
+
+it("localiza todos os widgets do campo em páginas reais, inclusive sem P", async () => {
+  const doc = await PDFDocument.load(await fixture());
+  const second = doc.addPage();
+  const text = doc.getForm().getTextField("nome");
+  text.addToPage(second, { x: 20, y: 700, width: 150, height: 20 });
+  text.acroField.getWidgets()[1].dict.delete(PDFName.of("P"));
+  doc
+    .getForm()
+    .getRadioGroup("plano")
+    .addOptionToPage("C", second, { x: 20, y: 500, width: 20, height: 20 });
+  const fields = await inspectPdfFormFields(await doc.save());
+  expect(fields.find((field) => field.name === "nome")?.pages).toEqual([1, 2]);
+  expect(fields.find((field) => field.name === "plano")?.pages).toEqual([1, 2]);
+  expect(fields.find((field) => field.name === "aceite")?.pages).toEqual([1]);
+});
+
+it("identifica falha de codificação sem perder silenciosamente o texto", async () => {
+  await expect(fillPdfForm(await fixture(), { values: { nome: "漢字" } })).rejects.toThrow(
+    "PDF_FORM_CARACTERE_NAO_SUPORTADO",
+  );
+});
+
+it("a revisão validada fixa os valores e entrega cópias dos mesmos bytes", async () => {
+  const source = await fixture();
+  const file = new File([], "formulario.pdf");
+  Object.defineProperty(file, "arrayBuffer", { value: async () => source.slice().buffer });
+  const values = { nome: "José da Conceição", aceite: true, plano: "B", idiomas: ["PT", "ES"] };
+  const preparing = preparePdfFormRevision(file, { values, flatten: false });
+  values.nome = "alterado depois";
+  values.idiomas.push("EN");
+  const revision = await preparing;
+  const expected = { nome: "José da Conceição", aceite: true, plano: "B", idiomas: ["PT", "ES"] };
+  expect(matchesPdfFormRevision(revision, file, { values: expected, flatten: false })).toBe(true);
+  expect(matchesPdfFormRevision(revision, file, { values, flatten: false })).toBe(false);
+  expect(
+    matchesPdfFormRevision(revision, new File([], "formulario.pdf"), {
+      values: expected,
+      flatten: false,
+    }),
+  ).toBe(false);
+  expect(matchesPdfFormRevision(revision, file, { values: expected, flatten: true })).toBe(false);
+  const bytes = getPdfFormRevisionBytes(revision);
+  const form = (await PDFDocument.load(bytes)).getForm();
+  expect(form.getTextField("nome").getText()).toBe(expected.nome);
+  expect(form.getOptionList("idiomas").getSelected()).toEqual(["PT", "ES"]);
+  bytes.fill(0);
+  expect(
+    (await PDFDocument.load(getPdfFormRevisionBytes(revision)))
+      .getForm()
+      .getCheckBox("aceite")
+      .isChecked(),
+  ).toBe(true);
+});
+
+it("cancela preparação abandonada antes de validar uma revisão", async () => {
+  const source = await fixture();
+  const file = new File([], "cancelado.pdf");
+  let release: (value: ArrayBuffer) => void = () => {};
+  Object.defineProperty(file, "arrayBuffer", {
+    value: () =>
+      new Promise<ArrayBuffer>((resolve) => {
+        release = resolve;
+      }),
+  });
+  const controller = new AbortController();
+  const pending = preparePdfFormRevision(file, { values: { nome: "Maria" } }, controller.signal);
+  controller.abort();
+  release(source.slice().buffer as ArrayBuffer);
+  await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+});
+
+it("achatar formulário em várias páginas remove todas as referências de widgets", async () => {
+  const doc = await PDFDocument.load(await fixture());
+  const second = doc.addPage();
+  doc
+    .getForm()
+    .getRadioGroup("plano")
+    .addOptionToPage("C", second, { x: 20, y: 500, width: 20, height: 20 });
+  const result = await PDFDocument.load(
+    await fillPdfForm(await doc.save(), { values: { nome: "José", plano: "C" }, flatten: true }),
+  );
+  expect(
+    result
+      .getPages()
+      .map((page) =>
+        (page.node.Annots()?.asArray() ?? []).map((ref) => result.context.lookup(ref)?.toString()),
+      ),
+  ).toEqual([[], []]);
+});
+
+it("achatar remove widgets sem remover anotações de link independentes", async () => {
+  const doc = await PDFDocument.load(await fixture());
+  const link = doc.context.register(
+    doc.context.obj({
+      Type: "Annot",
+      Subtype: "Link",
+      Rect: [20, 20, 120, 40],
+      A: { S: "URI", URI: PDFString.of("https://example.com") },
+    }),
+  );
+  doc.getPage(0).node.addAnnot(link);
+  const result = await PDFDocument.load(
+    await fillPdfForm(await doc.save(), { values: { nome: "Maria" }, flatten: true }),
+  );
+  const annotations = result.getPage(0).node.Annots()?.asArray() ?? [];
+  expect(annotations).toHaveLength(1);
+  expect(result.context.lookup(annotations[0])?.toString()).toContain("/Subtype /Link");
 });

@@ -10839,3 +10839,39 @@ html:has(.image-composition-panel) {
   max-height: none;
   overflow: visible;
 }
+
+.form-fill-field-pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 8px;
+}
+.form-fill-field-pages button,
+.form-fill-preview-error button,
+.form-fill-replace-file {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.form-fill-field-pages button:focus-visible,
+.form-fill-preview-error button:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 3px;
+}
+.form-fill-preview-error {
+  padding: 12px;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+.form-fill-preview-error p {
+  margin-bottom: 12px;
+}
+.form-fill-field-card {
+  min-width: 0;
+  margin: 0;
+}

@@ -37,11 +37,11 @@ para relatórios de auditoria ou planos novos.
 
 | Ordem | Complemento | Plano responsável | Estado / dependência |
 | --- | --- | --- | --- |
-| 0 | Q-C0: corpus, licenças e critérios de qualidade comercial | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#fase-de-complementação--24102026) | Parcial: aplicado às fatias IM-C1/IM-C2/IM-C3, qualidade IM-C4 e UX-C1; demais ferramentas/motores pendentes |
+| 0 | Q-C0: corpus, licenças e critérios de qualidade comercial | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#fase-de-complementação--24102026) | Parcial: aplicado às fatias IM-C1/IM-C2/IM-C3, qualidade IM-C4, UX-C1 e DOC-C1; demais ferramentas/motores pendentes |
 | 1 | IM-C1: gestão e inspeção dos lotes nas seis ferramentas de imagem | [PDF e Imagem](superpowers/plans/2026-10-23-unificar-pdf-imagem.md#fase-de-complementação--24102026) | Concluído no website; motores e limites preservados |
 | 2 | IM-C2: recorte com alças, zoom e teclado | Mesmo plano de PDF e Imagem | Concluído no website; Cropper.js 2.3.1, exportação e preflight preservados |
 | 3 | UX-C1: controles de visualização PDF reutilizáveis | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#fase-de-complementação--24102026) | Concluído no website; oito mesas, zoom e navegação independentes da exportação |
-| 4 | DOC-C1: valores de formulário na prévia e navegação por campo | [Quatro ferramentas](superpowers/plans/2026-10-23-corrigir-quatro-ferramentas.md#fase-de-complementação--24102026) | Planejado; consome UX-C1 |
+| 4 | DOC-C1: valores de formulário na prévia e navegação por campo | [Quatro ferramentas](superpowers/plans/2026-10-23-corrigir-quatro-ferramentas.md#fase-de-complementação--24102026) | Concluído no website; revisão atual, snapshot validado e navegação por campo |
 | 5 | SEC-C1: ocultação com remoção de conteúdo e preservação fora da área | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#fase-de-complementação--24102026) | Prova técnica; não substituir o modo seguro atual antes de homologar |
 | 6 | IM-C3: composição de imagem com objetos e histórico | Plano de PDF e Imagem | Concluído no website; modo avançado na marca d’água, Fabric.js 7.4.0 e renderizador compartilhado |
 | 7 | ED-C1/ED-C2: compatibilidade e desempenho do editor PDF | [Editar PDF](superpowers/plans/2026-10-23-editar-pdf.md#fase-de-complementação--24102026) | Planejado; não ampliar limites sem medições |

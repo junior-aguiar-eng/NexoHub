@@ -7,6 +7,11 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 
 ### Modificado
 
+- Formulários PDF com prévia dos valores atuais, atualização com debounce, cancelamento de
+  renders obsoletos e navegação do campo às suas páginas. Download usa os bytes da revisão
+  validada. Erros de fonte bloqueiam a saída; achatamento elimina referências de widgets
+  preservando anotações independentes. Entrada incompatível é recusada e há opção de trocar PDF.
+
 - Mesas de PDF com navegação, salto de página, zoom de 50–300% e ajuste à largura compartilhados
   em oito ferramentas. Prévias limitadas e canceláveis; zoom preserva opções e coordenadas de
   exportação. Corrigida a oclusão de controles na mesa de PDF para Markdown.

@@ -157,21 +157,32 @@ sem argumentos. Não armazenar estado do motor dentro dos controles.
 `e2e/security-excel-quality.spec.ts`. **Criar:** `platform/pdf-redaction-engine.ts` e testes,
 encapsulando o motor escolhido sem expor seu runtime à UI.
 
-- [ ] Provar [EmbedPDF v2](https://github.com/embedpdf/embed-pdf-viewer/tree/v2), em especial
+- [x] Provar [EmbedPDF v2](https://github.com/embedpdf/embed-pdf-viewer/tree/v2), em especial
   `@embedpdf/plugin-redaction@2.15.1` (MIT), com PDFium já instalado; manter todos os pacotes da
   família na mesma versão. Avaliar necessidade do plugin/UI versus acesso ao motor; não instalar
   a suíte inteira nem adotar v3 em desenvolvimento ou CloudPDF/server por associação de nome.
-- [ ] Testar remoção em texto, imagem, Form XObject reutilizado, rotação e CropBox. O texto
+- [x] Testar remoção em texto, imagem, Form XObject reutilizado, rotação e CropBox. O texto
   ocultado não pode ser extraído nem reaparecer em conteúdo residual/incremental; conteúdo fora
   da região, links e campos devem ser preservados ou a operação recusada com motivo específico.
-- [ ] Manter o contrato `RedactPdfOptions` e novo artifact imutável. A revisão aplicada e o
+- [x] Manter o contrato `RedactPdfOptions` e novo artifact imutável. A revisão aplicada e o
   download devem usar os mesmos bytes; prévia de retângulo sozinho não comprova remoção.
-- [ ] Auditar cópias residuais em objetos/streams/metadados associados ao trecho. Se não houver
+- [x] Auditar cópias residuais em objetos/streams/metadados associados ao trecho. Se não houver
   remoção segura para uma classe de PDF, manter o modo raster atual explicitamente identificado,
   com suas perdas, ou recusar; nunca trocar automaticamente por cobertura visual recuperável.
-- [ ] Atualizar limites e evidências em `docs/AUDITORIA-PROTECAO-TARJA-EXCEL-WEB-2026-10-23.md`
+- [x] Atualizar limites e evidências em `docs/AUDITORIA-PROTECAO-TARJA-EXCEL-WEB-2026-10-23.md`
   como resultado posterior, preservando a auditoria original. Proteger/Desbloquear compartilham
   o corpus de segurança; não trocar sua criptografia por consequência desta integração.
+
+
+Resultado de 24/10/2026: modo de preservação opcional no website, restrito ao perfil descrito
+na auditoria de segurança. PDFium 2.15.1 existente, sem novos pacotes; remoção nativa seguida
+de gravação completa e reconstrução do grafo. Recursos não utilizados são podados em páginas,
+Forms e aparências sem alterar recursos compartilhados de outros proprietários. Documentos
+fora do perfil são recusados; o modo imagem continua padrão e só muda mediante escolha do
+usuário. Revisão e download compartilham o Blob aplicado. Revisão independente encontrou três
+falhas materiais, corrigidas com regressões: recursos órfãos de aparências, dicionários privados
+de anotações e caixas invertidas. Compatibilidade universal e desempenho nos limites continuam
+fora da homologação; não ampliar fontes, imagens ou classes sem novas provas.
 
 ### OCR-C1 — OCR medido e preparação compartilhada com o scanner
 

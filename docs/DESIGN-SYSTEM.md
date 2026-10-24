@@ -128,3 +128,13 @@ original como revisão preenchida, nem habilitar exportação enquanto a revisã
 pronta. PDF sem campos tem prévia original identificada e ação de preenchimento desabilitada.
 Nomes longos quebram linha; barra de destinos pode quebrar em várias linhas. Cores e foco seguem
 os tokens existentes. Estados de acentos, erro e teclado foram conferidos nas quatro larguras.
+
+
+### Revisão aplicada de ocultação
+
+A mesa diferencia as marcações sobre o original da revisão do PDF gerado. O seletor apresenta
+modo imagem como padrão e preservação de PDFs simples como opção explícita, com limites e
+perdas adjacentes. A revisão usa `PdfViewport`, o Blob do download e largura de até 1100 px em
+uma área de sucesso de até 1200 px. Ações se distribuem em mais linhas no celular, com alvos
+mínimos de 44 px. Falha de renderização permite tentar novamente; nunca mostra o original como
+resultado aplicado.

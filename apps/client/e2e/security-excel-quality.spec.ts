@@ -1,11 +1,15 @@
 import { readFile } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, PDFName, PDFString } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 
 async function upload(page: Page, route: string, bytes: Uint8Array) {
-  await page.goto(route);
+  await page.goto(
+    route.startsWith("/hub/")
+      ? route
+      : `${process.env.NEXOHUB_BASE_PATH ?? "/"}${route.replace(/^\//, "")}`,
+  );
   await page
     .locator('input[type="file"]')
     .first()
@@ -138,3 +142,116 @@ for (const route of ["/proteger-pdf", "/ocultar-pdf", "/pdf-para-excel"]) {
     }
   });
 }
+
+test("preservação local remove texto, mantém o exterior e revisa o mesmo download", async ({
+  page,
+}) => {
+  const d = await PDFDocument.create(),
+    p = d.addPage([600, 400]);
+  p.drawText("SEGREDO_EXCLUSIVO", { x: 40, y: 330, size: 16 });
+  p.drawText("PUBLICO_PRESERVADO", { x: 40, y: 200, size: 16 });
+  d.setTitle("SEGREDO_EXCLUSIVO");
+  d.addPage([600, 400]).drawText("SEGUNDA PAGINA", { x: 40, y: 200 });
+  await upload(page, `${process.env.NEXOHUB_BASE_PATH ?? "/"}ocultar-pdf`, await d.save());
+  await page.getByLabel("Modo de ocultação").selectOption("preserve");
+  await page.getByRole("button", { name: "Adicionar Tarja Manual" }).click();
+  await page.getByLabel("Posição horizontal (%)").fill("0");
+  await page.getByLabel("Posição vertical (%)").fill("0");
+  await page.getByLabel("Largura (%)").fill("100");
+  await page.getByLabel("Altura (%)").fill("25");
+  await page.locator(".ilovepdf-action-red-btn").click();
+  const preview = page.getByRole("region", { name: "Revise o PDF gerado" });
+  await expect(preview.getByRole("img")).toBeVisible();
+  const bytes = await output(page),
+    task = pdfjs.getDocument({ data: bytes.slice() });
+  try {
+    const doc = await task.promise,
+      text = (await (await doc.getPage(1)).getTextContent()).items
+        .flatMap((i) => ("str" in i ? [i.str] : []))
+        .join(" ");
+    expect(text).not.toContain("SEGREDO_EXCLUSIVO");
+    expect(text).toContain("PUBLICO_PRESERVADO");
+    expect((await doc.getMetadata()).info).not.toHaveProperty("Title");
+  } finally {
+    await task.destroy();
+  }
+  await preview.getByRole("button", { name: "Próxima página" }).click();
+  await expect(preview.getByLabel("Página da prévia")).toHaveValue("2");
+  await expect(preview.getByRole("img")).toBeVisible();
+  await page.getByRole("button", { name: "Voltar às tarjas" }).click();
+  await expect(page.getByLabel("Modo de ocultação")).toHaveValue("preserve");
+  await expect(page.getByLabel("Altura (%)")).toHaveValue("25");
+  await expect(page.getByRole("link", { name: /Baixar arquivo gerado/i })).toHaveCount(0);
+});
+for (const kind of ["extensão privada", "MediaBox invertido"])
+  test(`perfil não homologado é recusado sem trocar para raster: ${kind}`, async ({ page }) => {
+    const d = await PDFDocument.create(),
+      p = d.addPage();
+    p.drawText("Original");
+    if (kind === "extensão privada")
+      p.node.set(PDFName.of("PrivateBackup"), PDFString.of("segredo"));
+    else p.node.set(PDFName.of("MediaBox"), d.context.obj([500, 700, 0, 0]));
+    await upload(page, `${process.env.NEXOHUB_BASE_PATH ?? "/"}ocultar-pdf`, await d.save());
+    await page.getByLabel("Modo de ocultação").selectOption("preserve");
+    await page.getByRole("button", { name: "Adicionar Tarja Manual" }).click();
+    await page.locator(".ilovepdf-action-red-btn").click();
+    await expect(page.getByRole("alert")).toContainText("não homologados");
+    await expect(page.getByLabel("Modo de ocultação")).toHaveValue("preserve");
+    await expect(page.getByRole("link", { name: /Baixar arquivo gerado/i })).toHaveCount(0);
+    await page.getByLabel("Modo de ocultação").selectOption("raster");
+    await page.locator(".ilovepdf-action-red-btn").click();
+    await expect(
+      page.getByRole("region", { name: "Revise o PDF gerado" }).getByRole("img"),
+    ).toBeVisible();
+  });
+for (const width of [390, 768, 1024, 1440])
+  test(`revisão aplicada sem sobreposição em ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await upload(page, `${process.env.NEXOHUB_BASE_PATH ?? "/"}ocultar-pdf`, await source());
+    await page.getByRole("button", { name: "Adicionar Tarja Manual" }).click();
+    await page.locator(".ilovepdf-action-red-btn").click();
+    const preview = page.getByRole("region", { name: "Revise o PDF gerado" });
+    await expect(preview.getByRole("img")).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
+      true,
+    );
+    const surface = await preview.locator(".pdf-viewport-scroll").boundingBox(),
+      controls = await preview.locator(".pdf-viewport-controls").boundingBox();
+    expect(surface).toBeTruthy();
+    expect(controls).toBeTruthy();
+    if (surface && controls) {
+      expect(controls.y + controls.height).toBeLessThanOrEqual(surface.y + 1);
+      expect(surface.width).toBeGreaterThan(width < 768 ? 300 : 500);
+    }
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({
+      path: `/workspace/artifacts/complementacao-ocultacao-2026-10-24/aplicada-${width}.png`,
+      fullPage: true,
+    });
+  });
+
+test("cancelar encerra o processamento pendente e permite nova execução", async ({ page }) => {
+  let release: () => void = () => {};
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(/pdfium.*\.wasm/, async (route) => {
+    await gate;
+    await route.continue().catch(() => {});
+  });
+  await upload(page, `${process.env.NEXOHUB_BASE_PATH ?? "/"}ocultar-pdf`, await source());
+  await page.getByLabel("Modo de ocultação").selectOption("preserve");
+  await page.getByRole("button", { name: "Adicionar Tarja Manual" }).click();
+  const loading = page.waitForRequest(/pdfium.*\.wasm/);
+  await page.locator(".ilovepdf-action-red-btn").click();
+  await loading;
+  await page.getByRole("button", { name: "Cancelar ocultação" }).click();
+  release();
+  await expect(page.locator(".ilovepdf-action-red-btn")).toBeEnabled();
+  await expect(page.getByRole("link", { name: /Baixar arquivo gerado/i })).toHaveCount(0);
+  await page.getByLabel("Modo de ocultação").selectOption("raster");
+  await page.locator(".ilovepdf-action-red-btn").click();
+  await expect(
+    page.getByRole("region", { name: "Revise o PDF gerado" }).getByRole("img"),
+  ).toBeVisible();
+});

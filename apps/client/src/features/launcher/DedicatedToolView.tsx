@@ -81,6 +81,7 @@ import { PdfToExcelPanel } from "./PdfToExcelPanel";
 import { PdfToJpgPanel } from "./PdfToJpgPanel";
 import { PdfToMarkdownPanel } from "./PdfToMarkdownPanel";
 import { ProtectPdfPanel } from "./ProtectPdfPanel";
+import { RedactionResultPreview } from "./RedactionResultPreview";
 import { RedactPdfPanel } from "./RedactPdfPanel";
 import { RemovePagesPanel } from "./RemovePagesPanel";
 import { ReviewDocumentPanel } from "./ReviewDocumentPanel";
@@ -293,6 +294,8 @@ export function DedicatedToolView({
   const [protectAllowFillingForms, setProtectAllowFillingForms] = useState<boolean>(true);
 
   // Estados de Ocultação / Tarja de PDF (Redact)
+  const [redactionPreserve, setRedactionPreserve] = useState(false);
+  const redactionController = useRef<AbortController | null>(null);
   const [redactionAreas, setRedactionAreas] = useState<RedactionArea[]>([]);
 
   // Estados de PDF para Excel
@@ -648,6 +651,17 @@ export function DedicatedToolView({
       formRunGeneration.current++;
     };
   }, [files, tool.id, formValues, formFlatten]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: arquivo, áreas e modo invalidam a operação e o artifact anterior.
+  useEffect(() => {
+    if (tool.id !== "pdf-redact") return;
+    redactionController.current?.abort();
+    setDownloadUrl(null);
+    setOutputBlob(null);
+    setStatus("idle");
+    setErrorMessage(null);
+    return () => redactionController.current?.abort();
+  }, [files, tool.id, redactionAreas, redactionPreserve]);
 
   // Quando arquivos PDF são carregados, gera miniaturas reais em canvas com PDF.js
   useEffect(() => {
@@ -1111,6 +1125,11 @@ export function DedicatedToolView({
     if (tool.id === "pdf-form-fill" && !formRevision) return;
     const formGeneration = tool.id === "pdf-form-fill" ? ++formRunGeneration.current : 0;
 
+    const redactionRun = tool.id === "pdf-redact" ? new AbortController() : undefined;
+    if (redactionRun) {
+      redactionController.current?.abort();
+      redactionController.current = redactionRun;
+    }
     const isTranslation = tool.id === "text-translate";
     const run = isTranslation ? ++translationRun.current : 0;
     if (isTranslation) {
@@ -1268,6 +1287,8 @@ export function DedicatedToolView({
         protectAllowAnnotating,
         protectAllowFillingForms,
         redactionAreas,
+        redactionPreserve,
+        redactionSignal: redactionRun?.signal,
         excelOutputFormat,
         excelSheetMode,
         excelCsvDelimiter,
@@ -1314,6 +1335,7 @@ export function DedicatedToolView({
           setReviewProgressStatus(info.message || `${info.progress}%`);
         },
       });
+      if (redactionRun?.signal.aborted) return;
       if (tool.id === "pdf-form-fill" && formGeneration !== formRunGeneration.current) return;
       if (isTranslation && run !== translationRun.current) return;
       if (currentImageRun?.signal.aborted) return;
@@ -1388,6 +1410,7 @@ export function DedicatedToolView({
         categoryKey,
       });
     } catch (err) {
+      if (redactionRun?.signal.aborted) return;
       if (tool.id === "pdf-form-fill" && formGeneration !== formRunGeneration.current) return;
       if (
         currentImageRun &&
@@ -1424,6 +1447,8 @@ export function DedicatedToolView({
   }
 
   function handleReset() {
+    redactionController.current?.abort();
+    setRedactionAreas([]);
     setHtmlCodeContent("");
     setScannedPages([]);
     setRemovePagesSelection([]);
@@ -1813,6 +1838,8 @@ export function DedicatedToolView({
           totalPages={pdfPageCount}
           thumbnailUrl={firstPageThumb}
           pageThumbnails={allPageThumbnails}
+          preserve={redactionPreserve}
+          onPreserveChange={setRedactionPreserve}
           redactions={redactionAreas}
           onRedactionsChange={(areas) => setRedactionAreas([...areas])}
         />
@@ -2249,7 +2276,7 @@ export function DedicatedToolView({
   if (status === "success") {
     return (
       <div
-        className={`dedicated-tool-page dedicated-tool-page--success ${imageResults.length ? "dedicated-tool-page--image-results" : ""}`}
+        className={`dedicated-tool-page dedicated-tool-page--success ${imageResults.length ? "dedicated-tool-page--image-results" : ""} ${tool.id === "pdf-redact" ? "dedicated-tool-page--redaction-result" : ""}`}
       >
         <div className="ilovepdf-success-stage">
           <div
@@ -2263,6 +2290,10 @@ export function DedicatedToolView({
           <p className="ilovepdf-success-subtitle">
             <strong>{outputFileName}</strong> {translate("dedicated.successSubtitle")}
           </p>
+
+          {tool.id === "pdf-redact" && outputBlob && (
+            <RedactionResultPreview blob={outputBlob} pageCount={pdfPageCount} />
+          )}
 
           {compressionResult && (
             <div className="ilovepdf-savings-box">
@@ -2316,6 +2347,21 @@ export function DedicatedToolView({
           {errorMessage && <p role="alert">{errorMessage}</p>}
 
           <div className="ilovepdf-success-actions">
+            {tool.id === "pdf-redact" && (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setDownloadUrl(null);
+                  setOutputBlob(null);
+                  setOutputFileName("");
+                  setStatus("idle");
+                  setErrorMessage(null);
+                }}
+              >
+                {translate("redact.backToAreas")}
+              </Button>
+            )}
+
             <Button variant="secondary" onClick={handleReset}>
               <RefreshCw size={15} />
               <span>{translate("dedicated.processAnother")}</span>
@@ -2534,6 +2580,18 @@ export function DedicatedToolView({
                 {translate("imageProcessing.cancel")}
               </Button>
             </>
+          )}
+          {tool.id === "pdf-redact" && status === "running" && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                redactionController.current?.abort();
+                setStatus("idle");
+                setErrorMessage(null);
+              }}
+            >
+              {translate("redact.cancel")}
+            </Button>
           )}
           {errorMessage && <p role="alert">{errorMessage}</p>}
           <button

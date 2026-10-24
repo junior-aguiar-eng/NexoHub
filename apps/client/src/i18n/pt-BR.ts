@@ -636,6 +636,35 @@ export const ptBR = {
   "redact.removeArea": "Remover",
   "redact.clearAll": "Limpar Todas",
   "redact.actionSubmit": "Aplicar Tarjas e Salvar PDF",
+  "redact.cancel": "Cancelar ocultação",
+  "redact.mode": "Modo de ocultação",
+  "redact.modeRaster": "Converter páginas em imagem (padrão)",
+  "redact.modePreserve": "Preservar conteúdo — PDFs simples",
+  "redact.preserveNotice":
+    "Remove os objetos atingidos e mantém texto, imagens, links e campos fora das tarjas em PDFs compatíveis. Remove metadados e marcadores de navegação. Perfil limitado: fontes padrão, imagens opacas e formulários simples; até 20 MB e 30 páginas. Documentos incompatíveis são recusados, sem troca automática de modo.",
+  "redact.unsupportedProfile":
+    "Este PDF contém recursos ainda não homologados para preservar conteúdo. Use explicitamente o modo imagem, considerando suas perdas, ou outro documento.",
+  "redact.annotationIntersection":
+    "Uma tarja atinge um link ou campo de formulário. Ajuste a área ou escolha explicitamente o modo imagem para remover também esses recursos.",
+  "redact.preserveLimit":
+    "O modo de preservação aceita até 20 MB, 30 páginas e 200 tarjas, com limites adicionais para imagens. Reduza o documento ou escolha o modo imagem.",
+  "redact.operationError":
+    "Não foi possível aplicar as tarjas. Nenhum arquivo parcial foi disponibilizado. Tente novamente ou escolha o modo imagem.",
+  "redact.workerError":
+    "O processamento local não concluiu no prazo ou não pôde iniciar. Tente novamente; nenhum arquivo parcial foi disponibilizado.",
+  "redact.labelUnsupported":
+    "O rótulo contém caracteres não suportados neste modo. Edite o rótulo antes de aplicar.",
+  "redact.originalPreview":
+    "Marcações sobre o original. A ocultação só é aplicada ao gerar o arquivo.",
+  "redact.appliedTitle": "Revise o PDF gerado",
+  "redact.appliedDescription":
+    "Esta prévia usa o mesmo arquivo do download, com as tarjas já aplicadas. Confira todas as áreas antes de compartilhar.",
+  "redact.appliedPage": "Página do PDF com as tarjas aplicadas",
+  "redact.previewError":
+    "Não foi possível renderizar a prévia do arquivo gerado. Ela não foi substituída pelo original.",
+  "redact.previewLoading": "Carregando o PDF gerado…",
+  "redact.retryPreview": "Tentar prévia novamente",
+  "redact.backToAreas": "Voltar às tarjas",
   "redact.privacyNotice":
     "A saída reconstrói todas as páginas como imagens com as áreas ocultadas. Texto selecionável, busca, links, formulários e anexos não são mantidos. O arquivo original permanece intacto.",
   "redact.drawHint": "Clique e arraste sobre o documento para selecionar a área a ser ocultada.",

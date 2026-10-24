@@ -174,3 +174,22 @@ no snapshot de progresso.
 Falha intermediária interrompe a sequência sem descartar resultados anteriores. Cancelamento usa o
 `AbortSignal` encaminhado ao `ToolRunner`. Cada ferramenta continua persistindo sua própria operação
 e seus artifacts no Operation Graph; a receita não cria um caminho alternativo de execução.
+
+
+### Complementação SEC-C1: Ocultar PDF
+
+`RedactPdfOptions` conserva as áreas percentuais no espaço visual do CropBox/rotação e o
+original imutável. `redactionPreserve` é opção separada do executor, padrão falso; não há
+fallback automático. O modo imagem mantém a remoção por reconstrução de pixels e suas perdas.
+O modo de preservação usa PDFium 2.15.1 em worker cancelável e é restrito a fontes padrão,
+imagens opacas simples e Form XObjects/links/campos homologados. Atingir link/widget ou usar
+recursos fora do perfil recusa a operação antes de disponibilizar um artifact. Metadados do
+documento e marcadores são descartados; conteúdo externo, inclusive campos e links aceitos,
+é preservado. Limites, recusas e corpus constam na
+[auditoria de segurança](AUDITORIA-PROTECAO-TARJA-EXCEL-WEB-2026-10-23.md#complementação-sec-c1--24102026).
+
+Retângulos sobre o original são apenas marcações. Após gerar, a revisão renderiza o Blob do
+próprio download, sem usar o original em caso de falha. Voltar às tarjas conserva opções e
+elimina o resultado anterior. Alterar arquivo/áreas/modo ou sair cancela a operação; respostas
+obsoletas não produzem download. Nenhuma detecção automática ou eliminação global de todas as
+ocorrências de um texto é prometida.

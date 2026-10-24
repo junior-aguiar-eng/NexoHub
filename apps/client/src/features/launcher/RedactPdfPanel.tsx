@@ -6,6 +6,8 @@ import type { RedactionArea } from "@/platform/pdf-engine";
 import { PdfViewport } from "./PdfViewport";
 
 export interface RedactPdfPanelProps {
+  readonly preserve?: boolean;
+  readonly onPreserveChange?: (preserve: boolean) => void;
   readonly fileName: string;
   readonly fileSizeBytes: number;
   readonly totalPages: number;
@@ -17,6 +19,8 @@ export interface RedactPdfPanelProps {
 }
 
 export function RedactPdfPanel({
+  preserve = false,
+  onPreserveChange,
   fileName,
   fileSizeBytes,
   totalPages,
@@ -27,6 +31,7 @@ export function RedactPdfPanel({
   onRedactionsChange,
 }: RedactPdfPanelProps) {
   const labelInputId = useId();
+  const modeInputId = useId();
   const [previewPage, setPreviewPage] = useState<number>(1);
   const [selectedColor, setSelectedColor] = useState<"black" | "white" | "gray">("black");
   const [defaultLabel, setDefaultLabel] = useState<string>(() => translate("redact.defaultLabel"));
@@ -194,6 +199,16 @@ export function RedactPdfPanel({
             <span>{translate("redact.optionsTitle")}</span>
           </div>
 
+          <label htmlFor={modeInputId}>{translate("redact.mode")}</label>
+          <select
+            id={modeInputId}
+            className="redact-text-input"
+            value={preserve ? "preserve" : "raster"}
+            onChange={(event) => onPreserveChange?.(event.target.value === "preserve")}
+          >
+            <option value="raster">{translate("redact.modeRaster")}</option>
+            <option value="preserve">{translate("redact.modePreserve")}</option>
+          </select>
           <p className="redact-instruction">{translate("redact.instruction")}</p>
 
           <div className="redact-field-group">
@@ -411,6 +426,7 @@ export function RedactPdfPanel({
             </span>
           </div>
 
+          <p className="redact-draw-hint">{translate("redact.originalPreview")}</p>
           <div className="redact-draw-hint">{translate("redact.drawHint")}</div>
 
           <PdfViewport page={previewPage} pageCount={totalPages} onPageChange={setPreviewPage}>
@@ -502,7 +518,9 @@ export function RedactPdfPanel({
           </PdfViewport>
 
           <div className="redact-preview-footer">
-            <span className="redact-privacy-notice">{translate("redact.privacyNotice")}</span>
+            <span className="redact-privacy-notice">
+              {translate(preserve ? "redact.preserveNotice" : "redact.privacyNotice")}
+            </span>
           </div>
         </div>
       </div>

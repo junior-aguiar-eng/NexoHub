@@ -7,6 +7,10 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 
 ### Modificado
 
+- Ocultar PDF com preservação opcional em perfil restrito via PDFium existente, remoção nativa,
+  limpeza de metadados e recusa de recursos não homologados. Modo imagem permanece padrão.
+  Revisão renderiza o arquivo do download; cancelamento, retorno às tarjas e ações responsivas.
+
 - Formulários PDF com prévia dos valores atuais, atualização com debounce, cancelamento de
   renders obsoletos e navegação do campo às suas páginas. Download usa os bytes da revisão
   validada. Erros de fonte bloqueiam a saída; achatamento elimina referências de widgets

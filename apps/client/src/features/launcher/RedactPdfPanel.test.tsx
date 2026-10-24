@@ -255,3 +255,21 @@ it("abre a página da tarja selecionada na lista", () => {
   fireEvent.click(screen.getByRole("button", { name: /Pág. 2.*#1/ }));
   expect(onPreviewPageChange).toHaveBeenLastCalledWith(2);
 });
+it("identifica a prévia como marcações e exige escolha explícita de preservação", () => {
+  const onPreserveChange = vi.fn();
+  render(
+    <RedactPdfPanel
+      fileName="a.pdf"
+      fileSizeBytes={100}
+      totalPages={1}
+      redactions={[]}
+      onRedactionsChange={vi.fn()}
+      preserve={false}
+      onPreserveChange={onPreserveChange}
+    />,
+  );
+  expect(screen.getByLabelText("Modo de ocultação")).toHaveValue("raster");
+  expect(screen.getByText(/Marcações sobre o original/)).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Modo de ocultação"), { target: { value: "preserve" } });
+  expect(onPreserveChange).toHaveBeenCalledWith(true);
+});

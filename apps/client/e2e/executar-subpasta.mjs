@@ -22,6 +22,7 @@ try {
         "hub-subpath.spec.ts",
         "pdf-viewport.spec.ts",
         "form-preview.spec.ts",
+        "security-excel-quality.spec.ts",
         "tool-workspace-regressions.spec.ts",
         "image-batch.spec.ts",
         "image-crop-editor.spec.ts",

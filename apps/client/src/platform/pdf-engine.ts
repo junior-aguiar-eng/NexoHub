@@ -1229,7 +1229,9 @@ export interface RedactPdfOptions {
 export async function redactPdfDocument(
   pdfBytes: Uint8Array,
   options: RedactPdfOptions,
+  signal?: AbortSignal,
 ): Promise<Uint8Array> {
+  if (signal?.aborted) throw new Error("OPERACAO_CANCELADA");
   if (pdfBytes.byteLength === 0) {
     throw new Error("EMPTY_DOCUMENT");
   }
@@ -1241,6 +1243,10 @@ export async function redactPdfDocument(
     standardFontDataUrl: STANDARD_FONT_DATA_URL,
     stopAtErrors: true,
   });
+  const abort = () => {
+    void loadingTask.destroy();
+  };
+  signal?.addEventListener("abort", abort, { once: true });
   try {
     const source = await loadingTask.promise;
     for (const area of options.redactions) {
@@ -1273,6 +1279,7 @@ export async function redactPdfDocument(
     };
     let totalPixels = 0;
     for (let pageIndex = 0; pageIndex < source.numPages; pageIndex++) {
+      if (signal?.aborted) throw new Error("OPERACAO_CANCELADA");
       const page = await source.getPage(pageIndex + 1);
       const visible = page.getViewport({ scale: 1 });
       // 216 DPI, com limites explícitos de memória e dimensões de canvas.
@@ -1338,8 +1345,14 @@ export async function redactPdfDocument(
         page.cleanup();
       }
     }
-    return await output.save({ useObjectStreams: true });
+    const bytes = await output.save({ useObjectStreams: true });
+    if (signal?.aborted) throw new Error("OPERACAO_CANCELADA");
+    return bytes;
+  } catch (error) {
+    if (signal?.aborted) throw new Error("OPERACAO_CANCELADA");
+    throw error;
   } finally {
+    signal?.removeEventListener("abort", abort);
     await loadingTask.destroy();
   }
 }

@@ -59,6 +59,7 @@ import {
   unlockPdfDocument,
 } from "./pdf-engine";
 import { getPdfFormRevisionBytes, matchesPdfFormRevision, type PdfFormRevision } from "./pdf-form";
+import { redactBrowserPdf } from "./pdf-redaction-client";
 import { compileScannedPagesToPdf, type ScannedPageItem } from "./scan-to-pdf-engine";
 
 export interface LauncherPage {
@@ -149,6 +150,8 @@ export interface LauncherToolInput {
   readonly protectAllowCopying?: boolean;
   readonly protectAllowAnnotating?: boolean;
   readonly protectAllowFillingForms?: boolean;
+  readonly redactionPreserve?: boolean;
+  readonly redactionSignal?: AbortSignal;
   readonly redactionAreas?: readonly RedactionArea[];
   readonly excelOutputFormat?: "xlsx" | "csv";
   readonly excelSheetMode?: "per-page" | "single-sheet";
@@ -1006,9 +1009,10 @@ async function executeTool(
     case "pdf-redact": {
       if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
       const pdfBytes = new Uint8Array(await first.arrayBuffer());
-      const redactedBytes = await redactPdfDocument(pdfBytes, {
-        redactions: input.redactionAreas ?? [],
-      });
+      const options = { redactions: input.redactionAreas ?? [] };
+      const redactedBytes = input.redactionPreserve
+        ? await redactBrowserPdf(pdfBytes, options, input.redactionSignal)
+        : await redactPdfDocument(pdfBytes, options, input.redactionSignal);
       return {
         blob: pdfBlob(redactedBytes),
         fileName: `${baseName}_tarjado.pdf`,
@@ -1315,6 +1319,13 @@ export async function runLauncherTool(
           SENHA_RC4_NAO_SUPORTADA: "protect.rc4UnsupportedPassword",
           AREA_OCULTACAO_OBRIGATORIA: "redact.areaRequired",
           AREA_OCULTACAO_INVALIDA: "redact.areaInvalid",
+          PDF_OCULTACAO_PERFIL_NAO_SUPORTADO: "redact.unsupportedProfile",
+          PDF_OCULTACAO_ANOTACAO_NA_AREA: "redact.annotationIntersection",
+          PDF_OCULTACAO_PRESERVACAO_LIMITE: "redact.preserveLimit",
+          PDF_OCULTACAO_OPERACAO: "redact.operationError",
+          PDF_OCULTACAO_MEMORIA: "redact.operationError",
+          PDF_OCULTACAO_WORKER: "redact.workerError",
+          PDF_OCULTACAO_ROTULO_NAO_SUPORTADO: "redact.labelUnsupported",
           PDF_OCULTACAO_LIMITE_EXCEDIDO: "redact.limitExceeded",
           PDF_SEM_TABELAS: "excel.noTables",
           PDF_SEM_TEXTO_SELECIONAVEL: "toolQuality.noText",
@@ -1355,7 +1366,11 @@ export async function runLauncherTool(
     toolId,
     input,
     signal:
-      input.imageSignal ?? input.translationSignal ?? input.comparisonSignal ?? input.editorSignal,
+      input.imageSignal ??
+      input.translationSignal ??
+      input.comparisonSignal ??
+      input.editorSignal ??
+      input.redactionSignal,
   });
   const output = result.artifacts[0] as LauncherToolOutput | undefined;
   if (!output?.blob || !output.fileName) throw new Error("EXECUTION_FAILED");

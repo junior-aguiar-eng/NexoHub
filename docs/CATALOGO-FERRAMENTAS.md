@@ -33,7 +33,7 @@ Data da última auditoria canônica: 23/10/2026.
 | `pdf-sign` | Assinar PDF | Segurança | Implementada | Web, Desktop, HTTP | browser | Rubrica visual (desenho/texto/imagem). Não substitui certificado digital ICP-Brasil. |
 | `pdf-protect` | Proteger PDF | Segurança | Implementada | Web, Desktop, HTTP | browser | Criptografia com senha de abertura e permissões granulares. |
 | `pdf-unlock` | Desbloquear PDF | Segurança | Implementada | Web, Desktop, HTTP | browser | Descriptografa RC4/AES conhecendo a senha do proprietário. |
-| `pdf-redact` | Ocultar PDF (Tarja) | Segurança | Implementada | Web, Desktop, HTTP | browser | Aplica tarjas opacas nas coordenadas solicitadas. |
+| `pdf-redact` | Ocultar PDF (Tarja) | Segurança | Implementada | Web, Desktop, HTTP | browser | Modo imagem padrão; preservação opcional para PDFs simples, com remoção nativa, recusas explícitas e revisão do arquivo gerado. |
 | `pdf-compare` | Comparar PDF | Segurança | Implementada | Web, Desktop, HTTP | browser | Análise estrutural/visual entre duas versões com relatório gerado. |
 | `pdf-compress` | Comprimir PDF | Otimizar | Implementada | Web, Desktop, HTTP | native (fallback browser) | Perfis de compressão estrutural e reencodagem de imagens. Rejeita PDFs assinados. |
 | `pdf-ocr` | OCR em PDF | Otimizar / Texto | Implementada | Web, Desktop, HTTP | browser (fallback native) | Reconhecimento óptico local. Gera texto e PDF pesquisável. |

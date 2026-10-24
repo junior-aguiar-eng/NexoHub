@@ -8,6 +8,7 @@ import { HttpDocumentCorePort } from "./http-document-core";
 import * as imageEngine from "./image-engine";
 import * as imageProcessing from "./image-processing";
 import { type LauncherToolInput, runLauncherTool } from "./launcher-tool-runner";
+import * as redactionClient from "./pdf-redaction-client";
 
 async function fixture(): Promise<File> {
   const pdf = await PDFDocument.create();
@@ -748,5 +749,31 @@ it("exporta os bytes da revisão validada e recusa revisão de outro arquivo/val
         formRevision: revision,
       }),
     ).rejects.toThrow(/revisão/i);
+  }
+});
+
+it("preservação é explícita e entrega os bytes nativos sem raster fallback", async () => {
+  const bytes = new Uint8Array([37, 80, 68, 70, 45]),
+    file = await fixture();
+  const spy = vi.spyOn(redactionClient, "redactBrowserPdf").mockResolvedValue(bytes);
+  const signal = new AbortController().signal;
+  try {
+    const result = await runLauncherTool(new BrowserDocumentCorePort(), "pdf-redact", {
+      ...input([file]),
+      redactionPreserve: true,
+      redactionSignal: signal,
+      redactionAreas: [],
+    });
+    expect(new Uint8Array(await result.blob.arrayBuffer())).toEqual(bytes);
+    expect(spy).toHaveBeenCalledWith(expect.any(Uint8Array), { redactions: [] }, signal);
+    spy.mockRejectedValueOnce(new Error("PDF_OCULTACAO_PERFIL_NAO_SUPORTADO"));
+    await expect(
+      runLauncherTool(new BrowserDocumentCorePort(), "pdf-redact", {
+        ...input([file]),
+        redactionPreserve: true,
+      }),
+    ).rejects.toMatchObject({ message: expect.stringContaining("não homologados") });
+  } finally {
+    spy.mockRestore();
   }
 });

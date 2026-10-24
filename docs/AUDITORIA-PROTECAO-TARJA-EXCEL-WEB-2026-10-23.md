@@ -46,3 +46,90 @@ Arquivos de teste sintéticos; nenhum documento do usuário ou upload externo.
 Validação final: 427 testes unitários e 74 E2E aprovados, além de lint, tipagem e build do website.
 
 Nenhuma publicação faz parte desta auditoria. A entrega fica local até solicitação de commit/push/deploy.
+
+
+## Complementação SEC-C1 — 24/10/2026
+
+A auditoria acima permanece como registro do modo imagem. Foi acrescentado um modo **opcional
+para preservar conteúdo em PDFs simples**, sem substituir o padrão e sem fallback automático.
+
+### Motor e decisão de dependências
+
+A inspeção do código publicado de `@embedpdf/plugin-redaction@2.15.1` e
+`@embedpdf/engines@2.15.1` confirmou o uso de `EPDFPage_ApplyRedactions` e geração posterior do
+conteúdo. O projeto usa diretamente essas funções no `@embedpdf/pdfium@2.15.1` já instalado,
+em worker descartável, mantendo a versão e os avisos MIT/BSD existentes. Nenhum pacote novo
+foi instalado; o plugin exigiria outros plugins de interface e a camada engines acrescentaria
+pacotes de fontes desnecessários para o perfil atual.
+
+**PDFium sozinho não basta:** a prova inicial manteve título/assunto confidenciais e uma
+propriedade privada de página. Por isso, a implementação valida o perfil, remove metadados de
+página e recria o grafo de páginas/formulários antes e depois da operação. A gravação nativa é
+completa, sem modo incremental. A cor e o rótulo são desenhados somente depois da remoção dos
+objetos: cobertura visual não é usada como substituta da remoção.
+
+### Perfil de preservação e recusas
+
+- Fontes Type1 padrão de 14 famílias/variantes, com codificação simples. Fontes incorporadas,
+  ToUnicode e codificações personalizadas são recusadas.
+- Imagens opacas DeviceRGB/DeviceGray, 8 bits, cruas ou Flate; máscaras, transparência, JPEG,
+  ICC e preditores não estão homologados neste perfil.
+- Form XObjects simples e reutilizados; links URI sem aparências personalizadas e campos simples fora das tarjas. Interseção
+  com link/widget é recusada explicitamente. Metadados do documento, XMP, miniaturas e
+  marcadores de navegação não são preservados; valores dos campos externos são preservados.
+- Documentos assinados, criptografados, XFA, estruturas marcadas, camadas, scripts, anexos e
+  extensões privadas/desconhecidas do perfil são recusados. A classificação é conservadora;
+  até strings com sintaxe semelhante a comentários ou conteúdo marcado podem causar recusa.
+- Limites: entrada de 20 MiB, 30 páginas e 200 áreas; saída nativa de 80 MiB; imagem de até
+  24 MP, 8192 px por dimensão e 96 MP acumulados; stream de conteúdo de até 2 MiB decodificados.
+  Worker com timeout configurado de 60 s, encerrado ao cancelar ou invalidar a sessão. Limites de aceitação não são
+  uma medição de desempenho em celulares ou documentos próximos desses tetos.
+- Caixas de página devem ser finitas, ordenadas e limitadas a ±14400 pontos; rotações devem
+  ser múltiplas de 90°. Caixas invertidas são recusadas antes de calcular áreas.
+- Rótulos usam a fonte padrão; caracteres não representáveis são recusados, sem saída parcial.
+
+O modo imagem continua disponível mediante escolha explícita e conserva suas perdas já
+registradas. O usuário precisa marcar todas as ocorrências que deseja remover, inclusive
+instâncias repetidas. Conteúdo externo às áreas não é uma busca global de dados confidenciais.
+Este incremento **não homologa preservação universal** para documentos Office, digitalizações
+JPEG, PDFs etiquetados ou fontes arbitrárias.
+
+### Evidências posteriores
+
+Corpus sintético real, processado pelo WASM instalado: texto removido com texto externo
+selecionável; imagem com metade privada eliminada dos dados e pixels públicos idênticos;
+Form XObject reutilizado com duas instâncias removidas e conteúdo externo mantido; CropBox e
+rotações 0/90/180/270; campos preenchidos e links URI externos; streams órfãos e recursos sem
+uso descartados; título/assunto e metadados de página removidos; extensões privadas, máscaras,
+fontes fora do perfil e retângulos inválidos recusados. Os testes inspecionam extração textual,
+streams descomprimidos, valores de campos, links e pixels, além da imutabilidade da entrada.
+
+Na interface, as marcações do original são identificadas como tal. Após aplicar, a revisão é
+renderizada a partir do **mesmo Blob disponibilizado para download**, com navegação e zoom.
+Há recuperação de falha de prévia, retorno às marcações, cancelamento e descarte de resultados
+obsoletos. Proteger/Desbloquear mantêm seus motores e regressões anteriores.
+
+A revisão independente encontrou três falhas no candidato inicial: recursos não utilizados em
+aparências de campos preservadas, dicionários privados de anotações e MediaBox invertido. Foram
+acrescentadas regressões e correções: poda de XObjects sem operador `Do` efetivo em cada grafo
+preservado (página/Form/aparência), sem confundir strings/hex/arrays com operadores; clonagem
+por proprietário para não apagar recursos compartilhados usados em outra página; whitelist
+por tipo de anotação, validação de aparências e dicionários auxiliares/campos; e recusa de caixas
+invertidas, não finitas ou fora dos limites e rotações não suportadas. A validação também
+confere os tipos de posições como Border, ProcSet e FirstChar e as referências Parent/P,
+recusando grafos privados nesses locais. Instruções de aparência padrão dos formulários têm
+sintaxe restrita a fontes/cor/estado de texto, até 4096 caracteres; literais e operadores
+ignorados não são aceitos como depósitos de dados.
+
+Validação posterior às correções: 659 testes unitários (596 client, 44 domain, 16 SDK e
+3 registry), 32 E2E focados na raiz e 107 E2E em `/hub/`, todos aprovados. Antes da revisão,
+a suíte ampla da raiz registrou 228 aprovados e cinco skips existentes. Lint, tipagem de todo
+o workspace, build do website na raiz e em `/hub/` e `git diff --check` aprovados. Capturas em
+390, 768, 1024 e 1440 px conferidas; ações sem rolagem horizontal e controles separados da mesa.
+A revisão independente teve três achados Important corrigidos, sem pendências Critical/Important
+ou Minor. Não houve homologação em outros navegadores/dispositivos nem medição perto dos tetos.
+
+Sem novas dependências. O build em `/hub/` tem entrada de 1067,60 kB (293,80 kB gzip), worker
+adicional carregado sob demanda de 598,06 kB e o mesmo WASM PDFium de 4646,93 kB já existente.
+O alerta de chunk principal acima de 1000 kB permanece; não é uma medição de latência.
+Sem commit, push ou deploy nesta complementação.

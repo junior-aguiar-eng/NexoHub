@@ -418,10 +418,14 @@ export function DedicatedToolView({
   }, [hasPendingSession, status, tool.id, tool.manifest.category]);
   const isImageTool = tool.id === "images-to-pdf" || tool.manifest.category === "image";
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const previewQueue = useRef<Promise<void>>(Promise.resolve());
   const previewFiles = useRef(new WeakMap<File, Map<number, Promise<string>>>());
-  const activePreviewFile = useRef(files[0]);
+  const activePreviewFile = useRef<File | undefined>(files[0]);
   useEffect(() => {
     activePreviewFile.current = files[0];
+    return () => {
+      activePreviewFile.current = undefined;
+    };
   }, [files]);
   const handlePreviewPageChange = useCallback(
     (pageNumber: number) => {
@@ -434,14 +438,28 @@ export function DedicatedToolView({
       }
       let pending = cache.get(pageNumber);
       if (!pending) {
-        pending = file
-          .arrayBuffer()
-          .then((bytes) => renderPdfPageToDataUrl(new Uint8Array(bytes), pageNumber, 1.8));
+        const scale = ["pdf-organize", "pdf-remove-pages", "pdf-extract-pages"].includes(tool.id)
+          ? 0.6
+          : 1.8;
+        pending = previewQueue.current.then(async () => {
+          if (activePreviewFile.current !== file) return "";
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          if (activePreviewFile.current !== file) return "";
+          return renderPdfPageToDataUrl(bytes, pageNumber, scale);
+        });
+        previewQueue.current = pending.then(
+          () => {},
+          () => {},
+        );
         cache.set(pageNumber, pending);
       }
       void pending
         .then((thumbnail) => {
           if (activePreviewFile.current !== file) return;
+          if (!thumbnail) {
+            cache?.delete(pageNumber);
+            return;
+          }
           setAllPageThumbnails((previous) => {
             if (previous[pageNumber - 1] === thumbnail) return previous;
             const next = [...previous];
@@ -453,7 +471,7 @@ export function DedicatedToolView({
           cache?.delete(pageNumber);
         });
     },
-    [files],
+    [files, tool.id],
   );
   const fileInput = (
     <input
@@ -514,6 +532,7 @@ export function DedicatedToolView({
           if (isCancelled) return;
 
           setPdfPageCount(count);
+          setPageNumbersStartPage((page) => Math.min(page, count));
           setSplitIntervals([{ id: "interval-1", start: 1, end: count }]);
           setSplitSelectedPages([1]);
 
@@ -530,11 +549,23 @@ export function DedicatedToolView({
               ? [1, count]
               : [1];
 
-          const renderedThumbs = await renderPdfPagesThumbnails(
+          const batch = renderPdfPagesThumbnails(
             buffer,
             pageNumbersToRender,
             isGridTool ? 0.6 : 1.8,
           );
+          let cache = previewFiles.current.get(files[0]);
+          if (!cache) {
+            cache = new Map();
+            previewFiles.current.set(files[0], cache);
+          }
+          pageNumbersToRender.forEach((page, index) => {
+            cache?.set(
+              page,
+              batch.then((images) => images[index] ?? ""),
+            );
+          });
+          const renderedThumbs = await batch;
           if (isCancelled) return;
 
           const thumb1 = renderedThumbs[0] || "";
@@ -558,7 +589,13 @@ export function DedicatedToolView({
           setFileThumbnails((prev) => new Map(prev).set(files[0], thumb1));
 
           if (isGridTool) {
-            setAllPageThumbnails(renderedThumbs);
+            setAllPageThumbnails((previous) => {
+              const next = [...previous];
+              pageNumbersToRender.forEach((page, index) => {
+                next[page - 1] = renderedThumbs[index] ?? "";
+              });
+              return next;
+            });
           }
 
           if (tool.id === "pdf-merge") {
@@ -614,17 +651,18 @@ export function DedicatedToolView({
   }, [files, tool.id]);
 
   // Inspeciona dimensões e miniatura de imagem no Modo Imagem
+  const primaryImageFile = files[0];
   useEffect(() => {
     let isCancelled = false;
     let objectUrl: string | null = null;
 
     async function inspectImage() {
-      if (files.length === 0) {
+      if (!primaryImageFile) {
         setImageOriginalDimensions(null);
         setImagePreviewUrl(null);
         return;
       }
-      const file = files[0];
+      const file = primaryImageFile;
       const isImg = file.type.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name);
       if (!isImg) return;
 
@@ -641,8 +679,11 @@ export function DedicatedToolView({
         setImageOriginalDimensions({ width: meta.width, height: meta.height });
         setImageResizeWidth(meta.width);
         setImageResizeHeight(meta.height);
-        setImageCropWidth(Math.min(meta.width, 800));
-        setImageCropHeight(Math.min(meta.height, 600));
+        setImageCropX(0);
+        setImageCropY(0);
+        setImageCropPreset("free");
+        setImageCropWidth(meta.width);
+        setImageCropHeight(meta.height);
       } catch (err) {
         console.warn("Could not inspect image metadata", err);
       }
@@ -654,7 +695,7 @@ export function DedicatedToolView({
       isCancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [files]);
+  }, [primaryImageFile]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: troca de arquivo/ferramenta invalida os resultados associados.
   useEffect(() => {
@@ -1366,6 +1407,7 @@ export function DedicatedToolView({
           pages={pageItems}
           selectedIndices={selectedPageIndices}
           realThumbnails={allPageThumbnails}
+          onPreviewPageChange={handlePreviewPageChange}
           onPagesChange={setPageItems}
           onRotateAll={handleRotateAll}
           allowRotation={true}
@@ -1653,6 +1695,7 @@ export function DedicatedToolView({
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
           pageThumbnails={allPageThumbnails}
+          onPreviewPageChange={handlePreviewPageChange}
           pagesToRemove={removePagesSelection}
           onPagesToRemoveChange={setRemovePagesSelection}
         />
@@ -1669,6 +1712,7 @@ export function DedicatedToolView({
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
           pageThumbnails={allPageThumbnails}
+          onPreviewPageChange={handlePreviewPageChange}
           selectedPages={extractPagesSelection}
           onSelectedPagesChange={setExtractPagesSelection}
           mode={extractPagesMode}
@@ -1739,6 +1783,8 @@ export function DedicatedToolView({
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
           thumbnailUrl={firstPageThumb}
+          pageThumbnails={allPageThumbnails}
+          onPreviewPageChange={handlePreviewPageChange}
           position={pageNumbersPosition}
           format={pageNumbersFormat}
           startPage={pageNumbersStartPage}
@@ -1942,6 +1988,7 @@ export function DedicatedToolView({
     if (tool.id === "image-watermark") {
       return (
         <ImageWatermarkPanel
+          isProcessing={status === "running"}
           fileName={files[0]?.name || "imagem.jpg"}
           fileSizeBytes={files[0]?.size || 0}
           thumbnailUrl={imagePreviewUrl ?? undefined}
@@ -2252,6 +2299,10 @@ export function DedicatedToolView({
             disabled={
               status === "running" ||
               !pageRangeValid ||
+              (tool.id === "image-crop" && !imageOriginalDimensions) ||
+              (tool.id === "image-watermark" &&
+                imageWatermarkType === "image" &&
+                !imageWatermarkFile) ||
               (!hasFilesOrText && tool.id !== "text-compare") ||
               (tool.id === "pdf-protect" && protectionStatus.isProtected) ||
               (tool.id === "pdf-redact" && redactionAreas.length === 0) ||

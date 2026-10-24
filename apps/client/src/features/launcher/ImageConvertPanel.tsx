@@ -56,7 +56,7 @@ export function ImageConvertPanel({
   return (
     <div className="image-tool-panel">
       {/* Pré-visualização da Imagem */}
-      <div className="bg-surface rounded-2xl border border-border p-5 flex flex-col sm:flex-row items-center gap-5 shadow-xs">
+      <div className="bg-surface-raised rounded-2xl border border-border p-5 flex flex-col sm:flex-row items-center gap-5 shadow-xs">
         {thumbnailUrl ? (
           <div className="image-tool-preview rounded-xl overflow-hidden bg-surface-muted border border-border shrink-0 flex items-center justify-center">
             <img src={thumbnailUrl} alt={fileName} className="w-full h-full object-contain" />
@@ -91,7 +91,7 @@ export function ImageConvertPanel({
         <span className="text-xs font-bold text-text-secondary">
           {translate("imageConvert.format")}
         </span>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="image-format-options">
           {formats.map((fmt) => {
             const isSelected = targetFormat === fmt.id;
             return (
@@ -99,10 +99,11 @@ export function ImageConvertPanel({
                 key={fmt.id}
                 type="button"
                 onClick={() => onTargetFormatChange(fmt.id)}
+                aria-pressed={isSelected}
                 className={`flex flex-col p-4 rounded-xl border text-left transition-all cursor-pointer ${
                   isSelected
                     ? "bg-blue-600/10 border-blue-600 ring-2 ring-blue-600/30 text-text-primary"
-                    : "bg-surface border-border hover:border-blue-500/40 text-text-secondary"
+                    : "bg-surface-raised border-border hover:border-blue-500/40 text-text-secondary"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -120,7 +121,7 @@ export function ImageConvertPanel({
 
       {/* Controle de Qualidade para JPEG e WebP */}
       {targetFormat !== "png" && (
-        <div className="bg-surface p-5 rounded-2xl border border-border flex flex-col gap-3">
+        <div className="bg-surface-raised p-5 rounded-2xl border border-border flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <label htmlFor="convert-quality" className="text-xs font-bold text-text-primary">
               {translate("imageConvert.quality")}

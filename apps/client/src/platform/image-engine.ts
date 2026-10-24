@@ -525,11 +525,12 @@ export async function cropImage(
   try {
     validateNumbers(options.x, options.y, options.width, options.height, options.quality);
     if (!options.width || !options.height) throw new Error("OPCOES_IMAGEM_INVALIDAS");
-    // Sanitização e limitação das coordenadas aos limites da imagem
-    const sx = Math.max(0, Math.min(loaded.width - 1, Math.round(options.x)));
-    const sy = Math.max(0, Math.min(loaded.height - 1, Math.round(options.y)));
-    const sw = Math.max(1, Math.min(loaded.width - sx, Math.round(options.width)));
-    const sh = Math.max(1, Math.min(loaded.height - sy, Math.round(options.height)));
+    const sx = Math.round(options.x);
+    const sy = Math.round(options.y);
+    const sw = Math.round(options.width);
+    const sh = Math.round(options.height);
+    if (sw < 1 || sh < 1 || sx + sw > loaded.width || sy + sh > loaded.height)
+      throw new Error("RECORTE_IMAGEM_FORA_DOS_LIMITES");
 
     canvas = createCanvas(sw, sh);
     const ctx = context2d(canvas);

@@ -105,6 +105,12 @@ describe("image-engine", () => {
     expect(cropped).toBeInstanceOf(Blob);
   });
 
+  it("recusa recorte fora dos limites em vez de exportar dimensões diferentes", async () => {
+    await expect(
+      cropImage(testPngBytes, { x: 500, y: 0, width: 400, height: 200 }),
+    ).rejects.toThrow("RECORTE_IMAGEM_FORA_DOS_LIMITES");
+  });
+
   it("converte imagem para formatos JPEG, PNG e WebP", async () => {
     const jpeg = await convertImage(testPngBytes, { targetFormat: "jpeg" });
     expect(jpeg.type).toBe("image/jpeg");

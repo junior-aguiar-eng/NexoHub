@@ -86,7 +86,7 @@ export function TranslateDocumentPanel({
           border: "1px solid rgba(6, 182, 212, 0.15)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <div className="translate-language-controls">
           {/* Seletor Origem */}
           <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
             <label
@@ -268,6 +268,7 @@ export function TranslateDocumentPanel({
         }}
       >
         <div
+          className="translate-result-header"
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -283,7 +284,7 @@ export function TranslateDocumentPanel({
             </h4>
           </div>
 
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div className="translate-result-actions">
             <Button
               variant="ghost"
               size="compact"

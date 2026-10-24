@@ -45,17 +45,25 @@ export function ImageRotatePanel({
   return (
     <div className="image-tool-panel">
       {/* Pré-visualização com Transformação em Tempo Real */}
-      <div className="bg-surface rounded-2xl border border-border p-6 flex flex-col items-center justify-center gap-4 shadow-xs">
-        <div className="w-56 h-56 rounded-xl bg-surface-muted border border-border overflow-hidden flex items-center justify-center relative">
+      <div className="bg-surface-raised rounded-2xl border border-border p-6 flex flex-col items-center justify-center gap-4 shadow-xs">
+        <div
+          className="image-rotation-stage rounded-xl bg-surface-muted border border-border"
+          style={{
+            aspectRatio: `${resultW} / ${resultH}`,
+            maxWidth: `${(resultW / resultH) * 680}px`,
+          }}
+        >
           {thumbnailUrl ? (
             <img
               src={thumbnailUrl}
               alt={fileName}
               style={{
-                transform: `rotate(${angle}deg) scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`,
+                width: `${(100 * origW) / resultW}%`,
+                height: `${(100 * origH) / resultH}%`,
+                transform: `translate(-50%, -50%) rotate(${angle}deg) scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`,
                 transition: "transform 0.3s ease",
               }}
-              className="max-w-full max-h-full object-contain"
+              className="image-rotation-image"
             />
           ) : (
             <RotateCw className="w-12 h-12 text-blue-600" />
@@ -82,7 +90,7 @@ export function ImageRotatePanel({
           <button
             type="button"
             onClick={handleRotateCw}
-            className="flex items-center justify-center gap-2 p-3.5 rounded-xl border border-border bg-surface hover:bg-surface-muted hover:border-blue-500/50 text-text-primary font-bold text-xs transition-all cursor-pointer shadow-2xs"
+            className="flex items-center justify-center gap-2 p-3.5 rounded-xl border border-border bg-surface-raised hover:bg-surface-muted hover:border-blue-500/50 text-text-primary font-bold text-xs transition-all cursor-pointer shadow-2xs"
           >
             <RotateCw className="w-4 h-4 text-blue-600" />
             <span>{translate("imageRotate.rotateRight")}</span>
@@ -91,7 +99,7 @@ export function ImageRotatePanel({
           <button
             type="button"
             onClick={handleRotateCcw}
-            className="flex items-center justify-center gap-2 p-3.5 rounded-xl border border-border bg-surface hover:bg-surface-muted hover:border-blue-500/50 text-text-primary font-bold text-xs transition-all cursor-pointer shadow-2xs"
+            className="flex items-center justify-center gap-2 p-3.5 rounded-xl border border-border bg-surface-raised hover:bg-surface-muted hover:border-blue-500/50 text-text-primary font-bold text-xs transition-all cursor-pointer shadow-2xs"
           >
             <RotateCcw className="w-4 h-4 text-blue-600" />
             <span>{translate("imageRotate.rotateLeft")}</span>
@@ -103,7 +111,7 @@ export function ImageRotatePanel({
             className={`flex items-center justify-center gap-2 p-3.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
               angle === 180
                 ? "bg-blue-600/10 border-blue-600 text-blue-600 ring-2 ring-blue-600/20"
-                : "bg-surface border-border hover:border-blue-500/50 text-text-primary"
+                : "bg-surface-raised border-border hover:border-blue-500/50 text-text-primary"
             }`}
           >
             <RotateCw className="w-4 h-4" />
@@ -113,7 +121,7 @@ export function ImageRotatePanel({
       </div>
 
       {/* Espelhamento / Inversão */}
-      <div className="bg-surface p-5 rounded-2xl border border-border flex flex-col sm:flex-row items-center justify-around gap-4">
+      <div className="bg-surface-raised p-5 rounded-2xl border border-border flex flex-col sm:flex-row items-center justify-around gap-4">
         <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-text-primary">
           <input
             type="checkbox"

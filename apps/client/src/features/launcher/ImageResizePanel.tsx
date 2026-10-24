@@ -62,7 +62,7 @@ export function ImageResizePanel({
   return (
     <div className="image-tool-panel">
       {/* Pré-visualização e Dimensões Calculadas */}
-      <div className="bg-surface rounded-2xl border border-border p-5 flex flex-col sm:flex-row items-center gap-5 shadow-xs">
+      <div className="bg-surface-raised rounded-2xl border border-border p-5 flex flex-col sm:flex-row items-center gap-5 shadow-xs">
         {thumbnailUrl ? (
           <div className="image-tool-preview rounded-xl overflow-hidden bg-surface-muted border border-border shrink-0 flex items-center justify-center">
             <img src={thumbnailUrl} alt={fileName} className="w-full h-full object-contain" />
@@ -95,7 +95,7 @@ export function ImageResizePanel({
           onClick={() => onModeChange("pixels")}
           className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             mode === "pixels"
-              ? "bg-surface text-text-primary shadow-xs border border-border/80"
+              ? "bg-surface-raised text-text-primary shadow-xs border border-border/80"
               : "text-text-secondary hover:text-text-primary"
           }`}
         >
@@ -107,7 +107,7 @@ export function ImageResizePanel({
           onClick={() => onModeChange("percentage")}
           className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             mode === "percentage"
-              ? "bg-surface text-text-primary shadow-xs border border-border/80"
+              ? "bg-surface-raised text-text-primary shadow-xs border border-border/80"
               : "text-text-secondary hover:text-text-primary"
           }`}
         >
@@ -118,7 +118,7 @@ export function ImageResizePanel({
 
       {/* Conteúdo do Modo Pixels */}
       {mode === "pixels" ? (
-        <div className="flex flex-col gap-4 bg-surface p-5 rounded-2xl border border-border">
+        <div className="flex flex-col gap-4 bg-surface-raised p-5 rounded-2xl border border-border">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="resize-width" className="text-xs font-bold text-text-secondary">
@@ -175,7 +175,7 @@ export function ImageResizePanel({
         </div>
       ) : (
         /* Conteúdo do Modo Porcentagem */
-        <div className="flex flex-col gap-4 bg-surface p-5 rounded-2xl border border-border">
+        <div className="flex flex-col gap-4 bg-surface-raised p-5 rounded-2xl border border-border">
           <span className="text-xs font-bold text-text-secondary">
             Reduzir imagem por porcentagem
           </span>

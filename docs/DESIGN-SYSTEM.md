@@ -67,3 +67,17 @@ em uma coluna flexível e controles de 360px a partir de 981px; abaixo disso fic
 Prévia com `object-fit: contain`, sem recortar a imagem para caber na miniatura. Labels e inputs
 de 14px, alvos mínimos de 44px, foco visível. Ações usam tokens do modo, não azul/coral fixos.
 Limites, formatos e testes do motor: [IMAGE-WEB-QUALITY.md](IMAGE-WEB-QUALITY.md).
+
+- Superfícies e bordas semânticas são registradas no `@theme` do Tailwind; aliases de texto
+  acompanham os tokens de tinta. Resets de fonte e cor pertencem à camada `base`, para não
+  sobrepor tamanho de texto ou contraste de estados ativos dos componentes.
+- Grades de opções respondem à largura do painel, não à largura da janela: formatos com
+  colunas mínimas de 180px, proporções com 130px e coordenadas em duas colunas flexíveis.
+  A paleta quebra linhas e preserva botões de 44×44px, sem disputar espaço com os ranges.
+- Prévias de rotação e marca d'água preservam a proporção e podem ocupar até 680px de altura.
+  A marca d'água usa o mesmo motor da exportação, com atualização após 200ms e cancelamento
+  de resultados obsoletos; os estados de atualização e erro são explícitos.
+- A seleção de recorte é visível, movível por ponteiro ou setas (Shift: 10px) e limitada à
+  imagem original. Medidas informadas e arquivo exportado devem coincidir.
+- Grades PDF carregam miniaturas reais adicionais quando entram na área visível. Numeração
+  mostra a página efetivamente escolhida, incluindo a opção de pular a capa.

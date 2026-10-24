@@ -1,4 +1,5 @@
 import { Crop } from "lucide-react";
+import { type PointerEvent, useRef } from "react";
 import { translate } from "@/i18n";
 
 export type CropRatioPreset = "free" | "1:1" | "4:3" | "16:9" | "3:2";
@@ -37,6 +38,44 @@ export function ImageCropPanel({
 }: ImageCropPanelProps) {
   const origW = originalDimensions?.width || 800;
   const origH = originalDimensions?.height || 600;
+
+  const drag = useRef<{ x: number; y: number; cropX: number; cropY: number } | null>(null);
+  const clamp = (value: number, max: number, min = 0) =>
+    Math.max(min, Math.min(max, Math.round(value)));
+  function moveX(value: number) {
+    onCropXChange(clamp(value, origW - cropWidth));
+  }
+  function moveY(value: number) {
+    onCropYChange(clamp(value, origH - cropHeight));
+  }
+  function resize(value: number, axis: "width" | "height") {
+    const [a, b] = ratio === "free" ? [0, 0] : ratio.split(":").map(Number);
+    const proportion = a / b;
+    if (axis === "width") {
+      const max =
+        ratio === "free"
+          ? origW - cropX
+          : Math.min(origW - cropX, Math.floor((origH - cropY) * proportion));
+      const width = clamp(value, max, 1);
+      onCropWidthChange(width);
+      if (ratio !== "free") onCropHeightChange(Math.max(1, Math.round(width / proportion)));
+    } else {
+      const max =
+        ratio === "free"
+          ? origH - cropY
+          : Math.min(origH - cropY, Math.floor((origW - cropX) / proportion));
+      const height = clamp(value, max, 1);
+      onCropHeightChange(height);
+      if (ratio !== "free") onCropWidthChange(Math.max(1, Math.round(height * proportion)));
+    }
+  }
+  function moveRegion(event: PointerEvent<HTMLButtonElement>) {
+    if (!drag.current) return;
+    const frame = event.currentTarget.parentElement?.getBoundingClientRect();
+    if (!frame?.width || !frame.height) return;
+    moveX(drag.current.cropX + ((event.clientX - drag.current.x) / frame.width) * origW);
+    moveY(drag.current.cropY + ((event.clientY - drag.current.y) / frame.height) * origH);
+  }
 
   const presets: Array<{
     id: CropRatioPreset;
@@ -89,10 +128,46 @@ export function ImageCropPanel({
   return (
     <div className="image-tool-panel">
       {/* Pré-visualização da Imagem */}
-      <div className="bg-surface rounded-2xl border border-border p-5 flex flex-col sm:flex-row items-center gap-5 shadow-xs">
+      <div className="bg-surface-raised rounded-2xl border border-border p-5 flex flex-col sm:flex-row items-center gap-5 shadow-xs">
         {thumbnailUrl ? (
-          <div className="image-tool-preview rounded-xl overflow-hidden bg-surface-muted border border-border shrink-0 flex items-center justify-center">
-            <img src={thumbnailUrl} alt={fileName} className="w-full h-full object-contain" />
+          <div className="image-tool-preview rounded-xl overflow-hidden bg-surface-muted border border-border">
+            <div className="image-crop-stage" style={{ aspectRatio: `${origW} / ${origH}` }}>
+              <img src={thumbnailUrl} alt={fileName} draggable={false} />
+              <button
+                type="button"
+                className="image-crop-region"
+                aria-label={translate("imageCrop.moveRegion")}
+                style={{
+                  left: `${(cropX / origW) * 100}%`,
+                  top: `${(cropY / origH) * 100}%`,
+                  width: `${(cropWidth / origW) * 100}%`,
+                  height: `${(cropHeight / origH) * 100}%`,
+                  minWidth: 0,
+                  minHeight: 0,
+                }}
+                onPointerDown={(event) => {
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  drag.current = { x: event.clientX, y: event.clientY, cropX, cropY };
+                }}
+                onPointerMove={moveRegion}
+                onPointerUp={() => {
+                  drag.current = null;
+                }}
+                onPointerCancel={() => {
+                  drag.current = null;
+                }}
+                onKeyDown={(event) => {
+                  const step = event.shiftKey ? 10 : 1;
+                  if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key))
+                    return;
+                  event.preventDefault();
+                  if (event.key === "ArrowLeft") moveX(cropX - step);
+                  if (event.key === "ArrowRight") moveX(cropX + step);
+                  if (event.key === "ArrowUp") moveY(cropY - step);
+                  if (event.key === "ArrowDown") moveY(cropY + step);
+                }}
+              />
+            </div>
           </div>
         ) : (
           <div className="image-tool-preview rounded-xl bg-blue-500/10 border border-blue-500/20 shrink-0 flex items-center justify-center text-blue-600">
@@ -106,10 +181,11 @@ export function ImageCropPanel({
           </span>
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs text-text-secondary mt-1">
             <span className="px-2 py-0.5 rounded-md bg-surface-muted border border-border font-medium">
-              Imagem: {origW} × {origH} px
+              {translate("imageCrop.originalSize")}: {origW} × {origH} px
             </span>
             <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 border border-blue-500/20 font-bold">
-              Recorte: {cropWidth || origW} × {cropHeight || origH} px
+              {translate("imageCrop.selectionSize")}: {cropWidth || origW} × {cropHeight || origH}{" "}
+              px
             </span>
           </div>
         </div>
@@ -117,8 +193,10 @@ export function ImageCropPanel({
 
       {/* Proporções Pré-definidas */}
       <div className="flex flex-col gap-2.5">
-        <span className="text-xs font-bold text-text-secondary">Proporção do Recorte</span>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <span className="text-xs font-bold text-text-secondary">
+          {translate("imageCrop.ratioLabel")}
+        </span>
+        <div className="image-ratio-options">
           {presets.map((p) => {
             const isSelected = ratio === p.id;
             return (
@@ -126,10 +204,11 @@ export function ImageCropPanel({
                 key={p.id}
                 type="button"
                 onClick={() => handleRatioSelect(p.id)}
+                aria-pressed={isSelected}
                 className={`py-2.5 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                   isSelected
                     ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                    : "bg-surface border-border text-text-secondary hover:border-blue-500/40 hover:text-text-primary"
+                    : "bg-surface-raised border-border text-text-secondary hover:border-blue-500/40 hover:text-text-primary"
                 }`}
               >
                 {translate(p.labelKey)}
@@ -140,65 +219,67 @@ export function ImageCropPanel({
       </div>
 
       {/* Dimensões e Coordenadas Numéricas */}
-      <div className="bg-surface p-5 rounded-2xl border border-border flex flex-col gap-4">
-        <span className="text-xs font-bold text-text-primary">Área de Recorte (Pixels)</span>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="bg-surface-raised p-5 rounded-2xl border border-border flex flex-col gap-4">
+        <span className="text-xs font-bold text-text-primary">
+          {translate("imageCrop.areaLabel")}
+        </span>
+        <div className="image-crop-fields">
           <div className="flex flex-col gap-1">
             <label htmlFor="crop-w" className="text-[11px] font-bold text-text-secondary">
-              Largura
+              {translate("imageCrop.width")}
             </label>
             <input
               id="crop-w"
               type="number"
               min={1}
-              max={origW}
+              max={origW - cropX}
               value={cropWidth || origW}
-              onChange={(e) => onCropWidthChange(Number(e.target.value))}
+              onChange={(e) => resize(Number(e.target.value), "width")}
               className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="crop-h" className="text-[11px] font-bold text-text-secondary">
-              Altura
+              {translate("imageCrop.height")}
             </label>
             <input
               id="crop-h"
               type="number"
               min={1}
-              max={origH}
+              max={origH - cropY}
               value={cropHeight || origH}
-              onChange={(e) => onCropHeightChange(Number(e.target.value))}
+              onChange={(e) => resize(Number(e.target.value), "height")}
               className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="crop-x" className="text-[11px] font-bold text-text-secondary">
-              Posição X
+              {translate("imageCrop.positionX")}
             </label>
             <input
               id="crop-x"
               type="number"
               min={0}
-              max={origW}
+              max={Math.max(0, origW - cropWidth)}
               value={cropX}
-              onChange={(e) => onCropXChange(Number(e.target.value))}
+              onChange={(e) => moveX(Number(e.target.value))}
               className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="crop-y" className="text-[11px] font-bold text-text-secondary">
-              Posição Y
+              {translate("imageCrop.positionY")}
             </label>
             <input
               id="crop-y"
               type="number"
               min={0}
-              max={origH}
+              max={Math.max(0, origH - cropHeight)}
               value={cropY}
-              onChange={(e) => onCropYChange(Number(e.target.value))}
+              onChange={(e) => moveY(Number(e.target.value))}
               className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
             />
           </div>

@@ -60,7 +60,7 @@ export function ImageCompressPanel({
   return (
     <div className="image-tool-panel">
       {/* Pré-visualização da Imagem */}
-      <div className="bg-surface rounded-2xl border border-border p-5 flex flex-col sm:flex-row items-center gap-5 shadow-xs">
+      <div className="bg-surface-raised rounded-2xl border border-border p-5 flex flex-col sm:flex-row items-center gap-5 shadow-xs">
         {thumbnailUrl ? (
           <div className="image-tool-preview rounded-xl overflow-hidden bg-surface-muted border border-border shrink-0 flex items-center justify-center">
             <img src={thumbnailUrl} alt={fileName} className="w-full h-full object-contain" />
@@ -91,7 +91,7 @@ export function ImageCompressPanel({
       {/* Seleção do Nível de Compressão */}
       <div className="flex flex-col gap-3">
         <span className="text-sm font-bold text-text-primary">Nível de Compressão</span>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="image-format-options">
           {options.map((opt) => {
             const isSelected = level === opt.id;
             const Icon = opt.icon;
@@ -100,10 +100,11 @@ export function ImageCompressPanel({
                 key={opt.id}
                 type="button"
                 onClick={() => onLevelChange(opt.id)}
+                aria-pressed={isSelected}
                 className={`flex flex-col p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
                   isSelected
                     ? "bg-blue-600/10 border-blue-600 ring-2 ring-blue-600/30 text-text-primary"
-                    : "bg-surface border-border hover:border-blue-500/50 hover:bg-surface-muted/60 text-text-secondary"
+                    : "bg-surface-raised border-border hover:border-blue-500/50 hover:bg-surface-muted/60 text-text-secondary"
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">

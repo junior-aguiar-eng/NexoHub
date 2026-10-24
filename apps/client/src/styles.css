@@ -1,6 +1,19 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
 
+@theme {
+  --color-surface: #f7f7fc;
+  --color-surface-raised: #ffffff;
+  --color-surface-muted: #f0f1f8;
+  --color-border: #e1e4ef;
+}
+
+@theme inline {
+  --color-text-primary: var(--color-ink);
+  --color-text-secondary: var(--color-ink-muted);
+  --color-text-muted: var(--color-ink-muted);
+}
+
 :root {
   color-scheme: light;
   --color-ink: #0f172a;
@@ -10,10 +23,6 @@
   --color-brand-soft: #fff1f4;
   --color-brand-contrast: #9f1239;
   --color-accent: #f43f5e;
-  --color-surface: #f7f7fc;
-  --color-surface-raised: #ffffff;
-  --color-surface-muted: #f0f1f8;
-  --color-border: #e1e4ef;
   --color-focus: #be123c;
   --glass-background: rgba(255, 255, 255, 0.85);
   --glass-border: rgba(255, 255, 255, 0.9);
@@ -261,12 +270,14 @@ body {
   min-height: 100vh;
   background: var(--color-surface);
 }
-button,
-input {
-  font: inherit;
-}
-button {
-  color: inherit;
+@layer base {
+  button,
+  input {
+    font: inherit;
+  }
+  button {
+    color: inherit;
+  }
 }
 :focus-visible {
   outline: 3px solid var(--color-focus);
@@ -10030,4 +10041,155 @@ body,
 }
 .image-tool-panel input:not([type="range"]) {
   font-size: 14px;
+}
+
+.image-crop-stage {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+.image-crop-stage img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+.image-crop-region {
+  position: absolute;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: 0 0 0 10000px rgb(15 23 42 / 45%);
+  cursor: move;
+  touch-action: none;
+}
+
+.image-watermark-style-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 16px;
+  min-width: 0;
+}
+.image-color-palette {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.image-color-palette button {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+}
+.image-watermark-style-grid input[type="range"] {
+  width: 100%;
+  min-width: 0;
+}
+
+.image-ratio-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
+  gap: 8px;
+}
+.image-format-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 12px;
+}
+.image-crop-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.image-ratio-options button,
+.image-format-options button {
+  min-width: 44px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.image-format-options button > div {
+  flex-wrap: wrap;
+}
+.image-format-options button :is(span, p) {
+  min-width: 0;
+  max-width: 100%;
+}
+.image-crop-fields input {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Os grupos adaptam-se ao espaço real, sem ocultar controles fora da tela. */
+.translate-language-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 390px;
+  min-width: 0;
+  max-width: 100%;
+}
+.translate-language-controls > div,
+.translate-language-controls select {
+  min-width: 0;
+  width: 100%;
+}
+.translate-result-header,
+.translate-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.doc-compare-stats-bar {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.doc-compare-column,
+.doc-compare-stats-bar > * {
+  min-width: 0;
+}
+@media (max-width: 520px) {
+  .translate-language-controls {
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
+  .translate-language-controls > div:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.image-rotation-stage,
+.image-watermark-preview {
+  position: relative;
+  width: 100%;
+  margin-inline: auto;
+  overflow: hidden;
+}
+.image-rotation-stage .image-rotation-image {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+}
+.image-watermark-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.page-thumbnail-loading {
+  position: absolute;
+  inset: auto 4px 4px;
+  padding: 4px;
+  border-radius: 6px;
+  background: var(--color-surface-raised);
+  color: var(--color-ink-muted);
+  text-align: center;
+  font-size: 11px;
+  pointer-events: none;
 }

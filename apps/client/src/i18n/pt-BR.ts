@@ -1154,6 +1154,8 @@ export const ptBR = {
   "workspace.watermark.colorRed": "Vermelho",
   "workspace.watermark.colorBlue": "Azul",
   "workspace.watermark.colorBlack": "Preto",
+  "workspace.pageGrid.loadingPreview": "Carregando prévia…",
+  "workspace.pageNumbers.previewPage": "Prévia da página",
   "workspace.pageNumbers.title": "Inserir Números de Página",
   "workspace.pageNumbers.desc":
     "Adicione numeração de página formatada e alinhada automaticamente.",
@@ -1381,6 +1383,18 @@ export const ptBR = {
   "imageResize.actionRunning": "Redimensionando...",
 
   // OPÇÕES - RECORTAR IMAGEM
+  "imageCrop.moveRegion":
+    "Mover área de recorte. Use as setas para ajustar a posição; Shift move dez pixels.",
+  "imageCrop.originalSize": "Imagem",
+  "imageCrop.selectionSize": "Recorte",
+  "imageCrop.ratioLabel": "Proporção do recorte",
+  "imageCrop.areaLabel": "Área de recorte (pixels)",
+  "imageCrop.width": "Largura",
+  "imageCrop.height": "Altura",
+  "imageCrop.positionX": "Posição X",
+  "imageCrop.positionY": "Posição Y",
+  "imageCrop.errorBounds":
+    "A área de recorte não cabe em uma das imagens. Ajuste a posição e as dimensões antes de continuar.",
   "imageCrop.ratioFree": "Livre",
   "imageCrop.ratioSquare": "1:1 (Quadrado)",
   "imageCrop.ratio4_3": "4:3 (Padrão)",
@@ -1418,6 +1432,9 @@ export const ptBR = {
   "imageWatermark.posBottomLeft": "Inferior esquerdo",
   "imageWatermark.posBottomRight": "Inferior direito",
   "imageWatermark.posRepeat": "Mosaico repetido",
+  "imageWatermark.previewPending": "Atualizando prévia…",
+  "imageWatermark.previewError":
+    "Não foi possível atualizar a prévia. A imagem original está sendo exibida.",
   "imageWatermark.action": "Aplicar Marca d'Água",
   "imageWatermark.actionRunning": "Aplicando...",
 } as const;

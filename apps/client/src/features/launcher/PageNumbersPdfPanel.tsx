@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { translate } from "@/i18n";
 
 export type PageNumbersPdfPanelProps = {
@@ -5,6 +6,8 @@ export type PageNumbersPdfPanelProps = {
   fileSizeBytes: number;
   totalPages: number;
   thumbnailUrl?: string;
+  pageThumbnails?: readonly string[];
+  onPreviewPageChange?: (page: number) => void;
   position:
     | "bottom-center"
     | "bottom-right"
@@ -32,6 +35,8 @@ export function PageNumbersPdfPanel({
   fileSizeBytes,
   totalPages,
   thumbnailUrl,
+  pageThumbnails,
+  onPreviewPageChange,
   position,
   format,
   startPage,
@@ -45,11 +50,16 @@ export function PageNumbersPdfPanel({
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   }
 
+  const previewPage = Math.min(startPage, Math.max(1, totalPages));
+  const previewThumbnail =
+    pageThumbnails?.[previewPage - 1] ?? (previewPage === 1 ? thumbnailUrl : undefined);
+  useEffect(() => {
+    onPreviewPageChange?.(previewPage);
+  }, [onPreviewPageChange, previewPage]);
   function getPreviewLabel(): string {
-    const pageNum = startPage > 1 ? 2 : 1;
-    if (format === "xSlashY") return `${pageNum} / ${totalPages}`;
-    if (format === "onlyX") return `${pageNum}`;
-    return `Página ${pageNum} de ${totalPages}`;
+    if (format === "xSlashY") return `${previewPage} / ${totalPages}`;
+    if (format === "onlyX") return `${previewPage}`;
+    return `Página ${previewPage} de ${totalPages}`;
   }
 
   // Coordenadas CSS para exibição da numeração na pré-visualização
@@ -66,10 +76,10 @@ export function PageNumbersPdfPanel({
             className="ilovepdf-file-thumb-wrapper"
             style={{ position: "relative", overflow: "hidden" }}
           >
-            {thumbnailUrl ? (
+            {previewThumbnail ? (
               <img
-                src={thumbnailUrl}
-                alt={`Miniatura de ${fileName}`}
+                src={previewThumbnail}
+                alt={`${translate("workspace.pageNumbers.previewPage")} ${previewPage}: ${fileName}`}
                 className="ilovepdf-file-thumb-img"
               />
             ) : (
@@ -271,6 +281,7 @@ export function PageNumbersPdfPanel({
             <button
               type="button"
               className={`ilovepdf-level-card ${startPage === 2 ? "ilovepdf-level-card--selected" : ""}`}
+              disabled={totalPages < 2}
               onClick={() => onStartPageChange(2)}
               style={{ padding: "0.5rem 0.4rem", textAlign: "center" }}
             >

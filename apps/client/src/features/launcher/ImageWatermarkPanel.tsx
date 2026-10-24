@@ -1,8 +1,10 @@
 import { Image as ImageIcon, Stamp, Type } from "lucide-react";
 import { type MessageKey, translate } from "@/i18n";
 import type { WatermarkPosition } from "@/platform/image-engine";
+import { useWatermarkPreview } from "./useWatermarkPreview";
 
 interface ImageWatermarkPanelProps {
+  readonly isProcessing?: boolean;
   readonly fileName: string;
   readonly fileSizeBytes: number;
   readonly originalDimensions?: { width: number; height: number };
@@ -25,6 +27,7 @@ interface ImageWatermarkPanelProps {
 
 export function ImageWatermarkPanel({
   fileName,
+  isProcessing = false,
   thumbnailUrl,
   originalDimensions,
   watermarkFile,
@@ -42,6 +45,19 @@ export function ImageWatermarkPanel({
   position,
   onPositionChange,
 }: ImageWatermarkPanelProps) {
+  const preview = useWatermarkPreview(
+    thumbnailUrl,
+    {
+      type: watermarkType,
+      text,
+      color,
+      opacity,
+      rotation,
+      position,
+      watermarkBlob: watermarkFile ?? undefined,
+    },
+    isProcessing,
+  );
   const positions: Array<{ id: WatermarkPosition; labelKey: MessageKey }> = [
     { id: "top-left", labelKey: "imageWatermark.posTopLeft" },
     { id: "top-right", labelKey: "imageWatermark.posTopRight" },
@@ -61,65 +77,35 @@ export function ImageWatermarkPanel({
   return (
     <div className="image-tool-panel">
       {/* Pré-visualização da Imagem com Simulação da Marca d'Água */}
-      <div className="bg-surface rounded-2xl border border-border p-6 flex flex-col items-center justify-center gap-4 shadow-xs">
-        <div className="w-64 h-64 rounded-xl bg-surface-muted border border-border overflow-hidden flex items-center justify-center relative select-none">
+      <div className="bg-surface-raised rounded-2xl border border-border p-6 flex flex-col items-center justify-center gap-4 shadow-xs">
+        <div
+          className="image-watermark-preview rounded-xl bg-surface-muted border border-border"
+          style={{
+            aspectRatio: `${originalDimensions?.width ?? 800} / ${originalDimensions?.height ?? 600}`,
+            maxWidth: `${((originalDimensions?.width ?? 800) / (originalDimensions?.height ?? 600)) * 680}px`,
+          }}
+        >
           {thumbnailUrl ? (
-            <img src={thumbnailUrl} alt={fileName} className="w-full h-full object-contain" />
+            <img
+              src={preview.url ?? thumbnailUrl}
+              alt={fileName}
+              className="w-full h-full object-contain"
+            />
           ) : (
             <Stamp className="w-12 h-12 text-blue-600" />
           )}
-
-          {/* Overlay simulado da marca d'água */}
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-4">
-            {position === "repeat" ? (
-              <div
-                className="w-full h-full flex flex-wrap items-center justify-around gap-6 overflow-hidden"
-                style={{ opacity }}
-              >
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <span
-                    key={i}
-                    style={{
-                      color,
-                      transform: `rotate(${rotation}deg)`,
-                      textShadow: "1px 1px 2px rgba(0,0,0,0.6)",
-                    }}
-                    className="font-bold text-xs"
-                  >
-                    {text || "NexoHub"}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <div
-                className={`w-full h-full flex ${
-                  position === "top-left"
-                    ? "items-start justify-start"
-                    : position === "top-right"
-                      ? "items-start justify-end"
-                      : position === "bottom-left"
-                        ? "items-end justify-start"
-                        : position === "bottom-right"
-                          ? "items-end justify-end"
-                          : "items-center justify-center"
-                }`}
-                style={{ opacity }}
-              >
-                <span
-                  style={{
-                    color,
-                    transform: `rotate(${rotation}deg)`,
-                    textShadow: "1px 1px 3px rgba(0,0,0,0.7)",
-                  }}
-                  className="font-bold text-sm tracking-wide"
-                >
-                  {text || "NexoHub"}
-                </span>
-              </div>
-            )}
-          </div>
         </div>
 
+        {preview.pending && (
+          <span role="status" className="text-sm text-text-secondary">
+            {translate("imageWatermark.previewPending")}
+          </span>
+        )}
+        {preview.error && (
+          <span role="alert" className="text-sm text-text-secondary">
+            {translate("imageWatermark.previewError")}
+          </span>
+        )}
         <span className="text-xs text-text-secondary font-medium">
           {fileName}{" "}
           {originalDimensions
@@ -133,9 +119,10 @@ export function ImageWatermarkPanel({
         <button
           type="button"
           onClick={() => onWatermarkTypeChange("text")}
+          aria-pressed={watermarkType === "text"}
           className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             watermarkType === "text"
-              ? "bg-surface text-text-primary shadow-xs border border-border/80"
+              ? "bg-surface-raised text-text-primary shadow-xs border border-border/80"
               : "text-text-secondary hover:text-text-primary"
           }`}
         >
@@ -145,9 +132,10 @@ export function ImageWatermarkPanel({
         <button
           type="button"
           onClick={() => onWatermarkTypeChange("image")}
+          aria-pressed={watermarkType === "image"}
           className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             watermarkType === "image"
-              ? "bg-surface text-text-primary shadow-xs border border-border/80"
+              ? "bg-surface-raised text-text-primary shadow-xs border border-border/80"
               : "text-text-secondary hover:text-text-primary"
           }`}
         >
@@ -190,7 +178,7 @@ export function ImageWatermarkPanel({
       )}
       {/* Controles de Texto */}
       {watermarkType === "text" && (
-        <div className="flex flex-col gap-4 bg-surface p-5 rounded-2xl border border-border">
+        <div className="flex flex-col gap-4 bg-surface-raised p-5 rounded-2xl border border-border">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="wm-text" className="text-xs font-bold text-text-secondary">
               {translate("imageWatermark.text")}
@@ -205,19 +193,20 @@ export function ImageWatermarkPanel({
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="image-watermark-style-grid">
             {/* Seletor de Cores */}
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-bold text-text-secondary">
                 {translate("imageWatermark.color")}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="image-color-palette">
                 {colors.map((c) => (
                   <button
                     key={c.value}
                     type="button"
                     onClick={() => onColorChange(c.value)}
                     title={c.name}
+                    aria-pressed={color === c.value}
                     style={{ backgroundColor: c.value }}
                     className={`w-7 h-7 rounded-full border border-border cursor-pointer transition-all ${
                       color === c.value ? "ring-2 ring-blue-600 ring-offset-2 scale-110" : ""
@@ -285,10 +274,11 @@ export function ImageWatermarkPanel({
                 key={pos.id}
                 type="button"
                 onClick={() => onPositionChange(pos.id)}
+                aria-pressed={isSelected}
                 className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                   isSelected
                     ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                    : "bg-surface border-border text-text-secondary hover:border-blue-500/40 hover:text-text-primary"
+                    : "bg-surface-raised border-border text-text-secondary hover:border-blue-500/40 hover:text-text-primary"
                 }`}
               >
                 {translate(pos.labelKey)}

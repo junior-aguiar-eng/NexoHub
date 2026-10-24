@@ -2,7 +2,7 @@ import { AlertTriangle, FileX2, Trash2, Undo2, X } from "lucide-react";
 import { type ChangeEvent, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
-import { createSvgPageThumbnail } from "@/platform/browser-pdf-utils";
+import { LazyPageThumbnail } from "./LazyPageThumbnail";
 import { parsePageRange } from "./page-range-input";
 
 export interface RemovePagesPanelProps {
@@ -11,6 +11,7 @@ export interface RemovePagesPanelProps {
   readonly fileSizeBytes: number;
   readonly totalPages: number;
   readonly pageThumbnails?: readonly string[];
+  readonly onPreviewPageChange?: (page: number) => void;
   readonly pagesToRemove: readonly number[];
   readonly onPagesToRemoveChange: (pages: number[]) => void;
 }
@@ -21,6 +22,7 @@ export function RemovePagesPanel({
   fileSizeBytes,
   totalPages,
   pageThumbnails = [],
+  onPreviewPageChange,
   pagesToRemove,
   onPagesToRemoveChange,
 }: RemovePagesPanelProps) {
@@ -203,7 +205,6 @@ export function RemovePagesPanel({
         {Array.from({ length: totalPages }, (_, i) => {
           const pageNum = i + 1;
           const isMarked = removeSet.has(pageNum);
-          const thumbUrl = pageThumbnails[i] || createSvgPageThumbnail(pageNum, 0);
 
           return (
             <button
@@ -241,8 +242,10 @@ export function RemovePagesPanel({
 
               {/* Thumbnail Container */}
               <div className="relative w-full aspect-[1/1.414] rounded-lg overflow-hidden border border-border/60 bg-white flex items-center justify-center">
-                <img
-                  src={thumbUrl}
+                <LazyPageThumbnail
+                  src={pageThumbnails[i]}
+                  pageNumber={pageNum}
+                  onRequest={onPreviewPageChange}
                   alt={`Miniatura da página ${pageNum}`}
                   className={`w-full h-full object-contain transition-opacity duration-200 ${
                     isMarked ? "opacity-30 grayscale" : "opacity-100"

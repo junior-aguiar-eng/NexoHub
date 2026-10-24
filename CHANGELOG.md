@@ -20,6 +20,14 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 
 ### Corrigido
 
+- **Mesas de ferramentas web:** correção de recorte fora dos limites, opções sobrepostas nos
+  painéis de imagem e transbordamentos móveis em tradução, comparação textual e formulários.
+  Tokens e resets do Tailwind passam a preservar superfícies, bordas, tipografia e estados ativos.
+- **Prévias coerentes e legíveis:** marca d'água de imagem renderizada pelo motor de exportação,
+  áreas maiores para rotação/marca d'água, página correta ao pular capa na numeração e
+  carregamento incremental de miniaturas PDF além da página 48.
+- **Regressões de interface:** cenários de navegador verificam layout com arquivos carregados,
+  pixels da prévia e dimensões do download na raiz e em `/hub/`.
 - **Responsividade e Transbordo Mobile (390px)**: Ocultação dos rótulos visuais do alternador PDF/Imagem em telas menores que 480px, preservando os nomes acessíveis e os alvos de toque.
 - **Compatibilidade Windows em Testes E2E**: Passagem de caminho local com separador final a `standardFontDataUrl` nos testes Playwright, usando `fileURLToPath` para suportar caminhos Windows e POSIX sem falha de carregamento de fontes.
 - **Suíte E2E**: Restauração da aprovação integral de 100% dos testes Playwright (97 aprovados).

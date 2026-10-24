@@ -2,7 +2,7 @@ import { Archive, Check, FileCheck2, FileOutput, Layers, X } from "lucide-react"
 import { type ChangeEvent, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
-import { createSvgPageThumbnail } from "@/platform/browser-pdf-utils";
+import { LazyPageThumbnail } from "./LazyPageThumbnail";
 import { parsePageRange } from "./page-range-input";
 
 export interface ExtractPagesPanelProps {
@@ -11,6 +11,7 @@ export interface ExtractPagesPanelProps {
   readonly fileSizeBytes: number;
   readonly totalPages: number;
   readonly pageThumbnails?: readonly string[];
+  readonly onPreviewPageChange?: (page: number) => void;
   readonly selectedPages: readonly number[];
   readonly onSelectedPagesChange: (pages: number[]) => void;
   readonly mode: "single-pdf" | "zip-split";
@@ -23,6 +24,7 @@ export function ExtractPagesPanel({
   fileSizeBytes,
   totalPages,
   pageThumbnails = [],
+  onPreviewPageChange,
   selectedPages,
   onSelectedPagesChange,
   mode,
@@ -255,7 +257,6 @@ export function ExtractPagesPanel({
         {Array.from({ length: totalPages }, (_, i) => {
           const pageNum = i + 1;
           const isSelected = selectedSet.has(pageNum);
-          const thumbUrl = pageThumbnails[i] || createSvgPageThumbnail(pageNum, 0);
 
           return (
             <button
@@ -295,8 +296,10 @@ export function ExtractPagesPanel({
 
               {/* Thumbnail Container */}
               <div className="relative w-full aspect-[1/1.414] rounded-lg overflow-hidden border border-border/60 bg-white flex items-center justify-center">
-                <img
-                  src={thumbUrl}
+                <LazyPageThumbnail
+                  src={pageThumbnails[i]}
+                  pageNumber={pageNum}
+                  onRequest={onPreviewPageChange}
                   alt={`Miniatura da página ${pageNum}`}
                   className="w-full h-full object-contain"
                   loading="lazy"

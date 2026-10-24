@@ -1253,6 +1253,7 @@ export async function runLauncherTool(
           FORMATO_IMAGEM_NAO_SUPORTADO: "imageProcessing.errorFormat",
           ANIMACAO_IMAGEM_NAO_SUPORTADA: "imageProcessing.errorFormat",
           OPCOES_IMAGEM_INVALIDAS: "imageProcessing.errorOptions",
+          RECORTE_IMAGEM_FORA_DOS_LIMITES: "imageCrop.errorBounds",
           FALHA_CARREGAR_IMAGEM: "imageProcessing.errorExport",
           FALHA_EXPORTAR_IMAGEM: "imageProcessing.errorExport",
           TEMPO_PROCESSAMENTO_IMAGEM: "imageProcessing.errorExport",

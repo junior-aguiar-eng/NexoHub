@@ -411,11 +411,12 @@ export function FormFillPdfPanel({
 
         @media (max-width: 900px) {
           .form-fill-container {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr);
           }
         }
 
         .form-fill-controls-pane {
+          min-width: 0;
           display: flex;
           flex-direction: column;
           gap: 1.25rem;
@@ -423,6 +424,7 @@ export function FormFillPdfPanel({
 
         .form-fill-header-card {
           display: flex;
+          flex-wrap: wrap;
           align-items: center;
           justify-content: space-between;
           padding: 1rem 1.25rem;
@@ -434,11 +436,15 @@ export function FormFillPdfPanel({
         }
 
         .form-fill-file-info {
+          max-width: 100%;
+          flex: 1 1 180px;
           display: flex;
           align-items: center;
           gap: 0.85rem;
           min-width: 0;
         }
+
+        .form-fill-file-info > div:last-child { min-width: 0; flex: 1; }
 
         .form-fill-file-icon {
           display: flex;
@@ -458,7 +464,7 @@ export function FormFillPdfPanel({
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          max-width: 240px;
+          max-width: 100%;
         }
 
         .form-fill-file-meta {

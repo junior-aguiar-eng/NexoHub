@@ -10,7 +10,7 @@ import {
 import { type ChangeEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
-import { createSvgPageThumbnail } from "@/platform/browser-pdf-utils";
+import { LazyPageThumbnail } from "./LazyPageThumbnail";
 
 export type PdfPageItem = {
   id: string;
@@ -25,6 +25,7 @@ type PdfPageGridPanelProps = {
   pages: PdfPageItem[];
   selectedIndices: number[];
   realThumbnails?: string[];
+  onPreviewPageChange?: (page: number) => void;
   onPagesChange?: (pages: PdfPageItem[]) => void;
   onSelectedIndicesChange?: (indices: number[]) => void;
   onRotateAll?: () => void;
@@ -38,6 +39,7 @@ export function PdfPageGridPanel({
   pages,
   selectedIndices,
   realThumbnails,
+  onPreviewPageChange,
   onPagesChange,
   onSelectedIndicesChange,
   onRotateAll,
@@ -221,8 +223,6 @@ export function PdfPageGridPanel({
         {pages.map((page, index) => {
           const isSelected = mode === "extract" && selectedIndices.includes(page.originalIndex);
           const realThumb = realThumbnails?.[page.originalIndex - 1];
-          const thumbUrl =
-            realThumb || createSvgPageThumbnail(page.originalIndex, page.rotation, totalPages);
           const isDeleted = Boolean(page.deleted);
 
           if (mode === "extract") {
@@ -243,8 +243,10 @@ export function PdfPageGridPanel({
                 </div>
 
                 <div className="pdf-page-card-preview">
-                  <img
-                    src={thumbUrl}
+                  <LazyPageThumbnail
+                    src={realThumb}
+                    pageNumber={page.originalIndex}
+                    onRequest={onPreviewPageChange}
                     alt={`Miniatura página ${page.originalIndex}`}
                     className="pdf-page-thumbnail-img"
                     style={{
@@ -276,8 +278,10 @@ export function PdfPageGridPanel({
               </div>
 
               <div className="pdf-page-card-preview">
-                <img
-                  src={thumbUrl}
+                <LazyPageThumbnail
+                  src={realThumb}
+                  pageNumber={page.originalIndex}
+                  onRequest={onPreviewPageChange}
                   alt={`Miniatura página ${page.originalIndex}`}
                   className="pdf-page-thumbnail-img"
                   style={{

@@ -16,7 +16,13 @@ try {
   process.exitCode = await new Promise((resolve, reject) => {
     const child = spawn(
       process.execPath,
-      [require.resolve("@playwright/test/cli"), "test", "hub-subpath.spec.ts", "--workers=2"],
+      [
+        require.resolve("@playwright/test/cli"),
+        "test",
+        "hub-subpath.spec.ts",
+        "tool-workspace-regressions.spec.ts",
+        "--workers=2",
+      ],
       { cwd: root, stdio: "inherit", env: process.env },
     );
     child.once("error", reject);

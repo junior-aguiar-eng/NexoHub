@@ -50,6 +50,7 @@ import {
   renderPdfPageToDataUrl,
   type SignaturePlacement,
 } from "@/platform/pdf-engine";
+import { PdfPreviewQueue } from "@/platform/pdf-preview-queue";
 import type { ScannedPageItem } from "@/platform/scan-to-pdf-engine";
 import { registerToolNavigationGuard } from "@/platform/tool-navigation-guard";
 import { addCustomWord, ignoreWordInSession } from "@/platform/user-vocabulary";
@@ -496,15 +497,24 @@ export function DedicatedToolView({
   const isImageTool = tool.id === "images-to-pdf" || tool.manifest.category === "image";
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageUploadButtonRef = useRef<HTMLButtonElement | null>(null);
-  const previewQueue = useRef<Promise<void>>(Promise.resolve());
+  const [pdfPreviewQueue] = useState(
+    () =>
+      new PdfPreviewQueue(async (file, page, signal) => {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        if (signal.aborted) return "";
+        return renderPdfPageToDataUrl(bytes, page, 1.8, signal);
+      }),
+  );
+  const gridPreviewQueue = useRef<Promise<void>>(Promise.resolve());
   const previewFiles = useRef(new WeakMap<File, Map<number, Promise<string>>>());
   const activePreviewFile = useRef<File | undefined>(files[0]);
   useEffect(() => {
     activePreviewFile.current = files[0];
     return () => {
       activePreviewFile.current = undefined;
+      pdfPreviewQueue.cancel();
     };
-  }, [files]);
+  }, [files, pdfPreviewQueue]);
   const handlePreviewPageChange = useCallback(
     (pageNumber: number) => {
       const file = files[0];
@@ -514,22 +524,24 @@ export function DedicatedToolView({
         cache = new Map();
         previewFiles.current.set(file, cache);
       }
-      let pending = cache.get(pageNumber);
+      const isGrid = ["pdf-organize", "pdf-remove-pages", "pdf-extract-pages"].includes(tool.id);
+      let pending = isGrid ? cache.get(pageNumber) : undefined;
       if (!pending) {
-        const scale = ["pdf-organize", "pdf-remove-pages", "pdf-extract-pages"].includes(tool.id)
-          ? 0.6
-          : 1.8;
-        pending = previewQueue.current.then(async () => {
-          if (activePreviewFile.current !== file) return "";
-          const bytes = new Uint8Array(await file.arrayBuffer());
-          if (activePreviewFile.current !== file) return "";
-          return renderPdfPageToDataUrl(bytes, pageNumber, scale);
-        });
-        previewQueue.current = pending.then(
-          () => {},
-          () => {},
-        );
-        cache.set(pageNumber, pending);
+        pending = isGrid
+          ? gridPreviewQueue.current.then(async () => {
+              if (activePreviewFile.current !== file) return "";
+              const bytes = new Uint8Array(await file.arrayBuffer());
+              if (activePreviewFile.current !== file) return "";
+              return renderPdfPageToDataUrl(bytes, pageNumber, 0.6);
+            })
+          : pdfPreviewQueue.request(file, pageNumber);
+        if (isGrid) {
+          cache.set(pageNumber, pending);
+          gridPreviewQueue.current = pending.then(
+            () => {},
+            () => {},
+          );
+        }
       }
       void pending
         .then((thumbnail) => {
@@ -541,6 +553,13 @@ export function DedicatedToolView({
           setAllPageThumbnails((previous) => {
             if (previous[pageNumber - 1] === thumbnail) return previous;
             const next = [...previous];
+            if (!isGrid) {
+              const retained = new Set(pdfPreviewQueue.cachedPages);
+              for (let index = 0; index < next.length; index++) {
+                if (index !== 0 && index !== next.length - 1 && !retained.has(index + 1))
+                  next[index] = "";
+              }
+            }
             next[pageNumber - 1] = thumbnail;
             return next;
           });
@@ -549,7 +568,7 @@ export function DedicatedToolView({
           cache?.delete(pageNumber);
         });
     },
-    [files, tool.id],
+    [files, tool.id, pdfPreviewQueue],
   );
   const fileInput = (
     <input
@@ -583,6 +602,7 @@ export function DedicatedToolView({
   // Quando arquivos PDF são carregados, gera miniaturas reais em canvas com PDF.js
   useEffect(() => {
     let isCancelled = false;
+    const previewAbort = new AbortController();
 
     async function inspectPdf() {
       if (tool.id === "pdf-compare" || tool.id === "pdf-edit") return;
@@ -631,6 +651,7 @@ export function DedicatedToolView({
             buffer,
             pageNumbersToRender,
             isGridTool ? 0.6 : 1.8,
+            previewAbort.signal,
           );
           let cache = previewFiles.current.get(files[0]);
           if (!cache) {
@@ -725,6 +746,7 @@ export function DedicatedToolView({
     inspectPdf();
     return () => {
       isCancelled = true;
+      previewAbort.abort();
     };
   }, [files, tool.id]);
 
@@ -1500,10 +1522,13 @@ export function DedicatedToolView({
     if (tool.id === "pdf-to-jpg") {
       return (
         <PdfToJpgPanel
+          key={previewEpoch}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
           thumbnailUrl={firstPageThumb}
+          pageThumbnails={allPageThumbnails}
+          onPreviewPageChange={handlePreviewPageChange}
         />
       );
     }
@@ -1512,10 +1537,13 @@ export function DedicatedToolView({
     if (tool.id === "pdf-to-markdown") {
       return (
         <PdfToMarkdownPanel
+          key={previewEpoch}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           pageCount={pdfPageCount}
           thumbnailUrl={firstPageThumb}
+          pageThumbnails={allPageThumbnails}
+          onPreviewPageChange={handlePreviewPageChange}
           detectHeadings={markdownDetectHeadings}
           onDetectHeadingsChange={setMarkdownDetectHeadings}
           detectTables={markdownDetectTables}
@@ -1533,7 +1561,7 @@ export function DedicatedToolView({
     if (tool.id === "pdf-crop") {
       return (
         <CropPdfPanel
-          key={`${files[0]?.name}-${files[0]?.size}-${files[0]?.lastModified}`}
+          key={previewEpoch}
           onPreviewPageChange={handlePreviewPageChange}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
@@ -1554,7 +1582,7 @@ export function DedicatedToolView({
     if (tool.id === "pdf-sign") {
       return (
         <SignPdfPanel
-          key={`${files[0]?.name}-${files[0]?.size}-${files[0]?.lastModified}`}
+          key={previewEpoch}
           onPreviewPageChange={handlePreviewPageChange}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
@@ -1611,7 +1639,7 @@ export function DedicatedToolView({
     if (tool.id === "pdf-form-fill") {
       return (
         <FormFillPdfPanel
-          key={`${files[0]?.name}-${files[0]?.size}-${files[0]?.lastModified}`}
+          key={previewEpoch}
           onPreviewPageChange={handlePreviewPageChange}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
@@ -1806,10 +1834,13 @@ export function DedicatedToolView({
     if (tool.id === "pdf-watermark") {
       return (
         <WatermarkPdfPanel
+          key={previewEpoch}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
           thumbnailUrl={firstPageThumb}
+          pageThumbnails={allPageThumbnails}
+          onPreviewPageChange={handlePreviewPageChange}
           watermarkText={watermarkText}
           watermarkAngle={watermarkAngle}
           watermarkOpacity={watermarkOpacity}
@@ -1826,6 +1857,7 @@ export function DedicatedToolView({
     if (tool.id === "pdf-page-numbers") {
       return (
         <PageNumbersPdfPanel
+          key={previewEpoch}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}

@@ -105,3 +105,16 @@ prévia original/processada em duas colunas com gap de 16px; abaixo de 520px, em
 Registros por arquivo exibem bytes, formato e dimensões reais; o ZIP é separado dos totais
 de imagens. Quebrar nomes e ações no móvel, preservando alvos de 44px. Economia é uma medida
 do resultado, nunca uma promessa; aumentos e pequenas variações conservam o sinal real.
+
+### Visualização PDF nas mesas atuais (UX-C1)
+
+Recorte, assinatura, ocultação, marca d’água, numeração, formulários, PDF para JPG e Markdown
+usam os mesmos controles de página e zoom. Página 1-based com salto por campo/Enter; zoom em
+passos de 25%, de 50 a 300%, com retorno a 100% para ajustar à largura disponível. Alvos mínimos
+44px, gaps de 4px dentro dos grupos e 8px/16px entre grupos; barra quebra linhas no móvel.
+Usar tokens de superfície, texto, borda e foco. A região rolável recebe foco para navegação
+por teclado; o zoom amplia folha e elementos sobrepostos proporcionalmente dentro dela,
+preservando a largura externa da página. Evitar outro scroller que recorte a região do documento.
+O zoom é de visualização: opções de saída e percentuais sobre a folha são independentes.
+Prévias continuam limitadas a 1800px/3MP; zoom elevado pode revelar pixels do raster. Não é um
+novo editor vetorial. Editor e comparador preservam suas barras e motores especializados.

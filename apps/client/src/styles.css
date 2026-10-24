@@ -10705,3 +10705,137 @@ html:has(.image-composition-panel) {
 .dedicated-tool-page--image-results .ilovepdf-big-download-btn {
   color: var(--color-on-brand, #fff);
 }
+
+/* UX-C1: bounded PDF viewing; document overlays keep their own coordinate space. */
+.pdf-viewport {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--color-ink);
+}
+.pdf-viewport-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 16px;
+  padding: 8px;
+  margin-bottom: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+.pdf-viewport-control-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.pdf-viewport-controls button,
+.pdf-viewport-controls input {
+  min-width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+.pdf-viewport-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  cursor: pointer;
+}
+.pdf-viewport-controls button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.pdf-viewport-controls button:hover:not(:disabled) {
+  background: var(--color-surface-muted);
+}
+.pdf-viewport-controls input {
+  width: 64px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.pdf-viewport-controls output {
+  min-width: 48px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+}
+.pdf-viewport-controls :is(button, input):focus-visible,
+.pdf-viewport-scroll:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 3px;
+}
+.pdf-viewport-scroll {
+  width: 100%;
+  max-height: 78vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-radius: 8px;
+}
+.pdf-viewport-page {
+  min-width: 0;
+  margin-inline: auto;
+}
+.dedicated-tool-page--workspace
+  .pdf-viewport-page
+  > :is(.ilovepdf-file-thumb-wrapper, .form-fill-preview-canvas-box, .redact-preview-area) {
+  width: 100%;
+  max-width: none;
+}
+.dedicated-tool-page--workspace
+  .pdf-viewport-page
+  :is(.ilovepdf-file-thumb-img, .form-fill-preview-image) {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  max-height: none;
+}
+.pdf-viewport-page .redact-preview-canvas-wrapper {
+  width: 100%;
+  max-width: none;
+}
+.pdf-viewport-page .redact-preview-area {
+  padding: 0;
+  overflow: visible;
+}
+@media (max-width: 520px) {
+  .pdf-viewport-controls {
+    gap: 4px;
+    padding: 6px;
+  }
+  .pdf-viewport-controls button span {
+    display: none;
+  }
+}
+
+.pdf-markdown-source {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+.pdf-viewport-controls {
+  margin-inline: 0;
+}
+
+/* A mesa já contém uma região de rolagem: não recortar seu rodapé em outro scroller. */
+.dedicated-tool-page--workspace .ilovepdf-compress-preview-area:has(.pdf-viewport) {
+  max-height: none;
+  overflow: visible;
+}
+.dedicated-tool-page--workspace
+  .pdf-viewport-page
+  :is(.form-fill-preview-canvas-box, .redact-preview-area) {
+  max-height: none;
+  overflow: visible;
+}

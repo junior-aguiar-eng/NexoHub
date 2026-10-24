@@ -20,6 +20,7 @@ try {
         require.resolve("@playwright/test/cli"),
         "test",
         "hub-subpath.spec.ts",
+        "pdf-viewport.spec.ts",
         "tool-workspace-regressions.spec.ts",
         "image-batch.spec.ts",
         "image-crop-editor.spec.ts",

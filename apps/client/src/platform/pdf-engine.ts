@@ -55,6 +55,7 @@ export async function renderPdfPagesThumbnails(
   pdfBytes: Uint8Array,
   pageNumbers: readonly number[],
   scale: number = 0.6,
+  signal?: AbortSignal,
 ): Promise<string[]> {
   const isTestEnv =
     typeof window === "undefined" ||
@@ -65,7 +66,7 @@ export async function renderPdfPagesThumbnails(
           ?.NODE_ENV === "test",
     );
 
-  if (isTestEnv || pageNumbers.length === 0) {
+  if (signal?.aborted || isTestEnv || pageNumbers.length === 0) {
     return pageNumbers.map(() => "");
   }
 
@@ -75,51 +76,62 @@ export async function renderPdfPagesThumbnails(
       useSystemFonts: true,
       standardFontDataUrl: STANDARD_FONT_DATA_URL,
     });
-    const pdf = await loadingTask.promise;
+    const abort = () => {
+      void loadingTask.destroy().catch(() => {});
+    };
+    signal?.addEventListener("abort", abort, { once: true });
+    if (signal?.aborted) abort();
     try {
-      const results: string[] = [];
-      for (const pageNumber of pageNumbers) {
-        try {
-          const clampedPage = Math.max(1, Math.min(pageNumber, pdf.numPages));
-          const page = await pdf.getPage(clampedPage);
-          const baseViewport = page.getViewport({ scale: 1 });
-          const boundedScale = Math.min(
-            scale,
-            1800 / Math.max(baseViewport.width, baseViewport.height),
-            Math.sqrt(3_000_000 / (baseViewport.width * baseViewport.height)),
-          );
-          const viewport = page.getViewport({ scale: boundedScale });
+      const pdf = await loadingTask.promise;
+      try {
+        const results: string[] = [];
+        for (const pageNumber of pageNumbers) {
+          if (signal?.aborted) return pageNumbers.map(() => "");
+          try {
+            const clampedPage = Math.max(1, Math.min(pageNumber, pdf.numPages));
+            const page = await pdf.getPage(clampedPage);
+            const baseViewport = page.getViewport({ scale: 1 });
+            const boundedScale = Math.min(
+              scale,
+              1800 / Math.max(baseViewport.width, baseViewport.height),
+              Math.sqrt(3_000_000 / (baseViewport.width * baseViewport.height)),
+            );
+            const viewport = page.getViewport({ scale: boundedScale });
 
-          const canvas = document.createElement("canvas");
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
+            const canvas = document.createElement("canvas");
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+              results.push("");
+              continue;
+            }
+
+            await page.render({
+              canvasContext: ctx,
+              viewport,
+              canvas,
+            }).promise;
+
+            results.push(canvas.toDataURL("image/jpeg", 0.85));
+          } catch {
             results.push("");
-            continue;
           }
-
-          await page.render({
-            canvasContext: ctx,
-            viewport,
-            canvas,
-          }).promise;
-
-          results.push(canvas.toDataURL("image/jpeg", 0.85));
+        }
+        return results;
+      } finally {
+        try {
+          pdf.cleanup();
         } catch {
-          results.push("");
+          // Fallback silencioso
         }
       }
-      return results;
     } finally {
-      try {
-        pdf.cleanup();
-        await loadingTask.destroy();
-      } catch {
-        // Fallback silencioso
-      }
+      signal?.removeEventListener("abort", abort);
+      await loadingTask.destroy().catch(() => {});
     }
   } catch (err) {
+    if (signal?.aborted) return pageNumbers.map(() => "");
     console.warn("Falha ao renderizar miniaturas com PDF.js:", err);
     return pageNumbers.map(() => "");
   }
@@ -132,8 +144,9 @@ export async function renderPdfPageToDataUrl(
   pdfBytes: Uint8Array,
   pageNumber: number = 1,
   scale: number = 0.6,
+  signal?: AbortSignal,
 ): Promise<string> {
-  const [thumb] = await renderPdfPagesThumbnails(pdfBytes, [pageNumber], scale);
+  const [thumb] = await renderPdfPagesThumbnails(pdfBytes, [pageNumber], scale, signal);
   return thumb ?? "";
 }
 

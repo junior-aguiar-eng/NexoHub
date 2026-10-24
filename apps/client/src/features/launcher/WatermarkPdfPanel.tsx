@@ -1,11 +1,15 @@
 import { Check } from "lucide-react";
+import { useEffect, useState } from "react";
 import { translate } from "@/i18n";
+import { PdfViewport } from "./PdfViewport";
 
 export type WatermarkPdfPanelProps = {
   fileName: string;
   fileSizeBytes: number;
   totalPages: number;
   thumbnailUrl?: string;
+  pageThumbnails?: readonly string[];
+  onPreviewPageChange?: (page: number) => void;
   watermarkText: string;
   watermarkAngle: number;
   watermarkOpacity: number;
@@ -28,6 +32,8 @@ export function WatermarkPdfPanel({
   fileSizeBytes,
   totalPages,
   thumbnailUrl,
+  pageThumbnails,
+  onPreviewPageChange,
   watermarkText,
   watermarkAngle,
   watermarkOpacity,
@@ -37,6 +43,13 @@ export function WatermarkPdfPanel({
   onWatermarkOpacityChange,
   onWatermarkColorChange,
 }: WatermarkPdfPanelProps) {
+  const [previewPage, setPreviewPage] = useState(1);
+  useEffect(() => {
+    onPreviewPageChange?.(previewPage);
+  }, [onPreviewPageChange, previewPage]);
+  const activeThumbnail =
+    pageThumbnails?.[previewPage - 1] || (previewPage === 1 ? thumbnailUrl : undefined);
+
   function formatSize(bytes: number) {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -51,70 +64,72 @@ export function WatermarkPdfPanel({
       {/* Centro: Pré-visualização com carimbo interativo em tempo real */}
       <div className="ilovepdf-compress-preview-area">
         <div className="ilovepdf-file-card-center">
-          <div
-            className="ilovepdf-file-thumb-wrapper"
-            style={{ position: "relative", overflow: "hidden" }}
-          >
-            {thumbnailUrl ? (
-              <img
-                src={thumbnailUrl}
-                alt={`Miniatura de ${fileName}`}
-                className="ilovepdf-file-thumb-img"
-              />
-            ) : (
-              <div className="ilovepdf-file-thumb-placeholder">PDF</div>
-            )}
-
-            {/* Overlay com a marca d'água em tempo real */}
+          <PdfViewport page={previewPage} pageCount={totalPages} onPageChange={setPreviewPage}>
             <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                pointerEvents: "none",
-                overflow: "hidden",
-              }}
+              className="ilovepdf-file-thumb-wrapper"
+              style={{ position: "relative", overflow: "hidden" }}
             >
-              <span
+              {activeThumbnail ? (
+                <img
+                  src={activeThumbnail}
+                  alt={`Miniatura de ${fileName}`}
+                  className="ilovepdf-file-thumb-img"
+                />
+              ) : (
+                <div className="ilovepdf-file-thumb-placeholder">PDF</div>
+              )}
+
+              {/* Overlay com a marca d'água em tempo real */}
+              <div
                 style={{
-                  display: "inline-block",
-                  transform: `rotate(${watermarkAngle === 0 ? 0 : -45}deg)`,
-                  color: activeColorHex,
-                  opacity: watermarkOpacity,
-                  fontSize: "1rem",
-                  fontWeight: 900,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  whiteSpace: "nowrap",
-                  border: `2px solid ${activeColorHex}`,
-                  padding: "4px 10px",
-                  borderRadius: "4px",
-                  userSelect: "none",
-                  transition: "all 0.15s ease",
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  pointerEvents: "none",
+                  overflow: "hidden",
                 }}
               >
-                {displayText}
+                <span
+                  style={{
+                    display: "inline-block",
+                    transform: `rotate(${watermarkAngle === 0 ? 0 : -45}deg)`,
+                    color: activeColorHex,
+                    opacity: watermarkOpacity,
+                    fontSize: "1rem",
+                    fontWeight: 900,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    whiteSpace: "nowrap",
+                    border: `2px solid ${activeColorHex}`,
+                    padding: "4px 10px",
+                    borderRadius: "4px",
+                    userSelect: "none",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {displayText}
+                </span>
+              </div>
+
+              <span
+                style={{
+                  position: "absolute",
+                  bottom: "8px",
+                  right: "8px",
+                  backgroundColor: "rgba(15, 23, 42, 0.8)",
+                  color: "#ffffff",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  padding: "2px 8px",
+                  borderRadius: "4px",
+                }}
+              >
+                {totalPages} {totalPages === 1 ? "página" : "páginas"}
               </span>
             </div>
-
-            <span
-              style={{
-                position: "absolute",
-                bottom: "8px",
-                right: "8px",
-                backgroundColor: "rgba(15, 23, 42, 0.8)",
-                color: "#ffffff",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                padding: "2px 8px",
-                borderRadius: "4px",
-              }}
-            >
-              {totalPages} {totalPages === 1 ? "página" : "páginas"}
-            </span>
-          </div>
+          </PdfViewport>
 
           <span className="ilovepdf-file-card-name" title={fileName}>
             {fileName}

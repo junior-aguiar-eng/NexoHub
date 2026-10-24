@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { translate } from "@/i18n";
+import { PdfViewport } from "./PdfViewport";
 
 export type PageNumbersPdfPanelProps = {
   fileName: string;
@@ -50,7 +51,11 @@ export function PageNumbersPdfPanel({
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   }
 
-  const previewPage = Math.min(startPage, Math.max(1, totalPages));
+  const [previewPage, setPreviewPage] = useState(Math.min(startPage, Math.max(1, totalPages)));
+  useEffect(
+    () => setPreviewPage(Math.min(startPage, Math.max(1, totalPages))),
+    [startPage, totalPages],
+  );
   const previewThumbnail =
     pageThumbnails?.[previewPage - 1] ?? (previewPage === 1 ? thumbnailUrl : undefined);
   useEffect(() => {
@@ -72,45 +77,49 @@ export function PageNumbersPdfPanel({
       {/* Centro: Pré-visualização com carimbo de número de página */}
       <div className="ilovepdf-compress-preview-area">
         <div className="ilovepdf-file-card-center">
-          <div
-            className="ilovepdf-file-thumb-wrapper"
-            style={{ position: "relative", overflow: "hidden" }}
-          >
-            {previewThumbnail ? (
-              <img
-                src={previewThumbnail}
-                alt={`${translate("workspace.pageNumbers.previewPage")} ${previewPage}: ${fileName}`}
-                className="ilovepdf-file-thumb-img"
-              />
-            ) : (
-              <div className="ilovepdf-file-thumb-placeholder">PDF</div>
-            )}
-
-            {/* Estampa visual da numeração de página */}
+          <PdfViewport page={previewPage} pageCount={totalPages} onPageChange={setPreviewPage}>
             <div
-              style={{
-                position: "absolute",
-                top: isTop ? "12px" : "auto",
-                bottom: !isTop ? "12px" : "auto",
-                left: isLeft ? "12px" : isRight ? "auto" : "50%",
-                right: isRight ? "12px" : "auto",
-                transform: !isLeft && !isRight ? "translateX(-50%)" : "none",
-                backgroundColor: "rgba(255, 255, 255, 0.92)",
-                border: "1px solid #cbd5e1",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                color: "#1e293b",
-                fontSize: "0.7rem",
-                fontWeight: 700,
-                padding: "2px 6px",
-                borderRadius: "4px",
-                pointerEvents: "none",
-                whiteSpace: "nowrap",
-                transition: "all 0.15s ease",
-              }}
+              className="ilovepdf-file-thumb-wrapper"
+              style={{ position: "relative", overflow: "hidden" }}
             >
-              {getPreviewLabel()}
+              {previewThumbnail ? (
+                <img
+                  src={previewThumbnail}
+                  alt={`${translate("workspace.pageNumbers.previewPage")} ${previewPage}: ${fileName}`}
+                  className="ilovepdf-file-thumb-img"
+                />
+              ) : (
+                <div className="ilovepdf-file-thumb-placeholder">PDF</div>
+              )}
+
+              {/* Estampa visual da numeração de página */}
+              {previewPage >= startPage && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: isTop ? "12px" : "auto",
+                    bottom: !isTop ? "12px" : "auto",
+                    left: isLeft ? "12px" : isRight ? "auto" : "50%",
+                    right: isRight ? "12px" : "auto",
+                    transform: !isLeft && !isRight ? "translateX(-50%)" : "none",
+                    backgroundColor: "rgba(255, 255, 255, 0.92)",
+                    border: "1px solid #cbd5e1",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                    color: "#1e293b",
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    padding: "2px 6px",
+                    borderRadius: "4px",
+                    pointerEvents: "none",
+                    whiteSpace: "nowrap",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {getPreviewLabel()}
+                </div>
+              )}
             </div>
-          </div>
+          </PdfViewport>
 
           <span className="ilovepdf-file-card-name" title={fileName}>
             {fileName}

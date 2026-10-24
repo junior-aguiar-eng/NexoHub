@@ -102,7 +102,8 @@ sem validação.
 
 ## Fase de complementação — 24/10/2026
 
-**Estado:** planejada. As restrições e evidências de setembro acima são históricas; este adendo
+**Estado:** UX-C1 concluído e validado no website. Os demais complementos seguem
+seus gates. As restrições e evidências de setembro acima são históricas; este adendo
 trata somente as ferramentas atuais no website e não reabre o fechamento nativo. A ordem única
 e os gates estão no [roadmap](../../ROADMAP.md#complementação-das-ferramentas-atuais--24102026).
 Não criar executores paralelos, habilitar ferramentas planejadas ou instalar todos os candidatos.
@@ -140,13 +141,13 @@ e geradores de testes existentes; usar material sintético ou com licença demon
 onZoomChange, onFitWidth })`; página 1-based, zoom multiplicador, callbacks numéricos e ajuste
 sem argumentos. Não armazenar estado do motor dentro dos controles.
 
-- [ ] Testar página 1/última, saltos, ajuste à largura, zoom e resize em 390–1440px; manter
+- [x] Testar página 1/última, saltos, ajuste à largura, zoom e resize em 390–1440px; manter
   estado selecionado por teclado e controles legíveis, sem duplicar os já existentes no editor.
-- [ ] Integrar incrementalmente controles e superfície ampla, renderizando apenas páginas
+- [x] Integrar incrementalmente controles e superfície ampla, renderizando apenas páginas
   necessárias. Zoom de visualização não pode alterar coordenadas do documento ou opções de export.
-- [ ] Conferir por download marca, assinatura, recorte, ocultação e numeração nas coordenadas
+- [x] Conferir por download marca, assinatura, recorte, ocultação e numeração nas coordenadas
   escolhidas após zoom/rotação/CropBox; cancelar fila de prévias ao trocar arquivo/sair.
-- [ ] Editor e comparador preservam seus motores/controles especializados e consomem apenas
+- [x] Editor e comparador preservam seus motores/controles especializados e consomem apenas
   elementos compatíveis; não migrar todos para um novo viewer em uma única alteração.
 
 ### SEC-C1 — Ocultação com remoção real, sem rasterizar o documento inteiro
@@ -239,3 +240,43 @@ resultados esperados e medição de bundle registrados em `docs/IMAGE-WEB-QUALIT
 dependência/modelo novo foi adotado em IM-C1; licenças dos motores candidatos e corpus de
 PDF/OCR/Excel/tradução continuam pendentes nos respectivos complementos. O registro de execução
 e os checkboxes de IM-C1 pertencem ao plano de PDF/Imagem, sem duplicação aqui.
+
+### Registro de implementação — UX-C1 (24/10/2026)
+
+- Base `59a3cb2`, preservando os commits IM-C1–IM-C4. Commit do UX-C1 autorizado posteriormente pelo usuário, sem
+  push/deploy. Nenhuma dependência adicionada ou alteração no executor de saída.
+- `PdfViewportControls` controlado e `PdfViewport` com estado apenas de zoom; integrados nas
+  oito mesas previstas. Numeração permite explorar outras páginas sem mudar a página inicial
+  da exportação; não desenha número antes dela. Editor/comparador não foram migrados.
+- Cache de seis páginas por arquivo, além da primeira/última prévia existentes. Renderização
+  PDF.js com sinal de cancelamento ao navegar, trocar arquivo ou sair; miniaturas de grade
+  preservam sua fila serial. Limites de prévia existentes: 1800px e 3MP, sem ampliar uso de memória
+  para simular um viewer vetorial. Zoom elevado pode pixelar: resolução adaptativa fica para
+  uma etapa com orçamento medido de memória, sem aumentar as promessas desta entrega.
+- Testes de navegação/zoom e resize nas oito mesas; arquivos sintéticos com CropBox e rotação.
+  Downloads de recorte, marca, numeração, assinatura e ocultação conferidos por geometria e
+  streams decodificados. Tarja desenhada após zoom é baixada/reaberta e seus pixels verificados;
+  assinatura arrastada após zoom confere coordenadas do operador no PDF baixado.
+- Revisão única apontou página lenta bloqueando a próxima. Reproduzido em teste e corrigido
+  com cancelamento por solicitação; nova página inicia sem aguardar a anterior. Oclusão real
+  no Markdown corrigida ao alinhar o conteúdo ao início da mesa, sem relaxar testes de clique.
+- Capturas em 390/768/1024/1440px e tema escuro: artefatos em
+  `/workspace/artifacts/complementacao-pdf-viewport-2026-10-24`. Sem overflow externo.
+- Bundle principal `/hub/` 1054,29kB / 289,93kB gzip, acréscimo de 2,30kB / 1,09kB gzip sobre IM-C4
+  neste ambiente. Limites de licença dos motores existentes seguem seus registros; esta etapa
+  não introduz código de terceiros.
+
+- Zoom proporcional também sobre textos, imagens e carimbos: teste de dimensão visual da marca
+  reproduziu ampliação apenas da folha e passou com `zoom` CSS nativo junto da largura proporcional.
+  Validado em Chromium, sem prometer homologação de versões antigas de outros navegadores.
+- Removida rolagem externa redundante somente nas mesas com viewport, deixando a região inteira
+  alcançável. Teste em altura de 1000px detectou o recorte pelo limite legado; confirmado nas oito
+  mesas. Guard de leitura da fila de grades preservado e fortalecido por teste após desmontagem.
+
+- Validação final: 603 testes unitários (540 client), 53 E2E de mesas/viewport na raiz e 82 E2E
+  em `/hub/` aprovados; formatter/lint, tipagem de todos os pacotes e builds aprovados. Suíte
+  geral da raiz: 211 aprovados/5 exclusivos da subpasta antes dos últimos ajustes proporcionais
+  de zoom/rolagem; os 53 focados e 82 da subpasta cobrem esses ajustes. Guard final da fila de
+  grades validado no teste fortalecido e na suíte completa de 603 testes, sem suprimir assertions.
+- Commit do UX-C1 autorizado pelo usuário, sem push/deploy. Próximo complemento no índice: DOC-C1, valores de formulário na
+  prévia e navegação por campo; não implementado nesta entrega.

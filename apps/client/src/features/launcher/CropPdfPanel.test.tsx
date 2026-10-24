@@ -95,12 +95,12 @@ describe("CropPdfPanel", () => {
       />,
     );
 
-    expect(screen.getByText("Página 1 de 4")).toBeDefined();
+    expect(screen.getByRole("spinbutton", { name: "Página da prévia" })).toHaveValue(1);
     const nextBtn = screen.getByLabelText("Próxima página");
     fireEvent.click(nextBtn);
-    expect(screen.getByText("Página 2 de 4")).toBeDefined();
+    expect(screen.getByRole("spinbutton", { name: "Página da prévia" })).toHaveValue(2);
     const prevBtn = screen.getByLabelText("Página anterior");
     fireEvent.click(prevBtn);
-    expect(screen.getByText("Página 1 de 4")).toBeDefined();
+    expect(screen.getByRole("spinbutton", { name: "Página da prévia" })).toHaveValue(1);
   });
 });

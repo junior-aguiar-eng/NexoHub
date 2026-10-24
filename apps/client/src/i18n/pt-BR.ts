@@ -1,4 +1,12 @@
 export const ptBR = {
+  "pdfViewport.controls": "Controles da prévia PDF",
+  "pdfViewport.page": "Página da prévia",
+  "pdfViewport.zoom": "Zoom da visualização",
+  "pdfViewport.zoomIn": "Ampliar prévia",
+  "pdfViewport.zoomOut": "Reduzir prévia",
+  "pdfViewport.fit": "Ajustar à largura",
+  "pdfViewport.surface": "Documento PDF: use a rolagem para explorar a prévia ampliada",
+
   "editor.deleteText": "Excluir texto",
   "editor.unsafeStyle":
     "A fonte e o tamanho estão preservados porque este objeto usa transparência ou recorte especial.",

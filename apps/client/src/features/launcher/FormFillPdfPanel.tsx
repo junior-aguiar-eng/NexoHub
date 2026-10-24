@@ -1,8 +1,6 @@
 import {
   AlertCircle,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   FileCheck2,
   FileText,
   FormInput,
@@ -14,6 +12,7 @@ import {
 import { useEffect, useId, useState } from "react";
 import { translate } from "@/i18n";
 import type { FormFieldDescriptor, FormFieldValue } from "@/platform/pdf-form";
+import { PdfViewport } from "./PdfViewport";
 
 export interface FormFillPdfPanelProps {
   readonly fileName: string;
@@ -349,48 +348,26 @@ export function FormFillPdfPanel({
             <FileCheck2 size={16} color="#3b82f6" />
             <span>{translate("formFill.previewTitle")}</span>
           </div>
-
-          {totalPages > 1 && (
-            <div className="form-fill-preview-pagination">
-              <button
-                type="button"
-                className="form-fill-page-nav-btn"
-                onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
-                disabled={previewPage <= 1}
-                aria-label={translate("formFill.previousPage")}
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="form-fill-page-indicator">
-                {previewPage} / {totalPages}
-              </span>
-              <button
-                type="button"
-                className="form-fill-page-nav-btn"
-                onClick={() => setPreviewPage((p) => Math.min(totalPages, p + 1))}
-                disabled={previewPage >= totalPages}
-                aria-label={translate("formFill.nextPage")}
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          )}
         </div>
 
-        <div className="form-fill-preview-canvas-box">
-          {activeThumbnail ? (
-            <img
-              src={activeThumbnail}
-              alt={translate("formFill.previewPageAlt").replace("{page}", String(previewPage))}
-              className="form-fill-preview-image"
-            />
-          ) : (
-            <div className="form-fill-preview-placeholder">
-              <FileText size={48} color="#64748b" />
-              <span>{translate("formFill.pageLabel").replace("{page}", String(previewPage))}</span>
-            </div>
-          )}
-        </div>
+        <PdfViewport page={previewPage} pageCount={totalPages} onPageChange={setPreviewPage}>
+          <div className="form-fill-preview-canvas-box">
+            {activeThumbnail ? (
+              <img
+                src={activeThumbnail}
+                alt={translate("formFill.previewPageAlt").replace("{page}", String(previewPage))}
+                className="form-fill-preview-image"
+              />
+            ) : (
+              <div className="form-fill-preview-placeholder">
+                <FileText size={48} color="#64748b" />
+                <span>
+                  {translate("formFill.pageLabel").replace("{page}", String(previewPage))}
+                </span>
+              </div>
+            )}
+          </div>
+        </PdfViewport>
 
         <div className="form-fill-preview-footer-hint">
           <Info size={14} />

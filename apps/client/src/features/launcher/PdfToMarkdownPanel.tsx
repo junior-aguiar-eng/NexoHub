@@ -9,15 +9,18 @@ import {
   Sparkles,
   Table as TableIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
+import { PdfViewport } from "./PdfViewport";
 
 export interface PdfToMarkdownPanelProps {
   fileName: string;
   fileSizeBytes: number;
   pageCount?: number;
   thumbnailUrl?: string;
+  pageThumbnails?: readonly string[];
+  onPreviewPageChange?: (page: number) => void;
   detectHeadings: boolean;
   onDetectHeadingsChange: (val: boolean) => void;
   detectTables: boolean;
@@ -183,6 +186,8 @@ export function PdfToMarkdownPanel({
   fileSizeBytes,
   pageCount = 1,
   thumbnailUrl,
+  pageThumbnails,
+  onPreviewPageChange,
   detectHeadings,
   onDetectHeadingsChange,
   detectTables,
@@ -193,6 +198,13 @@ export function PdfToMarkdownPanel({
   onMarkdownResultChange,
   isConverting = false,
 }: PdfToMarkdownPanelProps) {
+  const [previewPage, setPreviewPage] = useState(1);
+  useEffect(() => {
+    onPreviewPageChange?.(previewPage);
+  }, [onPreviewPageChange, previewPage]);
+  const activeThumbnail =
+    pageThumbnails?.[previewPage - 1] || (previewPage === 1 ? thumbnailUrl : undefined);
+
   const [viewTab, setViewTab] = useState<"rendered" | "raw">("rendered");
   const [copied, setCopied] = useState(false);
 
@@ -230,7 +242,12 @@ export function PdfToMarkdownPanel({
       {/* Coluna Central: Visualização do Documento ou Resultado Markdown */}
       <div
         className="ilovepdf-compress-preview-area"
-        style={{ flexDirection: "column", gap: "1.25rem", alignItems: "stretch" }}
+        style={{
+          flexDirection: "column",
+          gap: "1.25rem",
+          alignItems: "stretch",
+          justifyContent: "flex-start",
+        }}
       >
         {markdownResult ? (
           /* Estado com Resultado Pronto: Visualizador Duplo */
@@ -332,20 +349,22 @@ export function PdfToMarkdownPanel({
           </div>
         ) : (
           /* Estado Inicial: Miniatura do Arquivo e Destaques */
-          <div className="flex flex-col items-center justify-center p-6 text-center">
+          <div className="pdf-markdown-source">
             <div className="ilovepdf-file-card-center mb-6">
-              <div className="ilovepdf-file-thumb-wrapper">
-                {thumbnailUrl ? (
-                  <img
-                    src={thumbnailUrl}
-                    alt={`Miniatura de ${fileName}`}
-                    className="ilovepdf-file-thumb-img"
-                    style={{ height: "auto", width: "100%", objectFit: "contain" }}
-                  />
-                ) : (
-                  <div className="ilovepdf-file-thumb-placeholder">PDF</div>
-                )}
-              </div>
+              <PdfViewport page={previewPage} pageCount={pageCount} onPageChange={setPreviewPage}>
+                <div className="ilovepdf-file-thumb-wrapper">
+                  {activeThumbnail ? (
+                    <img
+                      src={activeThumbnail}
+                      alt={`Miniatura de ${fileName}`}
+                      className="ilovepdf-file-thumb-img"
+                      style={{ height: "auto", width: "100%", objectFit: "contain" }}
+                    />
+                  ) : (
+                    <div className="ilovepdf-file-thumb-placeholder">PDF</div>
+                  )}
+                </div>
+              </PdfViewport>
               <span className="ilovepdf-file-card-name" title={fileName}>
                 {fileName}
               </span>

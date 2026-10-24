@@ -1,16 +1,9 @@
-import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  EyeOff,
-  Plus,
-  ShieldAlert,
-  Trash2,
-} from "lucide-react";
+import { AlertCircle, EyeOff, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { translate } from "@/i18n";
 import type { RedactionArea } from "@/platform/pdf-engine";
+import { PdfViewport } from "./PdfViewport";
 
 export interface RedactPdfPanelProps {
   readonly fileName: string;
@@ -416,120 +409,97 @@ export function RedactPdfPanel({
             <span className="redact-preview-title">
               {translate("redact.page").replace("{page}", String(previewPage))} de {totalPages}
             </span>
-            {totalPages > 1 && (
-              <div className="redact-page-nav">
-                <button
-                  type="button"
-                  className="redact-nav-btn"
-                  disabled={previewPage <= 1}
-                  onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
-                  aria-label={translate("unlock.previousPage")}
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <span className="redact-page-counter">
-                  {previewPage} / {totalPages}
-                </span>
-                <button
-                  type="button"
-                  className="redact-nav-btn"
-                  disabled={previewPage >= totalPages}
-                  onClick={() => setPreviewPage((p) => Math.min(totalPages, p + 1))}
-                  aria-label={translate("unlock.nextPage")}
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            )}
           </div>
 
           <div className="redact-draw-hint">{translate("redact.drawHint")}</div>
 
-          <div className="redact-preview-area">
-            <div
-              ref={containerRef}
-              className="redact-preview-canvas-wrapper"
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={() => {
-                setIsDrawing(false);
-                setStartPoint(null);
-                setCurrentPoint(null);
-              }}
-              data-testid="redact-preview-canvas"
-            >
-              {activeThumbnail ? (
-                <img
-                  src={activeThumbnail}
-                  alt={translate("unlock.previewAlt").replace("{page}", String(previewPage))}
-                  className="redact-thumb-image"
-                  draggable={false}
-                />
-              ) : (
-                <div className="redact-thumb-placeholder">
-                  <EyeOff size={48} color="#64748b" />
-                  <span>{translate("common.previewUnavailable")}</span>
-                </div>
-              )}
-
-              {/* Tarjas já desenhadas na página atual */}
-              {currentPageRedactions.map((area) => {
-                const isWhite = area.color === "white";
-                const isGray = area.color === "gray";
-                const bg = isWhite ? "#ffffff" : isGray ? "#4b5563" : "#000000";
-                const textColor = isWhite ? "#000000" : "#ffffff";
-
-                return (
-                  <div
-                    key={area.id}
-                    className="redact-box-overlay"
-                    style={{
-                      left: `${area.xPercent}%`,
-                      top: `${area.yPercent}%`,
-                      width: `${area.widthPercent}%`,
-                      height: `${area.heightPercent}%`,
-                      backgroundColor: bg,
-                      color: textColor,
-                    }}
-                    title={area.label || translate("redact.removeArea")}
-                  >
-                    {area.label && <span className="redact-box-label">{area.label}</span>}
-                    <button
-                      type="button"
-                      className="redact-box-delete-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveRedaction(area.id);
-                      }}
-                      aria-label={translate("redact.removeArea")}
-                    >
-                      ×
-                    </button>
+          <PdfViewport page={previewPage} pageCount={totalPages} onPageChange={setPreviewPage}>
+            <div className="redact-preview-area">
+              <div
+                ref={containerRef}
+                className="redact-preview-canvas-wrapper"
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={() => {
+                  setIsDrawing(false);
+                  setStartPoint(null);
+                  setCurrentPoint(null);
+                }}
+                data-testid="redact-preview-canvas"
+              >
+                {activeThumbnail ? (
+                  <img
+                    src={activeThumbnail}
+                    alt={translate("unlock.previewAlt").replace("{page}", String(previewPage))}
+                    className="redact-thumb-image"
+                    draggable={false}
+                  />
+                ) : (
+                  <div className="redact-thumb-placeholder">
+                    <EyeOff size={48} color="#64748b" />
+                    <span>{translate("common.previewUnavailable")}</span>
                   </div>
-                );
-              })}
+                )}
 
-              {/* Caixa sendo desenhada ativamente */}
-              {drawingBox && (
-                <div
-                  className="redact-drawing-overlay"
-                  style={{
-                    left: `${drawingBox.x}%`,
-                    top: `${drawingBox.y}%`,
-                    width: `${drawingBox.w}%`,
-                    height: `${drawingBox.h}%`,
-                    backgroundColor:
-                      selectedColor === "white"
-                        ? "rgba(255, 255, 255, 0.7)"
-                        : selectedColor === "gray"
-                          ? "rgba(107, 114, 128, 0.7)"
-                          : "rgba(0, 0, 0, 0.7)",
-                  }}
-                />
-              )}
+                {/* Tarjas já desenhadas na página atual */}
+                {currentPageRedactions.map((area) => {
+                  const isWhite = area.color === "white";
+                  const isGray = area.color === "gray";
+                  const bg = isWhite ? "#ffffff" : isGray ? "#4b5563" : "#000000";
+                  const textColor = isWhite ? "#000000" : "#ffffff";
+
+                  return (
+                    <div
+                      key={area.id}
+                      className="redact-box-overlay"
+                      style={{
+                        left: `${area.xPercent}%`,
+                        top: `${area.yPercent}%`,
+                        width: `${area.widthPercent}%`,
+                        height: `${area.heightPercent}%`,
+                        backgroundColor: bg,
+                        color: textColor,
+                      }}
+                      title={area.label || translate("redact.removeArea")}
+                    >
+                      {area.label && <span className="redact-box-label">{area.label}</span>}
+                      <button
+                        type="button"
+                        className="redact-box-delete-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveRedaction(area.id);
+                        }}
+                        aria-label={translate("redact.removeArea")}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {/* Caixa sendo desenhada ativamente */}
+                {drawingBox && (
+                  <div
+                    className="redact-drawing-overlay"
+                    style={{
+                      left: `${drawingBox.x}%`,
+                      top: `${drawingBox.y}%`,
+                      width: `${drawingBox.w}%`,
+                      height: `${drawingBox.h}%`,
+                      backgroundColor:
+                        selectedColor === "white"
+                          ? "rgba(255, 255, 255, 0.7)"
+                          : selectedColor === "gray"
+                            ? "rgba(107, 114, 128, 0.7)"
+                            : "rgba(0, 0, 0, 0.7)",
+                    }}
+                  />
+                )}
+              </div>
             </div>
-          </div>
+          </PdfViewport>
 
           <div className="redact-preview-footer">
             <span className="redact-privacy-notice">{translate("redact.privacyNotice")}</span>

@@ -1,7 +1,5 @@
 import {
   Calendar,
-  ChevronLeft,
-  ChevronRight,
   GripHorizontal,
   Image as ImageIcon,
   PenTool,
@@ -12,6 +10,7 @@ import {
 import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from "react";
 import { translate } from "@/i18n";
 import type { SignaturePlacement } from "@/platform/pdf-engine";
+import { PdfViewport } from "./PdfViewport";
 
 export interface SignPdfPanelProps {
   readonly fileName: string;
@@ -306,221 +305,169 @@ export function SignPdfPanel({
           className="ilovepdf-file-card-center"
           style={{ width: "100%", maxWidth: "var(--workspace-page-width, 860px)" }}
         >
-          {/* Navegação entre páginas */}
-          {totalPages > 1 && (
+          {/* Folha do Documento com o Selo de Assinatura */}
+          <PdfViewport page={currentPage} pageCount={totalPages} onPageChange={setCurrentPage}>
             <div
+              ref={previewContainerRef}
+              className="ilovepdf-file-thumb-wrapper"
               style={{
+                position: "relative",
+                overflow: "hidden",
+                borderRadius: "8px",
+                boxShadow:
+                  "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                backgroundColor: "#ffffff",
+                border: "1px solid #e2e8f0",
+                width: "100%",
+                maxWidth: "100%",
+                marginInline: "auto",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "0.75rem",
-                marginBottom: "0.75rem",
+                userSelect: "none",
               }}
             >
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage <= 1}
-                aria-label={translate("crop.previousPage")}
-                style={{
-                  padding: "0.3rem 0.5rem",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  background: "#fff",
-                  cursor: currentPage <= 1 ? "not-allowed" : "pointer",
-                  opacity: currentPage <= 1 ? 0.5 : 1,
-                  display: "inline-flex",
-                  alignItems: "center",
-                }}
-              >
-                <ChevronLeft size={16} />
-              </button>
+              {currentThumb ? (
+                <img
+                  src={currentThumb}
+                  alt={translate("crop.pageAlt")
+                    .replace("{page}", String(currentPage))
+                    .replace("{name}", fileName)}
+                  className="ilovepdf-file-thumb-img"
+                  style={{
+                    maxHeight: "none",
+                    maxWidth: "100%",
+                    height: "auto",
+                    width: "100%",
+                    objectFit: "contain",
+                    display: "block",
+                    pointerEvents: "none",
+                  }}
+                />
+              ) : (
+                <div className="ilovepdf-file-thumb-placeholder" style={{ minHeight: "380px" }}>
+                  <PenTool size={42} style={{ color: "#059669", opacity: 0.6 }} />
+                  <span style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "#64748b" }}>
+                    Página {currentPage}
+                  </span>
+                </div>
+              )}
 
-              <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569" }}>
-                Página {currentPage} de {totalPages}
-              </span>
-
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage >= totalPages}
-                aria-label={translate("crop.nextPage")}
-                style={{
-                  padding: "0.3rem 0.5rem",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  background: "#fff",
-                  cursor: currentPage >= totalPages ? "not-allowed" : "pointer",
-                  opacity: currentPage >= totalPages ? 0.5 : 1,
-                  display: "inline-flex",
-                  alignItems: "center",
-                }}
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          )}
-
-          {/* Folha do Documento com o Selo de Assinatura */}
-          <div
-            ref={previewContainerRef}
-            className="ilovepdf-file-thumb-wrapper"
-            style={{
-              position: "relative",
-              overflow: "hidden",
-              borderRadius: "8px",
-              boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-              backgroundColor: "#ffffff",
-              border: "1px solid #e2e8f0",
-              width: "100%",
-              maxWidth: "100%",
-              marginInline: "auto",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              userSelect: "none",
-            }}
-          >
-            {currentThumb ? (
-              <img
-                src={currentThumb}
-                alt={translate("crop.pageAlt")
-                  .replace("{page}", String(currentPage))
-                  .replace("{name}", fileName)}
-                className="ilovepdf-file-thumb-img"
-                style={{
-                  maxHeight: "none",
-                  maxWidth: "100%",
-                  height: "auto",
-                  width: "100%",
-                  objectFit: "contain",
-                  display: "block",
-                  pointerEvents: "none",
-                }}
-              />
-            ) : (
-              <div className="ilovepdf-file-thumb-placeholder" style={{ minHeight: "380px" }}>
-                <PenTool size={42} style={{ color: "#059669", opacity: 0.6 }} />
-                <span style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "#64748b" }}>
-                  Página {currentPage}
-                </span>
-              </div>
-            )}
-
-            {/* Selo Arrastável de Assinatura */}
-            {showStamp && (
-              <div
-                onPointerDown={handlePointerDownDrag}
-                onPointerMove={handlePointerMoveDrag}
-                onPointerUp={handlePointerUpDrag}
-                onPointerCancel={handlePointerUpDrag}
-                style={{
-                  position: "absolute",
-                  left: `${placement.xPercent}%`,
-                  bottom: `${placement.yPercent}%`,
-                  width: `${placement.widthPercent}%`,
-                  height: `${placement.heightPercent}%`,
-                  boxSizing: "border-box",
-                  padding: "2px",
-                  borderRadius: "6px",
-                  border: "2px dashed #059669",
-                  backgroundColor: "rgba(255, 255, 255, 0.92)",
-                  boxShadow: "0 4px 12px rgba(5, 150, 105, 0.25)",
-                  cursor: "move",
-                  touchAction: "none",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: isDraggingRef.current ? "none" : "box-shadow 0.15s ease",
-                  zIndex: 10,
-                }}
-              >
+              {/* Selo Arrastável de Assinatura */}
+              {showStamp && (
                 <div
+                  onPointerDown={handlePointerDownDrag}
+                  onPointerMove={handlePointerMoveDrag}
+                  onPointerUp={handlePointerUpDrag}
+                  onPointerCancel={handlePointerUpDrag}
                   style={{
                     position: "absolute",
-                    bottom: "100%",
-                    width: "100%",
+                    left: `${placement.xPercent}%`,
+                    bottom: `${placement.yPercent}%`,
+                    width: `${placement.widthPercent}%`,
+                    height: `${placement.heightPercent}%`,
+                    boxSizing: "border-box",
+                    padding: "2px",
+                    borderRadius: "6px",
+                    border: "2px dashed #059669",
+                    backgroundColor: "rgba(255, 255, 255, 0.92)",
+                    boxShadow: "0 4px 12px rgba(5, 150, 105, 0.25)",
+                    cursor: "move",
+                    touchAction: "none",
                     display: "flex",
+                    flexDirection: "column",
                     alignItems: "center",
-                    justifyContent: "space-between",
-                    fontSize: "0.65rem",
-                    color: "#059669",
-                    fontWeight: 700,
-                    marginBottom: "2px",
+                    justifyContent: "center",
+                    transition: isDraggingRef.current ? "none" : "box-shadow 0.15s ease",
+                    zIndex: 10,
                   }}
                 >
-                  <span>{translate("sign.previewBadge")}</span>
-                  <GripHorizontal size={12} />
-                </div>
-
-                {signaturePreviewUrl ? (
-                  <img
-                    src={signaturePreviewUrl}
-                    alt={translate("sign.signatureImageAlt")}
-                    style={{
-                      minHeight: 0,
-                      flex: 1,
-                      height: "100%",
-                      width: "100%",
-                      maxWidth: "100%",
-                      objectFit: "contain",
-                      display: "block",
-                      pointerEvents: "none",
-                    }}
-                  />
-                ) : (
                   <div
                     style={{
-                      height: "36px",
+                      position: "absolute",
+                      bottom: "100%",
+                      width: "100%",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "center",
-                      color: "#94a3b8",
-                      fontSize: "0.75rem",
-                      fontStyle: "italic",
-                    }}
-                  >
-                    {translate("sign.tabDraw")}...
-                  </div>
-                )}
-
-                {signerName.trim() && (
-                  <div
-                    style={{
-                      fontSize: "0.68rem",
+                      justifyContent: "space-between",
+                      fontSize: "0.65rem",
+                      color: "#059669",
                       fontWeight: 700,
-                      color: "#1e293b",
-                      marginTop: "2px",
-                      textAlign: "center",
-                      width: "100%",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      marginBottom: "2px",
                     }}
                   >
-                    {signerName}
+                    <span>{translate("sign.previewBadge")}</span>
+                    <GripHorizontal size={12} />
                   </div>
-                )}
 
-                {includeDate && (
-                  <div
-                    style={{
-                      fontSize: "0.62rem",
-                      color: "#64748b",
-                      textAlign: "center",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "2px",
-                    }}
-                  >
-                    <Calendar size={10} />
-                    <span>{todayFormatted}</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                  {signaturePreviewUrl ? (
+                    <img
+                      src={signaturePreviewUrl}
+                      alt={translate("sign.signatureImageAlt")}
+                      style={{
+                        minHeight: 0,
+                        flex: 1,
+                        height: "100%",
+                        width: "100%",
+                        maxWidth: "100%",
+                        objectFit: "contain",
+                        display: "block",
+                        pointerEvents: "none",
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        height: "36px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#94a3b8",
+                        fontSize: "0.75rem",
+                        fontStyle: "italic",
+                      }}
+                    >
+                      {translate("sign.tabDraw")}...
+                    </div>
+                  )}
+
+                  {signerName.trim() && (
+                    <div
+                      style={{
+                        fontSize: "0.68rem",
+                        fontWeight: 700,
+                        color: "#1e293b",
+                        marginTop: "2px",
+                        textAlign: "center",
+                        width: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {signerName}
+                    </div>
+                  )}
+
+                  {includeDate && (
+                    <div
+                      style={{
+                        fontSize: "0.62rem",
+                        color: "#64748b",
+                        textAlign: "center",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "2px",
+                      }}
+                    >
+                      <Calendar size={10} />
+                      <span>{todayFormatted}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </PdfViewport>
 
           <div style={{ marginTop: "0.6rem", textAlign: "center" }}>
             <span className="ilovepdf-file-card-name" title={fileName}>

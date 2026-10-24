@@ -1,7 +1,8 @@
-import { ChevronLeft, ChevronRight, Crop, Info, Layers, RefreshCcw } from "lucide-react";
+import { Crop, Info, Layers, RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { translate } from "@/i18n";
 import type { CropMargins } from "@/platform/pdf-engine";
+import { PdfViewport } from "./PdfViewport";
 
 export interface CropPdfPanelProps {
   readonly fileName: string;
@@ -72,194 +73,142 @@ export function CropPdfPanel({
           className="ilovepdf-file-card-center"
           style={{ width: "100%", maxWidth: "var(--workspace-page-width, 860px)" }}
         >
-          {/* Navegação entre páginas */}
-          {totalPages > 1 && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.75rem",
-                marginBottom: "0.75rem",
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage <= 1}
-                aria-label={translate("crop.previousPage")}
-                style={{
-                  padding: "0.3rem 0.5rem",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  background: "#fff",
-                  cursor: currentPage <= 1 ? "not-allowed" : "pointer",
-                  opacity: currentPage <= 1 ? 0.5 : 1,
-                  display: "inline-flex",
-                  alignItems: "center",
-                }}
-              >
-                <ChevronLeft size={16} />
-              </button>
-
-              <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569" }}>
-                {translate("crop.pageNavigation")} {currentPage} {translate("crop.of")} {totalPages}
-              </span>
-
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage >= totalPages}
-                aria-label={translate("crop.nextPage")}
-                style={{
-                  padding: "0.3rem 0.5rem",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  background: "#fff",
-                  cursor: currentPage >= totalPages ? "not-allowed" : "pointer",
-                  opacity: currentPage >= totalPages ? 0.5 : 1,
-                  display: "inline-flex",
-                  alignItems: "center",
-                }}
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          )}
-
           {/* Área da folha com as margens de recorte visuais */}
-          <div
-            className="ilovepdf-file-thumb-wrapper"
-            style={{
-              position: "relative",
-              overflow: "hidden",
-              borderRadius: "8px",
-              boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-              backgroundColor: "#ffffff",
-              border: "1px solid #e2e8f0",
-              width: "100%",
-              maxWidth: "100%",
-              marginInline: "auto",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {currentThumb ? (
-              <img
-                src={currentThumb}
-                alt={translate("crop.pageAlt")
-                  .replace("{page}", String(currentPage))
-                  .replace("{name}", fileName)}
-                className="ilovepdf-file-thumb-img"
-                style={{
-                  maxHeight: "none",
-                  height: "auto",
-                  maxWidth: "100%",
-                  width: "100%",
-                  objectFit: "contain",
-                  display: "block",
-                }}
-              />
-            ) : (
-              <div className="ilovepdf-file-thumb-placeholder" style={{ minHeight: "360px" }}>
-                <Crop size={42} style={{ color: "#ea580c", opacity: 0.6 }} />
-                <span style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "#64748b" }}>
-                  Página {currentPage}
-                </span>
-              </div>
-            )}
-
-            {/* Cortinas escuras (área cortada / descartada) */}
-            {/* Top Cut */}
+          <PdfViewport page={currentPage} pageCount={totalPages} onPageChange={setCurrentPage}>
             <div
+              className="ilovepdf-file-thumb-wrapper"
               style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                height: `${margins.top}%`,
-                backgroundColor: "rgba(15, 23, 42, 0.6)",
-                backdropFilter: "blur(1px)",
-                transition: "height 0.1s ease-out",
-                pointerEvents: "none",
-              }}
-            />
-            {/* Bottom Cut */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: `${margins.bottom}%`,
-                backgroundColor: "rgba(15, 23, 42, 0.6)",
-                backdropFilter: "blur(1px)",
-                transition: "height 0.1s ease-out",
-                pointerEvents: "none",
-              }}
-            />
-            {/* Left Cut */}
-            <div
-              style={{
-                position: "absolute",
-                top: `${margins.top}%`,
-                bottom: `${margins.bottom}%`,
-                left: 0,
-                width: `${margins.left}%`,
-                backgroundColor: "rgba(15, 23, 42, 0.6)",
-                backdropFilter: "blur(1px)",
-                transition: "all 0.1s ease-out",
-                pointerEvents: "none",
-              }}
-            />
-            {/* Right Cut */}
-            <div
-              style={{
-                position: "absolute",
-                top: `${margins.top}%`,
-                bottom: `${margins.bottom}%`,
-                right: 0,
-                width: `${margins.right}%`,
-                backgroundColor: "rgba(15, 23, 42, 0.6)",
-                backdropFilter: "blur(1px)",
-                transition: "all 0.1s ease-out",
-                pointerEvents: "none",
-              }}
-            />
-
-            {/* Retângulo de corte central com contorno brilhante */}
-            <div
-              style={{
-                position: "absolute",
-                top: `${margins.top}%`,
-                bottom: `${margins.bottom}%`,
-                left: `${margins.left}%`,
-                right: `${margins.right}%`,
-                border: "2px dashed #ea580c",
-                boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.7) inset",
-                pointerEvents: "none",
+                position: "relative",
+                overflow: "hidden",
+                borderRadius: "8px",
+                boxShadow:
+                  "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                backgroundColor: "#ffffff",
+                border: "1px solid #e2e8f0",
+                width: "100%",
+                maxWidth: "100%",
+                marginInline: "auto",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                transition: "all 0.1s ease-out",
               }}
             >
+              {currentThumb ? (
+                <img
+                  src={currentThumb}
+                  alt={translate("crop.pageAlt")
+                    .replace("{page}", String(currentPage))
+                    .replace("{name}", fileName)}
+                  className="ilovepdf-file-thumb-img"
+                  style={{
+                    maxHeight: "none",
+                    height: "auto",
+                    maxWidth: "100%",
+                    width: "100%",
+                    objectFit: "contain",
+                    display: "block",
+                  }}
+                />
+              ) : (
+                <div className="ilovepdf-file-thumb-placeholder" style={{ minHeight: "360px" }}>
+                  <Crop size={42} style={{ color: "#ea580c", opacity: 0.6 }} />
+                  <span style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "#64748b" }}>
+                    Página {currentPage}
+                  </span>
+                </div>
+              )}
+
+              {/* Cortinas escuras (área cortada / descartada) */}
+              {/* Top Cut */}
               <div
                 style={{
-                  backgroundColor: "rgba(234, 88, 12, 0.9)",
-                  color: "#ffffff",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  padding: "3px 8px",
-                  borderRadius: "4px",
-                  letterSpacing: "0.03em",
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: `${margins.top}%`,
+                  backgroundColor: "rgba(15, 23, 42, 0.6)",
+                  backdropFilter: "blur(1px)",
+                  transition: "height 0.1s ease-out",
+                  pointerEvents: "none",
+                }}
+              />
+              {/* Bottom Cut */}
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: `${margins.bottom}%`,
+                  backgroundColor: "rgba(15, 23, 42, 0.6)",
+                  backdropFilter: "blur(1px)",
+                  transition: "height 0.1s ease-out",
+                  pointerEvents: "none",
+                }}
+              />
+              {/* Left Cut */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: `${margins.top}%`,
+                  bottom: `${margins.bottom}%`,
+                  left: 0,
+                  width: `${margins.left}%`,
+                  backgroundColor: "rgba(15, 23, 42, 0.6)",
+                  backdropFilter: "blur(1px)",
+                  transition: "all 0.1s ease-out",
+                  pointerEvents: "none",
+                }}
+              />
+              {/* Right Cut */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: `${margins.top}%`,
+                  bottom: `${margins.bottom}%`,
+                  right: 0,
+                  width: `${margins.right}%`,
+                  backgroundColor: "rgba(15, 23, 42, 0.6)",
+                  backdropFilter: "blur(1px)",
+                  transition: "all 0.1s ease-out",
+                  pointerEvents: "none",
+                }}
+              />
+
+              {/* Retângulo de corte central com contorno brilhante */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: `${margins.top}%`,
+                  bottom: `${margins.bottom}%`,
+                  left: `${margins.left}%`,
+                  right: `${margins.right}%`,
+                  border: "2px dashed #ea580c",
+                  boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.7) inset",
+                  pointerEvents: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.1s ease-out",
                 }}
               >
-                {visibleWidthPercent}% × {visibleHeightPercent}%
+                <div
+                  style={{
+                    backgroundColor: "rgba(234, 88, 12, 0.9)",
+                    color: "#ffffff",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    padding: "3px 8px",
+                    borderRadius: "4px",
+                    letterSpacing: "0.03em",
+                  }}
+                >
+                  {visibleWidthPercent}% × {visibleHeightPercent}%
+                </div>
               </div>
             </div>
-          </div>
+          </PdfViewport>
 
           <div style={{ marginTop: "0.75rem", textAlign: "center" }}>
             <span className="ilovepdf-file-card-name" title={fileName}>

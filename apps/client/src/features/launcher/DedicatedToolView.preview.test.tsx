@@ -33,7 +33,8 @@ it("descarta miniaturas enfileiradas quando a ferramenta é desmontada", async (
       }),
   );
   const file = new File(["PDF sintético"], "documento.pdf", { type: "application/pdf" });
-  Object.defineProperty(file, "arrayBuffer", { value: async () => new ArrayBuffer(0) });
+  const readSource = vi.fn(async () => new ArrayBuffer(0));
+  Object.defineProperty(file, "arrayBuffer", { value: readSource });
   const tool = launcherTools.find((item) => item.id === "pdf-organize");
   if (!tool) throw new Error("Ferramenta ausente");
   const view = render(
@@ -47,9 +48,11 @@ it("descarta miniaturas enfileiradas quando a ferramenta é desmontada", async (
   fireEvent.click(await screen.findByRole("button", { name: "Página 49" }));
   fireEvent.click(screen.getByRole("button", { name: "Página 50" }));
   await waitFor(() => expect(renderPdfPageToDataUrl).toHaveBeenCalledTimes(1));
+  const readsBeforeUnmount = readSource.mock.calls.length;
   view.unmount();
   await act(async () => {
     finish("data:image/png;base64,BBBB");
   });
   expect(renderPdfPageToDataUrl).toHaveBeenCalledTimes(1);
+  expect(readSource).toHaveBeenCalledTimes(readsBeforeUnmount);
 });

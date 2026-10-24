@@ -7,6 +7,10 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 
 ### Modificado
 
+- Mesas de PDF com navegação, salto de página, zoom de 50–300% e ajuste à largura compartilhados
+  em oito ferramentas. Prévias limitadas e canceláveis; zoom preserva opções e coordenadas de
+  exportação. Corrigida a oclusão de controles na mesa de PDF para Markdown.
+
 - Resultados de imagem com antes/depois, dimensões, formatos e bytes reais por arquivo; totais do
   lote separados do ZIP. Perfis PNG descrevem esforço sem perdas e JPEG informa fundo branco.
   AVIF avaliado externamente, ainda condicionado à homologação e sem nova dependência de runtime.

@@ -25,6 +25,7 @@ import { validateComposition } from "./image-composition-state";
 import type { ImageCompositionSnapshot } from "./image-composition-types";
 import type { WatermarkPosition } from "./image-engine";
 import { processImage } from "./image-processing";
+import { type ImageResultItem, inspectImageResult } from "./image-results";
 import { performBrowserPdfComparison } from "./pdf-comparison-client";
 import type { PdfComparisonProgress, PdfComparisonResult } from "./pdf-comparison-types";
 import { reviseBrowserPdf } from "./pdf-editor-client";
@@ -189,6 +190,7 @@ export interface LauncherToolInput {
 }
 
 export interface LauncherToolOutput {
+  readonly imageResults?: readonly ImageResultItem[];
   readonly editorRevision?: EditorRevision;
   readonly comparison?: PdfComparisonResult;
   readonly blob: Blob;
@@ -259,6 +261,16 @@ async function executePdfWithCore(
   throw new Error("TOOL_UNAVAILABLE");
 }
 
+async function imageToolOutput(
+  source: File,
+  blob: Blob,
+  fileName: string,
+  signal?: AbortSignal,
+): Promise<LauncherToolOutput> {
+  const item = await inspectImageResult(source, blob, fileName, signal);
+  return { blob, fileName, categoryKey: "recent.type.document", imageResults: [item] };
+}
+
 async function executeTool(
   documentCore: DocumentCorePort,
   request: ToolRunRequest,
@@ -290,6 +302,7 @@ async function executeTool(
       }
     }
     const entries: { name: string; data: Uint8Array }[] = [];
+    const imageResults: ImageResultItem[] = [];
     for (const [index, file] of input.files.entries()) {
       const result = await executeTool(documentCore, {
         ...request,
@@ -300,6 +313,12 @@ async function executeTool(
         128 * 1024 * 1024
       )
         throw new Error("LOTE_IMAGEM_MUITO_GRANDE");
+      imageResults.push(
+        ...(result.imageResults ?? []).map((item) => ({
+          ...item,
+          outputName: `${index + 1}_${item.outputName}`,
+        })),
+      );
       entries.push({
         name: `${index + 1}_${result.fileName}`,
         data: new Uint8Array(await result.blob.arrayBuffer()),
@@ -309,6 +328,7 @@ async function executeTool(
     if (input.imageSignal?.aborted) throw new Error("OPERACAO_CANCELADA");
     return {
       blob: new Blob([createZipArchive(entries) as BlobPart], { type: "application/zip" }),
+      imageResults,
       fileName: "imagens_processadas.zip",
       categoryKey: "recent.type.document",
     };
@@ -1119,11 +1139,12 @@ async function executeTool(
           : compressedBlob.type === "image/webp"
             ? "webp"
             : "jpg";
-      return {
-        blob: compressedBlob,
-        fileName: `${baseName}_comprimido.${ext}`,
-        categoryKey: "recent.type.document",
-      };
+      return imageToolOutput(
+        first,
+        compressedBlob,
+        `${baseName}_comprimido.${ext}`,
+        input.imageSignal,
+      );
     }
     case "image-resize": {
       if (!first) throw new Error("INVALID_INPUT");
@@ -1143,11 +1164,7 @@ async function executeTool(
         input.imageSignal,
       );
       const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
-      return {
-        blob,
-        fileName: `${baseName}_redimensionado.${ext}`,
-        categoryKey: "recent.type.document",
-      };
+      return imageToolOutput(first, blob, `${baseName}_redimensionado.${ext}`, input.imageSignal);
     }
     case "image-crop": {
       if (!first) throw new Error("INVALID_INPUT");
@@ -1165,11 +1182,7 @@ async function executeTool(
         input.imageSignal,
       );
       const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
-      return {
-        blob,
-        fileName: `${baseName}_recortado.${ext}`,
-        categoryKey: "recent.type.document",
-      };
+      return imageToolOutput(first, blob, `${baseName}_recortado.${ext}`, input.imageSignal);
     }
     case "image-convert": {
       if (!first) throw new Error("INVALID_INPUT");
@@ -1186,11 +1199,7 @@ async function executeTool(
         input.imageSignal,
       );
       const ext = targetFormat === "jpeg" ? "jpg" : targetFormat;
-      return {
-        blob,
-        fileName: `${baseName}.${ext}`,
-        categoryKey: "recent.type.document",
-      };
+      return imageToolOutput(first, blob, `${baseName}.${ext}`, input.imageSignal);
     }
     case "image-rotate": {
       if (!first) throw new Error("INVALID_INPUT");
@@ -1207,11 +1216,7 @@ async function executeTool(
         input.imageSignal,
       );
       const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
-      return {
-        blob,
-        fileName: `${baseName}_girado.${ext}`,
-        categoryKey: "recent.type.document",
-      };
+      return imageToolOutput(first, blob, `${baseName}_girado.${ext}`, input.imageSignal);
     }
     case "image-watermark": {
       if (!first) throw new Error("INVALID_INPUT");
@@ -1234,11 +1239,7 @@ async function executeTool(
         input.imageSignal,
       );
       const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
-      return {
-        blob,
-        fileName: `${baseName}_marca_dagua.${ext}`,
-        categoryKey: "recent.type.document",
-      };
+      return imageToolOutput(first, blob, `${baseName}_marca_dagua.${ext}`, input.imageSignal);
     }
     default:
       throw new Error("TOOL_UNAVAILABLE");

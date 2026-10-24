@@ -9,7 +9,18 @@ const engine = vi.hoisted(() => vi.fn<(job: ImageJob, signal?: AbortSignal) => P
 vi.mock("@/platform/image-processing", () => ({ processImage: engine }));
 vi.mock("@/platform/image-engine", async () => ({
   ...(await vi.importActual<typeof import("@/platform/image-engine")>("@/platform/image-engine")),
-  getImageMetadata: async () => ({ width: 96, height: 48, mimeType: "image/png", sizeBytes: 8 }),
+  getImageMetadata: async (blob: Blob) => ({
+    width: 96,
+    height: 48,
+    mimeType: "image/png",
+    sizeBytes: blob.size,
+  }),
+  getGeneratedImageMetadata: async (blob: Blob) => ({
+    width: 48,
+    height: 96,
+    mimeType: "image/png",
+    sizeBytes: blob.size,
+  }),
 }));
 afterEach(() => {
   engine.mockReset();

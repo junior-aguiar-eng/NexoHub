@@ -7,6 +7,9 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 
 ### Modificado
 
+- Resultados de imagem com antes/depois, dimensões, formatos e bytes reais por arquivo; totais do
+  lote separados do ZIP. Perfis PNG descrevem esforço sem perdas e JPEG informa fundo branco.
+  AVIF avaliado externamente, ainda condicionado à homologação e sem nova dependência de runtime.
 - Composição avançada dentro da marca d’água de imagens, com textos, formas, imagens, ordem e
   desfazer/refazer. Prévia e PNG exportado usam o mesmo renderizador local; importações pendentes
   bloqueiam a execução. Fluxo rápido e codecs existentes preservados.

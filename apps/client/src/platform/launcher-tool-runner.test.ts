@@ -632,6 +632,20 @@ describe("Tool Runner do Launcher", () => {
           type: job.kind === "convert" ? "image/webp" : "image/png",
         }),
     );
+    const metadata = vi.spyOn(imageEngine, "getImageMetadata").mockImplementation(async (blob) => ({
+      width: 200,
+      height: 200,
+      sizeBytes: blob instanceof Blob ? blob.size : blob.byteLength,
+      mimeType: blob instanceof Blob ? blob.type : "image/png",
+    }));
+    const generatedMetadata = vi
+      .spyOn(imageEngine, "getGeneratedImageMetadata")
+      .mockImplementation(async (blob) => ({
+        width: 200,
+        height: 200,
+        sizeBytes: blob.size,
+        mimeType: blob.type,
+      }));
     // Transporte é isolado aqui; codecs e pixels reais são verificados nos E2E.
     const compRes = await runLauncherTool(port, "image-compress", {
       ...input([testFile]),
@@ -694,5 +708,7 @@ describe("Tool Runner do Launcher", () => {
     expect(batch.blob.type).toBe("application/zip");
     expect(process).toHaveBeenCalledTimes(8);
     process.mockRestore();
+    metadata.mockRestore();
+    generatedMetadata.mockRestore();
   });
 });

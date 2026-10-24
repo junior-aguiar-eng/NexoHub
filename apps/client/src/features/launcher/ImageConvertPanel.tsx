@@ -34,22 +34,22 @@ export function ImageConvertPanel({
       id: "jpeg",
       name: "JPG / JPEG",
       ext: ".jpg",
-      desc: "Excelente para fotos e ilustrações complexas. Menor tamanho de arquivo.",
-      badge: "Mais Popular",
+      desc: translate("imageConvert.jpegDescription"),
+      badge: translate("imageConvert.jpegBadge"),
     },
     {
       id: "png",
       name: "PNG",
       ext: ".png",
-      desc: "Preserva transparência de fundo e máxima nitidez de linhas e textos.",
-      badge: "Sem Perdas",
+      desc: translate("imageConvert.pngDescription"),
+      badge: translate("imageConvert.pngBadge"),
     },
     {
       id: "webp",
       name: "WebP",
       ext: ".webp",
-      desc: "Padrão moderno do Google: 30% menor que JPG e suporte a transparência.",
-      badge: "Recomendado Web",
+      desc: translate("imageConvert.webpDescription"),
+      badge: translate("imageConvert.webpBadge"),
     },
   ];
 
@@ -78,7 +78,7 @@ export function ImageConvertPanel({
               </span>
             )}
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 border border-blue-500/20 font-bold">
-              <span>Destino:</span>
+              <span>{translate("imageConvert.destination")}</span>
               <ArrowRight className="w-3 h-3" />
               <span>{targetFormat.toUpperCase()}</span>
             </span>
@@ -119,6 +119,9 @@ export function ImageConvertPanel({
         </div>
       </div>
 
+      {targetFormat === "jpeg" && (
+        <p className="image-processing-limits">{translate("imageConvert.whiteBackground")}</p>
+      )}
       {/* Controle de Qualidade para JPEG e WebP */}
       {targetFormat !== "png" && (
         <div className="bg-surface-raised p-5 rounded-2xl border border-border flex flex-col gap-3">

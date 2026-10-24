@@ -1423,10 +1423,29 @@ export const ptBR = {
   "tool.imageWatermark.tagline": "Sua assinatura visual, na posição certa.",
 
   // OPÇÕES - COMPRIMIR IMAGEM
+  "imageResults.title": "Resultado das imagens",
+  "imageResults.original": "Imagem original",
+  "imageResults.processed": "Imagem processada",
+  "imageResults.before": "Antes",
+  "imageResults.after": "Depois",
+  "imageResults.unchanged": "Tamanho mantido",
+  "imageResults.reduction": "Redução de {percent}%",
+  "imageResults.increase": "Aumento de {percent}%",
+  "imageResults.archive":
+    "Download ZIP: {bytes}. Os totais acima somam as imagens, sem o espaço do contêiner.",
+  "imageResults.note":
+    "Dimensões e tamanhos medidos nos arquivos reais. Converter ou editar pode aumentar o arquivo; tamanho não mede qualidade visual.",
+  "imageCompress.levelLabel": "Nível de compressão",
+  "imageCompress.pngTitle": "Otimização PNG sem perdas",
+  "imageCompress.pngFast": "Rápida",
+  "imageCompress.pngBalanced": "Equilibrada",
+  "imageCompress.pngIntensive": "Intensiva",
+  "imageCompress.pngEffort":
+    "Preserva os pixels. O esforço de otimização pode aumentar o tempo de processamento.",
   "imageCompress.pngHint":
-    "Em PNG, os pixels e as dimensões são preservados; o nível muda o esforço de otimização.",
+    "PNG é otimizado sem perdas e pode manter o tamanho original. Os perfis de JPG e WebP podem alterar a qualidade visual.",
   "imageCompress.levelRecommended": "Recomendada",
-  "imageCompress.levelRecommendedDesc": "Melhor relação entre compressão e qualidade visual.",
+  "imageCompress.levelRecommendedDesc": "Equilíbrio entre tamanho e qualidade visual.",
   "imageCompress.levelExtreme": "Extrema",
   "imageCompress.levelExtremeDesc": "Menor qualidade visual, máxima redução de tamanho.",
   "imageCompress.levelLess": "Baixa",
@@ -1471,6 +1490,18 @@ export const ptBR = {
   "imageCrop.actionRunning": "Recortando...",
 
   // OPÇÕES - CONVERTER IMAGEM
+  "imageConvert.jpegDescription":
+    "Adequado para fotos. Usa compressão com perdas e fundo branco nas áreas transparentes.",
+  "imageConvert.jpegBadge": "Fotografia",
+  "imageConvert.pngDescription":
+    "Preserva transparência e pixels decodificados, sem compressão com perdas. Pode gerar arquivos maiores.",
+  "imageConvert.pngBadge": "Sem perdas",
+  "imageConvert.webpDescription":
+    "Oferece compressão com perdas e transparência. O tamanho final depende da imagem e da qualidade escolhida.",
+  "imageConvert.webpBadge": "Para a web",
+  "imageConvert.destination": "Destino:",
+  "imageConvert.whiteBackground":
+    "JPG não aceita transparência. As áreas transparentes receberão fundo branco.",
   "imageConvert.format": "Formato de destino",
   "imageConvert.quality": "Qualidade de saída",
   "imageConvert.action": "Converter imagem",

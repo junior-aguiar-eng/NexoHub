@@ -97,3 +97,11 @@ como revisão atual. A imagem é atualizada ao soltar o gesto. Cores seguem os t
 Mesas de recorte/composição usam rolagem imediata do documento: o foco nos campos não deve
 manter uma animação de scroll enquanto o usuário arrasta. A área de edição deve estar visível
 sem oclusão pelo cabeçalho nos ensaios de mouse/toque.
+
+### Resultado das ferramentas de imagem (IM-C4)
+
+A ação de download aparece antes do relatório. O relatório usa largura máxima de 1200px,
+prévia original/processada em duas colunas com gap de 16px; abaixo de 520px, empilha as imagens.
+Registros por arquivo exibem bytes, formato e dimensões reais; o ZIP é separado dos totais
+de imagens. Quebrar nomes e ações no móvel, preservando alvos de 44px. Economia é uma medida
+do resultado, nunca uma promessa; aumentos e pequenas variações conservam o sinal real.

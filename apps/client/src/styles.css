@@ -10581,3 +10581,127 @@ html:has(.image-crop-editor),
 html:has(.image-composition-panel) {
   scroll-behavior: auto;
 }
+
+.dedicated-tool-page--image-results .ilovepdf-success-stage {
+  max-width: 1200px;
+  width: 100%;
+}
+.image-export-results {
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface-raised);
+}
+.image-export-results h2 {
+  font-size: 20px;
+  margin: 0 0 12px;
+  color: var(--color-ink);
+}
+.image-export-totals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-ink);
+}
+.image-export-totals span {
+  color: var(--color-ink-muted);
+}
+.image-export-note {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-ink-muted);
+}
+.image-export-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.image-export-comparison figure {
+  margin: 0;
+  min-width: 0;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.image-export-comparison img {
+  display: block;
+  width: 100%;
+  height: 320px;
+  object-fit: contain;
+  background-image: conic-gradient(
+    #80808030 25%,
+    transparent 0 50%,
+    #80808030 0 75%,
+    transparent 0
+  );
+  background-size: 20px 20px;
+}
+.image-export-comparison figcaption {
+  padding: 12px;
+  color: var(--color-ink);
+  font-size: 14px;
+}
+.image-export-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 0;
+  display: grid;
+  gap: 12px;
+}
+.image-export-list li {
+  min-width: 0;
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+}
+.image-export-list h3,
+.image-export-list p {
+  overflow-wrap: anywhere;
+  white-space: normal;
+  font-size: 14px;
+  margin: 0 0 8px;
+  color: var(--color-ink);
+}
+.image-export-list dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 0 8px;
+}
+.image-export-list dt {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-ink);
+}
+.image-export-list dd {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-ink-muted);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 519px) {
+  .image-export-comparison {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .image-export-comparison img {
+    height: 240px;
+  }
+  .image-export-results {
+    padding: 16px;
+  }
+}
+.dedicated-tool-page--image-results .ilovepdf-success-actions {
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+}
+.dedicated-tool-page--image-results .ilovepdf-big-download-btn {
+  color: var(--color-on-brand, #fff);
+}

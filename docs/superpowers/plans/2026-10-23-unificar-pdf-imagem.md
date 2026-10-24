@@ -182,7 +182,7 @@ Implementado e validado. Evidências e limitações em [resultados](2026-10-23-u
 
 ## Fase de complementação — 24/10/2026
 
-**Estado:** IM-C1, IM-C2 e IM-C3 concluídos no website; IM-C4 planejado, adicional às etapas 1–6 concluídas. Aplicar as
+**Estado:** IM-C1–IM-C3 concluídos no website; núcleo de qualidade do IM-C4 entregue, AVIF condicionado à homologação adicional. Aplicar as
 [regras comuns](../../ROADMAP.md#regras-comuns-de-execução-e-aceite) e Q-C0 do plano de estabilização.
 As restrições de dependências da entrega original não significam adoção automática dos candidatos
 abaixo. Não refazer a identidade visual nem abrir outro plano de imagens.
@@ -252,6 +252,8 @@ Promise<Blob>`. Histórico guarda comandos, não cópias completas de imagens.
 
 ### IM-C4 — Formatos e qualidade de exportação, depois da interação
 
+**Estado:** resultados/perfis entregues; AVIF avaliado em prova externa, sem dependência ou anúncio no produto. Faltam dispositivos reais, corpus ampliado, memória e cadeia de licenças do codec.
+
 **Modificar:** `ImageCompressPanel.tsx`, `ImageConvertPanel.tsx`, `ImageResizePanel.tsx`,
 `ImageRotatePanel.tsx`, `ImageWatermarkPanel.tsx`, `platform/image-engine.ts`, `image-job.ts`,
 testes e `e2e/image-mode-quality.spec.ts`.
@@ -259,11 +261,11 @@ testes e `e2e/image-mode-quality.spec.ts`.
 - [ ] Comparar AVIF via [jSquash](https://github.com/jamsinclair/jSquash) com JPEG/WebP no corpus
   fotográfico de Q-C0: bytes, artefatos, tempo, pico de memória quando mensurável e dispositivos.
   Carregar codec só ao selecionar o formato; não anunciar AVIF até decode/encode passarem.
-- [ ] Expor antes/depois, dimensões e economia real; presets de tamanho/qualidade só se seus
+- [x] Expor antes/depois, dimensões e economia real; presets de tamanho/qualidade só se seus
   parâmetros produzirem comportamento distinto. PNG continua sem perdas; alpha→JPEG explícito.
-- [ ] Homologar rotação, espelhamento e marca no item selecionado e no lote, com os controles
+- [x] Homologar rotação, espelhamento e marca no item selecionado e no lote, com os controles
   acessíveis existentes. Metadados/ICC/HDR/animação permanecem limitados até prova específica.
-- [ ] Atualizar formatos, limites, licenças e testes; manter o caminho anterior caso o candidato
+- [x] Atualizar formatos, limites, licenças e testes; manter o caminho anterior caso o candidato
   não melhore qualidade/capacidade ou exceda o orçamento definido em Q-C0.
 
 **Fora desta fase:** TOAST UI arquivado; Filerobot beta como dependência automática; adoção
@@ -312,7 +314,7 @@ no navegador. Fontes da triagem: repositórios vinculados e metadados npm consul
 - Novas 12 licenças MIT conferidas nos pacotes instalados; auditoria de vulnerabilidades com
   zero ocorrências. Gate global de licenças não concluído por índice ausente no store e Cargo
   indisponível; detalhes em `IMAGE-WEB-QUALITY.md`. Não declarar esse gate aprovado.
-- IM-C2 permanece local, sem commit/push/deploy implícitos. IM-C3 entregue no registro seguinte; IM-C4 permanece planejado.
+- IM-C2 posteriormente commitado com IM-C3 em `fbd464b`, sem push/deploy; entregas posteriores nos registros seguintes.
 
 
 ### Registro da terceira entrega complementar — IM-C3
@@ -343,4 +345,26 @@ no navegador. Fontes da triagem: repositórios vinculados e metadados npm consul
   observados, hipóteses e limites em `IMAGE-WEB-QUALITY.md`.
 - Licenças novas MIT/OFL conferidas e distribuídas no build; audit de produção sem vulnerabilidades.
   Gate global de licenças continua bloqueado pelo ambiente, sem declaração de aprovação.
-- IM-C2 e IM-C3 mantidos locais, sem commit/push/deploy implícitos. IM-C4 permanece planejado.
+- IM-C2 e IM-C3 commitados em `fbd464b` por instrução explícita; sem push/deploy. IM-C4 no registro seguinte.
+
+
+### Registro da quarta entrega complementar — IM-C4
+
+- Preservado o checkpoint `fbd464b`, branch `fix/auditoria-website`. Commit desta entrega
+  autorizado posteriormente pelo usuário; sem push/deploy.
+- Antes/depois real, dimensões/formatos/bytes por arquivo, aumentos e reduções sem confundir
+  payload de imagem com o ZIP. Download principal acima das prévias; layout responsivo.
+- PNG mantém seus três níveis reais de esforço com rótulos sem promessa de mudança de qualidade;
+  JPEG/WebP preservados. Conversão informa transparência→branco e remove promessa fixa de economia.
+- Prova AVIF 2.1.1 em duas fotos CC0 e estresse ampliado de 24MP registrada em
+  `IMAGE-WEB-QUALITY.md` e `docs/benchmarks/2026-10-24-imc4-avif.json`. AVIF não foi instalado
+  no runtime: homologação de dispositivos/corpus/alpha/memória/licenças upstream permanece pendente.
+- Revisão única: percentual arredondado podia informar “mantido” apesar de bytes diferentes.
+  Reproduzido com dois testes e corrigido pelo delta real, com `<0,1%` quando necessário.
+- Guard adicional: metadados de saída não reaplicam o limite de 64 MiB de importação a PNGs gerados
+  maiores; teste de 65 MiB preserva o bloqueio na entrada e libera somente inspeção de saída.
+
+- Validação final: 598 testes unitários (535 client), 196 E2E aprovados/5 restritos à subpasta,
+  66 E2E em `/hub/`, lint, tipagem e builds aprovados. Contraste do download no tema escuro
+  reproduzido após estabilizar a transição e corrigido com o token `--color-on-brand`.
+  Capturas em 390/768/1024/1440 px sem overflow externo; tema escuro conferido.

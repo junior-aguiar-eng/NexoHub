@@ -82,7 +82,7 @@ As ferramentas abaixo compõem o catálogo visual planejado ou dependem de decis
 ## 5. Complementação das ferramentas atuais
 
 Índice dos planos responsáveis, adicionado em 24/10/2026. O estado de cada complemento consta
-no roadmap e no responsável; IM-C1, IM-C2 e IM-C3 foram entregues no website. Os complementos não alteram a
+no roadmap e no responsável; IM-C1–IM-C3 e a qualidade de exportação do IM-C4 foram entregues no website; AVIF segue condicionado. Os complementos não alteram a
 contagem de 34 ferramentas nem indicam homologação adicional de desktop/HTTP.
 Ordem e critérios comuns: [roadmap](ROADMAP.md#complementação-das-ferramentas-atuais--24102026).
 O checklist vive apenas no plano responsável, não nesta matriz.

@@ -139,9 +139,10 @@ function detectMimeType(bytes: Uint8Array): string {
 }
 async function toBlob(
   input: File | Blob | Uint8Array,
+  maxBytes = MAX_IMAGE_BYTES,
 ): Promise<{ blob: Blob; mimeType: string; sizeBytes: number }> {
   if (input instanceof Blob) {
-    if (!input.size || input.size > MAX_IMAGE_BYTES) throw new Error("IMAGEM_MUITO_GRANDE");
+    if (!input.size || input.size > maxBytes) throw new Error("IMAGEM_MUITO_GRANDE");
     const mimeType = detectMimeType(new Uint8Array(await input.slice(0, 32).arrayBuffer()));
     return {
       blob: input.type === mimeType ? input : input.slice(0, input.size, mimeType),
@@ -156,8 +157,8 @@ async function toBlob(
     sizeBytes: input.byteLength,
   };
 }
-async function validateImage(blob: Blob) {
-  if (!blob.size || blob.size > MAX_IMAGE_BYTES) throw new Error("IMAGEM_MUITO_GRANDE");
+async function validateImage(blob: Blob, maxBytes = MAX_IMAGE_BYTES) {
+  if (!blob.size || blob.size > maxBytes) throw new Error("IMAGEM_MUITO_GRANDE");
   const bytes = new Uint8Array(await blob.arrayBuffer());
   const mime = detectMimeType(bytes);
   // PNG animado e WebP animado não podem ser achatados silenciosamente.
@@ -182,13 +183,19 @@ async function validateImage(blob: Blob) {
     }
   }
 }
-export async function loadImageElement(blob: Blob): Promise<{
+export function loadImageElement(blob: Blob) {
+  return loadImage(blob, MAX_IMAGE_BYTES);
+}
+async function loadImage(
+  blob: Blob,
+  maxBytes: number,
+): Promise<{
   element: HTMLImageElement | ImageBitmap;
   width: number;
   height: number;
   close: () => void;
 }> {
-  await validateImage(blob);
+  await validateImage(blob, maxBytes);
   if (typeof createImageBitmap === "function") {
     // Falha de decode não deve produzir uma imagem fictícia nem disparar nova alocação.
     const bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" });
@@ -285,9 +292,19 @@ async function encodeCanvas(canvas: ImageCanvas, mime: string, quality: number):
 /**
  * Obtém metadados reais da imagem (largura, altura, mimeType, tamanho em bytes).
  */
-export async function getImageMetadata(input: File | Blob | Uint8Array): Promise<ImageMetadata> {
-  const { blob, mimeType, sizeBytes } = await toBlob(input);
-  const loaded = await loadImageElement(blob);
+export function getImageMetadata(input: File | Blob | Uint8Array): Promise<ImageMetadata> {
+  return inspectImageMetadata(input, MAX_IMAGE_BYTES);
+}
+/** Somente artefatos gerados pelo motor: PNG de 24 MP pode exceder os 64 MiB de entrada. */
+export function getGeneratedImageMetadata(output: Blob): Promise<ImageMetadata> {
+  return inspectImageMetadata(output, 128 * 1024 * 1024);
+}
+async function inspectImageMetadata(
+  input: File | Blob | Uint8Array,
+  maxBytes: number,
+): Promise<ImageMetadata> {
+  const { blob, mimeType, sizeBytes } = await toBlob(input, maxBytes);
+  const loaded = await loadImage(blob, maxBytes);
   let canvas: ImageCanvas | undefined;
   try {
     return {

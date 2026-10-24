@@ -7,6 +7,7 @@ interface ImageCompressPanelProps {
   readonly fileSizeBytes: number;
   readonly dimensions?: { width: number; height: number };
   readonly thumbnailUrl?: string;
+  readonly losslessOnly?: boolean;
   readonly level: ImageCompressionLevel;
   readonly onLevelChange: (level: ImageCompressionLevel) => void;
 }
@@ -23,6 +24,7 @@ export function ImageCompressPanel({
   dimensions,
   thumbnailUrl,
   level,
+  losslessOnly = false,
   onLevelChange,
 }: ImageCompressPanelProps) {
   const options: Array<{
@@ -90,38 +92,51 @@ export function ImageCompressPanel({
 
       {/* Seleção do Nível de Compressão */}
       <div className="flex flex-col gap-3">
-        <span className="text-sm font-bold text-text-primary">Nível de Compressão</span>
-        <div className="image-format-options">
-          {options.map((opt) => {
-            const isSelected = level === opt.id;
-            const Icon = opt.icon;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => onLevelChange(opt.id)}
-                aria-pressed={isSelected}
-                className={`flex flex-col p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
-                  isSelected
-                    ? "bg-blue-600/10 border-blue-600 ring-2 ring-blue-600/30 text-text-primary"
-                    : "bg-surface-raised border-border hover:border-blue-500/50 hover:bg-surface-muted/60 text-text-secondary"
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Icon
-                    className={`w-4 h-4 shrink-0 ${isSelected ? "text-blue-600" : "text-text-muted"}`}
-                  />
-                  <span className="text-sm font-bold text-text-primary">
-                    {translate(opt.titleKey)}
-                  </span>
-                </div>
-                <p className="text-xs text-text-secondary leading-relaxed">
-                  {translate(opt.descKey)}
-                </p>
-              </button>
-            );
-          })}
-        </div>
+        <span className="text-sm font-bold text-text-primary">
+          {translate(losslessOnly ? "imageCompress.pngTitle" : "imageCompress.levelLabel")}
+        </span>
+        {(!losslessOnly ||
+          (typeof Worker !== "undefined" && typeof OffscreenCanvas !== "undefined")) && (
+          <div className="image-format-options">
+            {options.map((opt) => {
+              const isSelected = level === opt.id;
+              const Icon = opt.icon;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => onLevelChange(opt.id)}
+                  aria-pressed={isSelected}
+                  className={`flex flex-col p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
+                    isSelected
+                      ? "bg-blue-600/10 border-blue-600 ring-2 ring-blue-600/30 text-text-primary"
+                      : "bg-surface-raised border-border hover:border-blue-500/50 hover:bg-surface-muted/60 text-text-secondary"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon
+                      className={`w-4 h-4 shrink-0 ${isSelected ? "text-blue-600" : "text-text-muted"}`}
+                    />
+                    <span className="text-sm font-bold text-text-primary">
+                      {losslessOnly
+                        ? translate(
+                            opt.id === "less"
+                              ? "imageCompress.pngFast"
+                              : opt.id === "extreme"
+                                ? "imageCompress.pngIntensive"
+                                : "imageCompress.pngBalanced",
+                          )
+                        : translate(opt.titleKey)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-secondary leading-relaxed">
+                    {losslessOnly ? translate("imageCompress.pngEffort") : translate(opt.descKey)}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
       <p className="image-processing-limits">{translate("imageCompress.pngHint")}</p>
     </div>

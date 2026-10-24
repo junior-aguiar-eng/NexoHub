@@ -1,0 +1,159 @@
+{
+  "date": "2026-10-24",
+  "scope": "prova externa ao produto; AVIF não homologado nem instalado no runtime",
+  "runtime": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+  "codecs": {
+    "avif": {
+      "package": "@jsquash/avif",
+      "version": "2.1.1",
+      "declaredLicense": "Apache-2.0",
+      "tarSha256": "b6c6204b63f9cb17aac7d6ee92b8a4aeba2403dccd49ffc9a93b778923049b5b",
+      "options": {
+        "speed": 6,
+        "bitDepth": 8,
+        "subsample": 1
+      }
+    },
+    "jpeg": {
+      "package": "@jsquash/jpeg",
+      "version": "1.6.0"
+    },
+    "webp": {
+      "package": "@jsquash/webp",
+      "version": "1.5.0"
+    }
+  },
+  "corpus": [
+    {
+      "photo": "chelsea",
+      "sha256": "596aa1e7cb875eb79f437e310381d26b338a81c2da23439704a73c4651e8c4bb",
+      "license": "CC0",
+      "author": "Stefan van der Walt",
+      "url": "https://raw.githubusercontent.com/scikit-image/scikit-image/v0.19.3/skimage/data/chelsea.png"
+    },
+    {
+      "photo": "coffee",
+      "sha256": "cc02f8ca188b167c775a7101b5d767d1e71792cf762c33d6fa15a4599b5a8de7",
+      "license": "CC0",
+      "author": "Rachel Michetti",
+      "url": "https://raw.githubusercontent.com/scikit-image/scikit-image/v0.19.3/skimage/data/coffee.png"
+    }
+  ],
+  "licenseSource": "https://github.com/scikit-image/scikit-image/blob/v0.19.3/skimage/data/_fetchers.py",
+  "measurements": [
+    {
+      "photo": "chelsea",
+      "format": "jpeg",
+      "quality": 75,
+      "bytes": 15927,
+      "ms": 112.29999999998836,
+      "psnr": 35.421463596426136,
+      "width": 451,
+      "height": 300
+    },
+    {
+      "photo": "chelsea",
+      "format": "webp",
+      "quality": 75,
+      "bytes": 13714,
+      "ms": 63.40000000002328,
+      "psnr": 35.54737385805105,
+      "width": 451,
+      "height": 300
+    },
+    {
+      "photo": "chelsea",
+      "format": "avif",
+      "quality": 50,
+      "bytes": 8165,
+      "ms": 513.9000000000233,
+      "psnr": 34.60646595051441,
+      "width": 451,
+      "height": 300
+    },
+    {
+      "photo": "chelsea",
+      "format": "avif",
+      "quality": 70,
+      "bytes": 16722,
+      "ms": 470.6000000000349,
+      "psnr": 38.261181723673346,
+      "width": 451,
+      "height": 300
+    },
+    {
+      "photo": "coffee",
+      "format": "jpeg",
+      "quality": 75,
+      "bytes": 33174,
+      "ms": 80.5,
+      "psnr": 31.775025578188295,
+      "width": 600,
+      "height": 400
+    },
+    {
+      "photo": "coffee",
+      "format": "webp",
+      "quality": 75,
+      "bytes": 31288,
+      "ms": 69.5,
+      "psnr": 33.50376239195408,
+      "width": 600,
+      "height": 400
+    },
+    {
+      "photo": "coffee",
+      "format": "avif",
+      "quality": 50,
+      "bytes": 18309,
+      "ms": 760.7999999999884,
+      "psnr": 32.89205401775065,
+      "width": 600,
+      "height": 400
+    },
+    {
+      "photo": "coffee",
+      "format": "avif",
+      "quality": 70,
+      "bytes": 36770,
+      "ms": 654.5,
+      "psnr": 35.898564258515876,
+      "width": 600,
+      "height": 400
+    },
+    {
+      "photo": "coffee-upscale-stress-24MP",
+      "format": "jpeg",
+      "bytes": 733277,
+      "ms": 2384.6999999999534,
+      "psnr": 46.08787942499027,
+      "width": 6000,
+      "height": 4000
+    },
+    {
+      "photo": "coffee-upscale-stress-24MP",
+      "format": "webp",
+      "bytes": 437386,
+      "ms": 2464.7000000000116,
+      "psnr": 43.50647999321657,
+      "width": 6000,
+      "height": 4000
+    },
+    {
+      "photo": "coffee-upscale-stress-24MP",
+      "format": "avif",
+      "bytes": 169794,
+      "ms": 16248.999999999942,
+      "psnr": 43.058072193182625,
+      "width": 6000,
+      "height": 4000
+    }
+  ],
+  "limitations": [
+    "Parâmetros de qualidade não são equivalentes entre codecs. PSNR RGB de pixels decodificados não certifica qualidade perceptual.",
+    "ms inclui importação/inicialização do encoder e encode em worker novo; não inclui decode da entrada nem fila completa.",
+    "O ensaio 24MP é ampliação de coffee para 6000x4000, não fotografia original de sensor 24MP.",
+    "Sem medição confiável de pico de memória do navegador inteiro ou teste em hardware móvel real.",
+    "Sem homologação AVIF alpha/animação, ICC/HDR/metadados e cadeia completa de licenças upstream."
+  ]
+}

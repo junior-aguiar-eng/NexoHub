@@ -42,6 +42,80 @@ Os complementos (lotes, recorte com alças, composição e formatos) pertencem a
 [plano principal de PDF/Imagem](superpowers/plans/2026-10-23-unificar-pdf-imagem.md#fase-de-complementação--24102026).
 Esta página descreve o motor entregue; candidatos pesquisados não contam como capacidade instalada.
 
+## Complementação IM-C4 — resultados verificáveis e formatos
+
+**Entregue no website:** resultado com tamanho, formato e dimensões lidos dos arquivos reais
+nas seis ferramentas. Em arquivo único, prévias do original e da saída; no lote, registros por
+arquivo, com nomes únicos. Reduções e aumentos são apresentados sem estimativas: valores menores
+que 0,1% mantêm o sinal e aparecem como `<0,1%`, não como “tamanho mantido”.
+
+Os totais somam os bytes das imagens codificadas. O tamanho do ZIP aparece separadamente;
+o cabeçalho do contêiner não distorce a economia informada. O botão principal de download
+permanece acima do relatório, visível na primeira tela; ações de reinício quebram linha no móvel.
+
+A inspeção é sequencial e fecha cada bitmap antes da próxima leitura; linhas do relatório guardam
+metadados, não Blobs extras. Cancelamento é verificado entre as leituras e antes de publicar.
+Importação continua limitada a 64 MiB/arquivo e 24MP. A leitura exclusiva de saídas geradas aceita
+até 128 MiB, preservando PNGs válidos de 24MP que podem ultrapassar o limite de entrada. Isso não
+amplia os formatos nem o limite de importação; não há promessa de pico de memória certificado.
+
+### Perfis e transparência
+
+- JPEG/WebP preservam os níveis existentes: qualidade 88/72/50 (baixa/recomendada/extrema).
+  O E2E usa JPEG sintético com ruído determinístico e verifica saídas de tamanho distinto.
+- PNG preserva OxiPNG nos níveis de esforço 1/2/4, rotulados Rápida/Equilibrada/Intensiva, todos
+  sem perdas adicionais sobre os pixels decodificados. Os níveis não prometem pior/melhor qualidade
+  visual. Sem Worker/OffscreenCanvas, a escolha PNG sem efeito é ocultada; o fallback é preservado.
+- JPEG informa explicitamente o fundo branco nas áreas transparentes. PNG mantém transparência;
+  WebP descreve a compressão sem a antiga promessa universal de “30% menor que JPG”.
+- Formatos ativos continuam JPG/PNG/WebP. Metadados, ICC/HDR, animação e fidelidade de pré-impressão
+  não receberam homologação adicional nesta fase.
+
+### AVIF: prova técnica, ainda condicionado
+
+O pacote publicado `@jsquash/avif` 2.1.1 foi avaliado fora do produto, sem instalação de runtime.
+Foram usados dois originais fotográficos CC0 do scikit-image v0.19.3: **chelsea**, Stefan van der
+Walt, e **coffee**, Rachel Michetti, cortesia do Pikolo Espresso Bar. Créditos e ausência de
+restrições constam em [_fetchers.py](https://github.com/scikit-image/scikit-image/blob/v0.19.3/skimage/data/_fetchers.py).
+URLs, SHA-256, parâmetros, navegador e medições completas estão no [registro do ensaio](benchmarks/2026-10-24-imc4-avif.json).
+
+Prova em worker com AVIF 8 bits, speed 6, subsampling padrão, e decode nativo em Chromium 154
+Linux. Tempos incluem importação/inicialização e encode, não toda a fila. Qualidades de codecs
+são parâmetros diferentes: **não** representam fidelidade equivalente. PSNR RGB é auxiliar e não
+substitui avaliação perceptual. A comparação visual está em
+`/workspace/artifacts/complementacao-exportacao-2026-10-24/avif-corpus.png`.
+
+| Foto / codec | Qualidade | Bytes | Tempo observado | PSNR RGB |
+| --- | ---: | ---: | ---: | ---: |
+| chelsea JPEG | 75 | 15.927 | 112ms | 35,42dB |
+| chelsea WebP | 75 | 13.714 | 63ms | 35,55dB |
+| chelsea AVIF | 50 | 8.165 | 514ms | 34,61dB |
+| chelsea AVIF | 70 | 16.722 | 471ms | 38,26dB |
+| coffee JPEG | 75 | 33.174 | 81ms | 31,78dB |
+| coffee WebP | 75 | 31.288 | 70ms | 33,50dB |
+| coffee AVIF | 50 | 18.309 | 761ms | 32,89dB |
+| coffee AVIF | 70 | 36.770 | 655ms | 35,90dB |
+
+No estresse de 24MP (**ampliação** de coffee para 6000×4000, não captura nativa de sensor):
+JPEG 75 gerou 733.277 bytes em 2,38s; WebP 75, 437.386 em 2,46s; AVIF 50, 169.794 em 16,25s.
+O ganho de tamanho existe nesse ensaio, com mais CPU. Isso não prova que AVIF sempre será menor
+ou melhor, nem certifica 24MP fotográficos reais em dispositivos móveis.
+
+**Pendências para adotar AVIF:** cadeia completa de licenças upstream do WASM (além da licença
+Apache-2.0 declarada pelo wrapper), corpus maior/nativo, transparência e animação, pico de memória
+quando mensurável e dispositivos reais. AVIF permanece fora do seletor e das capacidades anunciadas.
+Sem nova dependência no produto; codecs e caminhos anteriores foram preservados.
+
+### Evidência da entrega
+
+Seis novos E2E conferem prévias, dimensões, aumentos, ZIP e perfis, além de rotação/espelhamento e
+marca rápida em todo o lote com outra prévia selecionada. Testes unitários cobrem agregação,
+percentuais pequenos e separação dos limites de entrada/saída gerada. O decoder do teste de limite
+é substituído porque jsdom não o implementa; codecs e pixels reais são conferidos nos E2E.
+A revisão independente foi concluída; arredondamento enganoso foi reproduzido em RED e corrigido
+em GREEN. O teste de cancelamento preservou suas asserções e passou a isolar também a nova leitura
+de metadados da sua fixture de transporte fictícia, sem enfraquecer a verificação de ciclo de vida.
+
 ## Complementação IM-C3 — composição por objetos
 
 O modo **Composição avançada** integra a ferramenta de marca d’água existente. O fluxo rápido
@@ -248,3 +322,8 @@ O inventário JavaScript de `THIRD_PARTY_LICENSES.md` foi atualizado com `pnpm l
 A auditoria global `licenses:check` também exige Cargo/Python; Cargo não está disponível nesta
 workspace, portanto não se declara essa verificação global aprovada.
 Avisos das bibliotecas e fontes dos codecs estão em `public/licenses/image-codecs/`.
+
+Validação final do IM-C4: 598 testes unitários, 196 E2E na raiz (5 exclusivos da subpasta),
+66 E2E em `/hub/`, lint, tipagem e builds aprovados. Capturas em quatro larguras sem overflow;
+contraste do download no tema escuro verificado após a transição. Gate global de licenças
+ainda bloqueado pelo índice pnpm ausente e Cargo indisponível, conforme registro anterior.

@@ -24,6 +24,7 @@ try {
         "image-batch.spec.ts",
         "image-crop-editor.spec.ts",
         "image-composition.spec.ts",
+        "image-export-report.spec.ts",
         "--workers=2",
       ],
       { cwd: root, stdio: "inherit", env: process.env },

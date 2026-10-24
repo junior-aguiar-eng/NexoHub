@@ -34,6 +34,7 @@ import {
   validateComposition,
 } from "@/platform/image-composition-state";
 import type { ImageCompressionLevel, WatermarkPosition } from "@/platform/image-engine";
+import { type ImageResultItem, summarizeImageResults } from "@/platform/image-results";
 import { runLauncherTool } from "@/platform/launcher-tool-runner";
 import {
   type CropMargins,
@@ -64,6 +65,7 @@ import { ImageCompressPanel } from "./ImageCompressPanel";
 import { ImageConvertPanel, type ImageTargetFormat } from "./ImageConvertPanel";
 import { type CropRatioPreset, ImageCropPanel } from "./ImageCropPanel";
 import { ImageResizePanel } from "./ImageResizePanel";
+import { ImageResultsPanel } from "./ImageResultsPanel";
 import { ImageRotatePanel } from "./ImageRotatePanel";
 import { ImagesToPdfPanel } from "./ImagesToPdfPanel";
 import { ImageWatermarkPanel } from "./ImageWatermarkPanel";
@@ -373,6 +375,7 @@ export function DedicatedToolView({
 
   // Resultado de Execução
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [imageResults, setImageResults] = useState<readonly ImageResultItem[]>([]);
   const [outputBlob, setOutputBlob] = useState<Blob | null>(null);
   const [outputFileName, setOutputFileName] = useState<string>("");
   const [compressionResult, setCompressionResult] = useState<{
@@ -1223,7 +1226,12 @@ export function DedicatedToolView({
       const outputBlob = output.blob;
       const outName = output.fileName;
       const categoryKey = output.categoryKey;
-      const resultSizeBytes = outputBlob.size;
+      const imageSummary = output.imageResults
+        ? summarizeImageResults(output.imageResults)
+        : undefined;
+      setImageResults(output.imageResults ?? []);
+      const resultSizeBytes =
+        tool.id === "image-compress" && imageSummary ? imageSummary.afterBytes : outputBlob.size;
       const totalOriginalBytes =
         tool.manifest.category === "image"
           ? files.reduce((total, file) => total + file.size, 0)
@@ -1338,6 +1346,7 @@ export function DedicatedToolView({
     setReviewedText("");
     setReviewFindings([]);
     setCompressionResult(null);
+    setImageResults([]);
   }
 
   async function handleSaveOutput() {
@@ -1942,6 +1951,10 @@ export function DedicatedToolView({
           thumbnailUrl={imagePreviewUrl ?? undefined}
           dimensions={imageOriginalDimensions ?? undefined}
           level={imageCompressionLevel}
+          losslessOnly={
+            imageBatch.entries.length > 0 &&
+            imageBatch.entries.every((entry) => entry.metadata?.mimeType === "image/png")
+          }
           onLevelChange={setImageCompressionLevel}
         />
       );
@@ -2118,7 +2131,9 @@ export function DedicatedToolView({
   // FASE 3: SUCESSO E DOWNLOAD
   if (status === "success") {
     return (
-      <div className="dedicated-tool-page dedicated-tool-page--success">
+      <div
+        className={`dedicated-tool-page dedicated-tool-page--success ${imageResults.length ? "dedicated-tool-page--image-results" : ""}`}
+      >
         <div className="ilovepdf-success-stage">
           <div
             className="ilovepdf-success-icon-circle"
@@ -2170,6 +2185,15 @@ export function DedicatedToolView({
                 <span>{translate("dedicated.download")}</span>
               </a>
             )
+          )}
+
+          {imageResults.length > 0 && (
+            <ImageResultsPanel
+              items={imageResults}
+              originalUrl={imagePreviewUrl ?? undefined}
+              resultUrl={downloadUrl ?? undefined}
+              archiveBytes={outputBlob?.type === "application/zip" ? outputBlob.size : undefined}
+            />
           )}
 
           {errorMessage && <p role="alert">{errorMessage}</p>}

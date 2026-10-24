@@ -11,7 +11,16 @@ import {
   RefreshCw,
   Upload,
 } from "lucide-react";
-import { type DragEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  type DragEvent,
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import type { TranslationProgressInfo } from "@/platform/browser-translator";
@@ -19,6 +28,11 @@ import type { DocumentCorePort } from "@/platform/document-core";
 import { readDocumentText } from "@/platform/document-reader";
 import { extractPdfSpreadsheetData } from "@/platform/excel-converter";
 import { cropBatchConflicts } from "@/platform/image-batch";
+import {
+  compositionReducer,
+  createCompositionState,
+  validateComposition,
+} from "@/platform/image-composition-state";
 import type { ImageCompressionLevel, WatermarkPosition } from "@/platform/image-engine";
 import { runLauncherTool } from "@/platform/launcher-tool-runner";
 import {
@@ -119,6 +133,10 @@ function parseSelectedPages(input: string, maxPages: number): number[] {
   }
   return Array.from(pages).sort((a, b) => a - b);
 }
+
+const ImageCompositionPanel = lazy(() =>
+  import("./ImageCompositionPanel").then((module) => ({ default: module.ImageCompositionPanel })),
+);
 
 export function DedicatedToolView({
   tool,
@@ -383,6 +401,13 @@ export function DedicatedToolView({
   const [imageRotateAngle, setImageRotateAngle] = useState<0 | 90 | 180 | 270>(90);
   const [imageFlipHorizontal, setImageFlipHorizontal] = useState<boolean>(false);
   const [imageFlipVertical, setImageFlipVertical] = useState<boolean>(false);
+  const [compositionAssetPending, setCompositionAssetPending] = useState(false);
+  const [compositionMode, setCompositionMode] = useState(false);
+  const [compositionState, compositionDispatch] = useReducer(
+    compositionReducer,
+    undefined,
+    createCompositionState,
+  );
   const [imageWatermarkType, setImageWatermarkType] = useState<"text" | "image">("text");
   const [imageWatermarkText, setImageWatermarkText] = useState<string>("NexoHub");
   const [imageWatermarkColor, setImageWatermarkColor] = useState<string>("#ffffff");
@@ -401,6 +426,8 @@ export function DedicatedToolView({
   useEffect(() => {
     if (!imageFiles.length) {
       imageOptionsInitialized.current = false;
+      setCompositionMode(false);
+      compositionDispatch({ type: "reset" });
       setSelectedImageIndex(0);
       return;
     }
@@ -415,6 +442,19 @@ export function DedicatedToolView({
       setImageCropHeight(firstImageMetadata.height);
     }
   }, [imageFiles.length, firstImageMetadata]);
+  let compositionValid = true;
+  if (compositionMode && tool.id === "image-watermark") {
+    if (!compositionState.objects.length) compositionValid = false;
+    for (const entry of imageBatch.entries) {
+      if (entry.metadata) {
+        try {
+          validateComposition(compositionState, entry.metadata.width, entry.metadata.height);
+        } catch {
+          compositionValid = false;
+        }
+      }
+    }
+  }
   const cropConflicts =
     tool.id === "image-crop" && !imageBatch.pending
       ? cropBatchConflicts(imageBatch.entries, {
@@ -1083,6 +1123,7 @@ export function DedicatedToolView({
         imageRotateAngle,
         imageFlipHorizontal,
         imageFlipVertical,
+        imageComposition: compositionMode ? { objects: compositionState.objects } : undefined,
         imageWatermarkFile: imageWatermarkFile ?? undefined,
         imageWatermarkType,
         imageWatermarkText,
@@ -1341,7 +1382,8 @@ export function DedicatedToolView({
     if (tool.id === "image-crop") return translate("dedicated.actionImageCrop");
     if (tool.id === "image-convert") return translate("dedicated.actionImageConvert");
     if (tool.id === "image-rotate") return translate("dedicated.actionImageRotate");
-    if (tool.id === "image-watermark") return translate("dedicated.actionImageWatermark");
+    if (tool.id === "image-watermark")
+      return translate(compositionMode ? "composition.export" : "dedicated.actionImageWatermark");
     return translate("dedicated.actionRun");
   }
 
@@ -1983,27 +2025,70 @@ export function DedicatedToolView({
 
     if (tool.id === "image-watermark") {
       return (
-        <ImageWatermarkPanel
-          isProcessing={status === "running"}
-          fileName={imagePreviewFile?.name || "imagem.jpg"}
-          fileSizeBytes={imagePreviewFile?.size || 0}
-          thumbnailUrl={imagePreviewUrl ?? undefined}
-          originalDimensions={imageOriginalDimensions ?? undefined}
-          watermarkFile={imageWatermarkFile}
-          onWatermarkFileChange={setImageWatermarkFile}
-          watermarkType={imageWatermarkType}
-          onWatermarkTypeChange={setImageWatermarkType}
-          text={imageWatermarkText}
-          onTextChange={setImageWatermarkText}
-          color={imageWatermarkColor}
-          onColorChange={setImageWatermarkColor}
-          opacity={imageWatermarkOpacity}
-          onOpacityChange={setImageWatermarkOpacity}
-          rotation={imageWatermarkRotation}
-          onRotationChange={setImageWatermarkRotation}
-          position={imageWatermarkPosition}
-          onPositionChange={setImageWatermarkPosition}
-        />
+        <>
+          <fieldset
+            className="image-composition-mode"
+            aria-label={translate("composition.advanced")}
+          >
+            <button
+              type="button"
+              disabled={status === "running"}
+              aria-pressed={!compositionMode}
+              onClick={() => setCompositionMode(false)}
+            >
+              {translate("composition.quick")}
+            </button>
+            <button
+              type="button"
+              disabled={status === "running"}
+              aria-pressed={compositionMode}
+              onClick={() => setCompositionMode(true)}
+            >
+              {translate("composition.advanced")}
+            </button>
+          </fieldset>
+          {compositionMode && imagePreviewFile && imagePreviewUrl && imageOriginalDimensions ? (
+            <>
+              {!compositionValid && compositionState.objects.length > 0 && (
+                <p role="alert">{translate("composition.invalid")}</p>
+              )}
+              <Suspense fallback={<p role="status">{translate("composition.pending")}</p>}>
+                <ImageCompositionPanel
+                  file={imagePreviewFile}
+                  source={imagePreviewUrl}
+                  width={imageOriginalDimensions.width}
+                  height={imageOriginalDimensions.height}
+                  onAssetPendingChange={setCompositionAssetPending}
+                  state={compositionState}
+                  dispatch={compositionDispatch}
+                  disabled={status === "running"}
+                />
+              </Suspense>
+            </>
+          ) : (
+            <ImageWatermarkPanel
+              isProcessing={status === "running"}
+              fileName={imagePreviewFile?.name || "imagem.jpg"}
+              fileSizeBytes={imagePreviewFile?.size || 0}
+              thumbnailUrl={imagePreviewUrl ?? undefined}
+              originalDimensions={imageOriginalDimensions ?? undefined}
+              watermarkFile={imageWatermarkFile}
+              onWatermarkFileChange={setImageWatermarkFile}
+              watermarkType={imageWatermarkType}
+              onWatermarkTypeChange={setImageWatermarkType}
+              text={imageWatermarkText}
+              onTextChange={setImageWatermarkText}
+              color={imageWatermarkColor}
+              onColorChange={setImageWatermarkColor}
+              opacity={imageWatermarkOpacity}
+              onOpacityChange={setImageWatermarkOpacity}
+              rotation={imageWatermarkRotation}
+              onRotationChange={setImageWatermarkRotation}
+              position={imageWatermarkPosition}
+              onPositionChange={setImageWatermarkPosition}
+            />
+          )}
+        </>
       );
     }
 
@@ -2319,6 +2404,10 @@ export function DedicatedToolView({
                 (imageBatch.pending || imageBatch.invalid || cropConflicts.length > 0)) ||
               (tool.id === "image-crop" && !imageOriginalDimensions) ||
               (tool.id === "image-watermark" &&
+                compositionMode &&
+                (!compositionValid || compositionAssetPending)) ||
+              (tool.id === "image-watermark" &&
+                !compositionMode &&
                 imageWatermarkType === "image" &&
                 !imageWatermarkFile) ||
               (!hasFilesOrText && tool.id !== "text-compare") ||

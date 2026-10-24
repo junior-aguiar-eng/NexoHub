@@ -22,6 +22,8 @@ try {
         "hub-subpath.spec.ts",
         "tool-workspace-regressions.spec.ts",
         "image-batch.spec.ts",
+        "image-crop-editor.spec.ts",
+        "image-composition.spec.ts",
         "--workers=2",
       ],
       { cwd: root, stdio: "inherit", env: process.env },

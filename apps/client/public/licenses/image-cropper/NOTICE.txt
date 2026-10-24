@@ -1,0 +1,16 @@
+Cropper.js 2.3.1 e componentes incorporados — licença MIT
+Copyright 2015-present Chen Fengyuan
+Fonte: https://github.com/fengyuanchen/cropperjs/tree/v2.3.1
+
+@cropper/element 2.3.1 — MIT
+@cropper/element-canvas 2.3.1 — MIT
+@cropper/element-crosshair 2.3.1 — MIT
+@cropper/element-grid 2.3.1 — MIT
+@cropper/element-handle 2.3.1 — MIT
+@cropper/element-image 2.3.1 — MIT
+@cropper/element-selection 2.3.1 — MIT
+@cropper/element-shade 2.3.1 — MIT
+@cropper/element-viewer 2.3.1 — MIT
+@cropper/elements 2.3.1 — MIT
+@cropper/utils 2.3.1 — MIT
+cropperjs 2.3.1 — MIT

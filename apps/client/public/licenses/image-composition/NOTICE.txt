@@ -1,0 +1,8 @@
+Fabric.js 7.4.0 — MIT
+Fonte: https://github.com/fabricjs/fabric.js/tree/v740
+Uso: interação geométrica no navegador, carregada somente no modo avançado de marca d'água.
+As dependências opcionais Node canvas/jsdom são excluídas por overrides específicos dessa versão.
+
+Inter (Fontsource 5.3.0) — OFL-1.1
+Fonte: https://github.com/rsms/inter
+Fonte local, sem CDN; arquivo variável Latin original, sem modificação, para renderização dos textos.

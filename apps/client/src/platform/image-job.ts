@@ -1,5 +1,9 @@
 import type { ImageJob } from "./image-processing";
-export async function executeImageJob(job: ImageJob): Promise<Blob> {
+export async function executeImageJob(job: ImageJob, signal?: AbortSignal): Promise<Blob> {
+  if (job.kind === "composition") {
+    const { renderImageComposition } = await import("./image-composition-engine");
+    return renderImageComposition(job.blob, job.options, signal);
+  }
   const engine = await import("./image-engine");
   switch (job.kind) {
     case "compress":

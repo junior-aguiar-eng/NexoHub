@@ -21,6 +21,8 @@ import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
 import { convertHtmlToPdfDocument } from "./html-to-pdf-converter";
 import { cropBatchConflicts, imageBatchExceedsLimits, inspectImageBatch } from "./image-batch";
+import { validateComposition } from "./image-composition-state";
+import type { ImageCompositionSnapshot } from "./image-composition-types";
 import type { WatermarkPosition } from "./image-engine";
 import { processImage } from "./image-processing";
 import { performBrowserPdfComparison } from "./pdf-comparison-client";
@@ -183,6 +185,7 @@ export interface LauncherToolInput {
   readonly imageWatermarkRotation?: number;
   readonly imageWatermarkPosition?: WatermarkPosition;
   readonly imageWatermarkFile?: File;
+  readonly imageComposition?: ImageCompositionSnapshot;
 }
 
 export interface LauncherToolOutput {
@@ -278,6 +281,13 @@ async function executeTool(
           "INVALID_INPUT",
           `${translate("imageBatch.cropIncompatible")} ${conflicts.map((item) => `${item.index + 1}. ${item.file.name}`).join("; ")}`,
         );
+    }
+    if (request.toolId === "image-watermark" && input.imageComposition) {
+      const inspected = await inspectImageBatch(input.files, input.imageSignal);
+      for (const entry of inspected) {
+        if (!entry.metadata) throw new Error("COMPOSICAO_INVALIDA");
+        validateComposition(input.imageComposition, entry.metadata.width, entry.metadata.height);
+      }
     }
     const entries: { name: string; data: Uint8Array }[] = [];
     for (const [index, file] of input.files.entries()) {
@@ -1206,19 +1216,21 @@ async function executeTool(
     case "image-watermark": {
       if (!first) throw new Error("INVALID_INPUT");
       const blob = await processImage(
-        {
-          kind: "watermark",
-          blob: first,
-          options: {
-            type: input.imageWatermarkType ?? "text",
-            text: input.imageWatermarkText,
-            color: input.imageWatermarkColor,
-            opacity: input.imageWatermarkOpacity ?? 0.5,
-            rotation: input.imageWatermarkRotation,
-            position: input.imageWatermarkPosition,
-            watermarkBlob: input.imageWatermarkFile,
-          },
-        },
+        input.imageComposition
+          ? { kind: "composition", blob: first, options: input.imageComposition }
+          : {
+              kind: "watermark",
+              blob: first,
+              options: {
+                type: input.imageWatermarkType ?? "text",
+                text: input.imageWatermarkText,
+                color: input.imageWatermarkColor,
+                opacity: input.imageWatermarkOpacity ?? 0.5,
+                rotation: input.imageWatermarkRotation,
+                position: input.imageWatermarkPosition,
+                watermarkBlob: input.imageWatermarkFile,
+              },
+            },
         input.imageSignal,
       );
       const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
@@ -1292,6 +1304,8 @@ export async function runLauncherTool(
           TRADUCAO_WORKER_INDISPONIVEL: "workspace.translate.workerError",
           TRADUCAO_INICIALIZACAO_FALHOU: "workspace.translate.initializationError",
           TRADUCAO_SEM_RESULTADO: "workspace.translate.emptyResult",
+          COMPOSICAO_INVALIDA: "composition.invalid",
+          COMPOSICAO_LIMITE: "composition.invalid",
           DOCUMENTO_JA_PROTEGIDO: "protect.alreadyProtectedDesc",
           SENHA_RC4_NAO_SUPORTADA: "protect.rc4UnsupportedPassword",
           AREA_OCULTACAO_OBRIGATORIA: "redact.areaRequired",

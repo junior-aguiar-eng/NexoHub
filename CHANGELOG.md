@@ -7,6 +7,12 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 
 ### Modificado
 
+- Composição avançada dentro da marca d’água de imagens, com textos, formas, imagens, ordem e
+  desfazer/refazer. Prévia e PNG exportado usam o mesmo renderizador local; importações pendentes
+  bloqueiam a execução. Fluxo rápido e codecs existentes preservados.
+- Recorte de imagens com alças, zoom, pan e teclado por Cropper.js 2.3.1 carregado sob demanda;
+  campos numéricos e motor de exportação preservados. Projeção da imagem e da seleção verificada
+  em diferentes larguras, com transparência, EXIF e fallback se o editor visual não carregar.
 - Complementação integrada aos planos existentes de PDF/Imagem, edição, comparação, estabilização
   e conversões, com responsáveis e dependências no roadmap. Primeira etapa web: inspeção e remoção
   de imagens do lote nas seis ferramentas, recorte validado antes do processamento e previsão de

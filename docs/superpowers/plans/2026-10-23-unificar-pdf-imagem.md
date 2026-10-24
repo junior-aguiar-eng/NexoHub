@@ -182,7 +182,7 @@ Implementado e validado. Evidências e limitações em [resultados](2026-10-23-u
 
 ## Fase de complementação — 24/10/2026
 
-**Estado:** IM-C1 concluído no website; IM-C2–IM-C4 planejados, adicionais às etapas 1–6 concluídas. Aplicar as
+**Estado:** IM-C1, IM-C2 e IM-C3 concluídos no website; IM-C4 planejado, adicional às etapas 1–6 concluídas. Aplicar as
 [regras comuns](../../ROADMAP.md#regras-comuns-de-execução-e-aceite) e Q-C0 do plano de estabilização.
 As restrições de dependências da entrega original não significam adoção automática dos candidatos
 abaixo. Não refazer a identidade visual nem abrir outro plano de imagens.
@@ -211,24 +211,24 @@ na mesa, nunca no motor. Selecionar uma prévia não muda quais arquivos serão 
 
 ### IM-C2 — Recorte profissional sem mudar a semântica do resultado
 
-**Modificar:** `ImageCropPanel.tsx`, teste próximo, `platform/image-engine.ts`, teste próximo e
-`e2e/tool-workspace-regressions.spec.ts`. **Criar se selecionado:**
-`features/launcher/ImageCropCanvas.tsx`, adaptador da interação, sem segundo executor.
+**Entregue:** `ImageCropPanel.tsx`, `ImageCropCanvas.tsx`, i18n e estilos;
+`e2e/image-crop-editor.spec.ts` integrado ao runner de subpasta. Motor `image-engine.ts` e
+executor preservados; regressões existentes executadas, sem segundo executor.
 
-- [ ] Avaliar [Cropper.js 2.3.1](https://github.com/fengyuanchen/cropperjs/releases/tag/v2.3.1)
+- [x] Avaliar [Cropper.js 2.3.1](https://github.com/fengyuanchen/cropperjs/releases/tag/v2.3.1)
   (MIT) contra [react-easy-crop](https://github.com/ValentinH/react-easy-crop) (MIT).
   Preferência proposta: Cropper.js pelas alças de seleção; adotar **um** somente após comprovar
   toque, teclado, tema e compatibilidade do pacote publicado com Vite/React atuais.
-- [ ] Testar alças, pan/zoom, presets, campos numéricos e EXIF: cada gesto deve produzir a mesma
+- [x] Testar alças, pan/zoom, presets, campos numéricos e EXIF: cada gesto deve produzir a mesma
   região em pixels do original. Consome IM-C1; conserva os setters e validação estrita do recorte.
-- [ ] Implementar o adaptador mantendo campos numéricos acessíveis e foco; zoom não muda o
+- [x] Implementar o adaptador mantendo campos numéricos acessíveis e foco; zoom não muda o
   resultado por si só. Não remover a seleção atual antes de a alternativa passar no corpus.
-- [ ] Baixar e decodificar os recortes em retrato/paisagem/alpha, conferindo dimensões e bordas
+- [x] Baixar e decodificar os recortes em retrato/paisagem/alpha, conferindo dimensões e bordas
   conhecidas; testar limites, troca de item e mobile. Atualizar `docs/IMAGE-WEB-QUALITY.md`.
 
 ### IM-C3 — Composição com textos, formas e histórico
 
-**Estado:** prova técnica antes de implementação final. **Modificar:** `ImageWatermarkPanel.tsx`,
+**Estado:** implementado no website após prova técnica; Fabric.js 7.4.0 selecionado apenas para interação. **Modificar:** `ImageWatermarkPanel.tsx`,
 `DedicatedToolView.tsx`, i18n e motor de imagens somente para comandos novos homologados.
 **Criar:** `features/launcher/ImageCompositionPanel.tsx`, `platform/image-composition-types.ts`,
 `image-composition-state.ts` e `image-composition-engine.ts`, com testes próximos.
@@ -237,16 +237,16 @@ na mesa, nunca no motor. Selecionar uma prévia não muda quais arquivos serão 
 `renderImageComposition(source: Blob, snapshot: ImageCompositionSnapshot, signal?: AbortSignal):
 Promise<Blob>`. Histórico guarda comandos, não cópias completas de imagens.
 
-- [ ] Provar [Fabric.js 7.4.0](https://github.com/fabricjs/fabric.js/releases/tag/v740), MIT,
+- [x] Provar [Fabric.js 7.4.0](https://github.com/fabricjs/fabric.js/releases/tag/v740), MIT,
   usando o pacote publicado `fabric`; não copiar imports de `@fabricjs/browser` do branch em
   desenvolvimento sem confirmar sua publicação. [Konva](https://github.com/konvajs/konva) é
   alternativa, não dependência simultânea; seu wrapper deve ser compatível com React 19.2.8.
-- [ ] Testar texto com acentos/fontes locais, imagem com alpha, forma, posição/tamanho/ordem,
+- [x] Testar texto com acentos/fontes locais, imagem com alpha, forma, posição/tamanho/ordem,
   desfazer/refazer e descarte de resposta antiga. Comparar objetos/pixels da prévia e download.
-- [ ] Incorporar como modo avançado da composição/marca d'água, preservando o fluxo rápido.
+- [x] Incorporar como modo avançado da composição/marca d'água, preservando o fluxo rápido.
   Permitir selecionar, mover, redimensionar, excluir e ordenar; sem nova ferramenta/card nesta
   complementação. Filtros fotográficos só entram após prova de resultado e orçamento de memória.
-- [ ] Preservar Pica para redimensionamento e jSquash para codificação final. Não substituir o
+- [x] Preservar Pica para redimensionamento e jSquash para codificação final. Não substituir o
   motor inteiro, persistir arquivos sem solicitação nem prometer PSD/camadas interoperáveis.
   Validar revisão/exportação idênticas e custo frio/quente; registrar limites no documento técnico.
 
@@ -286,5 +286,61 @@ no navegador. Fontes da triagem: repositórios vinculados e metadados npm consul
   captura adicional em tema escuro. Artefatos em `/workspace/artifacts/complementacao-lotes-2026-10-24`.
 - Motor preservado em importação dinâmica, codecs sob demanda. A medição não certifica pico de
   memória nem desempenho em todos os celulares. Os limites anteriores foram preservados.
-- Implementação desta primeira etapa mantida local para revisão; sem commit de código, push ou
-  deploy implícitos. Próximo complemento: IM-C2, após avaliação de um único candidato de recorte.
+- Implementação IM-C1 commitada em `10df30c` a pedido do usuário, sem push/deploy.
+  IM-C2 implementado em seguida, conforme registro abaixo.
+
+
+### Registro da segunda entrega complementar — IM-C2
+
+- Cropper.js 2.3.1 (MIT) selecionado após prova de interação; react-easy-crop avaliado sem adoção.
+  Dependência carregada somente após importar uma imagem para recorte, com avisos MIT no build.
+- Oito alças de 44px, zoom 100–300%, pan e teclado; região canônica continua em pixels do original.
+  Presets, campos numéricos, preflight do lote e motor de exportação preservados. Falha no chunk
+  mantém prévia simples, aviso e exportação por coordenadas.
+- Revisão encontrou projeção da imagem divergente da seleção. Teste geométrico falhou antes
+  da correção e passou depois: diferença máxima imagem/canvas de 0,016px nas medições.
+- 526 testes unitários do client, lint, tipagem e builds raiz/`/hub/` aprovados. E2E de produção
+  na raiz: 180 aprovados (execução interrompida retomada nos três arquivos restantes) e 5 exclusivos de subpasta ignorados. Subpasta `/hub/`: 50 aprovados.
+- A validação de subpasta detectou arredondamento acumulado durante gestos. Corrigido o retorno
+  das coordenadas arredondadas à seleção; arrastes com 30 eventos respeitam tolerância de 1px.
+- Nove novos E2E cobrem download decodificado após gesto, pixels/alpha/EXIF, proporção,
+  geometria em quatro larguras, zoom, teclado, toque, troca de arquivo e falha no carregamento.
+- Capturas em 390/768/1024/1440px com zoom 100/200%, sem rolagem horizontal externa;
+  conferência em tema escuro. Artefatos: `/workspace/artifacts/complementacao-recorte-2026-10-24`.
+- Bundle principal +6,79kB (+2,49kB gzip) sobre IM-C1; chunk adicional sob demanda
+  47,78kB (14,09kB gzip). Sem certificação de pico de memória em dispositivos reais.
+- Novas 12 licenças MIT conferidas nos pacotes instalados; auditoria de vulnerabilidades com
+  zero ocorrências. Gate global de licenças não concluído por índice ausente no store e Cargo
+  indisponível; detalhes em `IMAGE-WEB-QUALITY.md`. Não declarar esse gate aprovado.
+- IM-C2 permanece local, sem commit/push/deploy implícitos. IM-C3 entregue no registro seguinte; IM-C4 permanece planejado.
+
+
+### Registro da terceira entrega complementar — IM-C3
+
+- Modo avançado dentro da marca d’água, mantendo o fluxo rápido. Texto com Inter local, retângulo,
+  elipse e imagem com alpha; seleção, posição, tamanho, opacidade, ordem, excluir e desfazer/refazer.
+- Fabric.js 7.4.0 publicado (MIT) com importação sob demanda; sem wrapper React, Konva nem opcionais
+  Node canvas/jsdom. Mesmo renderizador Canvas no worker para a prévia e o PNG final.
+- Limites adicionais explícitos: 8MP, 20 objetos, 16 MiB de assets; histórico de 100 comandos e
+  orçamento de 32 MiB de Blobs retidos. Campos usam pixels do original, compartilhados no lote.
+  Não há filtros fotográficos, PSD ou persistência; Pica e jSquash foram preservados.
+- Corpus sintético com hashes nos anexos do E2E; nove testes novos conferem texto rasterizado,
+  pixels/alpha, bytes idênticos de prévia/download, ordem, histórico, lote, toque e descarte antigo.
+- Revisão independente apontou uma falha: exportar durante decode de asset podia omiti-lo.
+  Dois testes com decoder real atrasado passaram de RED para GREEN: aguardar asset e limpar
+  pendência ao sair/trocar fonte. Sem achados importantes pendentes ou segunda revisão.
+- Testes unitários do projeto: 593 aprovados (530 client + 63 pacotes); lint/tipagem aprovados.
+  E2E geral na raiz: 189 aprovados e 5 exclusivos de subpasta ignorados; após ajustes de mensagem
+  e rolagem, os 18 E2E de recorte/composição passaram novamente no build raiz final.
+- Builds raiz e `/hub/` aprovados. Subpasta: 59 E2E aprovados, com confirmação no build final.
+  Estado vazio conferido separadamente: sem alerta falso e com exportação desabilitada.
+- Rastreamento confirmou scroll suave de foco alterando a posição da imagem durante o gesto.
+  Aplicada rolagem imediata somente com editor de precisão aberto. No teste CDP, centralização
+  e verificação do alvo evitam tocar o cabeçalho fixo. Vinte repetições dos gestos aprovadas,
+  sem ampliar tolerâncias nem alterar especulativamente o cálculo das bibliotecas.
+- Quatro larguras sem overflow externo e tema escuro conferidos; artefatos em
+  `/workspace/artifacts/complementacao-composicao-2026-10-24`. Medições de chunks e tempos
+  observados, hipóteses e limites em `IMAGE-WEB-QUALITY.md`.
+- Licenças novas MIT/OFL conferidas e distribuídas no build; audit de produção sem vulnerabilidades.
+  Gate global de licenças continua bloqueado pelo ambiente, sem declaração de aprovação.
+- IM-C2 e IM-C3 mantidos locais, sem commit/push/deploy implícitos. IM-C4 permanece planejado.

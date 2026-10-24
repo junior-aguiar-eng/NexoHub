@@ -18,3 +18,5 @@ overrides:
   "@img/sharp-win32-x64": "-"
   nanoid: ">=3.3.18"
   vite: "^8.2.4"
+  "fabric@7.4.0>canvas": "-"
+  "fabric@7.4.0>jsdom": "-"

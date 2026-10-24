@@ -1,3 +1,4 @@
+import type { ImageCompositionSnapshot } from "./image-composition-types";
 import type {
   ImageCompressionOptions,
   ImageConvertOptions,
@@ -14,11 +15,12 @@ export type ImageJob = { blob: Blob } & (
   | { kind: "convert"; options: ImageConvertOptions }
   | { kind: "rotate"; options: ImageRotateOptions }
   | { kind: "watermark"; options: ImageWatermarkOptions }
+  | { kind: "composition"; options: ImageCompositionSnapshot }
 );
 export function processImage(job: ImageJob, signal?: AbortSignal): Promise<Blob> {
   if (signal?.aborted) return Promise.reject(new Error("OPERACAO_CANCELADA"));
   if (typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined")
-    return executeImageJob(job);
+    return executeImageJob(job, signal);
   return new Promise((resolve, reject) => {
     let worker: Worker | undefined;
     const cleanup = () => {

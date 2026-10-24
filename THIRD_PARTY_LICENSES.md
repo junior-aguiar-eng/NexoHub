@@ -7,6 +7,17 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @babel/runtime | 7.29.7 | MIT |
 | JavaScript | @base-ui/react | 1.7.0 | MIT |
 | JavaScript | @base-ui/utils | 0.3.2 | MIT |
+| JavaScript | @cropper/element | 2.3.1 | MIT |
+| JavaScript | @cropper/element-canvas | 2.3.1 | MIT |
+| JavaScript | @cropper/element-crosshair | 2.3.1 | MIT |
+| JavaScript | @cropper/element-grid | 2.3.1 | MIT |
+| JavaScript | @cropper/element-handle | 2.3.1 | MIT |
+| JavaScript | @cropper/element-image | 2.3.1 | MIT |
+| JavaScript | @cropper/element-selection | 2.3.1 | MIT |
+| JavaScript | @cropper/element-shade | 2.3.1 | MIT |
+| JavaScript | @cropper/element-viewer | 2.3.1 | MIT |
+| JavaScript | @cropper/elements | 2.3.1 | MIT |
+| JavaScript | @cropper/utils | 2.3.1 | MIT |
 | JavaScript | @embedpdf/pdfium | 2.15.1 | MIT |
 | JavaScript | @floating-ui/core | 1.8.0 | MIT |
 | JavaScript | @floating-ui/dom | 1.8.0 | MIT |
@@ -42,6 +53,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | bmp-js | 0.1.0 | MIT |
 | JavaScript | class-variance-authority | 0.7.1 | Apache-2.0 |
 | JavaScript | clsx | 2.1.1 | MIT |
+| JavaScript | cropperjs | 2.3.1 | MIT |
 | JavaScript | csstype | 3.2.3 | MIT |
 | JavaScript | define-data-property | 1.1.4 | MIT |
 | JavaScript | define-properties | 1.2.1 | MIT |
@@ -50,6 +62,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | es-define-property | 1.0.1 | MIT |
 | JavaScript | es-errors | 1.3.0 | MIT |
 | JavaScript | escape-string-regexp | 4.0.0 | MIT |
+| JavaScript | fabric | 7.4.0 | MIT |
 | JavaScript | fflate | 0.8.3 | MIT |
 | JavaScript | flatbuffers | 25.9.23 | Apache-2.0 |
 | JavaScript | framer-motion | 12.43.0 | MIT |

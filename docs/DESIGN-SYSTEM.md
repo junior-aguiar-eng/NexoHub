@@ -79,5 +79,21 @@ Limites, formatos e testes do motor: [IMAGE-WEB-QUALITY.md](IMAGE-WEB-QUALITY.md
   de resultados obsoletos; os estados de atualização e erro são explícitos.
 - A seleção de recorte é visível, movível por ponteiro ou setas (Shift: 10px) e limitada à
   imagem original. Medidas informadas e arquivo exportado devem coincidir.
+- No recorte, alças de 44px usam o acento da zona e contorno branco sobre a imagem; foco segue
+  o token existente. Zoom/pan são controles da visualização, sem alterar coordenadas do original.
+  Campos numéricos continuam disponíveis para ajustes finos e regiões pequenas.
 - Grades PDF carregam miniaturas reais adicionais quando entram na área visível. Numeração
   mostra a página efetivamente escolhida, incluindo a opção de pular a capa.
+
+### Composição avançada de imagens (IM-C3)
+
+A marca d’água mantém dois modos no mesmo lugar: rápido e composição avançada. A mesa usa
+canvas amplo e inspetor de 280px, com gap de 20px; abaixo de 1000px, o inspetor passa para baixo.
+Controles e campos têm altura mínima de 44px; alças usam área de toque de 44px e marcador
+visual de 10px. Lista com estado pressionado permite escolher o objeto pelo teclado.
+Avisos distinguem atualização da prévia, importação de asset e falha; não mostrar raster antigo
+como revisão atual. A imagem é atualizada ao soltar o gesto. Cores seguem os tokens da zona Imagem.
+
+Mesas de recorte/composição usam rolagem imediata do documento: o foco nos campos não deve
+manter uma animação de scroll enquanto o usuário arrasta. A área de edição deve estar visível
+sem oclusão pelo cabeçalho nos ensaios de mouse/toque.

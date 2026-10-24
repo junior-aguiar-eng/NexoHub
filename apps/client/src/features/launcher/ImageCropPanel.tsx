@@ -1,6 +1,6 @@
 import { Crop } from "lucide-react";
-import { type PointerEvent, useRef } from "react";
 import { translate } from "@/i18n";
+import { ImageCropCanvas } from "./ImageCropCanvas";
 
 export type CropRatioPreset = "free" | "1:1" | "4:3" | "16:9" | "3:2";
 
@@ -39,7 +39,6 @@ export function ImageCropPanel({
   const origW = originalDimensions?.width || 800;
   const origH = originalDimensions?.height || 600;
 
-  const drag = useRef<{ x: number; y: number; cropX: number; cropY: number } | null>(null);
   const clamp = (value: number, max: number, min = 0) =>
     Math.max(min, Math.min(max, Math.round(value)));
   function moveX(value: number) {
@@ -68,13 +67,6 @@ export function ImageCropPanel({
       onCropHeightChange(height);
       if (ratio !== "free") onCropWidthChange(Math.max(1, Math.round(height * proportion)));
     }
-  }
-  function moveRegion(event: PointerEvent<HTMLButtonElement>) {
-    if (!drag.current) return;
-    const frame = event.currentTarget.parentElement?.getBoundingClientRect();
-    if (!frame?.width || !frame.height) return;
-    moveX(drag.current.cropX + ((event.clientX - drag.current.x) / frame.width) * origW);
-    moveY(drag.current.cropY + ((event.clientY - drag.current.y) / frame.height) * origH);
   }
 
   const presets: Array<{
@@ -131,43 +123,24 @@ export function ImageCropPanel({
       <div className="bg-surface-raised rounded-2xl border border-border p-5 flex flex-col sm:flex-row items-center gap-5 shadow-xs">
         {thumbnailUrl ? (
           <div className="image-tool-preview rounded-xl overflow-hidden bg-surface-muted border border-border">
-            <div className="image-crop-stage" style={{ aspectRatio: `${origW} / ${origH}` }}>
-              <img src={thumbnailUrl} alt={fileName} draggable={false} />
-              <button
-                type="button"
-                className="image-crop-region"
-                aria-label={translate("imageCrop.moveRegion")}
-                style={{
-                  left: `${(cropX / origW) * 100}%`,
-                  top: `${(cropY / origH) * 100}%`,
-                  width: `${(cropWidth / origW) * 100}%`,
-                  height: `${(cropHeight / origH) * 100}%`,
-                  minWidth: 0,
-                  minHeight: 0,
-                }}
-                onPointerDown={(event) => {
-                  event.currentTarget.setPointerCapture(event.pointerId);
-                  drag.current = { x: event.clientX, y: event.clientY, cropX, cropY };
-                }}
-                onPointerMove={moveRegion}
-                onPointerUp={() => {
-                  drag.current = null;
-                }}
-                onPointerCancel={() => {
-                  drag.current = null;
-                }}
-                onKeyDown={(event) => {
-                  const step = event.shiftKey ? 10 : 1;
-                  if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key))
-                    return;
-                  event.preventDefault();
-                  if (event.key === "ArrowLeft") moveX(cropX - step);
-                  if (event.key === "ArrowRight") moveX(cropX + step);
-                  if (event.key === "ArrowUp") moveY(cropY - step);
-                  if (event.key === "ArrowDown") moveY(cropY + step);
-                }}
-              />
-            </div>
+            <ImageCropCanvas
+              source={thumbnailUrl}
+              fileName={fileName}
+              width={origW}
+              height={origH}
+              crop={{ x: cropX, y: cropY, width: cropWidth, height: cropHeight }}
+              aspectRatio={
+                ratio === "free"
+                  ? undefined
+                  : Number(ratio.split(":")[0]) / Number(ratio.split(":")[1])
+              }
+              onChange={(rectangle) => {
+                onCropXChange(rectangle.x);
+                onCropYChange(rectangle.y);
+                onCropWidthChange(rectangle.width);
+                onCropHeightChange(rectangle.height);
+              }}
+            />
           </div>
         ) : (
           <div className="image-tool-preview rounded-xl bg-blue-500/10 border border-blue-500/20 shrink-0 flex items-center justify-center text-blue-600">

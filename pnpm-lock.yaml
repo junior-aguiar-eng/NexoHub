@@ -11,6 +11,8 @@ overrides:
   '@img/sharp-win32-x64': '-'
   nanoid: '>=3.3.18'
   vite: ^8.2.4
+  fabric@7.4.0>canvas: '-'
+  fabric@7.4.0>jsdom: '-'
 
 importers:
 
@@ -74,9 +76,15 @@ importers:
       clsx:
         specifier: 2.1.1
         version: 2.1.1
+      cropperjs:
+        specifier: 2.3.1
+        version: 2.3.1
       dictionary-pt:
         specifier: ^4.0.0
         version: 4.0.0
+      fabric:
+        specifier: 7.4.0
+        version: 7.4.0
       fflate:
         specifier: 0.8.3
         version: 0.8.3
@@ -323,6 +331,39 @@ packages:
   '@bramus/specificity@2.4.2':
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
+
+  '@cropper/element-canvas@2.3.1':
+    resolution: {integrity: sha512-UH3VMyjn58PdwYkPiTHuvRUjGzmyKr6E2pYWxTxN/04wnjgYLA77B5u5c1HhV6vD1ZKSvxJ/i9TkiySR9P1D6A==}
+
+  '@cropper/element-crosshair@2.3.1':
+    resolution: {integrity: sha512-Vz2heRwr2nd2rZ161vKyE4JwYV3eSodGCGGZq39TR0LICGOOeggLq0R664Af/eFB9PU8+tfJ42lWLoUdxQlVJQ==}
+
+  '@cropper/element-grid@2.3.1':
+    resolution: {integrity: sha512-6LDaUDxH2xdA7biTcqnihPQVHjlT4bXysA403s9rU4jo5f4pPnFHtNbB+FQTYKNz5EKun52WgVtR+6oWbmbxlg==}
+
+  '@cropper/element-handle@2.3.1':
+    resolution: {integrity: sha512-ygLw89PWu9k8SuKW7rjRBpD6ZfmtVr5ayWux9YKHU7PxX0SeL5kbCD+PpOxQB1ycW4UcyH0tHt77EWnsdSoOHw==}
+
+  '@cropper/element-image@2.3.1':
+    resolution: {integrity: sha512-rPE7OX/BPTw66+DjpN5aOuPb1xSAjQMgAJZXdRgmeJnn0YcDDhfGQm8VwcL8/PMLxtWFcKEM+aUiezbO01j4fg==}
+
+  '@cropper/element-selection@2.3.1':
+    resolution: {integrity: sha512-b8sabaFbHeQYY459uItDIeDY0IisZBO/wF+SYhKvAgI8TExj/f2mNcBZXjPHYCkWel2+1BSUTTNZxy+tR8sDEA==}
+
+  '@cropper/element-shade@2.3.1':
+    resolution: {integrity: sha512-X5ceZsy7iBxuIRhsL05H9+cPYzxZuvM7/9j5irXIbNsDiNwTedxIHdjhEhPbUYa+FaNn9wsKId24AEyH43JTGw==}
+
+  '@cropper/element-viewer@2.3.1':
+    resolution: {integrity: sha512-EdrYDbnkj0IOl/kyWKzzvcDRobr7Tfzho7FkVu8mpSk1ILDHmVf8pfZrYVwou8l4znLqp8ZqwuabAezJPfC2Yg==}
+
+  '@cropper/element@2.3.1':
+    resolution: {integrity: sha512-CgrLOx0qERWlfJK1Ed6ePq7SXcB6gLHtj3mtDVypyzti70fJdmNxrFm5Ucbq8vpp2Yo3tW2L6uDI0IBDoiT17A==}
+
+  '@cropper/elements@2.3.1':
+    resolution: {integrity: sha512-+D5rFlfFlWSL1lp0vPYI59/R6XM2vMnTSX0/B1zKRvmkc0t0N0m9lxVsaDb+9RkHx6PwAkBBNPZSRUeau33jMg==}
+
+  '@cropper/utils@2.3.1':
+    resolution: {integrity: sha512-b5qFTwws/osx0asIGLK1V//hdL08frGvfpi6s+p6zj5XH05ofVcz0Xl+Tot7sUx12pbfhhAlsquQTOJ1IsOoFw==}
 
   '@csstools/color-helpers@6.1.1':
     resolution: {integrity: sha512-gLNsunvwf3mCi5u5o46/Z/JcJMnhbHSaZ69rkgPzNM3J4s8hWwpPUQB6/tt0EDFyCiWzxANlx+2LJwpYj4zS1w==}
@@ -1093,6 +1134,9 @@ packages:
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
+  cropperjs@2.3.1:
+    resolution: {integrity: sha512-bgy+iHRFjsBxBCriXkTuFuHRJGSGZISuqDGhDQG7gLK0F7qOzhH06bdXzGf4b0bZSQ+mApakybiW9xvKnS9dbg==}
+
   css-tree@3.2.1:
     resolution: {integrity: sha512-X7sjQzceUhu1u7Y/ylrRZFU2FS6LRiFVp6rKLPg23y3x3c3DOKAwuXGDp+PAGjh6CSnCjYeAul8pcT8bAl+lSA==}
     engines: {node: ^10 || ^12.20.0 || ^14.13.0 || >=15.0.0}
@@ -1168,6 +1212,10 @@ packages:
   expect-type@1.4.0:
     resolution: {integrity: sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA==}
     engines: {node: '>=12.0.0'}
+
+  fabric@7.4.0:
+    resolution: {integrity: sha512-NalYDc3eifTl1C33zryQwpH6+XA/2ClxQrH9vkASkZw3tbkRmorpikhYMmxhUTmi7O3e9ODz0vOT8qfaCh9IVA==}
+    engines: {node: '>=20.0.0'}
 
   fdir@6.5.0:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
@@ -1966,6 +2014,72 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
+  '@cropper/element-canvas@2.3.1':
+    dependencies:
+      '@cropper/element': 2.3.1
+      '@cropper/utils': 2.3.1
+
+  '@cropper/element-crosshair@2.3.1':
+    dependencies:
+      '@cropper/element': 2.3.1
+      '@cropper/utils': 2.3.1
+
+  '@cropper/element-grid@2.3.1':
+    dependencies:
+      '@cropper/element': 2.3.1
+      '@cropper/utils': 2.3.1
+
+  '@cropper/element-handle@2.3.1':
+    dependencies:
+      '@cropper/element': 2.3.1
+      '@cropper/utils': 2.3.1
+
+  '@cropper/element-image@2.3.1':
+    dependencies:
+      '@cropper/element': 2.3.1
+      '@cropper/element-canvas': 2.3.1
+      '@cropper/utils': 2.3.1
+
+  '@cropper/element-selection@2.3.1':
+    dependencies:
+      '@cropper/element': 2.3.1
+      '@cropper/element-canvas': 2.3.1
+      '@cropper/element-image': 2.3.1
+      '@cropper/utils': 2.3.1
+
+  '@cropper/element-shade@2.3.1':
+    dependencies:
+      '@cropper/element': 2.3.1
+      '@cropper/element-canvas': 2.3.1
+      '@cropper/element-selection': 2.3.1
+      '@cropper/utils': 2.3.1
+
+  '@cropper/element-viewer@2.3.1':
+    dependencies:
+      '@cropper/element': 2.3.1
+      '@cropper/element-canvas': 2.3.1
+      '@cropper/element-image': 2.3.1
+      '@cropper/element-selection': 2.3.1
+      '@cropper/utils': 2.3.1
+
+  '@cropper/element@2.3.1':
+    dependencies:
+      '@cropper/utils': 2.3.1
+
+  '@cropper/elements@2.3.1':
+    dependencies:
+      '@cropper/element': 2.3.1
+      '@cropper/element-canvas': 2.3.1
+      '@cropper/element-crosshair': 2.3.1
+      '@cropper/element-grid': 2.3.1
+      '@cropper/element-handle': 2.3.1
+      '@cropper/element-image': 2.3.1
+      '@cropper/element-selection': 2.3.1
+      '@cropper/element-shade': 2.3.1
+      '@cropper/element-viewer': 2.3.1
+
+  '@cropper/utils@2.3.1': {}
+
   '@csstools/color-helpers@6.1.1': {}
 
   '@csstools/css-calc@3.3.0(@csstools/css-parser-algorithms@4.0.0(@csstools/css-tokenizer@4.0.0))(@csstools/css-tokenizer@4.0.0)':
@@ -2507,6 +2621,11 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
+  cropperjs@2.3.1:
+    dependencies:
+      '@cropper/elements': 2.3.1
+      '@cropper/utils': 2.3.1
+
   css-tree@3.2.1:
     dependencies:
       mdn-data: 2.27.1
@@ -2573,6 +2692,8 @@ snapshots:
       '@types/estree': 1.0.9
 
   expect-type@1.4.0: {}
+
+  fabric@7.4.0: {}
 
   fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:

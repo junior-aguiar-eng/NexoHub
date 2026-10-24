@@ -12,11 +12,17 @@ Dependências introduzidas na Fase 1 e licenças declaradas pelos respectivos pa
 | `tailwindcss` e `@tailwindcss/vite` | MIT | Tokens e pipeline de estilos |
 | `lucide-react` | ISC | Ícones de interface |
 | `motion` | MIT | Movimento com redução de animação |
+| `cropperjs` 2.3.1 e componentes `@cropper/*` 2.3.1 | MIT | Interação local de recorte com alças, sem substituir o motor de exportação |
+| `fabric` 7.4.0 | MIT | Interação geométrica no modo avançado de composição; sem canvas/jsdom Node |
 | Plus Jakarta Sans | OFL-1.1 | Tipografia local de interface |
 | Playfair Display | OFL-1.1 | Tipografia local editorial |
 
 As fontes são distribuídas no bundle por pacotes Fontsource; nenhuma fonte ou biblioteca é carregada
 por CDN em tempo de execução.
+
+Cropper é carregado sob demanda na ferramenta de recorte. Os avisos dos 12 pacotes instalados
+estão em `apps/client/public/licenses/image-cropper/`; a conferência de licenças e a limitação
+da auditoria global neste ambiente estão registradas em [IMAGE-WEB-QUALITY.md](IMAGE-WEB-QUALITY.md).
 
 A leitura de DOCX usa a implementação ZIP em JavaScript do `fflate`, sem dependências transitivas,
 e o parser XML nativo do navegador. A versão é fixada no lockfile; a extração limita a entrada a
@@ -29,3 +35,7 @@ sob demanda. Pica declara MIT; os wrappers jSquash declaram Apache-2.0. Avisos d
 e licenças upstream de MozJPEG, libwebp e OxiPNG estão distribuídos em
 `apps/client/public/licenses/image-codecs/`. Avaliação de necessidade, tamanho, limites e
 medição: [IMAGE-WEB-QUALITY.md](IMAGE-WEB-QUALITY.md).
+
+Fabric.js é importado somente no modo avançado da marca d’água. Avisos MIT e OFL da fonte local
+Inter acompanham o build em `apps/client/public/licenses/image-composition/`. O renderizador
+de prévia e download usa Canvas no worker existente; sem dependência de Fabric no worker.

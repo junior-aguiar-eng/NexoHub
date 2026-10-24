@@ -126,3 +126,28 @@ test("marca d’água longa cabe na página recortada sem perder o texto origina
     await task.destroy();
   }
 });
+
+test("repara PDF corrompido com lixo inicial e exibe diagnóstico", async ({ page }) => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage([400, 400]);
+  const validBytes = await pdf.save();
+
+  // Injeta lixo antes do cabeçalho
+  const prefix = Buffer.from("LIXO_DE_DOWNLOAD_HTTP_12345");
+  const corruptedBuffer = Buffer.concat([prefix, Buffer.from(validBytes)]);
+
+  await page.goto("/reparar-pdf");
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "danificado.pdf",
+    mimeType: "application/pdf",
+    buffer: corruptedBuffer,
+  });
+
+  await expect(page.getByTestId("pdf-repair-idle")).toBeVisible();
+  await page.getByTestId("pdf-repair-idle").getByRole("button", { name: "Reparar PDF" }).click();
+
+  await expect(page.getByTestId("pdf-repair-success")).toBeVisible();
+  await expect(page.getByText("Diagnóstico da Recuperação")).toBeVisible();
+  await expect(page.getByText(/1 de 1 páginas recuperadas/i)).toBeVisible();
+  await expect(page.getByRole("link", { name: /Baixar PDF Reparado/i })).toBeVisible();
+});

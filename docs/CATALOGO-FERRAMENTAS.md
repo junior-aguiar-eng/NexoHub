@@ -9,9 +9,9 @@ Data da última auditoria canônica: 23/10/2026.
 ## 1. Visão Geral do Inventário
 
 - **Total mapeado no ecossistema:** 42 ferramentas
-- **Implementadas e operacionais:** 34 ferramentas (28 PDF/Texto + 6 Imagem)
+- **Implementadas e operacionais:** 35 ferramentas (29 PDF/Texto + 6 Imagem)
 - **Parciais / Em homologação técnica:** 1 ferramenta (DOCX via sidecar na Fase 11)
-- **Planejadas / Pendentes de ADR ou implementação:** 8 ferramentas
+- **Planejadas / Pendentes de ADR ou implementação:** 7 ferramentas
 
 ---
 
@@ -36,6 +36,7 @@ Data da última auditoria canônica: 23/10/2026.
 | `pdf-redact` | Ocultar PDF (Tarja) | Segurança | Implementada | Web, Desktop, HTTP | browser | Aplica tarjas opacas nas coordenadas solicitadas. |
 | `pdf-compare` | Comparar PDF | Segurança | Implementada | Web, Desktop, HTTP | browser | Análise estrutural/visual entre duas versões com relatório gerado. |
 | `pdf-compress` | Comprimir PDF | Otimizar | Implementada | Web, Desktop, HTTP | native (fallback browser) | Perfis de compressão estrutural e reencodagem de imagens. Rejeita PDFs assinados. |
+| `pdf-repair` | Reparar PDF | Otimizar | Implementada | Web, Desktop, HTTP | browser | Reconstrução de xref/trailer, resgate resiliente de páginas legíveis e relatório diagnóstico. |
 | `pdf-ocr` | OCR em PDF | Otimizar / Texto | Implementada | Web, Desktop, HTTP | browser (fallback native) | Reconhecimento óptico local. Gera texto e PDF pesquisável. |
 | `images-to-pdf` | Imagem para PDF | Converter em PDF | Implementada | Web, Desktop, HTTP | browser | Suporta JPG, PNG e WebP com orientação e margens. |
 | `html-to-pdf` | HTML para PDF | Converter em PDF | Implementada | Web, Desktop, HTTP | browser | Converte títulos, parágrafos, listas e tabelas em layout próprio. Não preserva o layout CSS original nem executa scripts ou carrega recursos externos. |
@@ -62,7 +63,6 @@ As ferramentas abaixo compõem o catálogo visual planejado ou dependem de decis
 
 | Ferramenta | Identificador Previsto | Categoria | Dependência Arquitetural / Bloqueio |
 |---|---|---|---|
-| **Reparar PDF** | `pdf-repair` | Otimizar | Especificação dos tipos de corrupção tratáveis (xref reconstruído, streams truncados, trailer ausente) com biblioteca local (`pdf-lib` / `qpdf`). |
 | **Word para PDF** | `word-to-pdf` | Converter em PDF | ADR de Motor Office: conversão de DOC/DOCX preservando layout completo. Requer sidecar com motor de renderização (ex: LibreOffice / headless unoconv). |
 | **PDF para Word** | `pdf-to-word` | Converter de PDF | ADR de Motor Office: reconstrução de parágrafos, fluxos de texto e tabelas em DOCX. |
 | **PowerPoint para PDF** | `powerpoint-to-pdf` | Converter em PDF | Dependente do mesmo ADR de Motor Office (LibreOffice). |

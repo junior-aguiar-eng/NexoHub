@@ -93,6 +93,17 @@ export const coreToolManifests = [
     executor: "native",
   },
   {
+    id: "pdf-repair",
+    version: "1.0.0",
+    name: "Reparar PDF",
+    category: "pdf",
+    surfaces: ["quick", "studio"],
+    accepts: ["application/pdf"],
+    produces: ["application/pdf"],
+    capabilities: pdfCapabilities,
+    executor: "browser",
+  },
+  {
     id: "images-to-pdf",
     version: "1.0.0",
     name: "Imagem para PDF",

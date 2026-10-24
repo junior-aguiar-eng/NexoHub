@@ -27,8 +27,9 @@ describe("Fonte única de disponibilidade de ferramentas", () => {
     expect(httpSupportedToolIds).toBe(activeToolIds);
   });
 
-  it("contém exatamente as 34 ferramentas ativas do produto", () => {
-    // 28 ferramentas PDF/Texto + 6 ferramentas de imagem
-    expect(activeToolIds.size).toBe(34);
+  it("contém exatamente as 35 ferramentas ativas do produto", () => {
+    // 29 ferramentas PDF/Texto + 6 ferramentas de imagem
+    expect(activeToolIds.has("pdf-repair")).toBe(true);
+    expect(activeToolIds.size).toBe(35);
   });
 });

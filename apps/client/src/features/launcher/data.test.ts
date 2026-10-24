@@ -24,6 +24,7 @@ describe("Strict Functional Tools Catalog", () => {
       "pdf-extract-pages",
       "html-to-pdf",
       "scan-to-pdf",
+      "pdf-repair",
       "pdf-edit",
       "pdf-compare",
       "image-compress",
@@ -35,7 +36,7 @@ describe("Strict Functional Tools Catalog", () => {
     ]) {
       expect(ids).toContain(id);
     }
-    expect(ids).toHaveLength(34);
+    expect(ids).toHaveLength(35);
   });
   it("não oferece conversões e proteção sem executor", () => {
     const tools = resolveLauncherTools();

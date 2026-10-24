@@ -54,6 +54,7 @@ import {
   splitPdfByInterval,
   unlockPdfDocument,
 } from "./pdf-engine";
+import { type PdfRepairReport, repairPdfDocument } from "./pdf-repair-engine";
 import { compileScannedPagesToPdf, type ScannedPageItem } from "./scan-to-pdf-engine";
 
 export interface LauncherPage {
@@ -195,6 +196,7 @@ export interface LauncherToolOutput {
   readonly secondaryFileName?: string;
   readonly reviewFindings?: readonly ReviewFinding[];
   readonly extractedImages?: readonly ExtractedImage[];
+  readonly pdfRepairReport?: PdfRepairReport;
 }
 
 import { activeToolIds } from "./tool-availability";
@@ -341,6 +343,32 @@ async function executeTool(
         throw error;
       }
       return { blob, fileName: `${baseName}_comprimido.pdf`, categoryKey: "recent.type.pdf" };
+    }
+    case "pdf-repair": {
+      let bytes: Uint8Array;
+      let report: PdfRepairReport;
+      try {
+        const repairOutcome = await repairPdfDocument(new Uint8Array(await first.arrayBuffer()));
+        bytes = repairOutcome.pdfBytes;
+        report = repairOutcome.report;
+      } catch (error) {
+        if (error instanceof Error && error.message === "EMPTY_DOCUMENT") {
+          throw new ToolRunError("INVALID_INPUT", translate("toolQuality.invalidDocument"));
+        }
+        if (error instanceof Error && error.message === "SENHA_OBRIGATORIA") {
+          throw new ToolRunError("INVALID_INPUT", translate("toolQuality.passwordRequired"));
+        }
+        if (error instanceof Error && error.message === "CORRUPTED_DOCUMENT") {
+          throw new ToolRunError("INVALID_INPUT", translate("repair.errorUnrecoverable"));
+        }
+        throw error;
+      }
+      return {
+        blob: pdfBlob(bytes),
+        fileName: `${baseName}_reparado.pdf`,
+        categoryKey: "recent.type.pdf",
+        pdfRepairReport: report,
+      };
     }
     case "pdf-organize": {
       const pages = input.pages.filter((page) => !page.deleted);

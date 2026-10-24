@@ -30,6 +30,7 @@ import {
   SpellCheck2,
   Stamp,
   Unlock,
+  Wrench,
 } from "lucide-react";
 import type { LauncherTool, Suite } from "./model";
 
@@ -117,6 +118,15 @@ const presentation = {
     uploadTaglineKey: "tool.pdfCompress.tagline" as const,
     icon: FileArchive,
     accentColor: "#00875F", // Verde Esmeralda
+  },
+  "pdf-repair": {
+    searchAliases: ["corrigir", "consertar", "recuperar", "restaurar"],
+    suite: "optimize" as const,
+    titleKey: "tool.pdfRepair.title" as const,
+    descriptionKey: "tool.pdfRepair.description" as const,
+    uploadTaglineKey: "tool.pdfRepair.tagline" as const,
+    icon: Wrench,
+    accentColor: "#10B981", // Verde Esmeralda / Cura
   },
   "images-to-pdf": {
     suite: "convert" as const,

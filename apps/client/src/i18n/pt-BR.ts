@@ -307,6 +307,24 @@ export const ptBR = {
   "tool.pdfCompress.title": "Comprimir PDF",
   "tool.pdfCompress.description":
     "Otimizar a estrutura do PDF e mostrar a variação real do tamanho.",
+  "tool.pdfRepair.tagline": "Recupere seus documentos danificados com integridade.",
+  "tool.pdfRepair.title": "Reparar PDF",
+  "tool.pdfRepair.description":
+    "Corrigir tabelas xref corrompidas, trailers danificados e resgatar páginas legíveis de PDFs com falha.",
+  "dedicated.actionRepair": "Reparar PDF",
+  "repair.title": "Reparar PDF",
+  "repair.diagnosticCard": "Diagnóstico da Recuperação",
+  "repair.xrefFixed": "Tabela de referências (xref) reconstruída",
+  "repair.trailerFixed": "Estrutura de final e trailer restaurada",
+  "repair.eofFixed": "Marcador de fim de arquivo (EOF) corrigido",
+  "repair.headerFixed": "Cabeçalho e alinhamento sintático corrigidos",
+  "repair.pagesSaved": "{count} de {total} páginas recuperadas",
+  "repair.sizeComparison": "Tamanho original: {orig} • Tamanho recuperado: {rep}",
+  "repair.errorUnrecoverable":
+    "Documento sem dados estruturais recuperáveis. O arquivo não possui objetos ou cabeçalho PDF legível.",
+  "repair.tryAnother": "Tentar outro arquivo",
+  "repair.running": "Analisando sintaxe e reconstruindo páginas...",
+  "repair.ready": "Documento reconstruído com sucesso",
   "tool.pdfExtractImages.tagline": "As imagens do seu PDF, prontas para novos usos.",
   "tool.pdfExtractImages.title": "Extrair Imagens",
   "tool.pdfExtractImages.description":

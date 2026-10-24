@@ -78,3 +78,24 @@ As ferramentas abaixo compõem o catálogo visual planejado ou dependem de decis
 1. **Fonte Única:** A disponibilidade ativa é governada por `@/platform/tool-availability.ts`, derivado diretamente de `coreToolRegistry`.
 2. **Paridade Funcional:** O client desktop (Tauri) e o website (Browser/PWA) compartilham o mesmo catálogo de 34 ferramentas ativas. Nenhuma ferramenta é exibida com selo "Em breve" ou sem executor associado.
 3. **Privacidade e Local-First:** Toda operação de transformação executa localmente. Nenhum documento é transmitido para servidores remotos.
+
+## 5. Complementação das ferramentas atuais
+
+Índice dos planos responsáveis, adicionado em 24/10/2026. Os complementos são **planejados** e
+não alteram os 34 executores atuais nem indicam homologação adicional de desktop/HTTP.
+Ordem e critérios comuns: [roadmap](ROADMAP.md#complementação-das-ferramentas-atuais--24102026).
+O checklist vive apenas no plano responsável, não nesta matriz.
+
+| Ferramentas / capacidade | Plano responsável e complementos |
+| --- | --- |
+| As seis ferramentas `image-*` | [PDF/Imagem](superpowers/plans/2026-10-23-unificar-pdf-imagem.md#fase-de-complementação--24102026): IM-C1 lotes, IM-C2 recorte, IM-C3 composição, IM-C4 exportação |
+| Mesas PDF e acessibilidade transversal | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#fase-de-complementação--24102026): Q-C0 corpus/licenças, UX-C1 visualização |
+| `pdf-redact`, `pdf-protect`, `pdf-unlock` | Mesmo plano de estabilização: SEC-C1 remoção real e regressões de segurança |
+| `pdf-ocr`, `pdf-to-excel`, `pdf-to-markdown`, `text-translate` | Mesmo plano de estabilização: OCR-C1, XL-C1, MD-C1 e TR-C1 |
+| `pdf-form-fill`, `scan-to-pdf`, `html-to-pdf`, `pdf-remove-pages`, `pdf-extract-pages` | [Quatro ferramentas](superpowers/plans/2026-10-23-corrigir-quatro-ferramentas.md#fase-de-complementação--24102026): DOC-C1 a DOC-C4 |
+| `pdf-edit` | [Editar PDF](superpowers/plans/2026-10-23-editar-pdf.md#fase-de-complementação--24102026): ED-C1 compatibilidade, ED-C2 desempenho |
+| `pdf-compare` | [Comparar PDF](superpowers/plans/2026-10-23-comparar-pdf.md#fase-de-complementação--24102026): CMP-C1 navegação/relatório |
+| `pdf-repair` (continua planejada) | [Especificação existente](REPARAR-PDF.md#complementação-do-motor--24102026): R-C1 prova do motor |
+
+Ferramentas sem complemento específico mantêm seu contrato atual e a regressão em Q-C0;
+não ganham nova promessa funcional por associação ao grupo.

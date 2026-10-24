@@ -179,3 +179,92 @@ a RAW/HEIC, SVG remoto ou GIF animado apenas por aparecerem no concorrente.
 ## Resultado de execução
 
 Implementado e validado. Evidências e limitações em [resultados](2026-10-23-unificar-pdf-imagem-resultados.md). A checagem global de licenças foi executada, mas depende de Cargo ausente nesta workspace; inventário/auditoria JavaScript conferidos separadamente.
+
+## Fase de complementação — 24/10/2026
+
+**Estado:** planejada, adicional às etapas 1–6 concluídas. Aplicar as
+[regras comuns](../../ROADMAP.md#regras-comuns-de-execução-e-aceite) e Q-C0 do plano de estabilização.
+As restrições de dependências da entrega original não significam adoção automática dos candidatos
+abaixo. Não refazer a identidade visual nem abrir outro plano de imagens.
+
+### IM-C1 — Lotes visíveis nas seis ferramentas
+
+**Modificar:** `apps/client/src/features/launcher/DedicatedToolView.tsx`, os seis
+`Image*Panel.tsx`, `apps/client/src/i18n/pt-BR.ts` e `platform/launcher-tool-runner.ts`.
+**Criar:** `features/launcher/ImageBatchPanel.tsx` e teste próximo.
+**Testar:** `e2e/image-mode-quality.spec.ts`, `e2e/tool-workspace-regressions.spec.ts`.
+
+**Interface proposta:** `ImageBatchPanel({ files, selectedIndex, onSelect, onRemove })`, com
+`readonly File[]`, índice zero-based e callbacks `(index: number) => void`. O estado do lote fica
+na mesa, nunca no motor. Selecionar uma prévia não muda quais arquivos serão processados.
+
+- [ ] Reproduzir em teste lote com nomes repetidos, paisagem/retrato, alpha e remoção do item
+  selecionado; provar que hoje só a primeira imagem é inspecionável.
+- [ ] Exibir nome, dimensões, seleção e remoção por item; reutilizar a mesma prévia nas seis
+  ferramentas. Ao remover o selecionado, selecionar o próximo válido; lote vazio retorna ao upload.
+- [ ] Manter opções compartilhadas no primeiro incremento, com indicação clara de aplicação ao
+  lote. Recorte deve passar por preflight em **todos** os arquivos; listar incompatíveis antes
+  de executar, sem truncar áreas silenciosamente nem remover arquivos do lote sem decisão do usuário.
+- [ ] Conferir ZIP por nomes/quantidade/bytes, preservação das opções ao acrescentar arquivos,
+  cancelamento no meio do lote e liberação das URLs ao remover/sair. Rodar os gates comuns.
+
+### IM-C2 — Recorte profissional sem mudar a semântica do resultado
+
+**Modificar:** `ImageCropPanel.tsx`, teste próximo, `platform/image-engine.ts`, teste próximo e
+`e2e/tool-workspace-regressions.spec.ts`. **Criar se selecionado:**
+`features/launcher/ImageCropCanvas.tsx`, adaptador da interação, sem segundo executor.
+
+- [ ] Avaliar [Cropper.js 2.3.1](https://github.com/fengyuanchen/cropperjs/releases/tag/v2.3.1)
+  (MIT) contra [react-easy-crop](https://github.com/ValentinH/react-easy-crop) (MIT).
+  Preferência proposta: Cropper.js pelas alças de seleção; adotar **um** somente após comprovar
+  toque, teclado, tema e compatibilidade do pacote publicado com Vite/React atuais.
+- [ ] Testar alças, pan/zoom, presets, campos numéricos e EXIF: cada gesto deve produzir a mesma
+  região em pixels do original. Consome IM-C1; conserva os setters e validação estrita do recorte.
+- [ ] Implementar o adaptador mantendo campos numéricos acessíveis e foco; zoom não muda o
+  resultado por si só. Não remover a seleção atual antes de a alternativa passar no corpus.
+- [ ] Baixar e decodificar os recortes em retrato/paisagem/alpha, conferindo dimensões e bordas
+  conhecidas; testar limites, troca de item e mobile. Atualizar `docs/IMAGE-WEB-QUALITY.md`.
+
+### IM-C3 — Composição com textos, formas e histórico
+
+**Estado:** prova técnica antes de implementação final. **Modificar:** `ImageWatermarkPanel.tsx`,
+`DedicatedToolView.tsx`, i18n e motor de imagens somente para comandos novos homologados.
+**Criar:** `features/launcher/ImageCompositionPanel.tsx`, `platform/image-composition-types.ts`,
+`image-composition-state.ts` e `image-composition-engine.ts`, com testes próximos.
+
+**Contrato proposto:** `ImageCompositionSnapshot` descreve objetos em pixels do original;
+`renderImageComposition(source: Blob, snapshot: ImageCompositionSnapshot, signal?: AbortSignal):
+Promise<Blob>`. Histórico guarda comandos, não cópias completas de imagens.
+
+- [ ] Provar [Fabric.js 7.4.0](https://github.com/fabricjs/fabric.js/releases/tag/v740), MIT,
+  usando o pacote publicado `fabric`; não copiar imports de `@fabricjs/browser` do branch em
+  desenvolvimento sem confirmar sua publicação. [Konva](https://github.com/konvajs/konva) é
+  alternativa, não dependência simultânea; seu wrapper deve ser compatível com React 19.2.8.
+- [ ] Testar texto com acentos/fontes locais, imagem com alpha, forma, posição/tamanho/ordem,
+  desfazer/refazer e descarte de resposta antiga. Comparar objetos/pixels da prévia e download.
+- [ ] Incorporar como modo avançado da composição/marca d'água, preservando o fluxo rápido.
+  Permitir selecionar, mover, redimensionar, excluir e ordenar; sem nova ferramenta/card nesta
+  complementação. Filtros fotográficos só entram após prova de resultado e orçamento de memória.
+- [ ] Preservar Pica para redimensionamento e jSquash para codificação final. Não substituir o
+  motor inteiro, persistir arquivos sem solicitação nem prometer PSD/camadas interoperáveis.
+  Validar revisão/exportação idênticas e custo frio/quente; registrar limites no documento técnico.
+
+### IM-C4 — Formatos e qualidade de exportação, depois da interação
+
+**Modificar:** `ImageCompressPanel.tsx`, `ImageConvertPanel.tsx`, `ImageResizePanel.tsx`,
+`ImageRotatePanel.tsx`, `ImageWatermarkPanel.tsx`, `platform/image-engine.ts`, `image-job.ts`,
+testes e `e2e/image-mode-quality.spec.ts`.
+
+- [ ] Comparar AVIF via [jSquash](https://github.com/jamsinclair/jSquash) com JPEG/WebP no corpus
+  fotográfico de Q-C0: bytes, artefatos, tempo, pico de memória quando mensurável e dispositivos.
+  Carregar codec só ao selecionar o formato; não anunciar AVIF até decode/encode passarem.
+- [ ] Expor antes/depois, dimensões e economia real; presets de tamanho/qualidade só se seus
+  parâmetros produzirem comportamento distinto. PNG continua sem perdas; alpha→JPEG explícito.
+- [ ] Homologar rotação, espelhamento e marca no item selecionado e no lote, com os controles
+  acessíveis existentes. Metadados/ICC/HDR/animação permanecem limitados até prova específica.
+- [ ] Atualizar formatos, limites, licenças e testes; manter o caminho anterior caso o candidato
+  não melhore qualidade/capacidade ou exceda o orçamento definido em Q-C0.
+
+**Fora desta fase:** TOAST UI arquivado; Filerobot beta como dependência automática; adoção
+simultânea de editores; remoção de fundo AGPL ou pesos de IA sem decisão de licença; Sharp/Node
+no navegador. Fontes da triagem: repositórios vinculados e metadados npm consultados em 24/10/2026.

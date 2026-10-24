@@ -46,3 +46,68 @@ Pedidos de câmera resolvidos após sair da tela; formulários com campos em vá
 - Revisão independente identificou reordenação do Unicode na extração. O teste `HTML mantém a ordem de linhas Unicode entre linhas vetoriais` falhou antes da correção e passou depois. O caminho padrão de OCR continua acrescentando stream separado para preservar documentos já serializados.
 - Verificação final: `pnpm check`, `pnpm test` (541 testes) e build do website aprovados; Playwright completo com 113 testes aprovados. Captura adicional com câmera de teste do Chromium: vídeo 1920×1080 e PDF de uma página.
 - Sem novas dependências, commit, push ou deploy nesta entrega.
+
+## Fase de complementação — 24/10/2026
+
+**Estado:** planejada, adicional às correções concluídas. O formulário compartilha a preservação
+de campos já tratada neste plano, por isso seu complemento permanece aqui. Aplicar Q-C0 e os
+[gates comuns](../../ROADMAP.md#regras-comuns-de-execução-e-aceite); dependências da nova fase
+exigem avaliação própria, sem alterar o histórico da entrega sem dependências.
+
+### DOC-C1 — Formulário com prévia dos valores atuais
+
+**Modificar:** `apps/client/src/platform/pdf-form.ts`, `pdf-form.test.ts`,
+`features/launcher/FormFillPdfPanel.tsx`, teste próximo, `DedicatedToolView.tsx` e i18n.
+**Criar:** `features/launcher/useFormPreview.ts` e teste próximo.
+**Testar:** `e2e/new-tools-quality.spec.ts`, `tool-workspace-regressions.spec.ts`.
+
+- [ ] Testar texto, checkbox, rádio e lista em várias páginas: hoje a prévia mostra o original;
+  ao mudar valor, deve mostrar a revisão correspondente. Cobrir fonte/acentos e achatar ou não.
+- [ ] Reutilizar `fillPdfForm` para gerar bytes efêmeros e renderizar a página da revisão,
+  com debounce, cancelamento e geração de sessão. O download usa o mesmo snapshot validado.
+  Valores não suportados devem gerar erro, nunca desaparecer silenciosamente.
+- [ ] Navegar do campo à página correspondente; consumir UX-C1 sem reconstruir outro viewer.
+  Preservar widgets/valores na saída editável e removê-los somente quando achatar for escolhido.
+- [ ] Testar troca de arquivo/saída durante renderização e nomes longos em 390px; revogar URLs
+  e descartar resultados antigos. Registrar cobertura em `docs/TOOL-SPEC.md`.
+
+### DOC-C2 — Digitalização com perspectiva e revisão por página
+
+**Modificar:** `features/launcher/ScanToPdfPanel.tsx`, teste próximo,
+`platform/scan-to-pdf-engine.ts`, teste próximo e `e2e/four-tools-regression.spec.ts`.
+**Consome:** `prepareDocumentImage` de OCR-C1, sem segundo pipeline de OpenCV.
+
+- [ ] Testar foto inclinada com quatro marcadores conhecidos, documento sobre fundo e baixa
+  iluminação; após correção, todos os marcadores devem permanecer e as bordas formar retângulo.
+- [ ] Oferecer ajuste manual dos quatro cantos e comparação original/corrigido antes de aceitar.
+  Aplicar alinhamento/contraste só à cópia, com desfazer e escolha por página.
+- [ ] Compor páginas corrigidas na ordem indicada; testar cancelar, câmera recusada, tracks
+  encerradas e remoção/reordenação. Não confundir melhoria de imagem com reconhecimento OCR.
+- [ ] Integrar o pré-processador somente se OCR-C1 comprovar ganho e custo aceitável; sem essa
+  prova, manter captura original e ajustes atuais. Registrar limites e resultado no plano.
+
+### DOC-C3 — HTML: fidelidade dentro do escopo local
+
+**Modificar:** `platform/html-local-document.ts`, `html-to-pdf-converter.ts`, teste próximo,
+`features/launcher/HtmlToPdfPanel.tsx`, teste próximo e `e2e/four-tools-regression.spec.ts`.
+
+- [ ] Acrescentar casos de tabelas longas, cabeçalhos repetidos, colunas largas, Unicode e
+  quebras explícitas; conferir presença do último texto e ausência de conteúdo fora da página.
+- [ ] Implementar paginação/cabeçalhos mantendo leitura inerte, CSP sem rede e sandbox.
+  Preservar texto selecionável quando suportado e avisar quais estilos não são reproduzidos.
+- [ ] Não instalar html2canvas/html2pdf.js como solução automática de impressão fiel: rasterizar
+  a página muda seleção/acessibilidade e não resolve todo CSS. Conversão de sites arbitrários
+  via Chromium/servidor permanece condicionada à decisão arquitetural e de privacidade.
+
+### DOC-C4 — Remover e extrair páginas: preservação e uso em documentos grandes
+
+**Modificar:** `PdfPageGridPanel.tsx`, `RemovePagesPanel.tsx`, `ExtractPagesPanel.tsx`,
+`LazyPageThumbnail.tsx`, `DedicatedToolView.tsx`, `platform/pdf-form.ts` e testes relacionados.
+
+- [ ] Ampliar corpus com campos em páginas mantidas/descartadas, CropBox e rotações; conferir
+  ordem, valores e quantidade de páginas no PDF e ZIP, inclusive seleção descontínua.
+- [ ] Medir grade e seleção em documento grande; virtualizar elementos somente se necessário,
+  preservando seleção global, foco e navegação por teclado. As miniaturas além de 48 páginas
+  já foram corrigidas em `43f9c1a`; não reimplementar esse carregamento.
+- [ ] Preservar cancelamento da fila ao sair e não exigir renderizar o PDF inteiro para
+  selecionar/extrair um intervalo. Rodar os gates comuns antes de ampliar limites atuais.

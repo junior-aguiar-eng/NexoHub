@@ -51,3 +51,25 @@ Nestes casos, a ferramenta rejeita a operação com o código estruturado `CORRU
 
 - **Ambiente Web:** Mecanismo resiliente local baseado em leitura tolerante a falhas (via parser permissivo do `pdf-lib` em modo de reparo ou worker de reconstrução binária de objetos sem dependência externa adicional).
 - **Ambiente Desktop:** Reconstrução equivalente acionável via Document Core Port ou módulo nativo Rust.
+
+## Complementação do motor — 24/10/2026
+
+### R-C1 — Avaliar qpdf dentro da fase 17 existente
+
+**Estado:** prova técnica planejada, sem ativação no catálogo. Aplicar Q-C0 e os
+[gates comuns](ROADMAP.md#regras-comuns-de-execução-e-aceite).
+**Arquivos previstos:** `apps/client/src/platform/pdf-repair-engine.ts`, teste próximo e worker
+cancelável, somente depois da escolha do runtime; contratos/registro existentes ao homologar.
+
+- [ ] Criar fixtures sintéticas com xref/trailer quebrado, arquivo truncado recuperável e perda
+  irrecuperável. Conferir páginas, conteúdo, campos e original imutável após reparo.
+- [ ] Comparar leitura tolerante atual com [qpdf](https://github.com/qpdf/qpdf) Apache-2.0;
+  avaliar versão, licenças incorporadas, tamanho e manutenção do wrapper WASM separadamente.
+  Um wrapper experimental não herda a maturidade do motor C++.
+- [ ] Não implementar reconstrução baseada apenas em regex sobre bytes: streams podem conter
+  delimitadores aparentes; exigir parser/motor demonstrado e limites contra loops/expansão.
+- [ ] Se não houver integração web local robusta, manter a ferramenta planejada. Binário nativo
+  ou execução remota depende de decisão explícita de plataforma/privacidade; não é fallback oculto.
+- [ ] Ativar somente com resultado reaberto e verificado por leitor independente, erros claros
+  para perda física de conteúdo e cancelamento. qpdf não resolve edição textual, OCR ou PDF/A
+  por si só; essas capacidades permanecem nos seus planos atuais.

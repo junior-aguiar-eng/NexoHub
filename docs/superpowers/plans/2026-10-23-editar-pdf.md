@@ -72,3 +72,43 @@ Não criar commits intermediários: a autorização atual é para implementar, n
   dos bytes exportados. Recriação de objetos transparentes/com recorte especial é recusada.
 - Nenhum achado importante permaneceu aberto. Alterações mantidas no checkout `work`, sem commit,
   push ou deploy. Limites finais em `docs/EDITAR-PDF-WEB.md`.
+
+## Fase de complementação — 24/10/2026
+
+**Estado:** planejada; preserva as quatro tarefas concluídas. Consome Q-C0 e os
+[gates comuns](../../ROADMAP.md#regras-comuns-de-execução-e-aceite). Não trocar o motor atual por
+um editor visual de imagens: Fabric/Konva não editam o texto existente no conteúdo de um PDF.
+
+### ED-C1 — Compatibilidade textual demonstrada
+
+**Modificar:** `apps/client/src/platform/pdf-editor-engine.ts`, `pdf-editor-types.ts`,
+`pdf-editor-verify.ts` e testes; `features/launcher/PdfEditorPanel.tsx` e teste próximo.
+**Fixtures:** `platform/__fixtures__/pdf-editor/`; documento técnico `docs/EDITAR-PDF-WEB.md`.
+
+- [ ] Expandir o corpus com fontes incorporadas completas/subconjuntos, ligaduras, acentos,
+  transparência, texto transformado, múltiplas colunas e formulários; registrar por classe
+  edição suportada ou recusa. Conferir visualmente e por extração independente a saída.
+- [ ] Mostrar o motivo de incompatibilidade antes de editar e oferecer troca explícita de
+  fonte quando segura. Não usar largura de glifo como prova de suporte nem cobertura branca.
+- [ ] Melhorar seleção de objetos e propriedades sem introduzir sobreposição ou reflow
+  implícito; texto maior que a caixa continua recusado até existir prova específica de reflow.
+- [ ] Verificar original, regiões não editadas e campos após substituições, exclusão e histórico.
+  Homologar qualquer expansão do repertório antes de remover restrições do documento técnico.
+
+### ED-C2 — Documentos maiores com orçamento de recursos
+
+**Modificar:** `pdf-editor-engine.ts`, `pdf-editor-client.ts`, `pdf-editor.worker.ts`,
+`pdf-editor-state.ts`, `PdfEditorPanel.tsx`/CSS e `e2e/pdf-editor.spec.ts`.
+
+- [ ] Medir parsing, render e histórico próximos aos limites atuais de 20 MiB/30 páginas/3.000
+  objetos. Testar página ativa, navegação rápida, cancelamento e saída durante renderização.
+- [ ] Implementar renderização/cache sob demanda onde a medição indicar custo, mantendo uma
+  revisão canônica e histórico de comandos. Reaproveitar UX-C1 só onde compatível com o editor.
+- [ ] Aumentar limites somente depois de comprovar memória, tempo e responsividade em máquina
+  modesta. Limites de elementos e exportação continuam explícitos; falha preserva última revisão.
+- [ ] Validar preview/download/undo/redo da mesma revisão e fontes locais em `/hub/`.
+
+**Dependências:** manter `@embedpdf/pdfium@2.15.1` enquanto atender ao corpus; avaliar atualização
+seletiva da linha estável v2, inventariando WASM e licenças. Não migrar para v3 em desenvolvimento,
+nem instalar CloudPDF/server. OCR com reconstrução e edição universal de parágrafos continuam
+fora desta complementação até demonstração de viabilidade e escopo próprios.

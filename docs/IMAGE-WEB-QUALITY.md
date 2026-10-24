@@ -31,9 +31,13 @@ Os codecs são carregados apenas durante operações que os exigem.
 | @jsquash/oxipng | 2.3.0 | Apache-2.0 | Otimização PNG |
 
 Canvas permanece para recorte, rotação, composição e marca d'água. Cropper.js não foi adicionado:
-o recorte atual mantém controles numéricos/proporções, sem duplicar o motor.
+o recorte atual mantém região visual movível, controles numéricos/proporções, sem duplicar o motor.
 Nenhum runtime ou modelo de IA novo foi incluído. Pica não garante cor de pré-impressão/HDR;
 as limitações de gamma/8 bits constam na documentação oficial.
+
+Complementos planejados (lotes, recorte com alças, composição e formatos) pertencem ao
+[plano principal de PDF/Imagem](superpowers/plans/2026-10-23-unificar-pdf-imagem.md#fase-de-complementação--24102026).
+Esta página descreve o motor entregue; candidatos pesquisados não contam como capacidade instalada.
 
 No build observado, Pica ocupa aproximadamente 53kB de JS (17kB gzip); os WASM opcionais dos
 codecs variam de 164 a 346kB por arquivo. Algumas variantes alternativas de codec integram o

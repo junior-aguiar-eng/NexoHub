@@ -99,3 +99,135 @@ duas entradas e um PDF de três páginas na junção, uma entrada e um ZIP com d
 e uma entrada e um PDF com rotação de 90° na rotação. Também foi corrigido o estado da tela dedicada,
 que mantinha o resultado anterior ao trocar de ferramenta. O instalador e a máquina limpa continuam
 sem validação.
+
+## Fase de complementação — 24/10/2026
+
+**Estado:** planejada. As restrições e evidências de setembro acima são históricas; este adendo
+trata somente as ferramentas atuais no website e não reabre o fechamento nativo. A ordem única
+e os gates estão no [roadmap](../../ROADMAP.md#complementação-das-ferramentas-atuais--24102026).
+Não criar executores paralelos, habilitar ferramentas planejadas ou instalar todos os candidatos.
+
+### Q-C0 — Homologação antes de ampliar promessas comerciais
+
+**Modificar:** `docs/DEFINITION-OF-DONE.md`, `docs/THIRD_PARTY_LICENSES.md` e o documento técnico
+da ferramenta afetada. **Fixtures:** diretórios `__fixtures__` de `apps/client/src/platform`
+e geradores de testes existentes; usar material sintético ou com licença demonstrada.
+
+- [ ] Registrar por ferramenta um corpus versionado com origem/licença/hash e expectativa:
+  imagens fotográficas e gráficas, PDF textual/digitalizado, CropBox/rotação, fontes incorporadas,
+  campos, tabelas sem/com borda e arquivos inválidos. Gerar arquivos grandes em teste.
+- [ ] Fixar no documento da ferramenta quais casos são suportados, recusados e ainda não
+  medidos. Preservar todos os testes anteriores; nenhum ganho pode ocultar perda em outro caso.
+- [ ] Antes da integração de cada candidato, registrar versão publicada, licença do wrapper,
+  binário/codec/modelo, dependências transitivas, manutenção e advisories. Alterar
+  `apps/client/package.json`/lockfile apenas depois dessa avaliação e do aceite da prova técnica.
+- [ ] Medir baseline e candidato no mesmo corpus/dispositivo, frio/quente, bytes transferidos,
+  JS/WASM carregado e memória quando disponível. Aceitar somente se acrescentar capacidade ou
+  qualidade comprovada, sem bloquear a interface; justificar o custo e fixar limites no documento.
+- [ ] Definir o teste de resultado por tipo: pixels/dimensões para imagem; texto/objetos/regiões
+  para PDF; células/estrutura para Excel; taxa de erro de caracteres/palavras para OCR. Métrica
+  heurística do motor não deve aparecer como probabilidade de correção do documento.
+
+### UX-C1 — Visualização PDF reutilizável nas mesas atuais
+
+**Modificar:** painéis `CropPdfPanel`, `SignPdfPanel`, `RedactPdfPanel`, `WatermarkPdfPanel`,
+`PageNumbersPdfPanel`, `FormFillPdfPanel`, `PdfToJpgPanel` e `PdfToMarkdownPanel` em
+`apps/client/src/features/launcher/`, `styles.css` e i18n.
+**Criar:** `features/launcher/PdfViewportControls.tsx` e teste próximo.
+**Testar:** `e2e/tool-workspace-size.spec.ts`, `tool-workspace-regressions.spec.ts`.
+
+**Interface proposta:** `PdfViewportControls({ page, pageCount, zoom, onPageChange,
+onZoomChange, onFitWidth })`; página 1-based, zoom multiplicador, callbacks numéricos e ajuste
+sem argumentos. Não armazenar estado do motor dentro dos controles.
+
+- [ ] Testar página 1/última, saltos, ajuste à largura, zoom e resize em 390–1440px; manter
+  estado selecionado por teclado e controles legíveis, sem duplicar os já existentes no editor.
+- [ ] Integrar incrementalmente controles e superfície ampla, renderizando apenas páginas
+  necessárias. Zoom de visualização não pode alterar coordenadas do documento ou opções de export.
+- [ ] Conferir por download marca, assinatura, recorte, ocultação e numeração nas coordenadas
+  escolhidas após zoom/rotação/CropBox; cancelar fila de prévias ao trocar arquivo/sair.
+- [ ] Editor e comparador preservam seus motores/controles especializados e consomem apenas
+  elementos compatíveis; não migrar todos para um novo viewer em uma única alteração.
+
+### SEC-C1 — Ocultação com remoção real, sem rasterizar o documento inteiro
+
+**Modificar:** `platform/pdf-engine.ts` (`redactPdfDocument`), `features/launcher/RedactPdfPanel.tsx`,
+`DedicatedToolView.tsx`, `platform/launcher-tool-runner.ts`; testes `pdf-security.test.ts` e
+`e2e/security-excel-quality.spec.ts`. **Criar:** `platform/pdf-redaction-engine.ts` e testes,
+encapsulando o motor escolhido sem expor seu runtime à UI.
+
+- [ ] Provar [EmbedPDF v2](https://github.com/embedpdf/embed-pdf-viewer/tree/v2), em especial
+  `@embedpdf/plugin-redaction@2.15.1` (MIT), com PDFium já instalado; manter todos os pacotes da
+  família na mesma versão. Avaliar necessidade do plugin/UI versus acesso ao motor; não instalar
+  a suíte inteira nem adotar v3 em desenvolvimento ou CloudPDF/server por associação de nome.
+- [ ] Testar remoção em texto, imagem, Form XObject reutilizado, rotação e CropBox. O texto
+  ocultado não pode ser extraído nem reaparecer em conteúdo residual/incremental; conteúdo fora
+  da região, links e campos devem ser preservados ou a operação recusada com motivo específico.
+- [ ] Manter o contrato `RedactPdfOptions` e novo artifact imutável. A revisão aplicada e o
+  download devem usar os mesmos bytes; prévia de retângulo sozinho não comprova remoção.
+- [ ] Auditar cópias residuais em objetos/streams/metadados associados ao trecho. Se não houver
+  remoção segura para uma classe de PDF, manter o modo raster atual explicitamente identificado,
+  com suas perdas, ou recusar; nunca trocar automaticamente por cobertura visual recuperável.
+- [ ] Atualizar limites e evidências em `docs/AUDITORIA-PROTECAO-TARJA-EXCEL-WEB-2026-10-23.md`
+  como resultado posterior, preservando a auditoria original. Proteger/Desbloquear compartilham
+  o corpus de segurança; não trocar sua criptografia por consequência desta integração.
+
+### OCR-C1 — OCR medido e preparação compartilhada com o scanner
+
+**Modificar:** `platform/browser-ocr.ts`, `browser-ocr.test.ts`, `browser-ocr-searchable.test.ts`,
+`pdf-ocr-text-layer.ts`, `features/launcher/OcrScannerPanel.tsx` e `e2e/language-image-quality.spec.ts`.
+**Criar:** `platform/document-image-preprocessing.ts` e testes se o ganho for demonstrado.
+
+**Interface proposta:** `prepareDocumentImage(source: Blob, options: DocumentImagePreparationOptions,
+signal?: AbortSignal): Promise<Blob>`; opções tipadas de perspectiva/alinhamento/contraste;
+nenhuma mutação da imagem original. DOC-C2 consome este mesmo adaptador.
+
+- [ ] Medir Tesseract.js já instalado em corpus pt-BR com acentos, números, fotos inclinadas,
+  baixo contraste e PDFs mistos; separar página digitalizada de página com texto extraível.
+- [ ] Comparar pré-processamento atual com OpenCV.js de release estável Apache-2.0, sob demanda
+  em worker. Preservar opção de original e rejeitar correção automática que corte conteúdo.
+- [ ] Testar cancelamento e descarte entre páginas; PDF pesquisável mantém imagem e alinha texto
+  às caixas reais. Exibir confiança como indicador de OCR, sem garantia de acerto.
+- [ ] PaddleOCR/Docling são candidatos de avaliação fora do browser atual, não instalações
+  automáticas. Exigem decisão de runtime, recursos, privacidade e licenças dos pesos; não anunciar
+  suporte pela existência de pacote Python ou por fallback remoto invisível.
+
+### XL-C1 / MD-C1 — Tabelas e leitura documental verificáveis
+
+**Modificar:** `platform/excel-converter.ts`, `excel-converter.test.ts`,
+`features/launcher/PdfToExcelPanel.tsx`, `PdfToMarkdownPanel.tsx`, `platform/pdf-engine.ts` e
+`e2e/security-excel-quality.spec.ts`, `new-tools-quality.spec.ts`.
+
+- [ ] XL-C1: testar tabelas com borda/sem borda, múltiplas páginas, células vazias/mescladas,
+  códigos com zeros e números pt-BR. Conferir o XLSX por célula e estrutura, não por tamanho.
+- [ ] Permitir selecionar página/região e corrigir separadores de colunas antes da exportação,
+  reutilizando `extractPdfSpreadsheetData`/`PdfSpreadsheetData`; prévia e saída usam a mesma
+  configuração. Não converter código em número nem reconstruir valores por suposição.
+- [ ] MD-C1: testar ordem de leitura em duas colunas, títulos/listas e tabelas; preservar texto
+  completo e indicar páginas sem camada textual. Reutilizar OCR-C1 apenas por escolha explícita.
+- [ ] Avaliar [Camelot](https://github.com/camelot-dev/camelot) (MIT) para tabelas e
+  [Docling](https://github.com/docling-project/docling) (código MIT, pesos separados) para estrutura.
+  Registrar comparação por documento e custo. **Integração condicionada:** Python/Node/backend
+  não entram no website local sem decisão arquitetural; a subetapa fica bloqueada, não concluída.
+
+### TR-C1 — Tradução: qualidade, carregamento e direitos de uso do modelo
+
+**Modificar:** `docs/TRADUCAO-WEB.md`, `platform/translation-protocol.ts`, `translation-runtime.ts`
+e testes, `translation-segmentation.ts`, `features/launcher/TranslateDocumentPanel.tsx` e
+`e2e/translation-loading.spec.ts`; ADR-011 se houver alteração da seleção de modelos.
+
+- [ ] Confirmar em fonte primária a licença dos pesos `Xenova/nllb-200-distilled-600M` e do
+  modelo original. A licença reportada do NLLB inclui restrição não comercial; a consulta direta
+  da ficha foi bloqueada na pesquisa. Até confirmação e resolução, não declarar o tradutor
+  homologado para exploração comercial. A licença do Transformers.js não libera os pesos.
+- [ ] Comparar modelos compatíveis e licenciados para o uso pretendido em pares pt/en/es,
+  com textos longos, números, nomes e negações. Não escolher apenas por tamanho nem transpor
+  automaticamente os modelos nativos do ADR-011 para o navegador.
+- [ ] Preservar worker, cache, progresso real, timeout por inatividade e cancelamento; medir
+  primeiro download/inicialização/inferência em dispositivo modesto antes de trocar o perfil.
+- [ ] Documentar modelo, revisão/hash, licença, limites e qualidade observada. Publicar somente
+  após resolver o gate de licença e validar tradução real; mocks de download não medem qualidade.
+
+**Entrega de cada complemento:** teste de regressão ou corpus antes, código mínimo, verificação
+da saída, gates do roadmap e evidências aqui. Não reclassificar recursos novos como correções já
+entregues em `43f9c1a`; sem commit/push/deploy implícitos.

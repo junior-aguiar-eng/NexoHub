@@ -43,3 +43,28 @@ falhas e cancelamento/troca de arquivo com descarte de resultados atrasados.
 - Revisão independente identificou amostras largas saindo da margem do PDF; corrigido com
   medição da fonte e teste real de extração do relatório (falhou antes, passou depois).
 - Limites finais documentados em `docs/COMPARAR-PDF-WEB.md`. Sem commit, push ou deploy.
+
+## Fase de complementação — 24/10/2026
+
+### CMP-C1 — Navegação e relatório mais legíveis, mantendo o motor atual
+
+**Estado:** planejado. Consome Q-C0/UX-C1 e os
+[gates comuns](../../ROADMAP.md#regras-comuns-de-execução-e-aceite).
+**Modificar:** `apps/client/src/features/launcher/PdfComparePanel.tsx`/CSS e testes,
+`platform/pdf-comparison.ts`, `pdf-comparison-report.ts` e testes,
+`e2e/pdf-compare.spec.ts`, `docs/COMPARAR-PDF-WEB.md`.
+
+- [ ] Acrescentar corpus com páginas quase iguais, repetidas/reordenadas, branco inserido,
+  documentos mistos e Unicode fora das fontes padrão; conferir alinhamento e relatório exportado.
+- [ ] Melhorar ajuste à largura, zoom e salto para alteração, preservando sincronização e
+  contexto da página; reaproveitar controles de UX-C1 somente se mantiverem a semântica dos pares.
+- [ ] Evitar `?` em caracteres do relatório mediante fonte local licenciada e incorporada;
+  provar extração/visualização, paginação e margens. JSON continua completo, sem perda silenciosa.
+- [ ] Apresentar limites do alinhamento heurístico e páginas sem texto. Não rotular diferenças
+  como prova de autenticidade, plágio ou interpretação semântica; OCR só após OCR-C1 e escolha
+  explícita por documento/página, preservando os resultados originais separadamente.
+- [ ] Medir renderizações e memória; carregar detalhes sob demanda sem enfraquecer detecção de
+  páginas inseridas/removidas. Testar cancelar/trocar arquivos durante cálculo e geração do relatório.
+
+Não adicionar outro diff/viewer por padrão. PDF.js, pixelmatch e o comparador textual existentes
+permanecem até que uma comparação com o corpus demonstre necessidade de substituição.

@@ -64,6 +64,20 @@ export interface EditorRevision {
   thumbnails: EditorBitmap[];
   signed: boolean;
 }
+export type EditorWorkerRequest =
+  | {
+      kind: "revise";
+      bytes: Uint8Array;
+      snapshot: EditorSnapshot;
+      page: number;
+      thumbnails?: boolean;
+    }
+  | { kind: "preview"; bytes: Uint8Array; page: number };
+export interface EditorWorkerResponse {
+  result?: EditorRevision;
+  preview?: EditorBitmap;
+  error?: string;
+}
 export const EDITOR_LIMITS = Object.freeze({
   bytes: 20 * 1024 * 1024,
   pages: 30,
@@ -72,4 +86,7 @@ export const EDITOR_LIMITS = Object.freeze({
   text: 4000,
   renderSide: 1400,
   imagePixels: 8_000_000,
+  outputBytes: 80 * 1024 * 1024,
+  previewCacheBytes: 16 * 1024 * 1024,
+  historyBytes: 64 * 1024 * 1024,
 });

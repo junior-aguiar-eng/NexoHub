@@ -12,7 +12,7 @@ Cada revisão parte do original imutável e de um snapshot de comandos. A export
 - Mover/redimensionar elementos adicionados por ponteiro ou propriedades numéricas; duplicar,
   excluir e ordenar elementos. A caixa acompanha o gesto; a revisão é renderizada ao concluí-lo.
 - Selecionar objetos de texto existentes e substituir ou excluir seu conteúdo de verdade.
-- Desfazer/refazer com histórico de até 50 etapas; miniaturas regeneradas ao percorrer histórico.
+- Desfazer/refazer com histórico de até 50 etapas e orçamento de payloads; miniaturas regeneradas ao percorrer histórico.
 - Zoom de 50% a 200%, ajuste à largura e navegação entre páginas.
 - Aviso de alterações não salvas ao sair pela interface, navegação interna ou fechamento da aba.
 - Preservação da última revisão válida e do texto digitado quando uma operação falha.
@@ -58,13 +58,25 @@ previamente desbloqueados. Editar um documento assinado pode invalidar sua assin
 - Texto novo entre 6 e 120 pt. Tamanho existente utiliza a transformação visual da fonte.
 - Prévia com até 1.400 pixels no maior lado e escala máxima de 2; miniaturas de até 150 pixels.
 - Dimensão de página até 14.400 pt e exportação até 80 MiB. Operação cancelável, com timeout de 60 s.
-- História mantida em memória durante a sessão; sem persistência entre visitas nem colaboração.
+- Cache LRU de bitmaps por revisão: até 16 MiB e três páginas; descartado após edição ou troca de arquivo.
+- Histórico mantido em memória, até 50 etapas e 64 MiB estimados de payloads. Buffers de imagens
+  compartilhados são contados uma vez; passado antigo é removido com aviso quando necessário.
+  A revisão atual é preservada. A marca da versão salva usa identidade fraca para não reter imagens
+  descartadas. Sem persistência entre visitas nem colaboração.
+
+Os orçamentos de cache/histórico não representam o pico total do processo: bytes do documento,
+bitmap ativo, Canvas, cópias de transferência e memória do PDFium também têm custo transitório.
 
 ## Implementação e dependência
 
 `PdfEditorEngine` encapsula PDFium e libera documentos, páginas, fontes internas, bitmaps, objetos
 não anexados e buffers alocados. O worker é encerrado ao terminar, falhar ou cancelar. Respostas
 antigas são descartadas por geração da sessão. Prévias e bytes derivam da mesma revisão.
+Ao navegar, o executor recebe os bytes da revisão validada e renderiza somente a página solicitada
+em worker, sem reaplicar comandos, inspecionar todos os objetos ou salvar outro PDF. Um acerto no
+cache dispensa o worker. Navegar não altera os bytes do download nem o histórico; edição,
+desfazer/refazer ou novo arquivo invalidam o cache. As miniaturas iniciais continuam limitadas
+a 30 imagens de até 150 pixels; o corpus de 30 páginas ocupa aproximadamente 1,9 MB em RGBA.
 Coordenadas usam transformação afim pelos extremos da página, evitando quantização de vetores de
 1 pt. O recorte e as rotações são considerados tanto na seleção quanto na gravação.
 
@@ -96,7 +108,7 @@ não valida a revisão. Situações sem correspondência demonstrada continuam r
 O repertório observado permanece conservador tanto na fonte completa quanto no subconjunto.
 Espaços de extração são normalizados; isso não certifica fidelidade tipográfica dos espaços.
 Os limites de arquivo, páginas, objetos e memória continuam os descritos acima. ED-C2, referente
-a desempenho e documentos maiores, é a próxima etapa do plano.
+a desempenho e documentos maiores, foi concluído dentro dos limites atuais.
 Resultados das verificações, medições e ressalvas estão no
 [plano responsável](superpowers/plans/2026-10-23-editar-pdf.md#registro-complementar--ed-c1-24102026).
 

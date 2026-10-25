@@ -40,6 +40,7 @@ import { editorReplacementIssue } from "@/platform/pdf-editor-compatibility";
 import {
   commitEditorSnapshot,
   type EditorHistory,
+  EditorPreviewCache,
   editorHistory,
   redoEditor,
   undoEditor,
@@ -115,10 +116,11 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
   const [showPages, setShowPages] = useState(true),
     [showProps, setShowProps] = useState(true);
   const [thumbnails, setThumbnails] = useState<string[]>([]);
+  const previewCache = useRef(new EditorPreviewCache());
   const generation = useRef(0),
     controller = useRef<AbortController | null>(null),
     count = useRef(0);
-  const savedSnapshot = useRef(history.present),
+  const savedSnapshot = useRef(new WeakSet([history.present])),
     started = useRef(false),
     stage = useRef<HTMLDivElement>(null);
   const imageInput = useRef<HTMLInputElement>(null),
@@ -139,7 +141,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
     revision = output?.editorRevision,
     info = revision?.pages[page];
   const preview = useMemo(() => bitmapUrl(revision?.preview), [revision?.preview]);
-  const dirty = history.present !== savedSnapshot.current;
+  const dirty = !savedSnapshot.current.has(history.present);
   const selectedOriginal = info?.texts.find((o) => o.id === selected);
   const replacementIssue =
     selectedOriginal && replacement
@@ -161,6 +163,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
     () => () => {
       generation.current++;
       controller.current?.abort();
+      previewCache.current.clear();
     },
     [],
   );
@@ -188,6 +191,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
     targetPage: number,
     initial = false,
     refreshThumbnails = false,
+    previewOnly = false,
   ) {
     invalidate();
     const token = generation.current,
@@ -197,8 +201,22 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
     setError(undefined);
     setStatus(undefined);
     try {
+      if (previewOnly) {
+        if (!output?.editorRevision) throw new Error("EDITOR_OPERACAO");
+        const cached = previewCache.current.get(targetPage);
+        if (cached) {
+          setOutput({ ...output, editorRevision: { ...output.editorRevision, preview: cached } });
+          setPage(targetPage);
+          setDraftDirty(false);
+          return true;
+        }
+      }
       const result = await runLauncherTool(documentCore, "pdf-edit", {
-        files: [target],
+        files: [
+          previewOnly && output
+            ? new File([output.blob], output.fileName, { type: "application/pdf" })
+            : target,
+        ],
         splitMode: "interval",
         splitIntervals: [],
         mergeIntervals: false,
@@ -209,19 +227,33 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
         firstText: "",
         secondText: "",
         editorSnapshot: next.present,
+        editorPreviewOnly: previewOnly,
         editorPage: targetPage,
         editorThumbnails: initial || refreshThumbnails,
         editorSignal: abort.signal,
       });
       if (token !== generation.current || abort.signal.aborted) return false;
+      if (previewOnly) {
+        if (!result.editorPreview || !output?.editorRevision) throw new Error("EDITOR_OPERACAO");
+        previewCache.current.set(targetPage, result.editorPreview);
+        setOutput({
+          ...output,
+          editorRevision: { ...output.editorRevision, preview: result.editorPreview },
+        });
+        setPage(targetPage);
+        setDraftDirty(false);
+        return true;
+      }
       if (!result.editorRevision) throw new Error("EDITOR_OPERACAO");
+      previewCache.current.clear();
+      previewCache.current.set(targetPage, result.editorRevision.preview);
       setFile(target);
       setHistory(next);
       setPage(targetPage);
       setOutput(result);
       setDraftDirty(false);
       if (initial) {
-        savedSnapshot.current = next.present;
+        savedSnapshot.current = new WeakSet([next.present]);
         setThumbnails(result.editorRevision.thumbnails.map(bitmapUrl));
         clearSelection();
         setZoom(1);
@@ -436,8 +468,9 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
       clearSelection();
   }
   async function navigate(index: number) {
+    if (!file || !revision || index < 0 || index >= revision.pages.length) return;
     if (draftDirty && !window.confirm(t("discard"))) return;
-    if (await commit(history, index)) clearSelection();
+    if (await run(file, history, index, false, false, true)) clearSelection();
   }
   async function save() {
     if (!output || draftDirty) return;
@@ -452,7 +485,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
         anchor.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
-      savedSnapshot.current = history.present;
+      savedSnapshot.current = new WeakSet([history.present]);
       setStatus(t("saved"));
     } catch {
       setError(t("error"));
@@ -1299,6 +1332,11 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                 )}
               </fieldset>
               <div className="pdf-editor-save">
+                {history.truncated && (
+                  <p className="pdf-editor-warning" role="status">
+                    {t("historyTrimmed")}
+                  </p>
+                )}
                 <p>{draftDirty ? t("draft") : t("notes")}</p>
                 <button
                   className="pdf-editor-primary"

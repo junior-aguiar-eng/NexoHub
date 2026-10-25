@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { UnavailableDocumentCorePort } from "@/platform/document-core";
 import { runLauncherTool } from "@/platform/launcher-tool-runner";
 import type { EditorRevision } from "@/platform/pdf-editor-types";
+import { allowToolNavigation } from "@/platform/tool-navigation-guard";
 import { PdfEditorPanel } from "./PdfEditorPanel";
 
 vi.mock("@/platform/launcher-tool-runner", () => ({ runLauncherTool: vi.fn() }));
@@ -34,14 +35,8 @@ const revision: EditorRevision = {
   thumbnails: [],
   signed: false,
 };
-function setup() {
-  return render(
-    <PdfEditorPanel
-      documentCore={new UnavailableDocumentCorePort()}
-      onBack={vi.fn()}
-      initialFiles={[file]}
-    />,
-  );
+function setup(core = new UnavailableDocumentCorePort()) {
+  return render(<PdfEditorPanel documentCore={core} onBack={vi.fn()} initialFiles={[file]} />);
 }
 
 it("mostra motivo do objeto incompatível sem abrir edição", async () => {
@@ -160,6 +155,75 @@ it("adiciona elemento e permite desfazer sem perder a revisão", async () => {
     expect.objectContaining({ editorThumbnails: true }),
   );
 });
+
+it("navega pela revisão exportável e reutiliza página em cache sem refazer a edição", async () => {
+  run.mockResolvedValueOnce({
+    blob: new Blob(["revisao"]),
+    fileName: "editado.pdf",
+    categoryKey: "recent.type.pdf",
+    editorRevision: { ...revision, pages: [...revision.pages, { ...revision.pages[0] }] },
+  });
+  run.mockResolvedValueOnce({
+    blob: new Blob(["revisao"]),
+    fileName: "editado.pdf",
+    categoryKey: "recent.type.pdf",
+    editorPreview: revision.preview,
+  });
+  setup();
+  fireEvent.click(await screen.findByRole("button", { name: "Próxima página" }));
+  await screen.findByText("2 / 2");
+  expect(run).toHaveBeenLastCalledWith(
+    expect.anything(),
+    "pdf-edit",
+    expect.objectContaining({ editorPreviewOnly: true, editorPage: 1 }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Página anterior" }));
+  await screen.findByText("1 / 2");
+  expect(run).toHaveBeenCalledTimes(2);
+  expect(screen.getByRole("button", { name: "Desfazer" })).toBeDisabled();
+  expect(run.mock.calls[1][2].files[0].size).toBe(7);
+});
+
+it("resposta atrasada de prévia cancelada não substitui a navegação mais recente", async () => {
+  const drawn = vi.fn();
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+    putImageData: drawn,
+  } as unknown as CanvasRenderingContext2D);
+  let finish: ((value: Awaited<ReturnType<typeof runLauncherTool>>) => void) | undefined;
+  const twoPages = { ...revision, pages: [...revision.pages, { ...revision.pages[0] }] };
+  run.mockResolvedValueOnce({
+    blob: new Blob(["pdf"]),
+    fileName: "x.pdf",
+    categoryKey: "recent.type.pdf",
+    editorRevision: twoPages,
+  });
+  run.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  run.mockResolvedValueOnce({
+    blob: new Blob(["pdf"]),
+    fileName: "x.pdf",
+    categoryKey: "recent.type.pdf",
+    editorPreview: { data: new Uint8Array([2, 2, 2, 255]), width: 1, height: 1 },
+  });
+  setup();
+  fireEvent.click(await screen.findByRole("button", { name: "Próxima página" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Cancelar operação" }));
+  fireEvent.click(screen.getByRole("button", { name: "Próxima página" }));
+  await screen.findByText("2 / 2");
+  await act(async () =>
+    finish?.({
+      blob: new Blob(["pdf"]),
+      fileName: "x.pdf",
+      categoryKey: "recent.type.pdf",
+      editorPreview: { data: new Uint8Array([9, 9, 9, 255]), width: 1, height: 1 },
+    }),
+  );
+  expect(drawn.mock.lastCall?.[0].data[0]).toBe(2);
+});
 it("falha ao aplicar mantém documento e conteúdo digitado para correção", async () => {
   setup();
   await screen.findByRole("button", { name: "Adicionar texto" });
@@ -225,5 +289,30 @@ it("não descarta texto digitado ao trocar de modo sem confirmação", async () 
   fireEvent.click(screen.getByRole("button", { name: "Selecionar elementos" }));
   expect(confirm).toHaveBeenCalledOnce();
   expect(screen.getByLabelText("Conteúdo do texto")).toHaveValue("Ainda não apliquei");
+  confirm.mockRestore();
+});
+
+it("desfazer até a revisão salva continua reconhecendo estado sem alterações", async () => {
+  const core = new (class extends UnavailableDocumentCorePort {
+    saveOutputFile = vi.fn(async () => undefined);
+  })();
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  setup(core);
+  fireEvent.click(await screen.findByRole("button", { name: "Adicionar texto" }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Desfazer" })).toBeEnabled());
+  fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }));
+  await screen.findByText("PDF editado salvo.");
+  fireEvent.click(screen.getByRole("button", { name: "Adicionar texto" }));
+  await waitFor(() => expect(run).toHaveBeenCalledTimes(3));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Desfazer" })).toBeEnabled());
+  fireEvent.click(screen.getByRole("button", { name: "Desfazer" }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Refazer" })).toBeEnabled());
+  expect(allowToolNavigation()).toBe(true);
+  expect(confirm).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Refazer" }));
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Adicionar texto" })).toBeEnabled(),
+  );
+  expect(allowToolNavigation()).toBe(false);
   confirm.mockRestore();
 });

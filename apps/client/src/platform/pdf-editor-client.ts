@@ -1,17 +1,43 @@
-import type { EditorRevision, EditorSnapshot } from "./pdf-editor-types";
+import type {
+  EditorBitmap,
+  EditorRevision,
+  EditorSnapshot,
+  EditorWorkerRequest,
+  EditorWorkerResponse,
+} from "./pdf-editor-types";
 export async function reviseBrowserPdf(
   bytes: Uint8Array,
   snapshot: EditorSnapshot,
   page: number,
   options: { signal?: AbortSignal; thumbnails?: boolean } = {},
 ): Promise<EditorRevision> {
-  if (options.signal?.aborted) throw new Error("OPERACAO_CANCELADA");
+  const response = await requestEditor(
+    { kind: "revise", bytes, snapshot, page, thumbnails: options.thumbnails },
+    options.signal,
+  );
+  if (!response.result) throw new Error("EDITOR_WORKER");
+  return response.result;
+}
+export async function renderBrowserPdfPage(
+  bytes: Uint8Array,
+  page: number,
+  options: { signal?: AbortSignal } = {},
+): Promise<EditorBitmap> {
+  const response = await requestEditor({ kind: "preview", bytes, page }, options.signal);
+  if (!response.preview) throw new Error("EDITOR_WORKER");
+  return response.preview;
+}
+async function requestEditor(
+  request: EditorWorkerRequest,
+  signal?: AbortSignal,
+): Promise<EditorWorkerResponse> {
+  if (signal?.aborted) throw new Error("OPERACAO_CANCELADA");
   return new Promise((resolve, reject) => {
     let worker: Worker | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const cleanup = () => {
       clearTimeout(timer);
-      options.signal?.removeEventListener("abort", abort);
+      signal?.removeEventListener("abort", abort);
       if (worker) {
         worker.onmessage = null;
         worker.onerror = null;
@@ -29,18 +55,16 @@ export async function reviseBrowserPdf(
     };
     try {
       worker = new Worker(new URL("./pdf-editor.worker.ts", import.meta.url), { type: "module" });
-      worker.onmessage = (event: MessageEvent<{ result?: EditorRevision; error?: string }>) => {
+      worker.onmessage = (event: MessageEvent<EditorWorkerResponse>) => {
         cleanup();
-        if (event.data.result) resolve(event.data.result);
-        else reject(new Error(event.data.error ?? "EDITOR_WORKER"));
+        if (event.data.error) reject(new Error(event.data.error));
+        else resolve(event.data);
       };
       worker.onerror = worker.onmessageerror = failed;
-      options.signal?.addEventListener("abort", abort, { once: true });
+      signal?.addEventListener("abort", abort, { once: true });
       timer = setTimeout(failed, 60_000);
-      const copy = bytes.slice();
-      worker.postMessage({ bytes: copy, snapshot, page, thumbnails: options.thumbnails }, [
-        copy.buffer,
-      ]);
+      const copy = request.bytes.slice();
+      worker.postMessage({ ...request, bytes: copy }, [copy.buffer]);
     } catch {
       failed();
     }

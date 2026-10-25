@@ -27,6 +27,92 @@ const fonts = new Set([
 type Memory = { HEAPU8: Uint8Array };
 export class PdfEditorEngine {
   constructor(private readonly api: WrappedPdfiumModule) {}
+  private renderBitmap(
+    page: number,
+    form: number,
+    pageWidth: number,
+    pageHeight: number,
+    side: number,
+  ): EditorBitmap {
+    const a = this.api;
+    const scale = Math.min(side / Math.max(pageWidth, pageHeight), 2);
+    const width = Math.max(1, Math.round(pageWidth * scale));
+    const height = Math.max(1, Math.round(pageHeight * scale));
+    const bitmap = a.FPDFBitmap_Create(width, height, 1);
+    if (!bitmap) fail("MEMORIA");
+    try {
+      a.FPDFBitmap_FillRect(bitmap, 0, 0, width, height, 0xffffffff);
+      a.FPDF_RenderPageBitmap(bitmap, page, 0, 0, width, height, 0, 1);
+      if (form) a.FPDF_FFLDraw(form, bitmap, page, 0, 0, width, height, 0, 1);
+      const ptr = a.FPDFBitmap_GetBuffer(bitmap),
+        stride = a.FPDFBitmap_GetStride(bitmap);
+      const heap = (a.pdfium as unknown as Memory).HEAPU8;
+      const data = new Uint8Array(width * height * 4);
+      for (let y = 0; y < height; y++)
+        for (let x = 0; x < width; x++) {
+          const output = (y * width + x) * 4,
+            input = ptr + y * stride + x * 4;
+          data[output] = heap[input + 2];
+          data[output + 1] = heap[input + 1];
+          data[output + 2] = heap[input];
+          data[output + 3] = heap[input + 3];
+        }
+      return { data, width, height };
+    } finally {
+      a.FPDFBitmap_Destroy(bitmap);
+    }
+  }
+
+  /** Renderiza bytes de uma revisão já exportável, sem reconstruir comandos ou salvar outro PDF. */
+  renderRevisionPage(bytes: Uint8Array, index: number): EditorBitmap {
+    if (!bytes.length) fail("PDF_INVALIDO");
+    if (bytes.length > EDITOR_LIMITS.outputBytes) fail("LIMITE");
+    const a = this.api,
+      m = a.pdfium;
+    const input = m.wasmExports.malloc(bytes.length);
+    if (!input) fail("MEMORIA");
+    let doc = 0,
+      page = 0,
+      form = 0,
+      formInfo = 0;
+    try {
+      (m as unknown as Memory).HEAPU8.set(bytes, input);
+      doc = a.FPDF_LoadMemDocument(input, bytes.length, "");
+      if (!doc) fail(a.FPDF_GetLastError() === 4 ? "SENHA" : "PDF_INVALIDO");
+      if (a.EPDF_IsEncrypted(doc)) fail("SENHA");
+      const count = a.FPDF_GetPageCount(doc);
+      if (count < 1 || count > EDITOR_LIMITS.pages) fail("LIMITE");
+      if (!Number.isInteger(index) || index < 0 || index >= count) fail("PAGINA");
+      if (a.FPDF_GetFormType(doc) > 0) {
+        formInfo = a.PDFiumExt_OpenFormFillInfo();
+        if (!formInfo) fail("OPERACAO");
+        form = a.PDFiumExt_InitFormFillEnvironment(doc, formInfo);
+        if (!form) fail("OPERACAO");
+      }
+      page = a.FPDF_LoadPage(doc, index);
+      if (!page) fail("PAGINA");
+      if (form) a.FORM_OnAfterLoadPage(page, form);
+      const width = a.FPDF_GetPageWidth(page),
+        height = a.FPDF_GetPageHeight(page);
+      if (
+        !Number.isFinite(width + height) ||
+        Math.min(width, height) < 1 ||
+        Math.max(width, height) > 14400 ||
+        a.FPDFPage_CountObjects(page) > EDITOR_LIMITS.objects + EDITOR_LIMITS.elements
+      )
+        fail("LIMITE");
+      return this.renderBitmap(page, form, width, height, EDITOR_LIMITS.renderSide);
+    } finally {
+      if (page) {
+        if (form) a.FORM_OnBeforeClosePage(page, form);
+        a.FPDF_ClosePage(page);
+      }
+      if (form) a.PDFiumExt_ExitFormFillEnvironment(form);
+      if (formInfo) a.PDFiumExt_CloseFormFillInfo(formInfo);
+      if (doc) a.FPDF_CloseDocument(doc);
+      m.wasmExports.free(input);
+    }
+  }
   revise(
     bytes: Uint8Array,
     snapshot: EditorSnapshot,
@@ -582,32 +668,13 @@ export class PdfEditorEngine {
       }
       for (const index of touched) check(a.FPDFPage_GenerateContent(pages[index]));
       const render = (index: number, side: number): EditorBitmap => {
-        const info = pageInfo[index],
-          scale = Math.min(side / Math.max(info.width, info.height), 2);
-        const width = Math.max(1, Math.round(info.width * scale)),
-          height = Math.max(1, Math.round(info.height * scale));
-        const bitmap = a.FPDFBitmap_Create(width, height, 1);
-        check(bitmap);
-        try {
-          a.FPDFBitmap_FillRect(bitmap, 0, 0, width, height, 0xffffffff);
-          a.FPDF_RenderPageBitmap(bitmap, pages[index], 0, 0, width, height, 0, 1);
-          if (form) a.FPDF_FFLDraw(form, bitmap, pages[index], 0, 0, width, height, 0, 1);
-          const p = a.FPDFBitmap_GetBuffer(bitmap),
-            stride = a.FPDFBitmap_GetStride(bitmap),
-            data = new Uint8Array(width * height * 4);
-          for (let y = 0; y < height; y++)
-            for (let x = 0; x < width; x++) {
-              const o = (y * width + x) * 4,
-                i = p + y * stride + x * 4;
-              data[o] = mem()[i + 2];
-              data[o + 1] = mem()[i + 1];
-              data[o + 2] = mem()[i];
-              data[o + 3] = mem()[i + 3];
-            }
-          return { data, width, height };
-        } finally {
-          a.FPDFBitmap_Destroy(bitmap);
-        }
+        return this.renderBitmap(
+          pages[index],
+          form,
+          pageInfo[index].width,
+          pageInfo[index].height,
+          side,
+        );
       };
       const writer = a.PDFiumExt_OpenFileWriter();
       check(writer);
@@ -615,7 +682,7 @@ export class PdfEditorEngine {
       try {
         check(a.FPDF_SaveAsCopy(doc, writer, 2));
         const size = a.PDFiumExt_GetFileWriterSize(writer);
-        if (size > 80 * 1024 * 1024) fail("LIMITE");
+        if (size > EDITOR_LIMITS.outputBytes) fail("LIMITE");
         const p = ptr(size);
         check(a.PDFiumExt_GetFileWriterData(writer, p, size));
         output = mem().slice(p, p + size);

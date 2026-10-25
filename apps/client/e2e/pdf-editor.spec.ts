@@ -165,6 +165,81 @@ test("histórico desfaz e refaz elemento de texto novo", async ({ page }) => {
   await ready(page);
   expect((await texts(await save(page)))[0]).toContain("Seu texto aqui");
 });
+
+test("navegação no limite usa revisão canônica, cache e descarte ao editar", async ({ page }) => {
+  const doc = await PDFDocument.create();
+  for (let p = 0; p < 30; p++) {
+    const sheet = doc.addPage([500, 700]);
+    for (let i = 0; i < 100; i++)
+      sheet.drawText(`P${p + 1} T${i + 1}`, {
+        x: 20 + (i % 5) * 95,
+        y: 680 - Math.floor(i / 5) * 32,
+        size: 8,
+      });
+  }
+  let workers = 0;
+  page.on("worker", (worker) => {
+    if (worker.url().includes("pdf-editor.worker")) workers++;
+  });
+  await open(page, await doc.save());
+  const before = await save(page);
+  const navigationStart = performance.now();
+  await page.getByRole("button", { name: "Página 30", exact: true }).click();
+  await ready(page);
+  await expect(page.getByRole("button", { name: "Página 30", exact: true })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  expect(workers).toBe(2);
+  const navigationMs = performance.now() - navigationStart;
+  const cachedStart = performance.now();
+  await page.getByRole("button", { name: "Página 1", exact: true }).click();
+  await ready(page);
+  expect(workers).toBe(2);
+  console.log(
+    `ED-C2: página não armazenada ${Math.round(navigationMs)} ms; retorno em cache ${Math.round(performance.now() - cachedStart)} ms; workers ${workers}.`,
+  );
+  expect(Buffer.from(await save(page)).equals(Buffer.from(before))).toBe(true);
+  await page.getByRole("button", { name: "Editar texto existente", exact: true }).click();
+  await page.getByRole("button", { name: "Selecionar texto: P1 T1", exact: true }).click();
+  await page.getByLabel("Conteúdo do texto").fill("Novo");
+  await page.getByRole("button", { name: "Aplicar alteração", exact: true }).click();
+  await ready(page);
+  await page.getByRole("button", { name: "Página 30", exact: true }).click();
+  await ready(page);
+  expect(workers).toBe(4);
+  const exported = await texts(await save(page));
+  expect(exported[0]).toContain("Novo");
+  expect(exported[29]).toContain("P30 T1");
+});
+
+test("cancelar e sair durante navegação encerra worker e conserva última revisão", async ({
+  page,
+}) => {
+  await open(page);
+  const before = await save(page);
+  const started = page.waitForEvent("worker");
+  await page.getByRole("button", { name: "Próxima página", exact: true }).click();
+  const worker = await started;
+  const closed = worker.waitForEvent("close");
+  await page.getByRole("button", { name: "Cancelar operação", exact: true }).click();
+  await closed;
+  await expect(page.getByRole("button", { name: "Página 1", exact: true })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  expect(Buffer.from(await save(page)).equals(Buffer.from(before))).toBe(true);
+  const startedAgain = page.waitForEvent("worker");
+  await page.getByRole("button", { name: "Próxima página", exact: true }).click();
+  const again = await startedAgain;
+  const stopped = again.waitForEvent("close");
+  await page
+    .getByRole("navigation", { name: "Navegação Principal" })
+    .getByRole("button", { name: "Juntar PDF", exact: true })
+    .click();
+  await stopped;
+  await expect(page).toHaveURL(/juntar-pdf$/);
+});
 test("texto que não cabe mantém revisão e permite corrigir sem perder o documento", async ({
   page,
 }) => {

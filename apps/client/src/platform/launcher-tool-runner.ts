@@ -28,8 +28,8 @@ import { processImage } from "./image-processing";
 import { type ImageResultItem, inspectImageResult } from "./image-results";
 import { performBrowserPdfComparison } from "./pdf-comparison-client";
 import type { PdfComparisonProgress, PdfComparisonResult } from "./pdf-comparison-types";
-import { reviseBrowserPdf } from "./pdf-editor-client";
-import type { EditorRevision, EditorSnapshot } from "./pdf-editor-types";
+import { renderBrowserPdfPage, reviseBrowserPdf } from "./pdf-editor-client";
+import type { EditorBitmap, EditorRevision, EditorSnapshot } from "./pdf-editor-types";
 import {
   addPageNumbersToPdfDocument,
   addWatermarkToPdfDocument,
@@ -76,6 +76,7 @@ export interface LauncherInterval {
 export interface LauncherToolInput {
   readonly editorSnapshot?: EditorSnapshot;
   readonly editorPage?: number;
+  readonly editorPreviewOnly?: boolean;
   readonly editorThumbnails?: boolean;
   readonly editorSignal?: AbortSignal;
   readonly comparisonSignal?: AbortSignal;
@@ -197,6 +198,7 @@ export interface LauncherToolInput {
 export interface LauncherToolOutput {
   readonly imageResults?: readonly ImageResultItem[];
   readonly editorRevision?: EditorRevision;
+  readonly editorPreview?: EditorBitmap;
   readonly comparison?: PdfComparisonResult;
   readonly blob: Blob;
   readonly fileName: string;
@@ -494,6 +496,14 @@ async function executeTool(
     case "pdf-edit": {
       if (!first || input.files.length !== 1)
         throw new ToolRunError("INVALID_INPUT", translate("editor.invalidPdf"));
+      if (input.editorPreviewOnly) {
+        const editorPreview = await renderBrowserPdfPage(
+          new Uint8Array(await first.arrayBuffer()),
+          input.editorPage ?? 0,
+          { signal: input.editorSignal },
+        );
+        return { blob: first, fileName: first.name, categoryKey: "recent.type.pdf", editorPreview };
+      }
       const revision = await reviseBrowserPdf(
         new Uint8Array(await first.arrayBuffer()),
         input.editorSnapshot ?? { replacements: [], elements: [] },

@@ -75,7 +75,7 @@ Não criar commits intermediários: a autorização atual é para implementar, n
 
 ## Fase de complementação — 24/10/2026
 
-**Estado:** ED-C1 concluído no website no perfil conservador documentado; ED-C2 planejado.
+**Estado:** ED-C1 e ED-C2 concluídos no website no perfil conservador documentado, sem ampliar limites.
 Preserva as quatro tarefas concluídas. Consome Q-C0 e os
 [gates comuns](../../ROADMAP.md#regras-comuns-de-execução-e-aceite). Não trocar o motor atual por
 um editor visual de imagens: Fabric/Konva não editam o texto existente no conteúdo de um PDF.
@@ -101,13 +101,13 @@ um editor visual de imagens: Fabric/Konva não editam o texto existente no conte
 **Modificar:** `pdf-editor-engine.ts`, `pdf-editor-client.ts`, `pdf-editor.worker.ts`,
 `pdf-editor-state.ts`, `PdfEditorPanel.tsx`/CSS e `e2e/pdf-editor.spec.ts`.
 
-- [ ] Medir parsing, render e histórico próximos aos limites atuais de 20 MiB/30 páginas/3.000
+- [x] Medir parsing, render e histórico próximos aos limites atuais de 20 MiB/30 páginas/3.000
   objetos. Testar página ativa, navegação rápida, cancelamento e saída durante renderização.
-- [ ] Implementar renderização/cache sob demanda onde a medição indicar custo, mantendo uma
+- [x] Implementar renderização/cache sob demanda onde a medição indicar custo, mantendo uma
   revisão canônica e histórico de comandos. Reaproveitar UX-C1 só onde compatível com o editor.
-- [ ] Aumentar limites somente depois de comprovar memória, tempo e responsividade em máquina
+- [x] Aumentar limites somente depois de comprovar memória, tempo e responsividade em máquina
   modesta. Limites de elementos e exportação continuam explícitos; falha preserva última revisão.
-- [ ] Validar preview/download/undo/redo da mesma revisão e fontes locais em `/hub/`.
+- [x] Validar preview/download/undo/redo da mesma revisão e fontes locais em `/hub/`.
 
 **Dependências:** manter `@embedpdf/pdfium@2.15.1` enquanto atender ao corpus; avaliar atualização
 seletiva da linha estável v2, inventariando WASM e licenças. Não migrar para v3 em desenvolvimento,
@@ -149,3 +149,50 @@ fora desta complementação até demonstração de viabilidade e escopo próprio
 - Recursos do build raiz: worker do editor 167,08 kB; verificador 490,44 kB; bundle principal
   1.069,52 kB (294,44 kB gzip). O aviso de chunk grande já existente permanece. Limites e WASM
   atuais preservados; sem homologação desktop ou promessa de edição universal.
+
+## Registro complementar — ED-C2 (24/10/2026)
+
+**Estado:** implementado e validado localmente. Base `87087db`, commit
+autorizado do ED-C1. Commit do ED-C2 autorizado em 24/10/2026; sem push ou deploy.
+
+- Navegação usa modo interno de prévia no mesmo executor `pdf-edit`/ToolRunner. O worker abre
+  os bytes da revisão validada, carrega a página solicitada e renderiza sem reconstruir comandos,
+  inspecionar as demais páginas ou serializar outro PDF. Download e histórico não são alterados.
+- Renderer compartilhado conserva formulários, CropBox e rotações. A entrada da prévia interna
+  admite o limite exportável já existente de 80 MiB; importar continua limitado a 20 MiB.
+- Cache LRU por revisão, até 16 MiB de pixels e três páginas. Nova revisão/arquivo limpa cache;
+  resposta cancelada/obsoleta não o alimenta. Um acerto dispensa worker. Miniaturas iniciais foram
+  mantidas: no corpus de 30 páginas somam 1.926.000 bytes, sem custo que justificasse outro pipeline.
+- Histórico limitado a 50 etapas e 64 MiB estimados de payloads, deduplicando buffers compartilhados.
+  Ao exceder o orçamento, remove passado antigo e informa o usuário; a revisão atual permanece.
+  A revisão independente encontrou retenção direta no marcador salvo, corrigida com identidade
+  fraca (`WeakSet`), sem guardar snapshots/bitmaps descartados. O teste comportamental confirma
+  que desfazer até a versão salva e refazer mantêm o guard de navegação correto. Não foi alegada
+  medição determinística de GC nem um teto para o heap total do processo.
+- Corpus sintético executável em `pdf-editor-budget.test.ts`: 30 páginas/3.000 objetos e imagem
+  RGB em PDF de 20.890.697 bytes. Ensaios isolados com um worker Vitest, Windows/Ryzen 5 3550H/
+  32 GB, Node 24.19.0: reconstrução para navegar 258 ms versus render isolado 17 ms no primeiro;
+  revisão 377 ms versus render isolado 99 ms no PDF grande. Medidas locais, sem inicialização do
+  worker web, sem benchmark frio controlado e sem promessa de velocidade em documentos arbitrários.
+- Capacidade linear WASM ao fim dos ensaios: 18.612.224 e 106.168.320 bytes respectivamente;
+  não equivale a pico RSS/heap do navegador. Cada prévia medida tem 5.600.000 bytes RGBA.
+  Os orçamentos de cache/histórico excluem documentos, Canvas, cópias de transferência e WASM.
+- Limites de 20 MiB/30 páginas/3.000 objetos preservados: não há corpus/dispositivo físico de baixa
+  memória suficiente para ampliá-los. Sem dependência, serviço, runtime ou plataforma novos.
+- Validação final: formatter, `pnpm check` (lint/tipagem), `git diff --check` e builds raiz/`/hub/`
+  aprovados. `pnpm test --maxWorkers=2`: 687 aprovados (624 client + 63 pacotes). A renderização
+  isolada de formulários no histórico recebeu comparação adicional dos pixels dos bytes exportados;
+  os 38 testes reais do engine foram reexecutados e aprovados após essa ampliação de evidência.
+- E2E Chromium, dois workers: 233 aprovados na raiz e cinco exclusivos de subpasta pulados;
+  118 aprovados em `/hub/`. Os 11 casos do editor cobrem revisão canônica, bytes de download
+  idênticos após navegar, cache sem novo worker, invalidação ao editar, cancelamento/saída durante
+  renderização, fontes locais, histórico e quatro larguras. Nenhuma falha nessa rodada final.
+- Navegação no navegador (30 páginas/3.000 objetos): 286 ms fora do cache/110 ms retorno em cache
+  na raiz e 287/99 ms em `/hub/`, sem criar outro worker no retorno. Inclui interação/worker/Canvas;
+  não confundir com os ensaios nativos anteriores nem usar como promessa de latência.
+- Build raiz: worker do editor 168,41 kB; verificador 490,44 kB; principal 1.072,02 kB
+  (295,36 kB gzip). Acréscimo frente ao ED-C1: 1,33 kB no worker e 2,50 kB/0,92 kB gzip no principal.
+  O aviso preexistente de chunk grande permanece. Revisão independente teve um P2 de retenção,
+  corrigido conforme acima; nenhuma segunda rodada de revisão foi declarada.
+- Commit do ED-C2 autorizado em 24/10/2026 após validação; sem push, merge ou deploy.
+  Próximo item do índice: CMP-C1.

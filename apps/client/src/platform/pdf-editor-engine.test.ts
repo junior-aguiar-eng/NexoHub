@@ -188,6 +188,9 @@ it("fonte incorporada mantém campo, regiões e prévia exportada na exclusão e
   ] as const) {
     const revision = engine.revise(bytes, history.present, 0);
     const reopened = engine.revise(revision.bytes, { replacements: [], elements: [] }, 0);
+    const isolated = engine.renderRevisionPage(revision.bytes, 0);
+    expect(isolated.data.length).toBe(revision.preview.data.length);
+    expect(isolated.data.every((value, i) => value === revision.preview.data[i])).toBe(true);
     expect(reopened.preview.data.length).toBe(revision.preview.data.length);
     expect(reopened.preview.data.every((value, i) => value === revision.preview.data[i])).toBe(
       true,
@@ -241,6 +244,22 @@ async function text(bytes: Uint8Array, page = 1) {
     await task.destroy();
   }
 }
+
+it.each([0, 90, 180, 270])(
+  "renderização isolada respeita CropBox e rotação %s sem alterar a revisão",
+  async (rotation) => {
+    const bytes = await source(rotation, true);
+    const revision = engine.revise(bytes, { replacements: [], elements: [] }, 0);
+    const original = revision.bytes.slice();
+    const preview = engine.renderRevisionPage(revision.bytes, 0);
+    expect([preview.width, preview.height]).toEqual([
+      revision.preview.width,
+      revision.preview.height,
+    ]);
+    expect(preview.data.every((value, i) => value === revision.preview.data[i])).toBe(true);
+    expect(revision.bytes).toEqual(original);
+  },
+);
 it("substitui objeto textual de verdade, preserva originais e outros conteúdos", async () => {
   const bytes = await source();
   const copy = bytes.slice();

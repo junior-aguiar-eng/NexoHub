@@ -30,6 +30,8 @@ export const ptBR = {
   "pdfViewport.surface": "Documento PDF: use a rolagem para explorar a prévia ampliada",
 
   "editor.deleteText": "Excluir texto",
+  "editor.historyTrimmed":
+    "O histórico mais antigo foi reduzido para respeitar o orçamento de memória. A revisão atual está preservada.",
   "editor.bounds":
     "Este texto está fora da área visível ou cruza seu limite. A edição deste objeto está indisponível.",
   "editor.transform": "Texto inclinado ou espelhado: a edição deste objeto está indisponível.",

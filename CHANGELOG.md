@@ -7,6 +7,10 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 
 ### Modificado
 
+- Editor PDF navega na revisão validada por renderização isolada e cache LRU de páginas;
+  download e histórico permanecem canônicos. Payloads do histórico têm orçamento com aviso de
+  truncamento; a marca de salvamento não mantém imagens já descartadas.
+
 - Editor PDF com motivos de incompatibilidade por objeto e pré-verificação de caracteres antes
   de aplicar a edição. Corpus de fontes completa/subconjunto, preservação de campos e histórico;
   objetos com recorte interno ou mapeamento ambíguo ficam somente para consulta.

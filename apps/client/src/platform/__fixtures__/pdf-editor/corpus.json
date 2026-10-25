@@ -1,0 +1,18 @@
+{
+  "origin": "Documentos sintéticos gerados pelos scripts deste diretório; sem dados pessoais.",
+  "font": {
+    "file": "public/standard_fonts/LiberationSans-Regular.ttf",
+    "sha256": "f8ace1f892b2bd9dc1792ba7f097fa7588f84fed48321480e04de5390828221f",
+    "license": "public/standard_fonts/LICENSE_LIBERATION"
+  },
+  "fixtures": [
+    {
+      "file": "embedded-subset.pdf",
+      "sha256": "1b443b9baa8f02149f82a81a7c300438ee6bee18e8d9422659d4a6c7fb61396a"
+    },
+    {
+      "file": "embedded-full.pdf",
+      "sha256": "9dfc436af4e97f78d8af2f6b2dfe39b85d6a225e2c0790c1b34aad3b9cfcfc58"
+    }
+  ]
+}

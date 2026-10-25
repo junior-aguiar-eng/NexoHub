@@ -30,6 +30,20 @@ export const ptBR = {
   "pdfViewport.surface": "Documento PDF: use a rolagem para explorar a prévia ampliada",
 
   "editor.deleteText": "Excluir texto",
+  "editor.bounds":
+    "Este texto está fora da área visível ou cruza seu limite. A edição deste objeto está indisponível.",
+  "editor.transform": "Texto inclinado ou espelhado: a edição deste objeto está indisponível.",
+  "editor.renderMode":
+    "Este texto usa contorno, máscara ou um modo gráfico incompatível com a edição.",
+  "editor.textMapping":
+    "O mapeamento de caracteres deste objeto não permite uma edição textual segura.",
+  "editor.clip":
+    "Este texto usa recorte interno, que pode esconder parte da substituição. A edição deste objeto está indisponível.",
+  "editor.observedFont":
+    "A fonte original aceita somente caracteres já observados com ela neste documento.",
+  "editor.latinFont": "Esta fonte aceita o repertório latino, incluindo acentos portugueses.",
+  "editor.unprovenCharacters":
+    "O texto contém caracteres ainda não demonstrados nesta fonte. Ajuste o texto ou escolha uma fonte alternativa quando disponível.",
   "editor.unsafeStyle":
     "A fonte e o tamanho estão preservados porque este objeto usa transparência ou recorte especial.",
   "editor.objects": "Objetos da página",

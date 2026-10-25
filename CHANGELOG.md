@@ -7,6 +7,10 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 
 ### Modificado
 
+- Editor PDF com motivos de incompatibilidade por objeto e pré-verificação de caracteres antes
+  de aplicar a edição. Corpus de fontes completa/subconjunto, preservação de campos e histórico;
+  objetos com recorte interno ou mapeamento ambíguo ficam somente para consulta.
+
 - Ocultar PDF com preservação opcional em perfil restrito via PDFium existente, remoção nativa,
   limpeza de metadados e recusa de recursos não homologados. Modo imagem permanece padrão.
   Revisão renderiza o arquivo do download; cancelamento, retorno às tarjas e ações responsivas.

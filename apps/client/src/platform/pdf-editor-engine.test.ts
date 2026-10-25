@@ -1,18 +1,57 @@
 // @vitest-environment node
+
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { init } from "@embedpdf/pdfium";
 import {
+  clip,
   concatTransformationMatrix,
+  decodePDFRawStream,
   degrees,
+  endPath,
   PDFDocument,
+  PDFName,
+  PDFRawStream,
   popGraphicsState,
   pushGraphicsState,
+  rectangle,
 } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import { beforeAll, expect, it } from "vitest";
 import { PdfEditorEngine } from "./pdf-editor-engine";
+import { commitEditorSnapshot, editorHistory, redoEditor, undoEditor } from "./pdf-editor-state";
+import { verifyEditorText } from "./pdf-editor-verify";
 
 let engine: PdfEditorEngine;
+
+it("confere proveniência das fixtures e incorporação integral da fonte licenciada", async () => {
+  const manifest = JSON.parse(
+    await readFile(new URL("./__fixtures__/pdf-editor/corpus.json", import.meta.url), "utf8"),
+  ) as {
+    font: { sha256: string };
+    fixtures: { file: string; sha256: string }[];
+  };
+  const hash = (data: Uint8Array) => createHash("sha256").update(data).digest("hex");
+  for (const fixture of manifest.fixtures) {
+    const data = await readFile(
+      new URL(`./__fixtures__/pdf-editor/${fixture.file}`, import.meta.url),
+    );
+    expect(hash(data)).toBe(fixture.sha256);
+  }
+  const pdf = await PDFDocument.load(
+    await readFile(new URL("./__fixtures__/pdf-editor/embedded-full.pdf", import.meta.url)),
+  );
+  const embedded = pdf.context
+    .enumerateIndirectObjects()
+    .map(([, object]) => object)
+    .filter(
+      (object): object is PDFRawStream =>
+        object instanceof PDFRawStream && object.dict.has(PDFName.of("Length1")),
+    );
+  expect(embedded.map((stream) => hash(decodePDFRawStream(stream).decode()))).toContain(
+    manifest.font.sha256,
+  );
+});
 beforeAll(async () => {
   const wasmBinary = await readFile(
     new URL("../../node_modules/@embedpdf/pdfium/dist/pdfium.wasm", import.meta.url),
@@ -20,6 +59,167 @@ beforeAll(async () => {
   const api = await init({ wasmBinary });
   api.PDFiumExt_Init();
   engine = new PdfEditorEngine(api);
+});
+
+it("informa o motivo da recusa de texto inclinado antes de editar", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage([500, 700]).drawText("Texto inclinado", {
+    x: 70,
+    y: 300,
+    size: 18,
+    rotate: degrees(15),
+  });
+  const initial = engine.revise(await pdf.save(), { replacements: [], elements: [] }, 0);
+  expect(initial.pages[0].texts[0]).toMatchObject({
+    editable: false,
+    editRestriction: "transform",
+  });
+});
+
+it("recusa texto com recorte interno que poderia esconder a substituição", async () => {
+  const pdf = await PDFDocument.create();
+  const page = pdf.addPage([500, 700]);
+  page.pushOperators(pushGraphicsState(), rectangle(70, 490, 40, 40), clip(), endPath());
+  page.drawText("Texto recortado", { x: 70, y: 500, size: 18 });
+  page.pushOperators(popGraphicsState());
+  const bytes = await pdf.save();
+  const initial = engine.revise(bytes, { replacements: [], elements: [] }, 0);
+  expect(initial.pages[0].texts[0]).toMatchObject({ editable: false, editRestriction: "clip" });
+  expect(() =>
+    engine.revise(bytes, { replacements: [{ id: "0:0", text: "Novo" }], elements: [] }, 0),
+  ).toThrow("EDITOR_OBJETO");
+});
+
+it("expõe apenas o repertório observado para fonte incorporada", async () => {
+  const bytes = new Uint8Array(
+    await readFile(new URL("./__fixtures__/pdf-editor/embedded-subset.pdf", import.meta.url)),
+  );
+  const initial = engine.revise(bytes, { replacements: [], elements: [] }, 0);
+  const object = initial.pages[0].texts[0];
+  expect(object.fontPolicy).toBe("observed");
+  expect(object.supportedCharacters).toContain("ç");
+  expect(object.supportedCharacters).not.toContain("ñ");
+});
+
+it("fonte completa preserva coluna, formulário, pixels não editados e original", async () => {
+  const bytes = new Uint8Array(
+    await readFile(new URL("./__fixtures__/pdf-editor/embedded-full.pdf", import.meta.url)),
+  );
+  const original = bytes.slice();
+  const initial = engine.revise(bytes, { replacements: [], elements: [] }, 0);
+  const object = initial.pages[0].texts.find((o) => o.text.trim() === "Ação útil original");
+  if (!object) throw new Error("Fixture sem objeto principal");
+  const snapshot = { replacements: [{ id: object.id, text: "Ação útil" }], elements: [] };
+  const result = engine.revise(bytes, snapshot, 0);
+  await verifyEditorText(result.bytes, snapshot, initial.pages);
+  expect(await text(result.bytes)).toContain("Coluna preservada");
+  expect(await text(result.bytes)).not.toContain("Ação útil original");
+  expect(
+    (await PDFDocument.load(result.bytes)).getForm().getTextField("campo-preservado").getText(),
+  ).toBe("Valor mantido");
+  expect(bytes).toEqual(original);
+  const before = initial.preview,
+    after = result.preview;
+  expect([after.width, after.height]).toEqual([before.width, before.height]);
+  let changedOutside = 0;
+  for (let y = 0; y < before.height; y++)
+    for (let x = 0; x < before.width; x++) {
+      if (
+        x >= object.x * before.width - 5 &&
+        x <= (object.x + object.width) * before.width + 5 &&
+        y >= object.y * before.height - 5 &&
+        y <= (object.y + object.height) * before.height + 5
+      )
+        continue;
+      const offset = (y * before.width + x) * 4;
+      if (
+        before.data
+          .subarray(offset, offset + 4)
+          .some((value, i) => value !== after.data[offset + i])
+      )
+        changedOutside++;
+    }
+  expect(changedOutside).toBe(0);
+  expect(() =>
+    engine.revise(bytes, { replacements: [{ id: object.id, text: "ñ" }], elements: [] }, 0),
+  ).toThrow("EDITOR_GLIFO");
+});
+
+it("identifica transparência e ligadura que exigem preservação conservadora", async () => {
+  const bytes = new Uint8Array(
+    await readFile(new URL("./__fixtures__/pdf-editor/embedded-full.pdf", import.meta.url)),
+  );
+  const initial = engine.revise(bytes, { replacements: [], elements: [] }, 0);
+  const alpha = initial.pages[0].texts.find((o) => o.text.includes("Transparência"));
+  expect(alpha).toMatchObject({
+    editable: true,
+    canChangeStyle: false,
+    styleRestriction: "transparency",
+  });
+  expect(initial.pages[0].texts.find((o) => o.text.includes("of"))).toMatchObject({
+    editable: false,
+    editRestriction: "textMapping",
+  });
+});
+
+it("fonte incorporada mantém campo, regiões e prévia exportada na exclusão e no histórico", async () => {
+  const bytes = new Uint8Array(
+    await readFile(new URL("./__fixtures__/pdf-editor/embedded-full.pdf", import.meta.url)),
+  );
+  const original = bytes.slice();
+  const initial = engine.revise(bytes, { replacements: [], elements: [] }, 0);
+  const object = initial.pages[0].texts.find((item) => item.text.trim() === "Ação útil original");
+  if (!object) throw new Error("Fixture sem texto");
+  const edited = commitEditorSnapshot(editorHistory(), {
+    replacements: [{ id: object.id, text: "Ação útil" }],
+    elements: [],
+  });
+  const deleted = commitEditorSnapshot(edited, {
+    replacements: [{ id: object.id, text: "" }],
+    elements: [],
+  });
+  const undone = undoEditor(deleted);
+  const redone = redoEditor(undone);
+  for (const [history, expected] of [
+    [edited, "Ação útil"],
+    [deleted, ""],
+    [undone, "Ação útil"],
+    [redone, ""],
+  ] as const) {
+    const revision = engine.revise(bytes, history.present, 0);
+    const reopened = engine.revise(revision.bytes, { replacements: [], elements: [] }, 0);
+    expect(reopened.preview.data.length).toBe(revision.preview.data.length);
+    expect(reopened.preview.data.every((value, i) => value === revision.preview.data[i])).toBe(
+      true,
+    );
+    const extracted = await text(revision.bytes);
+    expect(extracted).toContain("Coluna preservada");
+    expect(extracted.includes("Ação útil")).toBe(!!expected);
+    expect(
+      (await PDFDocument.load(revision.bytes)).getForm().getTextField("campo-preservado").getText(),
+    ).toBe("Valor mantido");
+    let changedOutside = 0;
+    const { width, height, data } = initial.preview;
+    for (let offset = 0; offset < data.length; offset += 4) {
+      const x = (offset / 4) % width,
+        y = Math.floor(offset / 4 / width);
+      if (
+        x >= object.x * width - 5 &&
+        x <= (object.x + object.width) * width + 5 &&
+        y >= object.y * height - 5 &&
+        y <= (object.y + object.height) * height + 5
+      )
+        continue;
+      if (
+        data
+          .subarray(offset, offset + 4)
+          .some((value, channel) => value !== revision.preview.data[offset + channel])
+      )
+        changedOutside++;
+    }
+    expect(changedOutside).toBe(0);
+  }
+  expect(bytes).toEqual(original);
 });
 async function source(rotation = 0, crop = false) {
   const pdf = await PDFDocument.create();

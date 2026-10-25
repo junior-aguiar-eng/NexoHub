@@ -1,5 +1,10 @@
 import type { WrappedPdfiumModule } from "@embedpdf/pdfium";
 import {
+  editorReplacementIssue,
+  editorUnsafeMapping,
+  editorLatinText as latin,
+} from "./pdf-editor-compatibility";
+import {
   EDITOR_LIMITS,
   type EditorBitmap,
   type EditorPage,
@@ -19,8 +24,6 @@ const fonts = new Set([
   "Times-Roman",
   "Courier",
 ]);
-const latin = (text: string) =>
-  /^[\x20-\x7e\xa0-\xff\u20ac\u2013\u2014\u2018\u2019\u201c\u201d\u2022\u2026\n]*$/.test(text);
 type Memory = { HEAPU8: Uint8Array };
 export class PdfEditorEngine {
   constructor(private readonly api: WrappedPdfiumModule) {}
@@ -220,6 +223,21 @@ export class PdfEditorEngine {
             const clip = a.FPDFPageObj_GetClipPath(obj),
               clipPaths = clip ? a.FPDFClipPath_CountPaths(clip) : 0;
             if (clip) a.FPDF_DestroyClipPath(clip);
+            const editRestriction: EditorTextObject["editRestriction"] =
+              x < 0 || y < 0 || Math.max(...corners.flat()) > 1
+                ? "bounds"
+                : Math.abs(mat[1]) >= 0.001 ||
+                    Math.abs(mat[2]) >= 0.001 ||
+                    mat[0] <= 0 ||
+                    mat[3] <= 0
+                  ? "transform"
+                  : a.FPDFTextObj_GetTextRenderMode(obj) !== 0
+                    ? "renderMode"
+                    : clipPaths > 0
+                      ? "clip"
+                      : editorUnsafeMapping(text)
+                        ? "textMapping"
+                        : undefined;
             const info: EditorTextObject = {
               id: `${index}:${i}`,
               text,
@@ -236,16 +254,18 @@ export class PdfEditorEngine {
                     .padStart(2, "0"),
                 )
                 .join("")}`,
-              editable:
-                x >= 0 &&
-                y >= 0 &&
-                Math.max(...corners.flat()) <= 1 &&
-                Math.abs(mat[1]) < 0.001 &&
-                Math.abs(mat[2]) < 0.001 &&
-                mat[0] > 0 &&
-                mat[3] > 0 &&
-                a.FPDFTextObj_GetTextRenderMode(obj) === 0,
+              editable: !editRestriction,
+              editRestriction,
               canChangeStyle: !a.FPDFPageObj_HasTransparency(obj) && clipPaths <= 0,
+              styleRestriction: a.FPDFPageObj_HasTransparency(obj)
+                ? "transparency"
+                : clipPaths > 0
+                  ? "clip"
+                  : undefined,
+              fontPolicy:
+                a.FPDFFont_GetIsEmbedded(font) === 0 && fonts.has(m.UTF8ToString(nameP))
+                  ? "latin"
+                  : "observed",
             };
             texts.push(info);
             objects.set(info.id, { obj, info, index: i });
@@ -257,6 +277,13 @@ export class PdfEditorEngine {
         objectMaps.push(objects);
       }
       const verifyObjects: { page: number; object: number; text: string }[] = [];
+      for (const objects of objectMaps)
+        for (const { obj, info } of objects.values()) {
+          if (info.fontPolicy === "observed")
+            info.supportedCharacters = Array.from(
+              fontCoverage.get(a.FPDFTextObj_GetFont(obj)) ?? [],
+            ).join("");
+        }
       const touched = new Set<number>(),
         seen = new Set<string>();
       for (const replacement of snapshot.replacements) {
@@ -265,6 +292,15 @@ export class PdfEditorEngine {
         const pageIndex = Number(replacement.id.split(":")[0]),
           entry = objectMaps[pageIndex]?.get(replacement.id);
         if (!entry?.info.editable) fail("OBJETO");
+        const issue = editorReplacementIssue(entry.info, replacement);
+        if (issue)
+          fail(
+            issue === "unprovenCharacters"
+              ? "GLIFO"
+              : issue === "fitError"
+                ? "TEXTO_NAO_CABE"
+                : "OBJETO",
+          );
         if (replacement.text === "") {
           check(a.FPDFPage_RemoveObject(pages[pageIndex], entry.obj));
           a.FPDFPageObj_Destroy(entry.obj);
@@ -339,7 +375,11 @@ export class PdfEditorEngine {
         const verification = a.FPDFText_LoadPage(page);
         check(verification);
         try {
-          if (getText(obj, verification) !== replacement.text) fail("GLIFO");
+          if (
+            getText(obj, verification).replace(/\s+/gu, " ").trim() !==
+            replacement.text.replace(/\s+/gu, " ").trim()
+          )
+            fail("GLIFO");
         } finally {
           a.FPDFText_ClosePage(verification);
         }

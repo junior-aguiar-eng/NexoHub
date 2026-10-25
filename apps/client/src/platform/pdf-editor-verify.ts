@@ -30,14 +30,15 @@ export async function verifyEditorText(
     });
     const pdf = await task.promise;
     for (let index = 0; index < pages.length; index++) {
-      const checks: { box: EditorBox; text: string }[] = [];
+      const checks: { id: string; box: EditorBox; text: string }[] = [];
       for (const replacement of snapshot.replacements) {
         const object = pages[index].texts.find((t) => t.id === replacement.id);
-        if (object && replacement.text) checks.push({ box: object, text: replacement.text });
+        if (object && replacement.text)
+          checks.push({ id: `source:${object.id}`, box: object, text: replacement.text });
       }
       for (const element of snapshot.elements)
         if (element.page === index && element.kind === "text" && element.text)
-          checks.push({ box: element, text: element.text });
+          checks.push({ id: `element:${element.id}`, box: element, text: element.text });
       if (!checks.length) continue;
       const page = await pdf.getPage(index + 1),
         viewport = page.getViewport({ scale: 1 });
@@ -60,6 +61,17 @@ export async function verifyEditorText(
           },
         ];
       });
+      const replacements = new Map(snapshot.replacements.map((item) => [item.id, item.text]));
+      const knownObjects = [
+        ...pages[index].texts.map((item) => ({
+          id: `source:${item.id}`,
+          box: item,
+          text: replacements.get(item.id) ?? item.text,
+        })),
+        ...snapshot.elements
+          .filter((item) => item.page === index && item.kind === "text")
+          .map((item) => ({ id: `element:${item.id}`, box: item, text: item.text ?? "" })),
+      ].filter((item) => normalized(item.text));
       for (const check of checks) {
         const box = check.box;
         const nearby = textItems.filter(
@@ -69,8 +81,36 @@ export async function verifyEditorText(
             item.bottom >= box.y - 0.001 &&
             item.y <= box.y + box.height + 0.001,
         );
-        if (!normalized(nearby.map((item) => item.text).join(" ")).includes(normalized(check.text)))
-          throw new Error("EDITOR_GLIFO");
+        const expected = normalized(check.text);
+        const parts = nearby.map((item) => normalized(item.text)).filter(Boolean);
+        const matches = parts.some((_, start) => {
+          let candidate = "";
+          for (let end = start; end < parts.length; end++) {
+            candidate = candidate ? `${candidate} ${parts[end]}` : parts[end];
+            if (candidate === expected) return true;
+            if (candidate.length > expected.length) break;
+          }
+          return false;
+        });
+        if (!matches) {
+          // PDF.js pode fundir objetos contíguos em um item. Nesse caso, conferir o
+          // conjunto completo esperado (alvo + vizinhos conhecidos), sem substring.
+          const related = knownObjects.filter(({ box: object }) =>
+            nearby.some(
+              (item) =>
+                item.right >= object.x - 0.001 &&
+                item.x <= object.x + object.width + 0.001 &&
+                item.bottom >= object.y - 0.001 &&
+                item.y <= object.y + object.height + 0.001,
+            ),
+          );
+          if (
+            !related.some((item) => item.id === check.id) ||
+            normalized(related.map((item) => item.text).join(" ")) !==
+              normalized(nearby.map((item) => item.text).join(" "))
+          )
+            throw new Error("EDITOR_GLIFO");
+        }
       }
       page.cleanup();
     }

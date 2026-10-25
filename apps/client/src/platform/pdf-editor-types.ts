@@ -19,6 +19,10 @@ export interface EditorTextObject extends EditorBox {
   color: string;
   editable: boolean;
   canChangeStyle?: boolean;
+  editRestriction?: "bounds" | "transform" | "renderMode" | "textMapping" | "clip";
+  styleRestriction?: "transparency" | "clip";
+  fontPolicy?: "latin" | "observed";
+  supportedCharacters?: string;
 }
 export interface EditorPage {
   width: number;

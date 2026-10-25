@@ -43,6 +43,67 @@ function setup() {
     />,
   );
 }
+
+it("mostra motivo do objeto incompatível sem abrir edição", async () => {
+  run.mockResolvedValueOnce({
+    blob: new Blob(["pdf"]),
+    fileName: "editado.pdf",
+    categoryKey: "recent.type.pdf",
+    editorRevision: {
+      ...revision,
+      pages: [
+        {
+          ...revision.pages[0],
+          texts: [
+            {
+              ...revision.pages[0].texts[0],
+              editable: false,
+              editRestriction: "transform",
+            },
+          ],
+        },
+      ],
+    },
+  });
+  setup();
+  fireEvent.click(await screen.findByRole("button", { name: "Editar texto existente" }));
+  fireEvent.change(screen.getByLabelText("Objetos da página"), { target: { value: "0:0" } });
+  expect(await screen.findByText(/Texto inclinado ou espelhado/)).toBeVisible();
+  expect(screen.queryByLabelText("Conteúdo do texto")).not.toBeInTheDocument();
+});
+
+it("bloqueia glifo não demonstrado e permite fonte alternativa explícita", async () => {
+  run.mockResolvedValueOnce({
+    blob: new Blob(["pdf"]),
+    fileName: "editado.pdf",
+    categoryKey: "recent.type.pdf",
+    editorRevision: {
+      ...revision,
+      pages: [
+        {
+          ...revision.pages[0],
+          texts: [
+            {
+              ...revision.pages[0].texts[0],
+              fontPolicy: "observed",
+              supportedCharacters: "Texto antigo ",
+            },
+          ],
+        },
+      ],
+    },
+  });
+  setup();
+  fireEvent.click(await screen.findByRole("button", { name: "Editar texto existente" }));
+  fireEvent.click(screen.getByRole("button", { name: "Selecionar texto: Texto antigo" }));
+  fireEvent.change(screen.getByLabelText("Conteúdo do texto"), { target: { value: "ação" } });
+  expect(screen.getByRole("button", { name: "Aplicar alteração" })).toBeDisabled();
+  expect(screen.getByText(/caracteres ainda não demonstrados/)).toBeVisible();
+  fireEvent.change(screen.getByLabelText("Fonte para a substituição"), {
+    target: { value: "Helvetica" },
+  });
+  expect(screen.getByRole("button", { name: "Aplicar alteração" })).toBeEnabled();
+});
 beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({

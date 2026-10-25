@@ -34,8 +34,16 @@ um leitor independente. Uma falha de verificação recusa a revisão em vez de p
 
 A troca explícita de fonte pode alterar a aparência. Fontes disponíveis: Helvetica, suas variantes
 negrito/itálico, Times-Roman e Courier. Texto novo usa caracteres latinos, com acentos portugueses.
-Em objetos com transparência ou recorte especial, mudanças que recriariam o objeto (fonte/tamanho)
-são bloqueadas; a substituição no próprio objeto mantém suas propriedades gráficas.
+Em objetos com transparência, mudanças que recriariam o objeto (fonte/tamanho) são bloqueadas;
+a substituição no próprio objeto mantém suas propriedades gráficas. Texto com recorte interno
+fica somente para consulta, pois o recorte pode esconder parte do conteúdo substituído.
+
+A lista de objetos também permite consultar textos incompatíveis: o painel informa se o motivo
+é transformação, recorte, limite da área visível, modo gráfico ou mapeamento textual ambíguo.
+O repertório conhecido da fonte é apresentado antes da edição. Caracteres não demonstrados
+bloqueiam a aplicação até ajustar o texto ou selecionar uma fonte alternativa permitida.
+Essa pré-verificação não substitui a conferência geométrica e dos bytes serializados no motor.
+Ligaduras Unicode e códigos de uso privado permanecem recusados neste perfil conservador.
 
 Digitalizações, texto convertido em curvas e objetos sem mapeamento seguro não admitem edição
 textual direta. Não há OCR com reconstrução nesta entrega. A ferramenta não simula edição cobrindo
@@ -70,6 +78,29 @@ Integração: Tool Registry, capacidades web, executor compartilhado e catálogo
 edição desktop. Não houve commit, push ou deploy como parte da instalação/implementação.
 
 ## Verificação
+
+### Complementação ED-C1 — 24/10/2026
+
+O corpus versionado está em `apps/client/src/platform/__fixtures__/pdf-editor/`, com origem,
+licença e hashes em `corpus.json`. A fixture de fonte completa inclui duas colunas, formulário,
+transparência, inclinação e ligadura. A fonte incorporada tem o mesmo SHA-256 do TTF local;
+isso identifica a entrada, sem presumir fidelidade da edição. Testes conferem separadamente
+texto por PDF.js, pixels fora da área editada e valores de campos, inclusive após exclusão e
+replay de desfazer/refazer. Os bytes de cada revisão são reabertos e renderizados para comparar
+a aparência exportada com a prévia, incluindo o campo de formulário.
+
+A verificação independente exige itens completos ou o agregado completo do alvo com vizinhos
+conhecidos quando PDF.js reúne objetos contíguos. Uma substring dentro de conteúdo diferente
+não valida a revisão. Situações sem correspondência demonstrada continuam recusadas.
+
+O repertório observado permanece conservador tanto na fonte completa quanto no subconjunto.
+Espaços de extração são normalizados; isso não certifica fidelidade tipográfica dos espaços.
+Os limites de arquivo, páginas, objetos e memória continuam os descritos acima. ED-C2, referente
+a desempenho e documentos maiores, é a próxima etapa do plano.
+Resultados das verificações, medições e ressalvas estão no
+[plano responsável](superpowers/plans/2026-10-23-editar-pdf.md#registro-complementar--ed-c1-24102026).
+
+### Entrega original
 
 Testes reais cobrem fontes padrão e fonte incorporada em subconjunto (fixture sintética), glifos
 incompatíveis, remoção e substituição de texto, fonte escalada por matriz, transparência, campos de

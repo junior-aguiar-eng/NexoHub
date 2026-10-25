@@ -75,7 +75,8 @@ Não criar commits intermediários: a autorização atual é para implementar, n
 
 ## Fase de complementação — 24/10/2026
 
-**Estado:** planejada; preserva as quatro tarefas concluídas. Consome Q-C0 e os
+**Estado:** ED-C1 concluído no website no perfil conservador documentado; ED-C2 planejado.
+Preserva as quatro tarefas concluídas. Consome Q-C0 e os
 [gates comuns](../../ROADMAP.md#regras-comuns-de-execução-e-aceite). Não trocar o motor atual por
 um editor visual de imagens: Fabric/Konva não editam o texto existente no conteúdo de um PDF.
 
@@ -85,14 +86,14 @@ um editor visual de imagens: Fabric/Konva não editam o texto existente no conte
 `pdf-editor-verify.ts` e testes; `features/launcher/PdfEditorPanel.tsx` e teste próximo.
 **Fixtures:** `platform/__fixtures__/pdf-editor/`; documento técnico `docs/EDITAR-PDF-WEB.md`.
 
-- [ ] Expandir o corpus com fontes incorporadas completas/subconjuntos, ligaduras, acentos,
+- [x] Expandir o corpus com fontes incorporadas completas/subconjuntos, ligaduras, acentos,
   transparência, texto transformado, múltiplas colunas e formulários; registrar por classe
   edição suportada ou recusa. Conferir visualmente e por extração independente a saída.
-- [ ] Mostrar o motivo de incompatibilidade antes de editar e oferecer troca explícita de
+- [x] Mostrar o motivo de incompatibilidade antes de editar e oferecer troca explícita de
   fonte quando segura. Não usar largura de glifo como prova de suporte nem cobertura branca.
-- [ ] Melhorar seleção de objetos e propriedades sem introduzir sobreposição ou reflow
+- [x] Melhorar seleção de objetos e propriedades sem introduzir sobreposição ou reflow
   implícito; texto maior que a caixa continua recusado até existir prova específica de reflow.
-- [ ] Verificar original, regiões não editadas e campos após substituições, exclusão e histórico.
+- [x] Verificar original, regiões não editadas e campos após substituições, exclusão e histórico.
   Homologar qualquer expansão do repertório antes de remover restrições do documento técnico.
 
 ### ED-C2 — Documentos maiores com orçamento de recursos
@@ -112,3 +113,39 @@ um editor visual de imagens: Fabric/Konva não editam o texto existente no conte
 seletiva da linha estável v2, inventariando WASM e licenças. Não migrar para v3 em desenvolvimento,
 nem instalar CloudPDF/server. OCR com reconstrução e edição universal de parágrafos continuam
 fora desta complementação até demonstração de viabilidade e escopo próprios.
+
+## Registro complementar — ED-C1 (24/10/2026)
+
+- Base: `529f36b`, branch `fix/auditoria-website`, em worktree isolado. Nenhum commit, push,
+  merge ou deploy desta etapa. `main` preservada.
+- Inspeção expõe motivo de recusa e política de caracteres por objeto. A lista permite consultar
+  os incompatíveis sem iniciar edição. UI e motor compartilham pré-verificação; fallback é explícito.
+- Corpus sintético versionado com SHA-256, fonte Liberation existente completa/subconjunto,
+  duas colunas, campo, transparência, inclinação e ligadura. O stream da fonte completa tem o
+  mesmo hash do TTF local; a licença existente contém exceção de incorporação documental.
+- Recorte interno e ligaduras/códigos privados ficam recusados antes da edição. Fonte completa
+  não implica repertório irrestrito: caracteres novos continuam exigindo fallback seguro.
+  Espaços gerados pelo leitor são normalizados, sem promessa de fidelidade tipográfica de espaços.
+- Testes reais conferem texto por PDF.js, campos, pixels não editados, exclusão, desfazer/refazer
+  e renderização dos bytes exportados comparada à prévia. Original permanece byte a byte intacto.
+- Revisão independente encontrou P2 na agregação de objetos contíguos pelo PDF.js. Corrigido
+  com regressão RED/GREEN e E2E: confere alvo e vizinhos conhecidos completos sem substring solta.
+  Lacunas de evidência sobre exclusão/histórico e aparência exportada também foram cobertas.
+- `pnpm check`, formatter e `git diff --check` aprovados; `pnpm test`: 672 aprovados
+  (609 client + 63 pacotes). Builds raiz e `/hub/` aprovados, sem nova dependência.
+- E2E raiz com dois workers: 230 aprovados, cinco pulados por serem exclusivos de subpasta e
+  um timeout ao carregar Recortar imagem. O arquivo de recorte inteiro passou na repetição
+  (nove casos), sem alteração de asserções: 231 casos únicos aprovados no conjunto. Causa do
+  timeout não demonstrada. A primeira rodada também expôs caminhos de fontes dos testes
+  incompatíveis com Windows; corrigidos para barras `/`, preservando as verificações.
+- E2E `/hub/`: 116 aprovados, incluindo os nove do editor adicionados à suíte da subpasta.
+- Capturas em 390/768/1024/1440 px: novas mensagens sem overflow; tema escuro e movimento
+  reduzido conferidos. Contraste baixo do título/navegação do shell escuro é uma pendência
+  preexistente registrada, sem mudança de CSS nesta fatia.
+- Medição pontual do cenário de objetos contíguos: abertura inicial 1.059 ms e revisão seguinte
+  955 ms na raiz; 1.011/948 ms em `/hub/`. Windows, Ryzen 5 3550H, 32 GB RAM, Node 24.19.0,
+  Chromium do Playwright 1.62.1, Vite local e dois workers. Não é benchmark frio/quente controlado
+  nem prova de ganho de desempenho; ED-C2 continua responsável por documentos maiores.
+- Recursos do build raiz: worker do editor 167,08 kB; verificador 490,44 kB; bundle principal
+  1.069,52 kB (294,44 kB gzip). O aviso de chunk grande já existente permanece. Limites e WASM
+  atuais preservados; sem homologação desktop ou promessa de edição universal.

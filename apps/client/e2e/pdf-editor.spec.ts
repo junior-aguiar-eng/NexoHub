@@ -13,7 +13,7 @@ async function source(rotation = 0) {
   return pdf.save();
 }
 async function open(page: Page, bytes?: Uint8Array) {
-  await page.goto("/editar-pdf");
+  await page.goto(`${process.env.NEXOHUB_BASE_PATH ?? "/"}editar-pdf`);
   await page.getByLabel("Selecionar PDF", { exact: true }).setInputFiles({
     name: "original.pdf",
     mimeType: "application/pdf",
@@ -49,6 +49,62 @@ async function texts(bytes: Uint8Array) {
     await task.destroy();
   }
 }
+
+test("explica incompatibilidade e exige fonte explícita para novos glifos antes da exportação", async ({
+  page,
+}, info) => {
+  const bytes = new Uint8Array(
+    await readFile(
+      new URL("../src/platform/__fixtures__/pdf-editor/embedded-full.pdf", import.meta.url),
+    ),
+  );
+  await open(page, bytes);
+  await page.getByRole("button", { name: "Editar texto existente", exact: true }).click();
+  const objects = page.getByLabel("Objetos da página");
+  const ligature = await objects.locator("option").filter({ hasText: "of" }).getAttribute("value");
+  if (!ligature) throw new Error("Objeto com ligadura não encontrado");
+  await objects.selectOption(ligature);
+  await expect(
+    page.getByText(
+      "O mapeamento de caracteres deste objeto não permite uma edição textual segura.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByLabel("Conteúdo do texto")).toHaveCount(0);
+  for (const width of [390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+      .toBeLessThanOrEqual(width);
+    await page.screenshot({
+      path: info.outputPath(`compatibilidade-${width}.png`),
+      fullPage: true,
+    });
+  }
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.evaluate(() => {
+    document.documentElement.dataset.theme = "dark";
+  });
+  await page.screenshot({ path: info.outputPath("compatibilidade-dark.png"), fullPage: true });
+  await page.evaluate(() => {
+    document.documentElement.dataset.theme = "light";
+  });
+  await page.getByRole("button", { name: /Selecionar texto: Ação útil original/ }).click();
+  await page.getByLabel("Conteúdo do texto").fill("ñ");
+  await expect(page.getByRole("button", { name: "Aplicar alteração", exact: true })).toBeDisabled();
+  await expect(page.getByText(/caracteres ainda não demonstrados/)).toBeVisible();
+  await page.getByLabel("Fonte para a substituição").selectOption("Helvetica");
+  await expect(page.getByRole("button", { name: "Aplicar alteração", exact: true })).toBeEnabled();
+  await page.getByRole("button", { name: "Aplicar alteração", exact: true }).click();
+  await ready(page);
+  const exported = await save(page);
+  const extracted = (await texts(exported))[0];
+  expect(extracted).toContain("ñ");
+  expect(extracted).toContain("Coluna preservada");
+  expect(extracted).not.toContain("Ação útil original");
+  expect(
+    (await PDFDocument.load(exported)).getForm().getTextField("campo-preservado").getText(),
+  ).toBe("Valor mantido");
+});
 test("edita texto original no WASM local, adiciona texto e exporta PDF verificável", async ({
   page,
 }) => {
@@ -72,7 +128,33 @@ test("edita texto original no WASM local, adiciona texto e exporta PDF verificá
   expect(result[0]).toContain("Texto preservado");
   expect(result[1]).toContain("Segunda pagina");
 });
-test("histórico misto desfaz e refaz edição real e elemento novo", async ({ page }) => {
+
+test("edita objeto contíguo sem alterar o texto vizinho agregado pelo leitor", async ({ page }) => {
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont("Helvetica");
+  const sheet = doc.addPage([500, 700]);
+  sheet.drawText("Casa", { x: 50, y: 500, size: 18, font });
+  sheet.drawText(" vizinho", {
+    x: 50 + font.widthOfTextAtSize("Casa", 18),
+    y: 500,
+    size: 18,
+    font,
+  });
+  const started = performance.now();
+  await open(page, await doc.save());
+  const opened = performance.now();
+  await page.getByRole("button", { name: "Editar texto existente", exact: true }).click();
+  await page.getByRole("button", { name: "Selecionar texto: Casa", exact: true }).click();
+  await page.getByLabel("Conteúdo do texto").fill("Novo");
+  const applying = performance.now();
+  await page.getByRole("button", { name: "Aplicar alteração", exact: true }).click();
+  await ready(page);
+  console.log(
+    `ED-C1: abertura local ${Math.round(opened - started)} ms; revisão ${Math.round(performance.now() - applying)} ms (dois workers).`,
+  );
+  expect((await texts(await save(page)))[0]).toContain("Novo vizinho");
+});
+test("histórico desfaz e refaz elemento de texto novo", async ({ page }) => {
   await open(page);
   await page.getByRole("button", { name: "Adicionar texto", exact: true }).click();
   await ready(page);
@@ -163,7 +245,7 @@ test("imagem, forma e desenho exportam junto com o conteúdo vetorial original",
   expect((await texts(bytes))[0]).toContain("Contrato original");
 });
 test("cancelamento encerra worker e permite abrir novamente", async ({ page }) => {
-  await page.goto("/editar-pdf");
+  await page.goto(`${process.env.NEXOHUB_BASE_PATH ?? "/"}editar-pdf`);
   const started = page.waitForEvent("worker");
   await page.getByLabel("Selecionar PDF", { exact: true }).setInputFiles({
     name: "original.pdf",
@@ -180,7 +262,7 @@ test("cancelamento encerra worker e permite abrir novamente", async ({ page }) =
 test("navegação interna e voltar do navegador pedem confirmação antes de descartar edições", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto(process.env.NEXOHUB_BASE_PATH ?? "/");
   await page.getByRole("heading", { name: "Editar PDF", exact: true }).click();
   await page.getByLabel("Selecionar PDF", { exact: true }).setInputFiles({
     name: "original.pdf",

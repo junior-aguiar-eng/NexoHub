@@ -36,6 +36,7 @@ import { translate } from "@/i18n";
 import type { MessageKey } from "@/i18n/pt-BR";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { type LauncherToolOutput, runLauncherTool } from "@/platform/launcher-tool-runner";
+import { editorReplacementIssue } from "@/platform/pdf-editor-compatibility";
 import {
   commitEditorSnapshot,
   type EditorHistory,
@@ -140,6 +141,10 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
   const preview = useMemo(() => bitmapUrl(revision?.preview), [revision?.preview]);
   const dirty = history.present !== savedSnapshot.current;
   const selectedOriginal = info?.texts.find((o) => o.id === selected);
+  const replacementIssue =
+    selectedOriginal && replacement
+      ? editorReplacementIssue(selectedOriginal, replacement)
+      : undefined;
   const clearSelection = useCallback(() => {
     setSelected(undefined);
     setDraft(undefined);
@@ -276,13 +281,15 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
     if (draftDirty && selected === objectId) return;
     if (!allowDraftDiscard()) return;
     const object = info?.texts.find((o) => o.id === objectId);
-    if (!object?.editable) return;
+    if (!object) return;
     setSelected(objectId);
     setReplacement(
-      history.present.replacements.find((r) => r.id === objectId) ?? {
-        id: objectId,
-        text: object.text,
-      },
+      !object.editable
+        ? undefined
+        : (history.present.replacements.find((r) => r.id === objectId) ?? {
+            id: objectId,
+            text: object.text,
+          }),
     );
     setDraft(undefined);
     setDraftDirty(false);
@@ -299,6 +306,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
     }
   }
   async function apply() {
+    if (replacementIssue) return;
     if (replacement) {
       const next = {
         ...history.present,
@@ -1016,7 +1024,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                   <option value="">{t("chooseObject")}</option>
                   {mode === "existing"
                     ? info?.texts
-                        .filter((item) => item.editable)
+                        .filter((item) => item.text.trim())
                         .map((item) => (
                           <option key={item.id} value={item.id}>
                             {item.text.slice(0, 80)}
@@ -1031,7 +1039,12 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                         ))}
                 </select>
               </label>
-              {!draft && !replacement && (
+              {selectedOriginal && !selectedOriginal.editable && (
+                <p className="pdf-editor-warning" role="status">
+                  {t(selectedOriginal.editRestriction ?? "unsafeObject")}
+                </p>
+              )}
+              {!draft && !replacement && !selectedOriginal && (
                 <div className="pdf-editor-empty">
                   <Layers size={30} />
                   <p>{t("emptySelection")}</p>
@@ -1060,6 +1073,16 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                       {t("originalObject")} · {selectedOriginal?.fontName} ·{" "}
                       {selectedOriginal?.fontSize.toFixed(1)} pt
                     </span>
+                    <p className="pdf-editor-meta">
+                      {t(
+                        selectedOriginal?.fontPolicy === "observed" ? "observedFont" : "latinFont",
+                      )}
+                    </p>
+                    {replacementIssue && (
+                      <p className="pdf-editor-warning" role="status">
+                        {t(replacementIssue)}
+                      </p>
+                    )}
                     <label>
                       {t("fontFallback")}
                       <select
@@ -1203,7 +1226,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                   <button
                     className="pdf-editor-apply"
                     type="button"
-                    disabled={!draftDirty}
+                    disabled={!draftDirty || !!replacementIssue}
                     onClick={() => {
                       void apply();
                     }}

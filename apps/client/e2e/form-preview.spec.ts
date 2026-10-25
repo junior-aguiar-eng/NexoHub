@@ -115,7 +115,9 @@ test("achatar retira widgets somente da saída escolhida e preserva os valores v
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const task = pdfjs.getDocument({
     data: new Uint8Array(bytes),
-    standardFontDataUrl: fileURLToPath(new URL("../public/standard_fonts/", import.meta.url)),
+    standardFontDataUrl: fileURLToPath(
+      new URL("../public/standard_fonts/", import.meta.url),
+    ).replaceAll("\\", "/"),
   });
   try {
     const document = await task.promise;

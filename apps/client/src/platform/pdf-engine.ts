@@ -1267,6 +1267,31 @@ export async function redactPdfDocument(
         throw new Error("AREA_OCULTACAO_INVALIDA");
     }
 
+    // Validar o orçamento integral antes de alocar ou renderizar qualquer canvas.
+    const rasterPages: { scale: number; width: number; height: number }[] = [];
+    let totalPixels = 0;
+    for (let pageIndex = 0; pageIndex < source.numPages; pageIndex++) {
+      if (signal?.aborted) throw new Error("OPERACAO_CANCELADA");
+      const page = await source.getPage(pageIndex + 1);
+      try {
+        const visible = page.getViewport({ scale: 1 });
+        // 216 DPI, com limites explícitos de memória e dimensões de canvas.
+        const scale = Math.min(
+          3,
+          8192 / Math.max(visible.width, visible.height),
+          Math.sqrt(24_000_000 / (visible.width * visible.height)),
+        );
+        if (!Number.isFinite(scale) || scale <= 0) throw new Error("PDF_OCULTACAO_LIMITE_EXCEDIDO");
+        const viewport = page.getViewport({ scale });
+        const width = Math.ceil(viewport.width);
+        const height = Math.ceil(viewport.height);
+        totalPixels += width * height;
+        if (totalPixels > 96_000_000) throw new Error("PDF_OCULTACAO_LIMITE_EXCEDIDO");
+        rasterPages.push({ scale, width, height });
+      } finally {
+        page.cleanup();
+      }
+    }
     // Um documento novo recebe somente pixels já ocultados. Não copiar páginas,
     // recursos, anexos, metadados ou streams do original: um overlay é reversível.
     const output = await PDFDocument.create();
@@ -1277,23 +1302,11 @@ export async function redactPdfDocument(
       ): { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D };
       destroy(target: { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D }): void;
     };
-    let totalPixels = 0;
-    for (let pageIndex = 0; pageIndex < source.numPages; pageIndex++) {
+    for (const [pageIndex, { scale, width, height }] of rasterPages.entries()) {
       if (signal?.aborted) throw new Error("OPERACAO_CANCELADA");
       const page = await source.getPage(pageIndex + 1);
       const visible = page.getViewport({ scale: 1 });
-      // 216 DPI, com limites explícitos de memória e dimensões de canvas.
-      const scale = Math.min(
-        3,
-        8192 / Math.max(visible.width, visible.height),
-        Math.sqrt(24_000_000 / (visible.width * visible.height)),
-      );
-      if (!Number.isFinite(scale) || scale <= 0) throw new Error("PDF_OCULTACAO_LIMITE_EXCEDIDO");
       const viewport = page.getViewport({ scale });
-      const width = Math.ceil(viewport.width);
-      const height = Math.ceil(viewport.height);
-      totalPixels += width * height;
-      if (totalPixels > 96_000_000) throw new Error("PDF_OCULTACAO_LIMITE_EXCEDIDO");
       const target = factory.create(width, height);
       try {
         await page.render({

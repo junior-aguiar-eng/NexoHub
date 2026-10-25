@@ -2,7 +2,7 @@
 import { computeHash2B, encodePasswordAES256 } from "@pdfsmaller/pdf-encrypt";
 import { degrees, PDFDict, PDFDocument, PDFHexString, PDFName, rgb } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { protectPdfDocument, redactPdfDocument } from "./pdf-engine";
 
 async function sourcePdf(rotation = 0) {
@@ -158,6 +158,37 @@ describe("segurança real de proteção e ocultação", () => {
         ],
       }),
     ).rejects.toThrow("PDF_OCULTACAO_LIMITE_EXCEDIDO");
+  });
+  it("recusa o orçamento total antes de alocar qualquer canvas", async () => {
+    const probe = await open(await sourcePdf());
+    const factory = Object.getPrototypeOf(probe.canvasFactory) as {
+      create(width: number, height: number): unknown;
+    };
+    const create = vi.spyOn(factory, "create").mockImplementation(() => {
+      throw new Error("CANVAS_ANTES_DO_PREFLIGHT");
+    });
+    try {
+      const huge = await PDFDocument.create();
+      for (let i = 0; i < 5; i++) huge.addPage([2000, 2000]);
+      const options = {
+        redactions: [
+          { id: "r", pageIndex: 0, xPercent: 0, yPercent: 0, widthPercent: 10, heightPercent: 10 },
+        ],
+      };
+      await expect(redactPdfDocument(await huge.save(), options)).rejects.toThrow(
+        "PDF_OCULTACAO_LIMITE_EXCEDIDO",
+      );
+      expect(create).not.toHaveBeenCalled();
+      const allowed = await PDFDocument.create();
+      allowed.addPage([2000, 2000]);
+      await expect(redactPdfDocument(await allowed.save(), options)).rejects.toThrow(
+        "CANVAS_ANTES_DO_PREFLIGHT",
+      );
+      expect(create).toHaveBeenCalledOnce();
+    } finally {
+      create.mockRestore();
+      await probe.loadingTask.destroy();
+    }
   });
   it.each([0, 90, 180, 270])(
     "remove conteúdo recuperável e aplica tarja no espaço visual com rotação %s",

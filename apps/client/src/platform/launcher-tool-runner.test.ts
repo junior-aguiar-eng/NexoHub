@@ -163,7 +163,7 @@ describe("Tool Runner do Launcher", () => {
 
   it("rejeita ferramenta sem executor", async () => {
     await expect(
-      runLauncherTool(new BrowserDocumentCorePort(), "pdf-to-word", input([await fixture()])),
+      runLauncherTool(new BrowserDocumentCorePort(), "word-to-pdf", input([await fixture()])),
     ).rejects.toThrow();
   });
 

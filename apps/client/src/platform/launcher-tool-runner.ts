@@ -55,6 +55,7 @@ import {
   unlockPdfDocument,
 } from "./pdf-engine";
 import { type PdfRepairReport, repairPdfDocument } from "./pdf-repair-engine";
+import { convertPdfToWord, type PdfToWordReport } from "./pdf-to-word-converter";
 import { compileScannedPagesToPdf, type ScannedPageItem } from "./scan-to-pdf-engine";
 
 export interface LauncherPage {
@@ -197,6 +198,7 @@ export interface LauncherToolOutput {
   readonly reviewFindings?: readonly ReviewFinding[];
   readonly extractedImages?: readonly ExtractedImage[];
   readonly pdfRepairReport?: PdfRepairReport;
+  readonly pdfToWordReport?: PdfToWordReport;
 }
 
 import { activeToolIds } from "./tool-availability";
@@ -368,6 +370,32 @@ async function executeTool(
         fileName: `${baseName}_reparado.pdf`,
         categoryKey: "recent.type.pdf",
         pdfRepairReport: report,
+      };
+    }
+    case "pdf-to-word": {
+      let docxBytes: Uint8Array;
+      let report: PdfToWordReport;
+      try {
+        const outcome = await convertPdfToWord(new Uint8Array(await first.arrayBuffer()));
+        docxBytes = outcome.docxBytes;
+        report = outcome.report;
+      } catch (error) {
+        if (error instanceof Error && error.message === "DOCUMENTO_VAZIO") {
+          throw new ToolRunError("INVALID_INPUT", translate("toolQuality.invalidDocument"));
+        }
+        if (error instanceof Error && error.message === "DOCUMENTO_INVALIDO") {
+          throw new ToolRunError("INVALID_INPUT", translate("repair.errorUnrecoverable"));
+        }
+        throw error;
+      }
+      const docxBlob = new Blob([docxBytes as unknown as BlobPart], {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+      return {
+        blob: docxBlob,
+        fileName: `${baseName}.docx`,
+        categoryKey: "recent.type.document",
+        pdfToWordReport: report,
       };
     }
     case "pdf-organize": {

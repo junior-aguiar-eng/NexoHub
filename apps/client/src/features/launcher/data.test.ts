@@ -25,6 +25,7 @@ describe("Strict Functional Tools Catalog", () => {
       "html-to-pdf",
       "scan-to-pdf",
       "pdf-repair",
+      "pdf-to-word",
       "pdf-edit",
       "pdf-compare",
       "image-compress",
@@ -36,7 +37,7 @@ describe("Strict Functional Tools Catalog", () => {
     ]) {
       expect(ids).toContain(id);
     }
-    expect(ids).toHaveLength(35);
+    expect(ids).toHaveLength(36);
   });
   it("não oferece conversões e proteção sem executor", () => {
     const tools = resolveLauncherTools();
@@ -51,7 +52,7 @@ describe("Strict Functional Tools Catalog", () => {
     expect(ids).toContain("pdf-ocr");
     expect(ids).toContain("pdf-extract-images");
     expect(ids).toContain("text-compare");
-    expect(ids).not.toContain("pdf-to-word");
+    expect(ids).toContain("pdf-to-word");
     expect(ids).not.toContain("word-to-pdf");
     expect(ids).toContain("pdf-protect");
     expect(ids).toContain("pdf-redact");

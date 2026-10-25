@@ -7,11 +7,16 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 
 ### Adicionado
 
+- **PDF para Word (`pdf-to-word`)**:
+  - Implementação do motor de conversão real `pdf-to-word-converter.ts` combinando a extração estruturada de texto via `pdfjs-dist` com a reconstrução semântica de parágrafos, estilos tipográficos (negrito/itálico) e quebras de página nativas gerando arquivos OpenXML binários `.docx` válidos e editáveis através da biblioteca `docx` (MIT).
+  - Tela dedicada `PdfToWordPanel` com progresso de conversão, painel analítico com contagem de páginas processadas, palavras e parágrafos estruturados, comparação de tamanho, prévia dos blocos extraídos, botão de download do `.docx` e banner preventivo com link para OCR caso o PDF seja digitalizado sem texto vetorial.
+  - Testes unitários do motor e da interface gráfica no Vitest e teste de ponta a ponta no Playwright.
+  - Expansão do catálogo de ferramentas ativas para 36 ferramentas operacionais.
+
 - **Reparar PDF (`pdf-repair`)**:
   - Implementação do motor de recuperação resiliente `pdf-repair-engine.ts` capaz de higienizar cabeçalhos corrompidos (`%PDF-`), remover lixo inicial/BOM, restaurar marcadores truncados no rodapé (`%%EOF`, `startxref`), reconectar referências a Cross-Reference Streams (`/Type /XRef`) e resgatar páginas íntegras página a página.
   - Tela dedicada `PdfRepairPanel` exibindo diagnóstico detalhado de reparo (Xref, Trailer, EOF, Cabeçalho, contagem de páginas salvas e comparação de bytes recuperados vs. originais) com pré-visualização de página e botão de download.
   - Cobertura integral com 6 testes unitários no motor e testes de interface no Vitest, além de cenário de qualidade ponta a ponta no Playwright.
-  - Expansão do catálogo de ferramentas ativas para 35 ferramentas operacionais.
 
 ### Modificado
 

@@ -17,7 +17,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Organizar PDF" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Comprimir PDF" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Extrair Imagens" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "PDF para Word" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "PDF para Word" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Revisar texto" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Comparar textos" })).toBeInTheDocument();
   });

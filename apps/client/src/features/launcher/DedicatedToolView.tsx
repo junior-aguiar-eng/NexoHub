@@ -1577,28 +1577,6 @@ export function DedicatedToolView({
       );
     }
 
-    // REPARAR PDF
-    if (tool.id === "pdf-repair") {
-      return (
-        <PdfRepairPanel
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          isRunning={status === "running"}
-          progressPercent={progress}
-          report={pdfRepairReport}
-          errorMessage={status === "error" ? errorMessage : null}
-          downloadUrl={downloadUrl}
-          outputFileName={
-            outputFileName ||
-            `${files[0]?.name?.replace(/\.[^/.]+$/, "") ?? "documento"}_reparado.pdf`
-          }
-          thumbnail={firstPageThumb}
-          onRunRepair={() => void handleExecute()}
-          onReset={handleReset}
-        />
-      );
-    }
-
     // JUNTAR PDF
     if (tool.id === "pdf-merge") {
       return (
@@ -2516,6 +2494,28 @@ export function DedicatedToolView({
           {tool.id === "pdf-form-fill" && errorMessage && <p role="alert">{errorMessage}</p>}
         </section>
       </div>
+    );
+  }
+
+  if (tool.id === "pdf-repair") {
+    return (
+      <>
+        {fileInput}
+        <PdfRepairPanel
+          fileName={files[0].name}
+          fileSizeBytes={files[0].size}
+          isRunning={status === "running"}
+          progressPercent={progress}
+          report={pdfRepairReport}
+          errorMessage={status === "error" ? errorMessage : null}
+          downloadUrl={downloadUrl}
+          outputFileName={outputFileName}
+          thumbnail={firstPageThumb}
+          onBack={onBack}
+          onRunRepair={() => void handleExecute()}
+          onReset={handleReset}
+        />
+      </>
     );
   }
 

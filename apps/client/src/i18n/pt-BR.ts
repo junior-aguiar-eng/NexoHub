@@ -377,6 +377,20 @@ export const ptBR = {
     "Corrigir tabelas xref corrompidas, trailers danificados e resgatar páginas legíveis de PDFs com falha.",
   "dedicated.actionRepair": "Reparar PDF",
   "repair.title": "Reparar PDF",
+  "repair.original": "Arquivo original",
+  "repair.originalPreview": "Prévia da página 1 do original {file}",
+  "repair.previewUnavailable": "A prévia do arquivo original não está disponível.",
+  "repair.pendingDiagnostic":
+    "Execute o reparo para consultar o diagnóstico e baixar o novo arquivo.",
+  "repair.scopeNotice":
+    "O reparo tenta recuperar a estrutura e as páginas legíveis. Conteúdo ausente ou danificado pode não ser recuperado. O original é preservado.",
+  "repair.progressLabel": "Progresso do reparo",
+  "repair.progressNotice":
+    "Aguarde enquanto o PDF é processado. O arquivo original permanece preservado.",
+  "repair.errorHeading": "Falha na Recuperação",
+  "repair.partialReady": "Recuperação parcial: confira o diagnóstico.",
+  "repair.warningsHeading": "Avisos da recuperação",
+  "repair.download": "Baixar PDF Reparado",
   "repair.diagnosticCard": "Diagnóstico da Recuperação",
   "repair.xrefFixed": "Tabela de referências (xref) reconstruída",
   "repair.trailerFixed": "Estrutura de final e trailer restaurada",

@@ -3,6 +3,90 @@ import { describe, expect, it, vi } from "vitest";
 import { PdfRepairPanel } from "./PdfRepairPanel";
 
 describe("PdfRepairPanel", () => {
+  const recovered = {
+    fixedHeader: true,
+    fixedEof: false,
+    fixedTrailer: false,
+    fixedXref: false,
+    recoveredPages: 1,
+    totalDetectedPages: 2,
+    originalSize: 1024,
+    repairedSize: 800,
+    warnings: ["Página 2 não pôde ser recuperada devido a fluxo corrompido."],
+  };
+  const resultProps = {
+    fileName: "original.pdf",
+    fileSizeBytes: 1024,
+    isRunning: false,
+    progressPercent: 100,
+    report: recovered,
+    errorMessage: null,
+    downloadUrl: "blob:http://localhost/reparado",
+    outputFileName: "reparado.pdf",
+    onRunRepair: vi.fn(),
+    onReset: vi.fn(),
+  };
+  it("distingue recuperação parcial e conserva os avisos e o download", () => {
+    render(<PdfRepairPanel {...resultProps} />);
+    expect(screen.getByRole("status")).toHaveTextContent("Recuperação parcial");
+    expect(screen.getByText(recovered.warnings[0])).toBeInTheDocument();
+    expect(screen.getByText("1 de 2 páginas recuperadas")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Baixar PDF Reparado" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Reparar PDF" })).not.toBeInTheDocument();
+  });
+  it("esconde o download anterior ao receber um erro e anuncia a falha", () => {
+    const { rerender } = render(<PdfRepairPanel {...resultProps} />);
+    rerender(<PdfRepairPanel {...resultProps} errorMessage="Documento irrecuperável" />);
+    expect(screen.queryByRole("link", { name: "Baixar PDF Reparado" })).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Falha na Recuperação");
+    expect(screen.getByText("Documento irrecuperável")).toBeInTheDocument();
+  });
+  it("separa documento, diagnóstico e ações em regiões acessíveis", () => {
+    render(
+      <PdfRepairPanel
+        fileName="original.pdf"
+        fileSizeBytes={1024}
+        isRunning={false}
+        progressPercent={0}
+        report={null}
+        errorMessage={null}
+        downloadUrl={null}
+        outputFileName="reparado.pdf"
+        thumbnail="data:image/png;base64,original"
+        onRunRepair={vi.fn()}
+        onReset={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("region", { name: "Área do documento" })).toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "Opções" })).toBeInTheDocument();
+    const actions = screen.getByRole("region", { name: "Ações da ferramenta" });
+    expect(actions).toContainElement(screen.getByRole("button", { name: "Reparar PDF" }));
+    expect(screen.getByAltText("Prévia da página 1 do original original.pdf")).toBeInTheDocument();
+  });
+
+  it("nomeia o progresso e bloqueia as ações durante a execução", () => {
+    render(
+      <PdfRepairPanel
+        fileName="original.pdf"
+        fileSizeBytes={1024}
+        isRunning
+        progressPercent={65}
+        report={null}
+        errorMessage={null}
+        downloadUrl={null}
+        outputFileName="reparado.pdf"
+        onRunRepair={vi.fn()}
+        onReset={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("progressbar", { name: "Progresso do reparo" })).toHaveAttribute(
+      "aria-valuenow",
+      "65",
+    );
+    expect(screen.getByRole("button", { name: "Reparar PDF" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Tentar outro arquivo" })).toBeDisabled();
+  });
+
   it("renderiza o estado inicial pronto para iniciar a reparação", async () => {
     const handleRun = vi.fn();
     const handleReset = vi.fn();

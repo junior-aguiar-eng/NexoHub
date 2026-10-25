@@ -26,7 +26,10 @@ Os conflitos foram resolvidos em `DedicatedToolView.tsx`, `launcher-tool-runner.
 `styles.css`, preservando fila de prévias, revisões de formulário, ocultação qualificada,
 comparador, gestão de imagens e pontos de entrada de Reparar PDF.
 
-O motor e o painel de reparo são idênticos aos de `a5aef3f`, conferidos pelos blobs Git:
+Na integração `8ed2033`, o motor e o painel de reparo eram idênticos aos de `a5aef3f`,
+conferidos pelos blobs Git abaixo. O painel recebeu adequação visual em etapa posterior,
+registrada em [Reparar PDF](REPARAR-PDF.md#padronização-da-mesa--25102026); o hash do motor
+permaneceu preservado. Estes hashes registram o estado da integração original:
 
 - `pdf-repair-engine.ts`: `eba10ccaa8d8f5cfb0105e345d8af9aca0566bdf`.
 - `PdfRepairPanel.tsx`: `b7189d014978c7c40a93a5a25e3b10df620e639c`.

@@ -71,6 +71,14 @@ check, builds e licenças. [Registro da integração](INTEGRACAO-FERRAMENTAS-MES
 O checkout principal com alterações locais de PDF→Word foi preservado; não houve publicação.
 OCR-C1/DOC-C2 continua sendo o próximo complemento, sem implementação nesta consolidação.
 
+**Adequação de Reparar PDF (25/10/2026):** antes de retomar OCR-C1/DOC-C2, o usuário autorizou
+aplicar o padrão de mesas também a Reparar PDF e reconciliar seu [plano próprio](REPARAR-PDF.md#padronização-da-mesa--25102026).
+A adequação foi concluída no website local: frame compartilhado, ações sem duplicação, pt-BR,
+diagnóstico e prévia original identificados. Check, 718 unitários com dois workers, builds,
+281 E2E na raiz (cinco exclusivos da subpasta pulados) e 170 em `/hub/` foram aprovados.
+A avaliação de qpdf, o worker cancelável e a ampliação do corpus continuam no R-C1, sem alteração
+do motor nesta adequação.
+
 - **Uma tarefa por vez:** reprovar o cenário antes da correção, implementar, validar o resultado
   exportado e registrar evidências no plano responsável antes de marcar concluído.
 - **Base:** as correções F01–F09 estão no commit `43f9c1a`; não são pendências a reimplementar.

@@ -54,7 +54,7 @@ test("mesas mantêm ações acessíveis com zoom real do navegador a 200%", asyn
       mimeType: "application/pdf",
       buffer: Buffer.from(await pdf.save()),
     };
-    for (const route of ["comprimir-pdf", "editar-pdf", "comparar-pdf"]) {
+    for (const route of ["comprimir-pdf", "editar-pdf", "comparar-pdf", "reparar-pdf"]) {
       await page.goto(`${root}${route}`);
       if (route === "comparar-pdf") {
         await page.getByLabel("PDF original", { exact: true }).setInputFiles(file);
@@ -63,14 +63,25 @@ test("mesas mantêm ações acessíveis com zoom real do navegador a 200%", asyn
         const report = page.getByRole("button", { name: "Baixar relatório PDF", exact: true });
         await report.waitFor({ state: "visible" });
         await expect(report).toBeVisible();
-      } else await page.locator('input[type="file"]').first().setInputFiles(file);
+      } else {
+        await page.locator('input[type="file"]').first().setInputFiles(file);
+        if (route === "reparar-pdf") {
+          await expect(page.getByRole("button", { name: "Reparar PDF", exact: true })).toHaveCount(
+            1,
+          );
+          await page.getByRole("button", { name: "Reparar PDF", exact: true }).click();
+          await page.getByTestId("pdf-repair-success").waitFor({ state: "visible" });
+        }
+      }
       await workspaceOptions(page);
       const action =
         route === "editar-pdf"
           ? page.getByRole("button", { name: "Salvar alterações", exact: true })
           : route === "comparar-pdf"
             ? page.getByRole("button", { name: "Baixar relatório PDF", exact: true })
-            : page.locator(".dedicated-tool-bottom-bar .ilovepdf-action-red-btn");
+            : route === "reparar-pdf"
+              ? page.getByRole("link", { name: "Baixar PDF Reparado", exact: true })
+              : page.locator(".dedicated-tool-bottom-bar .ilovepdf-action-red-btn");
       await expect(action).toBeEnabled();
       await expect(action).toBeInViewport({ ratio: 1 });
       await action.click({ trial: true });

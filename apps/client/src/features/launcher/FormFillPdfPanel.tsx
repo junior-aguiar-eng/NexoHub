@@ -129,9 +129,9 @@ export function FormFillPdfPanel({
   }
 
   return (
-    <div className="form-fill-container">
+    <div className="form-fill-container" data-workspace-panel>
       {/* Coluna Esquerda: Painel de Campos e Opções */}
-      <div className="form-fill-controls-pane">
+      <div className="form-fill-controls-pane" data-workspace-part="options">
         <div className="form-fill-header-card">
           <div className="form-fill-file-info">
             <div className="form-fill-file-icon">
@@ -401,7 +401,7 @@ export function FormFillPdfPanel({
       </div>
 
       {/* Coluna Direita: Pré-visualização do Documento */}
-      <div className="form-fill-preview-pane">
+      <div className="form-fill-preview-pane" data-workspace-part="document">
         <div className="form-fill-preview-header">
           <div className="form-fill-preview-title">
             <FileCheck2 size={16} color="#3b82f6" />

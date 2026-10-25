@@ -39,6 +39,14 @@ async function upload(page: Page) {
     }),
   });
   await page.locator('input[type="file"]').first().setInputFiles(files);
+  const batch = page.getByRole("region", { name: "Imagens do lote", exact: true });
+  await expect(batch).toBeVisible();
+  const toggle = batch.getByRole("button", { name: "Mostrar arquivos do lote", exact: true });
+  if (await toggle.isVisible()) {
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  }
 }
 
 for (const path of [

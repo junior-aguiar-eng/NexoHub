@@ -663,3 +663,234 @@
   background: white;
   pointer-events: none;
 }
+
+.app-shell--workspace .pdf-editor {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.app-shell--workspace .pdf-editor-topline {
+  flex: 0 0 auto;
+  margin: 0;
+  min-height: 52px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--editor-border);
+}
+.app-shell--workspace .pdf-editor-upload {
+  overflow: auto;
+  min-height: 0;
+}
+.app-shell--workspace .pdf-editor-toolbar {
+  flex: 0 0 auto;
+  margin: 0;
+  border-radius: 0;
+  padding: 6px 12px;
+  gap: 4px;
+}
+.app-shell--workspace .pdf-editor-toolbar button {
+  padding: 6px 10px;
+}
+.app-shell--workspace .pdf-editor-layout {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  grid-template-columns: 128px minmax(0, 1fr) 320px;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+.app-shell--workspace .pdf-editor-pages {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+}
+.app-shell--workspace .pdf-editor-center {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  min-height: 0;
+}
+.app-shell--workspace .pdf-editor-scroll {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+.app-shell--workspace .pdf-editor-viewbar {
+  flex: 0 0 auto;
+}
+.app-shell--workspace .pdf-editor-hint {
+  flex: 0 0 auto;
+  min-height: 0;
+  margin: 4px 0;
+}
+.app-shell--workspace .pdf-editor-properties {
+  grid-column: 3;
+  grid-row: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.app-shell--workspace .pdf-editor-save {
+  grid-column: 3;
+  grid-row: 2;
+  min-width: 0;
+  margin: 0;
+  position: static;
+  padding: 10px 16px;
+  background: white;
+  border-top: 1px solid var(--editor-border);
+  max-height: 30dvh;
+  overflow: auto;
+}
+.app-shell--workspace .pdf-editor-save p {
+  margin: 0 0 6px;
+}
+.app-shell--workspace .pdf-editor-layout:not(.show-pages) {
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+.app-shell--workspace .pdf-editor-layout:not(.show-pages) .pdf-editor-center {
+  grid-column: 1;
+}
+.app-shell--workspace
+  .pdf-editor-layout:not(.show-pages)
+  :is(.pdf-editor-properties, .pdf-editor-save) {
+  grid-column: 2;
+}
+.app-shell--workspace .pdf-editor-layout:not(.show-props) {
+  grid-template-columns: 128px minmax(0, 1fr);
+}
+.app-shell--workspace .pdf-editor-layout:not(.show-props):not(.show-pages) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.app-shell--workspace .pdf-editor-layout:not(.show-props) .pdf-editor-center {
+  grid-row: 1;
+}
+.app-shell--workspace .pdf-editor-layout:not(.show-props) .pdf-editor-save {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.app-shell--workspace .pdf-editor-layout:not(.show-props) .pdf-editor-save .pdf-editor-primary {
+  width: auto;
+}
+.app-shell--workspace
+  .pdf-editor
+  > :is(.pdf-editor-alert, .pdf-editor-warning, .pdf-editor-status, .pdf-editor-progress) {
+  flex: 0 0 auto;
+  max-height: 18dvh;
+  overflow: auto;
+  margin: 4px 12px;
+}
+@media (max-width: 900px) {
+  .app-shell--workspace .pdf-editor-layout,
+  .app-shell--workspace .pdf-editor-layout:not(.show-pages),
+  .app-shell--workspace .pdf-editor-layout:not(.show-props) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app-shell--workspace .pdf-editor .pdf-editor-pages {
+    display: none;
+  }
+  .app-shell--workspace .pdf-editor .pdf-editor-center,
+  .app-shell--workspace .pdf-editor .pdf-editor-properties,
+  .app-shell--workspace .pdf-editor .pdf-editor-save {
+    grid-column: 1;
+  }
+  .app-shell--workspace .pdf-editor .pdf-editor-center {
+    grid-row: 1;
+  }
+  .app-shell--workspace .pdf-editor .pdf-editor-save {
+    grid-row: 2;
+  }
+  .app-shell--workspace .pdf-editor[data-workspace-view="document"] .pdf-editor-properties {
+    display: none;
+  }
+  .app-shell--workspace .pdf-editor[data-workspace-view="options"] .pdf-editor-center {
+    display: none;
+  }
+  .app-shell--workspace .pdf-editor[data-workspace-view="options"] .pdf-editor-properties {
+    display: flex;
+    grid-row: 1;
+  }
+  .app-shell--workspace .pdf-editor[data-workspace-view="pages"] .pdf-editor-pages {
+    display: block;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .app-shell--workspace .pdf-editor[data-workspace-view="pages"] .pdf-editor-center,
+  .app-shell--workspace .pdf-editor[data-workspace-view="pages"] .pdf-editor-properties {
+    display: none;
+  }
+  .app-shell--workspace .pdf-editor-toolbar button > span {
+    display: none;
+  }
+  .app-shell--workspace .pdf-editor-toolbar {
+    gap: 2px;
+  }
+  .app-shell--workspace .pdf-editor-toolbar button {
+    min-width: 44px;
+  }
+  .app-shell--workspace .pdf-editor-viewbar {
+    gap: 0;
+    padding: 2px;
+  }
+  .app-shell--workspace .pdf-editor-save small {
+    display: none;
+  }
+}
+
+/* Barras com rolagem própria preservam os comandos em janelas baixas. */
+@media (max-height: 600px) {
+  .app-shell--workspace .pdf-editor-topline {
+    min-height: 44px;
+    padding-block: 0;
+    flex-wrap: nowrap;
+  }
+  .app-shell--workspace .pdf-editor-filename {
+    flex: 1;
+  }
+  .app-shell--workspace .pdf-editor .workspace-tabs {
+    padding-block: 0;
+  }
+  .app-shell--workspace .pdf-editor .workspace-tabs button {
+    min-height: 36px;
+    padding-block: 4px;
+  }
+  .app-shell--workspace .pdf-editor-toolbar,
+  .app-shell--workspace .pdf-editor-viewbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-block: 1px;
+    justify-content: flex-start;
+  }
+  .app-shell--workspace .pdf-editor-toolbar > *,
+  .app-shell--workspace .pdf-editor-viewbar > * {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .app-shell--workspace .pdf-editor-center {
+    padding: 0;
+    overflow: hidden;
+  }
+  .app-shell--workspace .pdf-editor-hint,
+  .app-shell--workspace .pdf-editor-save :is(p, small) {
+    display: none;
+  }
+  .app-shell--workspace .pdf-editor-save {
+    padding: 2px 8px;
+  }
+}

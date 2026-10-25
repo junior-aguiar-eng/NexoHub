@@ -1,0 +1,812 @@
+.app-shell[data-zone].app-shell--workspace {
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  --workspace-sidebar-width: 320px;
+  --workspace-viewport-height: 100%;
+}
+@supports not (height: 100dvh) {
+  .app-shell[data-zone].app-shell--workspace {
+    height: 100vh;
+  }
+}
+.app-shell--workspace > .app-header {
+  flex: 0 0 auto;
+  position: relative;
+  top: auto;
+}
+.app-shell.app-shell--workspace > .launcher-content.launcher-content--full {
+  flex: 1;
+  min-height: 0;
+  max-width: none;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.app-shell--workspace > .app-footer {
+  display: none;
+}
+.tool-workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  color: var(--color-ink);
+}
+.tool-workspace-header,
+.tool-workspace-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+}
+.tool-workspace-header {
+  min-height: 52px;
+}
+.tool-workspace-header h1 {
+  font-size: 18px;
+  margin: 0;
+}
+.tool-workspace-header button {
+  min-height: 44px;
+}
+.tool-workspace-body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--workspace-sidebar-width, 320px);
+}
+.tool-workspace-body {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+.tool-workspace-document {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+.tool-workspace-sidebar {
+  grid-column: 2;
+  grid-row: 1;
+}
+.tool-workspace-actions {
+  grid-column: 2;
+  grid-row: 2;
+  background: var(--color-surface-raised);
+}
+.tool-workspace-document {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  background: var(--color-surface-muted);
+}
+.tool-workspace-sidebar {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-raised);
+  border-left: 1px solid var(--color-border);
+}
+.tool-workspace-options {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+}
+.tool-workspace-actions {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 35dvh;
+  overflow: auto;
+}
+.tool-workspace-actions button {
+  min-height: 44px;
+  width: 100%;
+}
+.workspace-tabs {
+  display: none;
+  flex: 0 0 auto;
+  min-inline-size: 0;
+  margin: 0;
+  border: 0;
+  padding: 4px 12px;
+  gap: 8px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+}
+.workspace-tabs button {
+  min-height: 44px;
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-ink);
+  background: var(--color-surface-raised);
+  font: inherit;
+}
+.workspace-tabs button[aria-pressed="true"] {
+  border-color: var(--color-brand);
+  background: var(--color-brand-soft);
+}
+.workspace-tabs button:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* Painéis existentes mantêm seus contratos; somente regiões de apresentação são identificadas. */
+.app-shell--workspace .dedicated-tool-page--workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+.app-shell--workspace .dedicated-tool-page--workspace > .ilovepdf-tool-nav {
+  flex: 0 0 auto;
+  min-height: 52px;
+  margin: 0;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+.app-shell--workspace .dedicated-tool-workspace-main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  overflow: hidden;
+  gap: 0;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels {
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  grid-column: 1;
+  grid-row: 1;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels {
+  display: flex;
+  flex-direction: column;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels > [data-workspace-panel] {
+  flex: 1;
+  height: auto;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  > :is(
+    .pdf-page-grid-panel,
+    .image-composition-panel,
+    .document-compare-panel,
+    .ilovepdf-review-container,
+    .ilovepdf-translate-container,
+    .app-shell--workspace .dedicated-tool-workspace-split
+  ) {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  > :is(.document-compare-panel, .ilovepdf-review-container, .ilovepdf-translate-container) {
+  overflow: auto;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .image-composition-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .image-composition-workspace {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels [data-workspace-layout="toolbar"] {
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: 0;
+  max-width: none;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  [data-workspace-layout="toolbar"]
+  > [data-workspace-part="toolbar"] {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: 0;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  [data-workspace-layout="toolbar"]
+  > [data-workspace-part="options"]
+  > div {
+  display: flex;
+  flex-direction: column;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels > [data-workspace-panel] {
+  height: 100%;
+  min-height: 0;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels [data-workspace-panel] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--workspace-sidebar-width, 320px);
+  gap: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  [data-workspace-panel]
+  > [data-workspace-part="document"] {
+  grid-column: 1;
+  grid-row: 1;
+  min-height: 0;
+  min-width: 0;
+  max-height: none;
+  overflow: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  border-radius: 0;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  [data-workspace-panel]
+  > [data-workspace-part="options"] {
+  grid-column: 2;
+  grid-row: 1;
+  min-height: 0;
+  min-width: 0;
+  max-height: none;
+  overflow: auto;
+  overscroll-behavior: contain;
+  width: auto;
+  margin: 0;
+  border-radius: 0;
+  padding: 16px;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  [data-workspace-part="document"]:has(.pdf-viewport) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 12px;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  [data-workspace-panel][data-workspace-layout="toolbar"]
+  > :is([data-workspace-part="document"], [data-workspace-part="options"]) {
+  grid-row: 2;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .pdf-viewport {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .pdf-viewport-controls {
+  flex: 0 0 auto;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .pdf-viewport-scroll {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .pdf-page-grid-panel {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .pdf-page-grid-toolbar,
+.app-shell--workspace .dedicated-tool-workspace-panels .pdf-page-extract-bar {
+  flex: 0 0 auto;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .pdf-page-cards-grid {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+}
+.app-shell--workspace .dedicated-tool-page--workspace > .dedicated-tool-bottom-bar {
+  flex: 0 0 auto;
+  margin: 0;
+  min-height: 72px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  max-height: 30dvh;
+  overflow: auto;
+}
+.app-shell--workspace
+  .dedicated-tool-page--workspace
+  > .dedicated-tool-bottom-bar
+  .ilovepdf-action-red-btn {
+  min-height: 48px;
+  width: 288px;
+  padding: 12px 20px;
+}
+.app-shell--workspace
+  .dedicated-tool-page--workspace
+  > .dedicated-tool-bottom-bar
+  > [role="alert"] {
+  margin: 0;
+  flex: 1;
+}
+.app-shell--workspace
+  .dedicated-tool-page--workspace:not(:has([data-workspace-part="options"]))
+  > .workspace-tabs {
+  display: none;
+}
+.app-shell--workspace .dedicated-tool-page--upload,
+.app-shell--workspace .dedicated-tool-page--success {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+}
+.app-shell--workspace .dedicated-tool-workspace-main:has(> .image-batch-panel) {
+  grid-template-columns: 180px minmax(0, 1fr);
+}
+.app-shell--workspace .dedicated-tool-workspace-main > .image-batch-panel {
+  grid-column: 1;
+  grid-row: 1;
+  min-height: 0;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border-radius: 0;
+  border-right: 1px solid var(--color-border);
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-main:has(> .image-batch-panel)
+  > .dedicated-tool-workspace-panels {
+  grid-column: 2;
+}
+.app-shell--workspace .dedicated-tool-workspace-main .image-batch-heading {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+}
+.app-shell--workspace .dedicated-tool-workspace-main .image-batch-list {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  min-height: 0;
+  max-height: none;
+}
+.app-shell--workspace .dedicated-tool-workspace-main .image-batch-list > li {
+  flex-shrink: 0;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-main
+  > :is(.image-processing-limits, .image-batch-warning) {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  padding: 4px 12px;
+  margin: 0;
+  max-height: 12dvh;
+  overflow: auto;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .image-tool-panel {
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  .image-tool-panel
+  > [data-workspace-part="document"] {
+  display: flex;
+  padding: 12px;
+  background: var(--color-surface-raised);
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  .image-tool-panel
+  > [data-workspace-part="document"]
+  > div {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  box-shadow: none;
+  padding: 8px;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .image-tool-panel .image-tool-preview {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: auto;
+  max-height: none;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  .image-tool-panel
+  [data-workspace-part="document"]
+  > div
+  > div:last-child {
+  flex: 0 0 auto;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .dedicated-tool-workspace-split {
+  height: 100%;
+  min-height: 0;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  :is(.dedicated-tool-left-column, .dedicated-tool-right-column) {
+  min-height: 0;
+  overflow: auto;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .dedicated-tool-text-input-box {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .dedicated-tool-direct-textarea {
+  flex: 1;
+  min-height: 160px;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  :is(.doc-compare-header, .ilovepdf-review-top-bar, .ilovepdf-translate-lang-bar) {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+@media (max-width: 900px) {
+  .workspace-tabs {
+    display: flex;
+  }
+  .tool-workspace-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tool-workspace-document,
+  .tool-workspace-sidebar {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .tool-workspace-actions {
+    grid-column: 1;
+  }
+  .tool-workspace[data-workspace-view="document"] .tool-workspace-sidebar {
+    display: none;
+  }
+  .tool-workspace[data-workspace-view="options"] .tool-workspace-document {
+    display: none;
+  }
+  .tool-workspace-sidebar {
+    border: 0;
+  }
+  .tool-workspace-header {
+    padding-inline: 12px;
+    gap: 8px;
+  }
+  .app-shell--workspace .dedicated-tool-workspace-panels [data-workspace-panel] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app-shell--workspace
+    .dedicated-tool-workspace-panels
+    [data-workspace-panel]
+    > [data-workspace-part] {
+    grid-column: 1;
+  }
+  .app-shell--workspace
+    .dedicated-tool-page--workspace[data-workspace-view="document"]
+    [data-workspace-panel]
+    > [data-workspace-part="options"] {
+    display: none;
+  }
+  .app-shell--workspace
+    .dedicated-tool-page--workspace[data-workspace-view="options"]
+    [data-workspace-panel]
+    > [data-workspace-part="document"] {
+    display: none;
+  }
+  .app-shell--workspace .dedicated-tool-workspace-main:has(> .image-batch-panel) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  .app-shell--workspace
+    .dedicated-tool-workspace-main:has(> .image-batch-panel)
+    > .dedicated-tool-workspace-panels {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .app-shell--workspace .dedicated-tool-workspace-main > .image-batch-panel {
+    max-height: 140px;
+    padding: 6px 12px;
+  }
+  .app-shell--workspace .dedicated-tool-workspace-main .image-batch-heading p {
+    display: none;
+  }
+  .app-shell--workspace .dedicated-tool-workspace-main .image-batch-list {
+    flex-direction: row;
+    margin-top: 4px;
+  }
+  .app-shell--workspace .dedicated-tool-workspace-main .image-batch-list > li {
+    min-width: 200px;
+  }
+  .app-shell--workspace
+    .dedicated-tool-page--workspace
+    > .dedicated-tool-bottom-bar
+    .ilovepdf-action-red-btn {
+    width: 100%;
+  }
+}
+
+/* A prévia tem seu próprio scroller; os cards externos não podem impor altura intrínseca. */
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  [data-workspace-part="document"]:has(.pdf-viewport) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: hidden;
+  min-height: 0;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  [data-workspace-part="document"]
+  > .ilovepdf-file-card-center {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  max-width: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .ilovepdf-file-card-center > .pdf-viewport {
+  flex: 1;
+  min-height: 0;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  [data-workspace-panel]:not([data-workspace-layout="toolbar"]) {
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  :is(.redact-preview-card, .pdf-markdown-source) {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .image-composition-view {
+  container-type: size;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  .pdf-markdown-source
+  > .ilovepdf-file-card-center {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 8px;
+  width: 100%;
+  max-width: none;
+}
+.app-shell--workspace .dedicated-tool-workspace-panels .pdf-markdown-source > :last-child {
+  flex-shrink: 0;
+}
+.workspace-batch-toggle {
+  display: none;
+}
+.app-shell--workspace .image-batch-file,
+.app-shell--workspace .image-batch-select {
+  min-width: 0;
+}
+.app-shell--workspace .image-batch-file strong {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  .image-tool-panel
+  [data-workspace-part="document"]
+  > div
+  > div:last-child {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+.app-shell--workspace
+  .dedicated-tool-workspace-panels
+  .image-tool-panel
+  [data-workspace-part="document"]
+  .truncate {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app-shell--workspace .dedicated-tool-page--success {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+.app-shell--workspace .dedicated-tool-page--success > .ilovepdf-success-stage {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: auto;
+  padding: 20px;
+  margin: 0;
+}
+.dedicated-tool-success-footer {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  background: var(--color-surface-raised);
+  border-top: 1px solid var(--color-border);
+  max-height: 35dvh;
+  overflow: auto;
+}
+.dedicated-tool-success-footer .ilovepdf-big-download-btn {
+  order: 2;
+  min-height: 48px;
+  margin: 0;
+  padding: 12px 20px;
+}
+.dedicated-tool-success-footer .ilovepdf-success-actions {
+  order: 1;
+  margin: 0;
+}
+@media (max-width: 900px) {
+  .dedicated-tool-success-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .dedicated-tool-success-footer .ilovepdf-big-download-btn {
+    order: 0;
+    width: 100%;
+  }
+  .dedicated-tool-success-footer .ilovepdf-success-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+@media (min-width: 901px) {
+  .app-shell--workspace .dedicated-tool-page--workspace:has([data-workspace-part="options"]) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--workspace-sidebar-width, 320px);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  .app-shell--workspace
+    .dedicated-tool-page--workspace:has([data-workspace-part="options"])
+    > .ilovepdf-tool-nav {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .app-shell--workspace
+    .dedicated-tool-page--workspace:has([data-workspace-part="options"])
+    > .dedicated-tool-workspace-main {
+    grid-column: 1 / -1;
+    grid-row: 2 / span 2;
+  }
+  .app-shell--workspace
+    .dedicated-tool-page--workspace:has([data-workspace-part="options"])
+    > .dedicated-tool-bottom-bar {
+    grid-column: 2;
+    grid-row: 3;
+    z-index: 3;
+    flex-direction: column;
+    border-left: 1px solid var(--color-border);
+  }
+  .app-shell--workspace
+    .dedicated-tool-page--workspace:has([data-workspace-part="options"])
+    [data-workspace-part="options"] {
+    max-height: calc(100% - var(--workspace-action-height, 80px));
+    align-self: start;
+  }
+}
+.app-shell.app-shell--workspace > .app-header {
+  min-height: 64px;
+  height: auto;
+  padding-block: 6px;
+}
+@media (max-height: 600px) {
+  .app-shell.app-shell--workspace > .app-header {
+    min-height: 48px;
+    padding-block: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    backdrop-filter: none;
+  }
+  .app-shell--workspace > .app-header > :is(.header-left, .header-main-nav, .header-right) {
+    width: auto;
+    flex: 0 0 auto;
+  }
+}
+.app-shell--workspace
+  .dedicated-tool-page--workspace
+  > .ilovepdf-tool-nav
+  .dedicated-tool-back-btn {
+  min-height: 44px;
+  max-height: 44px;
+  padding: 6px 10px;
+}
+.app-shell--workspace .dedicated-tool-page--workspace > .ilovepdf-tool-nav .dedicated-tool-badge {
+  padding: 6px 10px;
+}
+@media (max-width: 900px) {
+  .app-shell--workspace .image-composition-toolbar {
+    flex-wrap: nowrap;
+    flex: 0 0 auto;
+    overflow-x: auto;
+  }
+  .app-shell--workspace .image-composition-toolbar > :is(button, label) {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .workspace-batch-toggle {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+  .app-shell--workspace .dedicated-tool-workspace-main .image-batch-heading {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+  .app-shell--workspace .dedicated-tool-workspace-main .image-batch-heading h2 {
+    font-size: 12px;
+    margin: 0;
+  }
+  .app-shell--workspace
+    .dedicated-tool-workspace-main
+    > .image-batch-panel[data-expanded="false"]
+    .image-batch-list {
+    display: none;
+  }
+  .app-shell--workspace .dedicated-tool-workspace-panels .image-composition-notice {
+    display: none;
+  }
+}

@@ -220,7 +220,11 @@ test("download final mantém destaque e contraste da ação principal", async ({
   await page.locator(".ilovepdf-action-red-btn").click();
   const download = page.locator(".ilovepdf-big-download-btn");
   await expect(download).toBeVisible();
+  await page.mouse.move(0, 0);
   await expect(download).toHaveCSS("background-color", "rgb(225, 29, 72)");
+  await expect(download).toHaveCSS("color", "rgb(255, 255, 255)");
+  await download.hover();
+  await expect(download).toHaveCSS("background-color", "rgb(190, 18, 60)");
   await expect(download).toHaveCSS("color", "rgb(255, 255, 255)");
 });
 

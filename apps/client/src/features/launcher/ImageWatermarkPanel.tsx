@@ -75,216 +75,219 @@ export function ImageWatermarkPanel({
   ];
 
   return (
-    <div className="image-tool-panel">
+    <div className="image-tool-panel" data-workspace-panel>
       {/* Pré-visualização da Imagem com Simulação da Marca d'Água */}
-      <div className="bg-surface-raised rounded-2xl border border-border p-6 flex flex-col items-center justify-center gap-4 shadow-xs">
-        <div
-          className="image-watermark-preview rounded-xl bg-surface-muted border border-border"
-          style={{
-            aspectRatio: `${originalDimensions?.width ?? 800} / ${originalDimensions?.height ?? 600}`,
-            maxWidth: `${((originalDimensions?.width ?? 800) / (originalDimensions?.height ?? 600)) * 680}px`,
-          }}
-        >
-          {thumbnailUrl ? (
-            <img
-              src={preview.url ?? thumbnailUrl}
-              alt={fileName}
-              className="w-full h-full object-contain"
-            />
-          ) : (
-            <Stamp className="w-12 h-12 text-blue-600" />
-          )}
-        </div>
-
-        {preview.pending && (
-          <span role="status" className="text-sm text-text-secondary">
-            {translate("imageWatermark.previewPending")}
-          </span>
-        )}
-        {preview.error && (
-          <span role="alert" className="text-sm text-text-secondary">
-            {translate("imageWatermark.previewError")}
-          </span>
-        )}
-        <span className="text-xs text-text-secondary font-medium">
-          {fileName}{" "}
-          {originalDimensions
-            ? `(${originalDimensions.width} × ${originalDimensions.height} px)`
-            : ""}
-        </span>
-      </div>
-
-      {/* Tipo de Marca d'Água (Texto / Imagem) */}
-      <div className="flex items-center p-1 rounded-xl bg-surface-muted border border-border">
-        <button
-          type="button"
-          onClick={() => onWatermarkTypeChange("text")}
-          aria-pressed={watermarkType === "text"}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            watermarkType === "text"
-              ? "bg-surface-raised text-text-primary shadow-xs border border-border/80"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          <Type className="w-3.5 h-3.5" />
-          <span>{translate("imageWatermark.tabText")}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => onWatermarkTypeChange("image")}
-          aria-pressed={watermarkType === "image"}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            watermarkType === "image"
-              ? "bg-surface-raised text-text-primary shadow-xs border border-border/80"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          <ImageIcon className="w-3.5 h-3.5" />
-          <span>{translate("imageWatermark.tabImage")}</span>
-        </button>
-      </div>
-
-      {watermarkType === "image" && (
-        <div className="image-watermark-upload">
-          <label htmlFor="image-watermark-logo">{translate("imageWatermark.selectLogo")}</label>
-          <input
-            id="image-watermark-logo"
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={(event) => onWatermarkFileChange(event.target.files?.[0] ?? null)}
-          />
-          {watermarkFile && <span>{watermarkFile.name}</span>}
-          <label htmlFor="logo-opacity">{translate("imageWatermark.opacity")}</label>
-          <input
-            id="logo-opacity"
-            type="range"
-            min="0.1"
-            max="1"
-            step="0.05"
-            value={opacity}
-            onChange={(event) => onOpacityChange(Number(event.target.value))}
-          />
-          <label htmlFor="logo-rotation">{translate("imageWatermark.rotation")}</label>
-          <input
-            id="logo-rotation"
-            type="range"
-            min="-90"
-            max="90"
-            step="5"
-            value={rotation}
-            onChange={(event) => onRotationChange(Number(event.target.value))}
-          />
-        </div>
-      )}
-      {/* Controles de Texto */}
-      {watermarkType === "text" && (
-        <div className="flex flex-col gap-4 bg-surface-raised p-5 rounded-2xl border border-border">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="wm-text" className="text-xs font-bold text-text-secondary">
-              {translate("imageWatermark.text")}
-            </label>
-            <input
-              id="wm-text"
-              type="text"
-              value={text}
-              onChange={(e) => onTextChange(e.target.value)}
-              placeholder="Ex: CONFIDENCIAL, NexoHub..."
-              className="px-3 py-2 rounded-xl border border-border bg-surface-raised text-text-primary text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
-            />
+      <div data-workspace-part="document">
+        <div className="bg-surface-raised rounded-2xl border border-border p-6 flex flex-col items-center justify-center gap-4 shadow-xs">
+          <div
+            className="image-watermark-preview rounded-xl bg-surface-muted border border-border"
+            style={{
+              aspectRatio: `${originalDimensions?.width ?? 800} / ${originalDimensions?.height ?? 600}`,
+              maxWidth: `${((originalDimensions?.width ?? 800) / (originalDimensions?.height ?? 600)) * 680}px`,
+            }}
+          >
+            {thumbnailUrl ? (
+              <img
+                src={preview.url ?? thumbnailUrl}
+                alt={fileName}
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <Stamp className="w-12 h-12 text-blue-600" />
+            )}
           </div>
 
-          <div className="image-watermark-style-grid">
-            {/* Seletor de Cores */}
+          {preview.pending && (
+            <span role="status" className="text-sm text-text-secondary">
+              {translate("imageWatermark.previewPending")}
+            </span>
+          )}
+          {preview.error && (
+            <span role="alert" className="text-sm text-text-secondary">
+              {translate("imageWatermark.previewError")}
+            </span>
+          )}
+          <span className="text-xs text-text-secondary font-medium">
+            {fileName}{" "}
+            {originalDimensions
+              ? `(${originalDimensions.width} × ${originalDimensions.height} px)`
+              : ""}
+          </span>
+        </div>
+      </div>
+      <div data-workspace-part="options">
+        {/* Tipo de Marca d'Água (Texto / Imagem) */}
+        <div className="flex items-center p-1 rounded-xl bg-surface-muted border border-border">
+          <button
+            type="button"
+            onClick={() => onWatermarkTypeChange("text")}
+            aria-pressed={watermarkType === "text"}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              watermarkType === "text"
+                ? "bg-surface-raised text-text-primary shadow-xs border border-border/80"
+                : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            <Type className="w-3.5 h-3.5" />
+            <span>{translate("imageWatermark.tabText")}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onWatermarkTypeChange("image")}
+            aria-pressed={watermarkType === "image"}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              watermarkType === "image"
+                ? "bg-surface-raised text-text-primary shadow-xs border border-border/80"
+                : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            <ImageIcon className="w-3.5 h-3.5" />
+            <span>{translate("imageWatermark.tabImage")}</span>
+          </button>
+        </div>
+
+        {watermarkType === "image" && (
+          <div className="image-watermark-upload">
+            <label htmlFor="image-watermark-logo">{translate("imageWatermark.selectLogo")}</label>
+            <input
+              id="image-watermark-logo"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(event) => onWatermarkFileChange(event.target.files?.[0] ?? null)}
+            />
+            {watermarkFile && <span>{watermarkFile.name}</span>}
+            <label htmlFor="logo-opacity">{translate("imageWatermark.opacity")}</label>
+            <input
+              id="logo-opacity"
+              type="range"
+              min="0.1"
+              max="1"
+              step="0.05"
+              value={opacity}
+              onChange={(event) => onOpacityChange(Number(event.target.value))}
+            />
+            <label htmlFor="logo-rotation">{translate("imageWatermark.rotation")}</label>
+            <input
+              id="logo-rotation"
+              type="range"
+              min="-90"
+              max="90"
+              step="5"
+              value={rotation}
+              onChange={(event) => onRotationChange(Number(event.target.value))}
+            />
+          </div>
+        )}
+        {/* Controles de Texto */}
+        {watermarkType === "text" && (
+          <div className="flex flex-col gap-4 bg-surface-raised p-5 rounded-2xl border border-border">
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold text-text-secondary">
-                {translate("imageWatermark.color")}
-              </span>
-              <div className="image-color-palette">
-                {colors.map((c) => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    onClick={() => onColorChange(c.value)}
-                    title={c.name}
-                    aria-pressed={color === c.value}
-                    style={{ backgroundColor: c.value }}
-                    className={`w-7 h-7 rounded-full border border-border cursor-pointer transition-all ${
-                      color === c.value ? "ring-2 ring-blue-600 ring-offset-2 scale-110" : ""
-                    }`}
-                  />
-                ))}
+              <label htmlFor="wm-text" className="text-xs font-bold text-text-secondary">
+                {translate("imageWatermark.text")}
+              </label>
+              <input
+                id="wm-text"
+                type="text"
+                value={text}
+                onChange={(e) => onTextChange(e.target.value)}
+                placeholder="Ex: CONFIDENCIAL, NexoHub..."
+                className="px-3 py-2 rounded-xl border border-border bg-surface-raised text-text-primary text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
+              />
+            </div>
+
+            <div className="image-watermark-style-grid">
+              {/* Seletor de Cores */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-bold text-text-secondary">
+                  {translate("imageWatermark.color")}
+                </span>
+                <div className="image-color-palette">
+                  {colors.map((c) => (
+                    <button
+                      key={c.value}
+                      type="button"
+                      onClick={() => onColorChange(c.value)}
+                      title={c.name}
+                      aria-pressed={color === c.value}
+                      style={{ backgroundColor: c.value }}
+                      className={`w-7 h-7 rounded-full border border-border cursor-pointer transition-all ${
+                        color === c.value ? "ring-2 ring-blue-600 ring-offset-2 scale-110" : ""
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Slider de Opacidade */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="wm-opacity" className="text-xs font-bold text-text-secondary">
+                    {translate("imageWatermark.opacity")}
+                  </label>
+                  <span className="text-xs font-bold text-blue-600">
+                    {Math.round(opacity * 100)}%
+                  </span>
+                </div>
+                <input
+                  id="wm-opacity"
+                  type="range"
+                  min={0.1}
+                  max={1.0}
+                  step={0.05}
+                  value={opacity}
+                  onChange={(e) => onOpacityChange(Number(e.target.value))}
+                  className="accent-blue-600 cursor-pointer"
+                />
               </div>
             </div>
 
-            {/* Slider de Opacidade */}
+            {/* Slider de Rotação */}
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <label htmlFor="wm-opacity" className="text-xs font-bold text-text-secondary">
-                  {translate("imageWatermark.opacity")}
+                <label htmlFor="wm-rot" className="text-xs font-bold text-text-secondary">
+                  {translate("imageWatermark.rotation")}
                 </label>
-                <span className="text-xs font-bold text-blue-600">
-                  {Math.round(opacity * 100)}%
-                </span>
+                <span className="text-xs font-bold text-blue-600">{rotation}°</span>
               </div>
               <input
-                id="wm-opacity"
+                id="wm-rot"
                 type="range"
-                min={0.1}
-                max={1.0}
-                step={0.05}
-                value={opacity}
-                onChange={(e) => onOpacityChange(Number(e.target.value))}
+                min={-90}
+                max={90}
+                step={5}
+                value={rotation}
+                onChange={(e) => onRotationChange(Number(e.target.value))}
                 className="accent-blue-600 cursor-pointer"
               />
             </div>
           </div>
+        )}
 
-          {/* Slider de Rotação */}
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <label htmlFor="wm-rot" className="text-xs font-bold text-text-secondary">
-                {translate("imageWatermark.rotation")}
-              </label>
-              <span className="text-xs font-bold text-blue-600">{rotation}°</span>
-            </div>
-            <input
-              id="wm-rot"
-              type="range"
-              min={-90}
-              max={90}
-              step={5}
-              value={rotation}
-              onChange={(e) => onRotationChange(Number(e.target.value))}
-              className="accent-blue-600 cursor-pointer"
-            />
+        {/* Seletor de Posição */}
+        <div className="flex flex-col gap-2.5">
+          <span className="text-xs font-bold text-text-secondary">
+            {translate("imageWatermark.position")}
+          </span>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {positions.map((pos) => {
+              const isSelected = position === pos.id;
+              return (
+                <button
+                  key={pos.id}
+                  type="button"
+                  onClick={() => onPositionChange(pos.id)}
+                  aria-pressed={isSelected}
+                  className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                      : "bg-surface-raised border-border text-text-secondary hover:border-blue-500/40 hover:text-text-primary"
+                  }`}
+                >
+                  {translate(pos.labelKey)}
+                </button>
+              );
+            })}
           </div>
-        </div>
-      )}
-
-      {/* Seletor de Posição */}
-      <div className="flex flex-col gap-2.5">
-        <span className="text-xs font-bold text-text-secondary">
-          {translate("imageWatermark.position")}
-        </span>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {positions.map((pos) => {
-            const isSelected = position === pos.id;
-            return (
-              <button
-                key={pos.id}
-                type="button"
-                onClick={() => onPositionChange(pos.id)}
-                aria-pressed={isSelected}
-                className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                  isSelected
-                    ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                    : "bg-surface-raised border-border text-text-secondary hover:border-blue-500/40 hover:text-text-primary"
-                }`}
-              >
-                {translate(pos.labelKey)}
-              </button>
-            );
-          })}
         </div>
       </div>
     </div>

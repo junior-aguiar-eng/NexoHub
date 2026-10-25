@@ -73,9 +73,9 @@ export function PageNumbersPdfPanel({
   const isRight = position.endsWith("right");
 
   return (
-    <div className="ilovepdf-compress-container">
+    <div className="ilovepdf-compress-container" data-workspace-panel>
       {/* Centro: Pré-visualização com carimbo de número de página */}
-      <div className="ilovepdf-compress-preview-area">
+      <div className="ilovepdf-compress-preview-area" data-workspace-part="document">
         <div className="ilovepdf-file-card-center">
           <PdfViewport page={previewPage} pageCount={totalPages} onPageChange={setPreviewPage}>
             <div
@@ -129,7 +129,7 @@ export function PageNumbersPdfPanel({
       </div>
 
       {/* Lateral: Opções da numeração de página */}
-      <aside className="ilovepdf-compress-options-sidebar">
+      <aside className="ilovepdf-compress-options-sidebar" data-workspace-part="options">
         <h3 className="ilovepdf-sidebar-title">{translate("workspace.pageNumbers.title")}</h3>
         <p
           className="ilovepdf-control-hint"

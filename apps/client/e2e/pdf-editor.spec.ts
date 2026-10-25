@@ -290,11 +290,14 @@ test("imagem, forma e desenho exportam junto com o conteúdo vetorial original",
     ctx.fillRect(0, 0, 10, 10);
     return canvas.toDataURL("image/png").split(",")[1];
   });
-  await page.getByLabel("Inserir imagem", { exact: true }).setInputFiles({
-    name: "imagem.png",
-    mimeType: "image/png",
-    buffer: Buffer.from(png, "base64"),
-  });
+  await page
+    .locator('input[type="file"]')
+    .and(page.getByLabel("Inserir imagem", { exact: true }))
+    .setInputFiles({
+      name: "imagem.png",
+      mimeType: "image/png",
+      buffer: Buffer.from(png, "base64"),
+    });
   await ready(page);
   await expect(
     page.getByRole("button", { name: "Selecionar elemento: Inserir imagem" }),

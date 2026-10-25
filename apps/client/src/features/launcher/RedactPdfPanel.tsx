@@ -164,9 +164,9 @@ export function RedactPdfPanel({
       : null;
 
   return (
-    <div className="redact-container">
+    <div className="redact-container" data-workspace-panel>
       {/* Coluna Esquerda: Controles e Lista de Tarjas */}
-      <div className="redact-controls-pane">
+      <div className="redact-controls-pane" data-workspace-part="options">
         <div className="redact-header-card">
           <div className="redact-file-info">
             <div className="redact-file-icon">
@@ -418,7 +418,7 @@ export function RedactPdfPanel({
       </div>
 
       {/* Coluna Direita: Pré-visualização Interativa */}
-      <div className="redact-preview-pane">
+      <div className="redact-preview-pane" data-workspace-part="document">
         <div className="redact-preview-card">
           <div className="redact-preview-header">
             <span className="redact-preview-title">

@@ -298,9 +298,9 @@ export function SignPdfPanel({
   }).format(new Date());
 
   return (
-    <div className="ilovepdf-compress-container">
+    <div className="ilovepdf-compress-container" data-workspace-panel>
       {/* Área Central: Pré-visualização com Selo Arrastável */}
-      <div className="ilovepdf-compress-preview-area">
+      <div className="ilovepdf-compress-preview-area" data-workspace-part="document">
         <div
           className="ilovepdf-file-card-center"
           style={{ width: "100%", maxWidth: "var(--workspace-page-width, 860px)" }}
@@ -490,7 +490,7 @@ export function SignPdfPanel({
       </div>
 
       {/* Barra Lateral: Configurações de Assinatura */}
-      <aside className="ilovepdf-compress-options-sidebar">
+      <aside className="ilovepdf-compress-options-sidebar" data-workspace-part="options">
         <h3 className="ilovepdf-sidebar-title">{translate("sign.optionsTitle")}</h3>
 
         {/* Abas de Modo de Assinatura */}

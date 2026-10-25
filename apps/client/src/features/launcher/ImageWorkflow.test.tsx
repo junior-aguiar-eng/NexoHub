@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, expect, it, vi } from "vitest";
 import { BrowserDocumentCorePort } from "@/platform/browser-document-core";
 import type { ImageJob } from "@/platform/image-processing";
 import { DedicatedToolView } from "./DedicatedToolView";
@@ -22,6 +22,10 @@ vi.mock("@/platform/image-engine", async () => ({
     sizeBytes: blob.size,
   }),
 }));
+// O teste mede cancelar/reiniciar; a transformação do mock pelo Vitest pertence à preparação.
+beforeAll(async () => {
+  await import("@/platform/image-engine");
+});
 afterEach(() => {
   engine.mockReset();
   vi.restoreAllMocks();

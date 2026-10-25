@@ -45,13 +45,24 @@ para relatórios de auditoria ou planos novos.
 | 5 | SEC-C1: ocultação com remoção de conteúdo e preservação fora da área | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#fase-de-complementação--24102026) | Concluído no website para perfil restrito; modo imagem padrão, revisão aplicada e recusas explícitas |
 | 6 | IM-C3: composição de imagem com objetos e histórico | Plano de PDF e Imagem | Concluído no website; modo avançado na marca d’água, Fabric.js 7.4.0 e renderizador compartilhado |
 | 7 | ED-C1/ED-C2: compatibilidade e desempenho do editor PDF | [Editar PDF](superpowers/plans/2026-10-23-editar-pdf.md#fase-de-complementação--24102026) | Concluídos no website: corpus, recusas, render por página e orçamentos; limites mantidos |
-| 8 | CMP-C1: comparação e relatório mais legíveis | [Comparar PDF](superpowers/plans/2026-10-23-comparar-pdf.md#fase-de-complementação--24102026) | Planejado; consome UX-C1, mantém motor atual |
+| 8 | CMP-C1: comparação e relatório mais legíveis | [Comparar PDF](superpowers/plans/2026-10-23-comparar-pdf.md#fase-de-complementação--24102026) | Concluído no website: corpus, navegação, fonte TTF incorporada e prévias sob demanda; motor mantido |
 | 9 | OCR-C1/DOC-C2: preparação de digitalizações para OCR | Estabilização / Quatro ferramentas | Prova técnica; um único pré-processador compartilhado |
 | 10 | XL-C1/MD-C1: tabelas e ordem de leitura mais controláveis | Estabilização | Planejado para web local; Camelot/Docling condicionados a decisão de runtime |
 | 11 | IM-C4: qualidade de exportação e AVIF; DOC-C3: paginação HTML; TR-C1: tradução | Respectivos planos acima | Qualidade de exportação IM-C4 entregue; AVIF/DOC-C3 condicionados; TR-C1 deve anteceder qualquer declaração de licença comercial do tradutor |
 | 12 | R-C1: avaliar qpdf para Reparar PDF | [Reparar PDF](REPARAR-PDF.md#complementação-do-motor--24102026) | Prova técnica dentro da fase 17 já existente; ferramenta continua planejada |
 
 ### Regras comuns de execução e aceite
+
+**Proposta transversal de interface (24/10/2026):** o usuário solicitou definir, em etapa
+separada, um padrão comum de mesas que ocupe a janela, com documento em rolagem interna e
+ferramentas/ação principal sempre visíveis. A [proposta de design](superpowers/specs/2026-10-24-padrao-mesas-ferramentas-design.md)
+e sua simulação tiveram a direção visual confirmada em 25/10/2026. A migração foi implementada
+localmente conforme o [plano das mesas](superpowers/plans/2026-10-25-refatorar-mesas.md),
+com a tarefa 4 concluída no website local: check, 704 unitários com dois workers, builds raiz e
+`/hub/`, 264 E2E na raiz e 154 na subpasta, além de zoom real a 200% e revisão independente.
+Homologação nativa Windows e publicação permanecem separadas; a migração não foi publicada. Todos os recursos atuais
+continuam gratuitos; um futuro editor avançado pago é uma hipótese comercial em avaliação.
+Essa proposta não muda o escopo das complementações funcionais abaixo.
 
 - **Uma tarefa por vez:** reprovar o cenário antes da correção, implementar, validar o resultado
   exportado e registrar evidências no plano responsável antes de marcar concluído.

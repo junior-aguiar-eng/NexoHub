@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { expect, type Page, test } from "@playwright/test";
 import { PDFDocument } from "pdf-lib";
+import { workspaceDocument, workspaceOptions } from "./workspace-views";
 
 const route = `${process.env.NEXOHUB_BASE_PATH ?? "/"}preencher-formulario`;
 async function fixture(name = "ANTES") {
@@ -175,13 +176,16 @@ test("campos longos e navegação por teclado cabem nas quatro larguras", async 
   await ready(page);
   for (const width of [390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
+    await workspaceOptions(page);
     const button = page.getByRole("button", { name: "Ir para idiomas na página 3", exact: true });
     await button.focus();
     await button.press("Enter");
-    await ready(page);
-    await expect(page.getByRole("spinbutton", { name: "Página da prévia" })).toHaveValue("3");
     await expect(button).toBeFocused();
     const bounds = await button.boundingBox();
+    await workspaceDocument(page);
+    await ready(page);
+    await expect(page.getByRole("spinbutton", { name: "Página da prévia" })).toHaveValue("3");
+    if (width > 900) await expect(button).toBeFocused();
     expect(bounds?.height ?? 0).toBeGreaterThanOrEqual(44);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       width,

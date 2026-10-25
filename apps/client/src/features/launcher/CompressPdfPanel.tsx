@@ -25,9 +25,9 @@ export function CompressPdfPanel({
   }
 
   return (
-    <div className="ilovepdf-compress-container">
+    <div className="ilovepdf-compress-container" data-workspace-panel>
       {/* Centro: Miniatura do Arquivo */}
-      <div className="ilovepdf-compress-preview-area">
+      <div className="ilovepdf-compress-preview-area" data-workspace-part="document">
         <div className="ilovepdf-file-card-center">
           <div className="ilovepdf-file-thumb-wrapper">
             {thumbnailUrl ? (
@@ -60,7 +60,7 @@ export function CompressPdfPanel({
         </div>
       </div>
 
-      <aside className="ilovepdf-compress-options-sidebar">
+      <aside className="ilovepdf-compress-options-sidebar" data-workspace-part="options">
         <h3 className="ilovepdf-sidebar-title">{translate("dedicated.compressionLevel")}</h3>
         <p
           className="ilovepdf-control-hint"

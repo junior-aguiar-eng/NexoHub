@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { degrees, PDFDocument, rgb } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 import { comparePdfDocuments, PDF_COMPARISON_LIMITS } from "./pdf-comparison";
@@ -24,6 +24,92 @@ async function pdf(pages: readonly (string | number)[], rotation = 0, crop = fal
 }
 
 describe("comparação real de PDFs locais", () => {
+  it("mede renderizações e retenção de imagens em vinte páginas sem eliminar detecção", async () => {
+    const a = await pdf(Array.from({ length: 20 }, (_, i) => `Pagina ${i} original`));
+    const b = await pdf(Array.from({ length: 20 }, (_, i) => `Pagina ${i} revisada`));
+    const start = performance.now();
+    const full = await comparePdfDocuments(a, b);
+    const middle = performance.now();
+    const lean = await comparePdfDocuments(a, b, { retainImages: false });
+    const done = performance.now();
+    const preview = await comparePdfDocuments(a, b, { previewPair: lean.pairs[10] });
+    expect(lean.metrics?.renderCount).toBe(full.metrics?.renderCount);
+    expect(lean.metrics?.renderCount).toBe(80);
+    expect(lean.metrics?.retainedImageCharacters).toBe(0);
+    expect(full.metrics?.retainedImageCharacters).toBeGreaterThan(0);
+    expect(preview.metrics?.renderCount).toBe(2);
+    expect(lean.pairs.map((pair) => pair.status)).toEqual(full.pairs.map((pair) => pair.status));
+    if (process.env.NEXOHUB_COMPARISON_BENCHMARK_LOG)
+      await writeFile(
+        process.env.NEXOHUB_COMPARISON_BENCHMARK_LOG,
+        JSON.stringify(
+          {
+            fullMs: middle - start,
+            leanMs: done - middle,
+            previewMs: performance.now() - done,
+            full: full.metrics,
+            lean: lean.metrics,
+            preview: preview.metrics,
+          },
+          null,
+          2,
+        ),
+      );
+  });
+  it.each([
+    [
+      ["Quase igual alfa", "Quase igual beta"],
+      ["Quase igual alfa", "Quase igual beta revisada"],
+    ],
+    [
+      ["Repetida", "Repetida", "Fim"],
+      ["Repetida", "", "Repetida", "Fim"],
+    ],
+    [
+      ["Alfa", "Beta", "Gama"],
+      ["Gama", "Alfa", "Beta"],
+    ],
+    [
+      ["Digitado", 0, "Outro texto"],
+      ["Digitado", 1, "Outro texto"],
+    ],
+  ] as const)(
+    "corpus ambíguo/misto conserva cada página exatamente uma vez: %j",
+    async (leftPages, rightPages) => {
+      const result = await comparePdfDocuments(await pdf(leftPages), await pdf(rightPages));
+      expect(
+        result.pairs.flatMap((pair) => (pair.leftPage === null ? [] : [pair.leftPage])),
+      ).toEqual(leftPages.map((_, index) => index + 1));
+      expect(
+        result.pairs.flatMap((pair) => (pair.rightPage === null ? [] : [pair.rightPage])),
+      ).toEqual(rightPages.map((_, index) => index + 1));
+      expect(result.pairs.every((pair) => pair.status === "unchanged")).toBe(false);
+    },
+  );
+  it("descarta imagens retidas mas preserva todos os pares e entrega detalhes sequenciais", async () => {
+    const left = await pdf(["Quase igual alfa", "Repetida", "Repetida", "Fim"]);
+    const right = await pdf(["Quase igual beta", "Repetida", "", "Repetida", "Fim"]);
+    const full = await comparePdfDocuments(left, right);
+    const seen: number[] = [];
+    const lean = await comparePdfDocuments(left, right, {
+      retainImages: false,
+      onPair: async (pair) => {
+        expect(pair.leftImage || pair.rightImage).toMatch(/^data:image\/png;base64,/);
+        seen.push(pair.index);
+      },
+    });
+    expect(
+      lean.pairs.map(({ leftImage: _l, rightImage: _r, diffImage: _d, ...pair }) => pair),
+    ).toEqual(full.pairs.map(({ leftImage: _l, rightImage: _r, diffImage: _d, ...pair }) => pair));
+    expect(lean.pairs.every((pair) => !pair.leftImage && !pair.rightImage && !pair.diffImage)).toBe(
+      true,
+    );
+    expect(seen).toEqual(full.pairs.map((pair) => pair.index));
+    expect(lean.pairs.some((pair) => pair.status === "added")).toBe(true);
+    const preview = await comparePdfDocuments(left, right, { previewPair: lean.pairs[3] });
+    expect(preview.pairs[0].leftImage).toBe(full.pairs[3].leftImage);
+    expect(preview.pairs[0].rightImage).toBe(full.pairs[3].rightImage);
+  });
   it("identifica PDFs iguais, preserva os bytes e informa progresso", async () => {
     const left = await pdf(["Contrato original"]);
     const original = left.slice();

@@ -8939,6 +8939,7 @@ body,
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 1rem 1.1rem;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -8961,6 +8962,8 @@ body,
 .ilovepdf-level-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
   gap: 0.2rem;
 }
 
@@ -8977,6 +8980,7 @@ body,
 }
 
 .ilovepdf-level-check {
+  flex: 0 0 22px;
   width: 22px;
   height: 22px;
   border-radius: 50%;

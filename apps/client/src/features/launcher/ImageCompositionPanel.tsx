@@ -179,11 +179,15 @@ export function ImageCompositionPanel({
       {assetPending && <p role="status">{translate("composition.assetPending")}</p>}
       {assetError && <p role="alert">{translate("composition.assetError")}</p>}
       {!valid && <p role="alert">{translate("composition.invalid")}</p>}
-      <div className="image-composition-workspace">
-        <div className="image-composition-view">
+      <div className="image-composition-workspace" data-workspace-panel>
+        <div className="image-composition-view" data-workspace-part="document">
           <div
             className="image-composition-stage"
-            style={{ aspectRatio: `${width}/${height}`, maxWidth: `${(width / height) * 680}px` }}
+            style={{
+              aspectRatio: `${width}/${height}`,
+              maxWidth: `${(width / height) * 680}px`,
+              width: `min(100%, calc(${width / height} * 100cqh))`,
+            }}
           >
             <img
               src={preview.url ?? source}
@@ -207,7 +211,7 @@ export function ImageCompositionPanel({
           )}
           {preview.error && <p role="alert">{translate("composition.previewError")}</p>}
         </div>
-        <aside className="image-composition-inspector">
+        <aside className="image-composition-inspector" data-workspace-part="options">
           <h3>{translate("composition.objects")}</h3>
           <ol aria-label={translate("composition.objects")}>
             {state.objects.map((o, i) => (

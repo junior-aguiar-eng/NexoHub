@@ -60,9 +60,9 @@ export function WatermarkPdfPanel({
   const displayText = watermarkText.trim() || "CONFIDENCIAL";
 
   return (
-    <div className="ilovepdf-compress-container">
+    <div className="ilovepdf-compress-container" data-workspace-panel>
       {/* Centro: Pré-visualização com carimbo interativo em tempo real */}
-      <div className="ilovepdf-compress-preview-area">
+      <div className="ilovepdf-compress-preview-area" data-workspace-part="document">
         <div className="ilovepdf-file-card-center">
           <PdfViewport page={previewPage} pageCount={totalPages} onPageChange={setPreviewPage}>
             <div
@@ -139,7 +139,7 @@ export function WatermarkPdfPanel({
       </div>
 
       {/* Lateral: Opções da marca d'água */}
-      <aside className="ilovepdf-compress-options-sidebar">
+      <aside className="ilovepdf-compress-options-sidebar" data-workspace-part="options">
         <h3 className="ilovepdf-sidebar-title">{translate("workspace.watermark.title")}</h3>
         <p
           className="ilovepdf-control-hint"

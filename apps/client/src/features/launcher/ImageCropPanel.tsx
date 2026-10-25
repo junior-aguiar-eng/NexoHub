@@ -118,143 +118,146 @@ export function ImageCropPanel({
   };
 
   return (
-    <div className="image-tool-panel">
+    <div className="image-tool-panel" data-workspace-panel>
       {/* Pré-visualização da Imagem */}
-      <div className="bg-surface-raised rounded-2xl border border-border p-5 flex flex-col sm:flex-row items-center gap-5 shadow-xs">
-        {thumbnailUrl ? (
-          <div className="image-tool-preview rounded-xl overflow-hidden bg-surface-muted border border-border">
-            <ImageCropCanvas
-              source={thumbnailUrl}
-              fileName={fileName}
-              width={origW}
-              height={origH}
-              crop={{ x: cropX, y: cropY, width: cropWidth, height: cropHeight }}
-              aspectRatio={
-                ratio === "free"
-                  ? undefined
-                  : Number(ratio.split(":")[0]) / Number(ratio.split(":")[1])
-              }
-              onChange={(rectangle) => {
-                onCropXChange(rectangle.x);
-                onCropYChange(rectangle.y);
-                onCropWidthChange(rectangle.width);
-                onCropHeightChange(rectangle.height);
-              }}
-            />
-          </div>
-        ) : (
-          <div className="image-tool-preview rounded-xl bg-blue-500/10 border border-blue-500/20 shrink-0 flex items-center justify-center text-blue-600">
-            <Crop className="w-10 h-10" />
-          </div>
-        )}
+      <div data-workspace-part="document">
+        <div className="bg-surface-raised rounded-2xl border border-border p-5 flex flex-col sm:flex-row items-center gap-5 shadow-xs">
+          {thumbnailUrl ? (
+            <div className="image-tool-preview rounded-xl overflow-hidden bg-surface-muted border border-border">
+              <ImageCropCanvas
+                source={thumbnailUrl}
+                fileName={fileName}
+                width={origW}
+                height={origH}
+                crop={{ x: cropX, y: cropY, width: cropWidth, height: cropHeight }}
+                aspectRatio={
+                  ratio === "free"
+                    ? undefined
+                    : Number(ratio.split(":")[0]) / Number(ratio.split(":")[1])
+                }
+                onChange={(rectangle) => {
+                  onCropXChange(rectangle.x);
+                  onCropYChange(rectangle.y);
+                  onCropWidthChange(rectangle.width);
+                  onCropHeightChange(rectangle.height);
+                }}
+              />
+            </div>
+          ) : (
+            <div className="image-tool-preview rounded-xl bg-blue-500/10 border border-blue-500/20 shrink-0 flex items-center justify-center text-blue-600">
+              <Crop className="w-10 h-10" />
+            </div>
+          )}
 
-        <div className="flex flex-col gap-1 min-w-0 flex-1 text-center sm:text-left">
-          <span className="font-bold text-text-primary text-base truncate" title={fileName}>
-            {fileName}
+          <div className="flex flex-col gap-1 min-w-0 flex-1 text-center sm:text-left">
+            <span className="font-bold text-text-primary text-base truncate" title={fileName}>
+              {fileName}
+            </span>
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs text-text-secondary mt-1">
+              <span className="px-2 py-0.5 rounded-md bg-surface-muted border border-border font-medium">
+                {translate("imageCrop.originalSize")}: {origW} × {origH} px
+              </span>
+              <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 border border-blue-500/20 font-bold">
+                {translate("imageCrop.selectionSize")}: {cropWidth || origW} × {cropHeight || origH}{" "}
+                px
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-workspace-part="options">
+        {/* Proporções Pré-definidas */}
+        <div className="flex flex-col gap-2.5">
+          <span className="text-xs font-bold text-text-secondary">
+            {translate("imageCrop.ratioLabel")}
           </span>
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs text-text-secondary mt-1">
-            <span className="px-2 py-0.5 rounded-md bg-surface-muted border border-border font-medium">
-              {translate("imageCrop.originalSize")}: {origW} × {origH} px
-            </span>
-            <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 border border-blue-500/20 font-bold">
-              {translate("imageCrop.selectionSize")}: {cropWidth || origW} × {cropHeight || origH}{" "}
-              px
-            </span>
+          <div className="image-ratio-options">
+            {presets.map((p) => {
+              const isSelected = ratio === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handleRatioSelect(p.id)}
+                  aria-pressed={isSelected}
+                  className={`py-2.5 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                      : "bg-surface-raised border-border text-text-secondary hover:border-blue-500/40 hover:text-text-primary"
+                  }`}
+                >
+                  {translate(p.labelKey)}
+                </button>
+              );
+            })}
           </div>
         </div>
-      </div>
 
-      {/* Proporções Pré-definidas */}
-      <div className="flex flex-col gap-2.5">
-        <span className="text-xs font-bold text-text-secondary">
-          {translate("imageCrop.ratioLabel")}
-        </span>
-        <div className="image-ratio-options">
-          {presets.map((p) => {
-            const isSelected = ratio === p.id;
-            return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => handleRatioSelect(p.id)}
-                aria-pressed={isSelected}
-                className={`py-2.5 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                  isSelected
-                    ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                    : "bg-surface-raised border-border text-text-secondary hover:border-blue-500/40 hover:text-text-primary"
-                }`}
-              >
-                {translate(p.labelKey)}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        {/* Dimensões e Coordenadas Numéricas */}
+        <div className="bg-surface-raised p-5 rounded-2xl border border-border flex flex-col gap-4">
+          <span className="text-xs font-bold text-text-primary">
+            {translate("imageCrop.areaLabel")}
+          </span>
+          <div className="image-crop-fields">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="crop-w" className="text-[11px] font-bold text-text-secondary">
+                {translate("imageCrop.width")}
+              </label>
+              <input
+                id="crop-w"
+                type="number"
+                min={1}
+                max={origW - cropX}
+                value={cropWidth || origW}
+                onChange={(e) => resize(Number(e.target.value), "width")}
+                className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
+              />
+            </div>
 
-      {/* Dimensões e Coordenadas Numéricas */}
-      <div className="bg-surface-raised p-5 rounded-2xl border border-border flex flex-col gap-4">
-        <span className="text-xs font-bold text-text-primary">
-          {translate("imageCrop.areaLabel")}
-        </span>
-        <div className="image-crop-fields">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="crop-w" className="text-[11px] font-bold text-text-secondary">
-              {translate("imageCrop.width")}
-            </label>
-            <input
-              id="crop-w"
-              type="number"
-              min={1}
-              max={origW - cropX}
-              value={cropWidth || origW}
-              onChange={(e) => resize(Number(e.target.value), "width")}
-              className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
-            />
-          </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="crop-h" className="text-[11px] font-bold text-text-secondary">
+                {translate("imageCrop.height")}
+              </label>
+              <input
+                id="crop-h"
+                type="number"
+                min={1}
+                max={origH - cropY}
+                value={cropHeight || origH}
+                onChange={(e) => resize(Number(e.target.value), "height")}
+                className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
+              />
+            </div>
 
-          <div className="flex flex-col gap-1">
-            <label htmlFor="crop-h" className="text-[11px] font-bold text-text-secondary">
-              {translate("imageCrop.height")}
-            </label>
-            <input
-              id="crop-h"
-              type="number"
-              min={1}
-              max={origH - cropY}
-              value={cropHeight || origH}
-              onChange={(e) => resize(Number(e.target.value), "height")}
-              className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
-            />
-          </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="crop-x" className="text-[11px] font-bold text-text-secondary">
+                {translate("imageCrop.positionX")}
+              </label>
+              <input
+                id="crop-x"
+                type="number"
+                min={0}
+                max={Math.max(0, origW - cropWidth)}
+                value={cropX}
+                onChange={(e) => moveX(Number(e.target.value))}
+                className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
+              />
+            </div>
 
-          <div className="flex flex-col gap-1">
-            <label htmlFor="crop-x" className="text-[11px] font-bold text-text-secondary">
-              {translate("imageCrop.positionX")}
-            </label>
-            <input
-              id="crop-x"
-              type="number"
-              min={0}
-              max={Math.max(0, origW - cropWidth)}
-              value={cropX}
-              onChange={(e) => moveX(Number(e.target.value))}
-              className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor="crop-y" className="text-[11px] font-bold text-text-secondary">
-              {translate("imageCrop.positionY")}
-            </label>
-            <input
-              id="crop-y"
-              type="number"
-              min={0}
-              max={Math.max(0, origH - cropHeight)}
-              value={cropY}
-              onChange={(e) => moveY(Number(e.target.value))}
-              className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
-            />
+            <div className="flex flex-col gap-1">
+              <label htmlFor="crop-y" className="text-[11px] font-bold text-text-secondary">
+                {translate("imageCrop.positionY")}
+              </label>
+              <input
+                id="crop-y"
+                type="number"
+                min={0}
+                max={Math.max(0, origH - cropHeight)}
+                value={cropY}
+                onChange={(e) => moveY(Number(e.target.value))}
+                className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
+              />
+            </div>
           </div>
         </div>
       </div>

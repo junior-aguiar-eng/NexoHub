@@ -121,9 +121,9 @@ export function ProtectPdfPanel({
   const strength = computeStrength(passwordValue);
 
   return (
-    <div className="protect-container">
+    <div className="protect-container" data-workspace-panel>
       {/* Coluna Esquerda: Configurações de Criptografia e Permissões */}
-      <div className="protect-controls-pane">
+      <div className="protect-controls-pane" data-workspace-part="options">
         <div className="protect-header-card">
           <div className="protect-file-info">
             <div className="protect-file-icon">
@@ -352,7 +352,7 @@ export function ProtectPdfPanel({
       </div>
 
       {/* Coluna Direita: Pré-visualização do PDF */}
-      <div className="protect-preview-pane">
+      <div className="protect-preview-pane" data-workspace-part="document">
         <div className="protect-preview-card">
           <div className="protect-preview-header">
             <span className="protect-preview-title">{translate("formFill.previewTitle")}</span>

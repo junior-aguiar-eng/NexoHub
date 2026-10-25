@@ -1,18 +1,28 @@
 import { comparePdfDocuments } from "./pdf-comparison";
-import { createPdfComparisonReport, serializePdfComparison } from "./pdf-comparison-report";
+import { createComparisonReportWriter, serializePdfComparison } from "./pdf-comparison-report";
+import type { PdfComparisonPair } from "./pdf-comparison-types";
 
 const scope = globalThis as unknown as {
   onmessage: (
-    event: MessageEvent<{ left: ArrayBuffer; right: ArrayBuffer; names: string[] }>,
+    event: MessageEvent<{
+      left: ArrayBuffer;
+      right: ArrayBuffer;
+      names: string[];
+      previewPair?: PdfComparisonPair;
+    }>,
   ) => void;
   postMessage: (data: unknown, transfer?: Transferable[]) => void;
 };
 scope.onmessage = async ({ data }) => {
   try {
+    const writer = data.previewPair ? undefined : await createComparisonReportWriter();
     const comparison = await comparePdfDocuments(
       new Uint8Array(data.left),
       new Uint8Array(data.right),
       {
+        previewPair: data.previewPair,
+        retainImages: !!data.previewPair,
+        onPair: writer ? (pair) => writer.appendPair(pair) : undefined,
         onProgress: (info) =>
           scope.postMessage({
             type: "progress",
@@ -20,7 +30,8 @@ scope.onmessage = async ({ data }) => {
           }),
       },
     );
-    const report = await createPdfComparisonReport(comparison, data.names);
+    scope.postMessage({ type: "progress", info: { phase: "reporting", progress: 96 } });
+    const report = writer ? await writer.finish(comparison, data.names) : new Uint8Array();
     const json = serializePdfComparison(comparison, data.names);
     scope.postMessage({ type: "progress", info: { phase: "done", progress: 100 } });
     scope.postMessage({ type: "result", bundle: { comparison, report, json } }, [report.buffer]);

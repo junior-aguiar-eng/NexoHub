@@ -3,6 +3,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
 import { PDFDocument, PDFName, PDFString } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import { workspaceOptions } from "./workspace-views";
 
 async function upload(page: Page, route: string, bytes: Uint8Array) {
   await page.goto(
@@ -161,6 +162,8 @@ test("preservação local remove texto, mantém o exterior e revisa o mesmo down
   await page.getByLabel("Altura (%)").fill("25");
   await page.locator(".ilovepdf-action-red-btn").click();
   const preview = page.getByRole("region", { name: "Revise o PDF gerado" });
+  // A região aparece quando o job termina; só então começa a verificação da imagem de revisão.
+  await preview.waitFor({ state: "visible" });
   await expect(preview.getByRole("img")).toBeVisible();
   const bytes = await output(page),
     task = pdfjs.getDocument({ data: bytes.slice() });
@@ -208,6 +211,7 @@ for (const width of [390, 768, 1024, 1440])
   test(`revisão aplicada sem sobreposição em ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await upload(page, `${process.env.NEXOHUB_BASE_PATH ?? "/"}ocultar-pdf`, await source());
+    await workspaceOptions(page);
     await page.getByRole("button", { name: "Adicionar Tarja Manual" }).click();
     await page.locator(".ilovepdf-action-red-btn").click();
     const preview = page.getByRole("region", { name: "Revise o PDF gerado" });

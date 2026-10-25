@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
 import { unzipSync } from "fflate";
+import { workspaceDocument, workspaceOptions } from "./workspace-views";
 
 const route = `${process.env.NEXOHUB_BASE_PATH ?? "/"}marca-dagua-imagem`;
 async function png(page: Page, logo = false) {
@@ -39,6 +40,7 @@ async function open(page: Page) {
 }
 async function rectangle(page: Page) {
   await page.getByRole("button", { name: "Adicionar retângulo", exact: true }).click();
+  await workspaceOptions(page);
   for (const [key, value] of [
     ["x", "100"],
     ["y", "100"],
@@ -49,6 +51,7 @@ async function rectangle(page: Page) {
     await page.locator(`#composition-${key}`).fill(value);
 }
 async function preview(page: Page) {
+  await workspaceDocument(page);
   const image = page.getByAltText("Prévia da composição", { exact: true });
   await expect(image).toBeVisible();
   await expect(page.locator(".image-composition-panel")).toHaveAttribute("data-ready", "true");

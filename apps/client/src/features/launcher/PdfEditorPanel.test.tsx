@@ -297,22 +297,29 @@ it("desfazer até a revisão salva continua reconhecendo estado sem alterações
     saveOutputFile = vi.fn(async () => undefined);
   })();
   const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-  setup(core);
-  fireEvent.click(await screen.findByRole("button", { name: "Adicionar texto" }));
-  await waitFor(() => expect(screen.getByRole("button", { name: "Desfazer" })).toBeEnabled());
-  fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }));
-  await screen.findByText("PDF editado salvo.");
-  fireEvent.click(screen.getByRole("button", { name: "Adicionar texto" }));
-  await waitFor(() => expect(run).toHaveBeenCalledTimes(3));
-  await waitFor(() => expect(screen.getByRole("button", { name: "Desfazer" })).toBeEnabled());
-  fireEvent.click(screen.getByRole("button", { name: "Desfazer" }));
-  await waitFor(() => expect(screen.getByRole("button", { name: "Refazer" })).toBeEnabled());
+  // Os jobs deste fixture já retornam promises resolvidas; consumir suas transações React
+  // evita usar o prazo de polling do DOM como sincronização do histórico.
+  await act(async () => {
+    setup(core);
+  });
+  const click = async (name: string) => {
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name }));
+    });
+  };
+  await click("Adicionar texto");
+  expect(screen.getByRole("button", { name: "Desfazer" })).toBeEnabled();
+  await click("Salvar alterações");
+  expect(screen.getByText("PDF editado salvo.")).toBeInTheDocument();
+  await click("Adicionar texto");
+  expect(run).toHaveBeenCalledTimes(3);
+  expect(screen.getByRole("button", { name: "Desfazer" })).toBeEnabled();
+  await click("Desfazer");
+  expect(screen.getByRole("button", { name: "Refazer" })).toBeEnabled();
   expect(allowToolNavigation()).toBe(true);
   expect(confirm).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: "Refazer" }));
-  await waitFor(() =>
-    expect(screen.getByRole("button", { name: "Adicionar texto" })).toBeEnabled(),
-  );
+  await click("Refazer");
+  expect(screen.getByRole("button", { name: "Adicionar texto" })).toBeEnabled();
   expect(allowToolNavigation()).toBe(false);
   confirm.mockRestore();
 });

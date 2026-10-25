@@ -250,6 +250,17 @@
   align-items: center;
   gap: 12px;
 }
+.pdf-compare-change-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.pdf-compare-pair-label:focus-visible {
+  outline: 3px solid #df614b;
+  outline-offset: 3px;
+}
 .pdf-compare-pager span {
   font-size: 13px;
 }
@@ -305,7 +316,6 @@
 .pdf-compare-image {
   position: relative;
   margin: auto;
-  min-width: 50%;
   flex-shrink: 0;
 }
 .pdf-compare-image > img,
@@ -449,5 +459,144 @@
 @media (min-width: 1025px) {
   .pdf-compare-scroll {
     height: clamp(680px, calc(100dvh - 220px), 1000px);
+  }
+}
+
+/* Mesa independente: documentos e opções ocupam a altura disponível do shell. */
+.tool-workspace.pdf-compare {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+.tool-workspace.pdf-compare .tool-workspace-document {
+  overflow: hidden;
+  padding: 12px;
+}
+.tool-workspace.pdf-compare .pdf-compare-view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+}
+.tool-workspace.pdf-compare .pdf-compare-text,
+.tool-workspace.pdf-compare .pdf-compare-previews {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+.tool-workspace.pdf-compare .pdf-compare-preview {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.tool-workspace.pdf-compare .pdf-compare-scroll {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+.tool-workspace.pdf-compare .pdf-compare-visual-tools {
+  margin: 8px 0;
+  gap: 6px;
+}
+.tool-workspace.pdf-compare .pdf-compare-pair-label {
+  margin: 8px 0;
+}
+.tool-workspace.pdf-compare .pdf-compare-change-nav {
+  margin-top: 4px;
+}
+.tool-workspace.pdf-compare .pdf-compare-entry {
+  height: 100%;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+.tool-workspace.pdf-compare .pdf-compare-entry > p {
+  text-align: center;
+}
+.tool-workspace.pdf-compare .pdf-compare-changes {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.tool-workspace.pdf-compare .pdf-compare-change-list {
+  max-height: none;
+}
+.tool-workspace.pdf-compare .pdf-compare-actions {
+  margin: 12px 0;
+}
+.tool-workspace.pdf-compare .tool-workspace-options .pdf-compare-upload-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tool-workspace.pdf-compare .tool-workspace-options .pdf-compare-slot label {
+  min-height: 76px;
+  padding: 8px 12px;
+  gap: 4px;
+}
+.tool-workspace.pdf-compare .tool-workspace-options .pdf-compare-slot svg {
+  display: none;
+}
+.tool-workspace.pdf-compare .pdf-compare-local {
+  margin-left: auto;
+}
+.tool-workspace.pdf-compare .pdf-compare-modes {
+  display: flex;
+  margin: 12px 0;
+}
+.tool-workspace.pdf-compare .pdf-compare-modes button {
+  flex: 1;
+}
+.tool-workspace.pdf-compare .pdf-compare-entry .pdf-compare-upload-row {
+  width: 100%;
+}
+.tool-workspace.pdf-compare .pdf-compare-warning {
+  padding: 8px 12px;
+}
+.tool-workspace.pdf-compare {
+  color: var(--color-ink);
+}
+.tool-workspace.pdf-compare :is(button, .pdf-compare-slot, .pdf-compare-view) {
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+  border-color: var(--color-border);
+}
+.tool-workspace.pdf-compare
+  :is(.pdf-compare-note, .pdf-compare-pair-label, .pdf-compare-slot label > span:last-child) {
+  color: var(--color-ink-muted);
+}
+.tool-workspace.pdf-compare :is(.pdf-compare-slot-title, .pdf-compare-slot strong) {
+  color: var(--color-ink);
+}
+.tool-workspace.pdf-compare .pdf-compare-text {
+  background: var(--color-surface-muted);
+}
+.tool-workspace.pdf-compare .pdf-compare-primary {
+  background: #e86750;
+  border-color: #e86750;
+  color: white;
+}
+.tool-workspace.pdf-compare button[aria-pressed="true"] {
+  background: var(--color-brand-soft);
+  border-color: var(--color-brand);
+  color: var(--color-brand-strong);
+}
+.tool-workspace.pdf-compare .pdf-compare-warning {
+  background: #fff7e6;
+  color: #694d19;
+}
+@media (max-width: 900px) {
+  .tool-workspace.pdf-compare .pdf-compare-local {
+    display: none;
+  }
+  .tool-workspace.pdf-compare .pdf-compare-change-list {
+    display: flex;
+  }
+  .tool-workspace.pdf-compare .tool-workspace-document {
+    padding: 8px;
   }
 }

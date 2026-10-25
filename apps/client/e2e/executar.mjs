@@ -4,7 +4,7 @@ import { preview } from "vite";
 const servidor = await preview({
   preview: {
     host: "127.0.0.1",
-    port: 4173,
+    port: Number(process.env.NEXOHUB_E2E_PORT ?? 4173),
     strictPort: true,
   },
 });

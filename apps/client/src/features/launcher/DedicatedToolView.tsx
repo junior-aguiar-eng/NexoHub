@@ -89,6 +89,7 @@ import { RotatePdfPanel } from "./RotatePdfPanel";
 import { ScanToPdfPanel } from "./ScanToPdfPanel";
 import { SignPdfPanel } from "./SignPdfPanel";
 import { type SplitInterval, SplitPdfPanel } from "./SplitPdfPanel";
+import { WorkspaceTabs, type WorkspaceView } from "./ToolWorkspace";
 import { TranslateDocumentPanel } from "./TranslateDocumentPanel";
 import { UnlockPdfPanel } from "./UnlockPdfPanel";
 import { useFormPreview } from "./useFormPreview";
@@ -155,12 +156,27 @@ export function DedicatedToolView({
   initialFiles,
   onOperationComplete,
 }: DedicatedToolViewProps) {
+  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("document");
   const [files, setFiles] = useState<File[]>(() => initialFiles ?? []);
   const [isDragging, setIsDragging] = useState(false);
   const [status, setStatus] = useState<"idle" | "running" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [inputTab, setInputTab] = useState<"upload" | "text">("upload");
+  const actionBarRef = useCallback((bar: HTMLDivElement | null) => {
+    const root = bar?.closest<HTMLElement>(".dedicated-tool-page--workspace");
+    if (!bar || !root) return;
+    const measure = () =>
+      root.style.setProperty(
+        "--workspace-action-height",
+        `${Math.ceil(bar.getBoundingClientRect().height)}px`,
+      );
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(bar);
+    return () => observer.disconnect();
+  }, []);
 
   // Miniaturas Reais Geradas com PDF.js
   const [firstPageThumb, setFirstPageThumb] = useState<string>("");
@@ -2317,6 +2333,18 @@ export function DedicatedToolView({
             </div>
           )}
 
+          {imageResults.length > 0 && (
+            <ImageResultsPanel
+              items={imageResults}
+              originalUrl={imagePreviewUrl ?? undefined}
+              resultUrl={downloadUrl ?? undefined}
+              archiveBytes={outputBlob?.type === "application/zip" ? outputBlob.size : undefined}
+            />
+          )}
+
+          {errorMessage && <p role="alert">{errorMessage}</p>}
+        </div>
+        <div className="dedicated-tool-success-footer">
           {documentCore.saveOutputFile && outputBlob ? (
             <button
               type="button"
@@ -2334,17 +2362,6 @@ export function DedicatedToolView({
               </a>
             )
           )}
-
-          {imageResults.length > 0 && (
-            <ImageResultsPanel
-              items={imageResults}
-              originalUrl={imagePreviewUrl ?? undefined}
-              resultUrl={downloadUrl ?? undefined}
-              archiveBytes={outputBlob?.type === "application/zip" ? outputBlob.size : undefined}
-            />
-          )}
-
-          {errorMessage && <p role="alert">{errorMessage}</p>}
 
           <div className="ilovepdf-success-actions">
             {tool.id === "pdf-redact" && (
@@ -2473,7 +2490,10 @@ export function DedicatedToolView({
 
   // FASE 2: WORKSPACE ATIVO
   return (
-    <div className="dedicated-tool-page dedicated-tool-page--workspace">
+    <div
+      className="dedicated-tool-page dedicated-tool-page--workspace"
+      data-workspace-view={workspaceView}
+    >
       {fileInput}
       <div className="ilovepdf-tool-nav">
         <button
@@ -2501,6 +2521,7 @@ export function DedicatedToolView({
         </div>
       </div>
 
+      <WorkspaceTabs view={workspaceView} onChange={setWorkspaceView} />
       <div className="dedicated-tool-workspace-main">
         {tool.manifest.category === "image" && (
           <>
@@ -2521,116 +2542,117 @@ export function DedicatedToolView({
             )}
           </>
         )}
-        {inputTab === "text" && isTextTool && tool.id !== "text-compare" ? (
-          <div className="dedicated-tool-workspace-split">
-            <div className="dedicated-tool-left-column">
-              <div className="dedicated-tool-text-input-box">
-                <label htmlFor="dedicated-tool-direct-textarea" className="dedicated-tool-label">
-                  Conteúdo do Documento:
-                </label>
-                <textarea
-                  id="dedicated-tool-direct-textarea"
-                  className="dedicated-tool-direct-textarea"
-                  value={directText}
-                  onChange={(e) => {
-                    if (tool.id === "text-translate") {
-                      cancelTranslation();
-                      clearTranslationResult();
-                    }
-                    setDirectText(e.target.value);
-                    if (tool.id === "text-review") {
-                      try {
-                        const findings = reviewText(e.target.value);
-                        setReviewFindings(findings);
-                        setReviewedText(e.target.value);
-                      } catch {}
-                    }
-                  }}
-                  placeholder="Digite ou cole o texto do documento aqui para processamento imediato..."
-                  rows={12}
-                />
-                <div className="dedicated-tool-text-metrics">
-                  {directText.length} caracteres •{" "}
-                  {directText.trim() ? directText.trim().split(/\s+/).length : 0} palavras
+        <div className="dedicated-tool-workspace-panels">
+          {inputTab === "text" && isTextTool && tool.id !== "text-compare" ? (
+            <div className="dedicated-tool-workspace-split">
+              <div className="dedicated-tool-left-column">
+                <div className="dedicated-tool-text-input-box">
+                  <label htmlFor="dedicated-tool-direct-textarea" className="dedicated-tool-label">
+                    Conteúdo do Documento:
+                  </label>
+                  <textarea
+                    id="dedicated-tool-direct-textarea"
+                    className="dedicated-tool-direct-textarea"
+                    value={directText}
+                    onChange={(e) => {
+                      if (tool.id === "text-translate") {
+                        cancelTranslation();
+                        clearTranslationResult();
+                      }
+                      setDirectText(e.target.value);
+                      if (tool.id === "text-review") {
+                        try {
+                          const findings = reviewText(e.target.value);
+                          setReviewFindings(findings);
+                          setReviewedText(e.target.value);
+                        } catch {}
+                      }
+                    }}
+                    placeholder="Digite ou cole o texto do documento aqui para processamento imediato..."
+                    rows={12}
+                  />
+                  <div className="dedicated-tool-text-metrics">
+                    {directText.length} caracteres •{" "}
+                    {directText.trim() ? directText.trim().split(/\s+/).length : 0} palavras
+                  </div>
                 </div>
               </div>
+              <div className="dedicated-tool-right-column">{renderVisualPanel()}</div>
             </div>
-            <div className="dedicated-tool-right-column">{renderVisualPanel()}</div>
-          </div>
-        ) : (
-          renderVisualPanel()
-        )}
-
+          ) : (
+            renderVisualPanel()
+          )}
+        </div>
         {tool.manifest.category === "image" && (
           <p className="image-processing-limits">{translate("imageProcessing.limit")}</p>
         )}
-        {/* Barra de Ação Inferior Fixa com Botão Estilo iLovePDF / iLoveIMG */}
-        <div className="dedicated-tool-bottom-bar" style={{ marginTop: "1.5rem" }}>
-          {tool.manifest.category === "image" && status === "running" && (
-            <>
-              <p role="status">{imageBatchProgress}</p>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  imageController.current?.abort();
-                  setStatus("idle");
-                  setImageBatchProgress("");
-                }}
-              >
-                {translate("imageProcessing.cancel")}
-              </Button>
-            </>
-          )}
-          {tool.id === "pdf-redact" && status === "running" && (
+      </div>
+      {/* Barra de Ação Inferior Fixa com Botão Estilo iLovePDF / iLoveIMG */}
+      <div ref={actionBarRef} className="dedicated-tool-bottom-bar">
+        {tool.manifest.category === "image" && status === "running" && (
+          <>
+            <p role="status">{imageBatchProgress}</p>
             <Button
               variant="secondary"
               onClick={() => {
-                redactionController.current?.abort();
+                imageController.current?.abort();
                 setStatus("idle");
-                setErrorMessage(null);
+                setImageBatchProgress("");
               }}
             >
-              {translate("redact.cancel")}
+              {translate("imageProcessing.cancel")}
             </Button>
-          )}
-          {errorMessage && <p role="alert">{errorMessage}</p>}
-          <button
-            type="button"
-            className="ilovepdf-action-red-btn"
-            disabled={
-              status === "running" ||
-              !pageRangeValid ||
-              (tool.manifest.category === "image" &&
-                (imageBatch.pending || imageBatch.invalid || cropConflicts.length > 0)) ||
-              (tool.id === "image-crop" && !imageOriginalDimensions) ||
-              (tool.id === "image-watermark" &&
-                compositionMode &&
-                (!compositionValid || compositionAssetPending)) ||
-              (tool.id === "image-watermark" &&
-                !compositionMode &&
-                imageWatermarkType === "image" &&
-                !imageWatermarkFile) ||
-              (!hasFilesOrText && tool.id !== "text-compare") ||
-              (tool.id === "pdf-protect" && protectionStatus.isProtected) ||
-              (tool.id === "pdf-redact" && redactionAreas.length === 0) ||
-              (tool.id === "pdf-form-fill" && !formPreview.revision) ||
-              (tool.id === "pdf-to-excel" && (isAnalyzingExcel || Boolean(excelPreviewError)))
-            }
-            onClick={handleExecute}
+          </>
+        )}
+        {tool.id === "pdf-redact" && status === "running" && (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              redactionController.current?.abort();
+              setStatus("idle");
+              setErrorMessage(null);
+            }}
           >
-            {status === "running" ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                <span>Processando...</span>
-              </>
-            ) : (
-              <>
-                <span>{getActionLabel()}</span>
-                <ArrowRight size={18} />
-              </>
-            )}
-          </button>
-        </div>
+            {translate("redact.cancel")}
+          </Button>
+        )}
+        {errorMessage && <p role="alert">{errorMessage}</p>}
+        <button
+          type="button"
+          className="ilovepdf-action-red-btn"
+          disabled={
+            status === "running" ||
+            !pageRangeValid ||
+            (tool.manifest.category === "image" &&
+              (imageBatch.pending || imageBatch.invalid || cropConflicts.length > 0)) ||
+            (tool.id === "image-crop" && !imageOriginalDimensions) ||
+            (tool.id === "image-watermark" &&
+              compositionMode &&
+              (!compositionValid || compositionAssetPending)) ||
+            (tool.id === "image-watermark" &&
+              !compositionMode &&
+              imageWatermarkType === "image" &&
+              !imageWatermarkFile) ||
+            (!hasFilesOrText && tool.id !== "text-compare") ||
+            (tool.id === "pdf-protect" && protectionStatus.isProtected) ||
+            (tool.id === "pdf-redact" && redactionAreas.length === 0) ||
+            (tool.id === "pdf-form-fill" && !formPreview.revision) ||
+            (tool.id === "pdf-to-excel" && (isAnalyzingExcel || Boolean(excelPreviewError)))
+          }
+          onClick={handleExecute}
+        >
+          {status === "running" ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              <span>Processando...</span>
+            </>
+          ) : (
+            <>
+              <span>{getActionLabel()}</span>
+              <ArrowRight size={18} />
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

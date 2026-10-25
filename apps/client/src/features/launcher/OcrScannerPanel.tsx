@@ -71,10 +71,11 @@ export function OcrScannerPanel({
   const charCount = recognizedText.length;
 
   return (
-    <div className="ilovepdf-compress-container">
+    <div className="ilovepdf-compress-container" data-workspace-panel>
       {/* Área Central: Visualização do Scanner e Editor de Texto Reconhecido */}
       <div
         className="ilovepdf-compress-preview-area"
+        data-workspace-part="document"
         style={{ flexDirection: "column", gap: "1.25rem", alignItems: "stretch" }}
       >
         {/* Scanner Visual Hero */}
@@ -199,7 +200,7 @@ export function OcrScannerPanel({
       </div>
 
       {/* Barra Lateral: Configurações do OCR */}
-      <aside className="ilovepdf-compress-options-sidebar">
+      <aside className="ilovepdf-compress-options-sidebar" data-workspace-part="options">
         <h3 className="ilovepdf-sidebar-title">{translate("workspace.ocr.optionsTitle")}</h3>
         <p
           className="ilovepdf-control-hint"

@@ -35,9 +35,9 @@ export function MergePdfPanel({
   }
 
   return (
-    <div className="ilovepdf-merge-container">
+    <div className="ilovepdf-merge-container" data-workspace-panel>
       {/* Centro: Grid de Arquivos com Miniaturas */}
-      <div className="ilovepdf-merge-preview-area">
+      <div className="ilovepdf-merge-preview-area" data-workspace-part="document">
         <div className="ilovepdf-merge-cards-grid">
           {files.map((file, idx) => {
             const thumb = thumbnails.get(file);
@@ -108,7 +108,7 @@ export function MergePdfPanel({
       </div>
 
       {/* Lateral: Resumo */}
-      <aside className="ilovepdf-merge-options-sidebar">
+      <aside className="ilovepdf-merge-options-sidebar" data-workspace-part="options">
         <h3 className="ilovepdf-sidebar-title">{translate("workspace.merge.title")}</h3>
         <p className="ilovepdf-sidebar-desc">{translate("workspace.merge.desc")}</p>
         <div className="ilovepdf-merge-stats-card">

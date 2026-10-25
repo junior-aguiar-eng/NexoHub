@@ -1,4 +1,12 @@
 export const ptBR = {
+  "workspaceLayout.views": "Regiões da mesa",
+  "workspaceLayout.document": "Documento",
+  "workspaceLayout.documentRegion": "Área do documento",
+  "workspaceLayout.actions": "Ações da ferramenta",
+  "workspaceLayout.options": "Opções",
+  "workspaceLayout.pages": "Páginas",
+  "workspaceLayout.toggleFiles": "Mostrar arquivos do lote",
+  "workspaceLayout.files": "Arquivos",
   "formFill.invalidFile": "Selecione um arquivo PDF válido para preencher o formulário.",
   "formFill.replaceFile": "Selecionar outro PDF",
   "formFill.replaceFileLabel": "Trocar PDF",
@@ -170,7 +178,7 @@ export const ptBR = {
   "pdfCompare.pageTextUnavailable":
     "Esta página não contém texto extraível. Consulte o modo visual.",
   "pdfCompare.alignmentNotice":
-    "O alinhamento é heurístico. Confira os pares em mudanças extensas de paginação.",
+    "O alinhamento é heurístico e preserva a ordem. Confira páginas repetidas, reordenadas ou muito parecidas. Diferenças não comprovam autenticidade, plágio ou equivalência semântica.",
   "pdfCompare.changes": "Alterações",
   "pdfCompare.search": "Buscar texto nas alterações",
   "pdfCompare.noChanges": "Nenhuma alteração encontrada para este filtro.",
@@ -184,6 +192,14 @@ export const ptBR = {
   "pdfCompare.missingPage": "Página ausente neste documento",
   "pdfCompare.previous": "Par anterior",
   "pdfCompare.next": "Próximo par",
+  "pdfCompare.previousChange": "Alteração anterior",
+  "pdfCompare.nextChange": "Próxima alteração",
+  "pdfCompare.fitWidth": "Ajustar à largura",
+  "pdfCompare.actualSize": "Tamanho renderizado",
+  "pdfCompare.loadingPreview": "Carregando prévia do par…",
+  "pdfCompare.reporting": "Gerando relatório",
+  "pdfCompare.errorFont":
+    "Não foi possível carregar a fonte local do relatório. Recarregue a ferramenta e tente novamente.",
   "pdfCompare.zoomOut": "Reduzir zoom",
   "pdfCompare.zoomIn": "Ampliar zoom",
   "pdfCompare.sync": "Sincronizar rolagem",
@@ -204,6 +220,8 @@ export const ptBR = {
     "Pares analisados: {pairs} • Com alterações de texto: {text} • Com alterações visuais: {visual}",
   "pdfCompare.reportPair": "Par {pair} — Original: {left} • Revisado: {right}",
   "pdfCompare.reportAbsent": "ausente",
+  "pdfCompare.reportGlyphs":
+    "Caracteres fora da cobertura da fonte aparecem como [U+XXXX]. Consulte o JSON para o texto original. Este relatório não prova autenticidade, plágio ou equivalência semântica.",
   "pdfCompare.reportLegend":
     "As regiões destacadas representam diferenças visuais. A comparação de texto é independente.",
   "pdfCompare.reportNoText":

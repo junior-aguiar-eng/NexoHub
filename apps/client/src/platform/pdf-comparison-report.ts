@@ -1,6 +1,7 @@
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
+import { PDFDocument, type PDFPage, rgb } from "pdf-lib";
 import { translate } from "@/i18n";
-import type { PdfComparisonResult } from "./pdf-comparison-types";
+import type { PdfComparisonPair, PdfComparisonResult } from "./pdf-comparison-types";
 
 export function serializePdfComparison(
   result: PdfComparisonResult,
@@ -17,66 +18,76 @@ export function serializePdfComparison(
     2,
   );
 }
-
-export async function createPdfComparisonReport(
-  result: PdfComparisonResult,
-  names: readonly string[],
-): Promise<Uint8Array> {
-  const pdf = await PDFDocument.create();
-  const font = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const safe = (value: string) =>
-    Array.from(value)
-      .map((char) => {
-        if (char.charCodeAt(0) < 32) return " ";
-        try {
-          font.encodeText(char);
-          return char;
-        } catch {
-          return "?";
-        }
-      })
-      .join("");
-  const fitSnippet = (value: string) => {
-    const text = safe(value);
-    if (font.widthOfTextAtSize(text, 10) <= 778) return text;
-    let clipped = text;
-    while (clipped && font.widthOfTextAtSize(`${clipped}...`, 10) > 778)
-      clipped = clipped.slice(0, -1);
-    return `${clipped}...`;
+export interface ComparisonReportOptions {
+  readonly fontBytes?: Uint8Array;
+  readonly signal?: AbortSignal;
+}
+/** Pares incorporados sequencialmente evitam reter os PNGs de todos os pares. */
+export async function createComparisonReportWriter(options: ComparisonReportOptions = {}) {
+  const check = () => {
+    if (options.signal?.aborted) throw new DOMException("Comparação cancelada", "AbortError");
   };
-  const page = pdf.addPage([842, 595]);
-  let y = 545;
-  const line = (value: string, size = 12, weight = false) => {
-    const text = safe(value);
-    let current = "";
-    for (const char of text.slice(0, 1500)) {
-      const candidate = current + char;
-      if (font.widthOfTextAtSize(candidate, size) > 740) {
-        page.drawText(current, { x: 44, y, size, font: weight ? bold : font });
-        y -= size * 1.5;
-        current = char;
-      } else current = candidate;
+  check();
+  let bytes = options.fontBytes;
+  if (!bytes) {
+    try {
+      const response = await fetch(
+        `${import.meta.env.BASE_URL}fonts/pdf-comparison/SourceSans3-Regular.ttf`,
+        { signal: options.signal },
+      );
+      if (!response.ok) throw new Error("PDF_COMPARACAO_FONTE_INDISPONIVEL");
+      bytes = new Uint8Array(await response.arrayBuffer());
+    } catch {
+      check();
+      throw new Error("PDF_COMPARACAO_FONTE_INDISPONIVEL");
     }
-    page.drawText(current, { x: 44, y, size, font: weight ? bold : font });
-    y -= size * 1.7;
-  };
-  line(translate("pdfCompare.reportTitle"), 22, true);
-  line(`${translate("pdfCompare.reportOriginal")}: ${(names[0] ?? "").slice(0, 300)}`);
-  line(`${translate("pdfCompare.reportRevised")}: ${(names[1] ?? "").slice(0, 300)}`);
-  y -= 12;
-  line(
-    translate("pdfCompare.reportSummary")
-      .replace("{pairs}", String(result.pairs.length))
-      .replace("{text}", String(result.pairs.filter((pair) => pair.textChanged).length))
-      .replace("{visual}", String(result.pairs.filter((pair) => pair.visualChanged).length)),
-  );
-  if (!result.leftHasText || !result.rightHasText) line(translate("pdfCompare.reportNoText"));
-  line(translate("pdfCompare.reportLegend"));
-  line(translate("pdfCompare.reportLimitations"), 10);
-  for (const pair of result.pairs.filter((pair) => pair.textChanged || pair.visualChanged)) {
-    const sheet = pdf.addPage([842, 595]);
-    const title = translate("pdfCompare.reportPair")
+  }
+  check();
+  const pdf = await PDFDocument.create();
+  pdf.registerFontkit(fontkit);
+  const font = await pdf.embedFont(bytes, { subset: true });
+  const supported = new Set(font.getCharacterSet());
+  const printable = (text: string) =>
+    Array.from(text.normalize("NFC"), (char) => {
+      const code = char.codePointAt(0) ?? 0;
+      return code < 32
+        ? " "
+        : supported.has(code)
+          ? char
+          : `[U+${code.toString(16).toUpperCase().padStart(4, "0")}]`;
+    }).join("");
+  function flow(initial: PDFPage, continuation: () => PDFPage, start = 550) {
+    let page = initial,
+      y = start;
+    return (value: string, size = 11) => {
+      check();
+      const lines: string[] = [];
+      let current = "",
+        width = 0;
+      for (const char of printable(value)) {
+        const charWidth = font.widthOfTextAtSize(char, size);
+        if (current && width + charWidth > 778) {
+          lines.push(current);
+          current = "";
+          width = 0;
+        }
+        current += char;
+        width += charWidth;
+      }
+      lines.push(current);
+      for (const text of lines) {
+        if (y - size * 0.3 < 32) {
+          page = continuation();
+          y = 550;
+        }
+        page.drawText(text, { x: 32, y, size, font });
+        y -= size * 1.5;
+      }
+      y -= size * 0.4;
+    };
+  }
+  const title = (pair: PdfComparisonPair) =>
+    translate("pdfCompare.reportPair")
       .replace("{pair}", String(pair.index + 1))
       .replace(
         "{left}",
@@ -86,66 +97,92 @@ export async function createPdfComparisonReport(
         "{right}",
         pair.rightPage === null ? translate("pdfCompare.reportAbsent") : String(pair.rightPage),
       );
-    sheet.drawText(safe(title), { x: 32, y: 560, size: 14, font: bold });
-    const changedText = (type: "added" | "removed") =>
-      pair.textDiff.lines
-        .filter((line) => line.type === type)
-        .map(
-          (line) =>
-            line.words
-              ?.filter((word) => word.type === type)
-              .map((word) => word.text)
-              .join("") || line.content,
-        )
-        .join(" ")
-        .slice(0, 100);
-    if (pair.textChanged) {
-      sheet.drawText(
-        fitSnippet(`${translate("pdfCompare.reportRemoved")}: ${changedText("removed")}`),
-        {
-          x: 32,
-          y: 538,
-          size: 10,
-          font,
-        },
-      );
-      sheet.drawText(
-        fitSnippet(`${translate("pdfCompare.reportAdded")}: ${changedText("added")}`),
-        {
-          x: 32,
-          y: 522,
-          size: 10,
-          font,
-        },
-      );
-    } else if (pair.geometryChanged) {
-      sheet.drawText(safe(translate("pdfCompare.geometryChanged")), {
-        x: 32,
-        y: 538,
-        size: 10,
-        font,
-      });
-    }
-
-    for (const [i, data] of [pair.leftImage, pair.rightImage].entries()) {
-      if (!data) continue;
-      const image = await pdf.embedPng(data);
-      const dimensions = image.scaleToFit(375, 430);
-      const x = 32 + i * 407 + (375 - dimensions.width) / 2;
-      const bottom = 64 + (430 - dimensions.height) / 2;
-      sheet.drawImage(image, { x, y: bottom, ...dimensions });
-      if (pair.visualChanged)
-        for (const region of pair.regions) {
-          sheet.drawRectangle({
-            x: x + region.x * dimensions.width,
-            y: bottom + (1 - region.y - region.height) * dimensions.height,
-            width: region.width * dimensions.width,
-            height: region.height * dimensions.height,
-            borderColor: rgb(0.88, 0.11, 0.28),
-            borderWidth: 1.2,
-          });
+  return {
+    async appendPair(pair: PdfComparisonPair) {
+      check();
+      if (!pair.textChanged && !pair.visualChanged && !pair.geometryChanged) return;
+      const sheet = pdf.addPage([842, 595]);
+      const line = flow(sheet, () => pdf.addPage([842, 595]));
+      line(title(pair), 14);
+      const hasImages = !!pair.leftImage || !!pair.rightImage;
+      if (hasImages) {
+        for (const [i, data] of [pair.leftImage, pair.rightImage].entries()) {
+          if (!data) continue;
+          check();
+          const image = await pdf.embedPng(data);
+          const dimensions = image.scaleToFit(375, 430);
+          const x = 32 + i * 407 + (375 - dimensions.width) / 2;
+          const bottom = 64 + (430 - dimensions.height) / 2;
+          sheet.drawImage(image, { x, y: bottom, ...dimensions });
+          if (pair.visualChanged)
+            for (const region of pair.regions)
+              sheet.drawRectangle({
+                x: x + region.x * dimensions.width,
+                y: bottom + (1 - region.y - region.height) * dimensions.height,
+                width: region.width * dimensions.width,
+                height: region.height * dimensions.height,
+                borderColor: rgb(0.88, 0.11, 0.28),
+                borderWidth: 1.2,
+              });
+          await image.embed();
         }
-    }
-  }
-  return pdf.save();
+      }
+      if (
+        pair.textChanged ||
+        pair.geometryChanged ||
+        !pair.leftText.trim() ||
+        !pair.rightText.trim()
+      ) {
+        const textLine = hasImages
+          ? flow(pdf.addPage([842, 595]), () => pdf.addPage([842, 595]))
+          : line;
+        if (hasImages) textLine(title(pair), 14);
+        if (!pair.leftText.trim() || !pair.rightText.trim())
+          textLine(translate("pdfCompare.pageTextUnavailable"));
+        if (pair.geometryChanged) textLine(translate("pdfCompare.geometryChanged"));
+        for (const type of ["removed", "added"] as const) {
+          const changed = pair.textDiff.lines
+            .filter((item) => item.type === type)
+            .map((item) => item.content)
+            .join("\n");
+          if (changed)
+            textLine(
+              `${translate(type === "removed" ? "pdfCompare.reportRemoved" : "pdfCompare.reportAdded")}: ${changed}`,
+            );
+        }
+      }
+      check();
+    },
+    async finish(result: PdfComparisonResult, names: readonly string[]) {
+      check();
+      let insert = 0;
+      const next = () => pdf.insertPage(insert++, [842, 595]);
+      const line = flow(next(), next);
+      line(translate("pdfCompare.reportTitle"), 22);
+      line(`${translate("pdfCompare.reportOriginal")}: ${names[0] ?? ""}`);
+      line(`${translate("pdfCompare.reportRevised")}: ${names[1] ?? ""}`);
+      line(
+        translate("pdfCompare.reportSummary")
+          .replace("{pairs}", String(result.pairs.length))
+          .replace("{text}", String(result.pairs.filter((pair) => pair.textChanged).length))
+          .replace("{visual}", String(result.pairs.filter((pair) => pair.visualChanged).length)),
+      );
+      if (!result.leftHasText || !result.rightHasText) line(translate("pdfCompare.reportNoText"));
+      line(translate("pdfCompare.reportLegend"));
+      line(translate("pdfCompare.reportLimitations"), 10);
+      line(translate("pdfCompare.reportGlyphs"), 10);
+      const output = await pdf.save();
+      check();
+      return output;
+    },
+  };
+}
+export async function createPdfComparisonReport(
+  result: PdfComparisonResult,
+  names: readonly string[],
+  options: ComparisonReportOptions = {},
+): Promise<Uint8Array> {
+  const writer = await createComparisonReportWriter(options);
+  for (const pair of result.pairs) await writer.appendPair(pair);
+  return writer.finish(result, names);
 }

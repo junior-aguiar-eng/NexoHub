@@ -34,9 +34,9 @@ export function PdfToJpgPanel({
   }
 
   return (
-    <div className="ilovepdf-compress-container">
+    <div className="ilovepdf-compress-container" data-workspace-panel>
       {/* Centro: Miniatura do PDF com número de páginas */}
-      <div className="ilovepdf-compress-preview-area">
+      <div className="ilovepdf-compress-preview-area" data-workspace-part="document">
         <div className="ilovepdf-file-card-center">
           <PdfViewport page={previewPage} pageCount={totalPages} onPageChange={setPreviewPage}>
             <div className="ilovepdf-file-thumb-wrapper">
@@ -75,7 +75,7 @@ export function PdfToJpgPanel({
       </div>
 
       {/* Lateral: Configurações e Orientações */}
-      <aside className="ilovepdf-compress-options-sidebar">
+      <aside className="ilovepdf-compress-options-sidebar" data-workspace-part="options">
         <h3 className="ilovepdf-sidebar-title">{translate("workspace.pdfToJpg.title")}</h3>
         <p
           className="ilovepdf-control-hint"

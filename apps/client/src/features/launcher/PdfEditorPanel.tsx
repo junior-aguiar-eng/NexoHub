@@ -53,6 +53,7 @@ import {
   type EditorReplacement,
 } from "@/platform/pdf-editor-types";
 import { registerToolNavigationGuard } from "@/platform/tool-navigation-guard";
+import { WorkspaceTabs, type WorkspaceView } from "./ToolWorkspace";
 import "./PdfEditorPanel.css";
 
 type Key = Extract<MessageKey, `editor.${string}`> extends `editor.${infer K}` ? K : never;
@@ -113,6 +114,27 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
     [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>(),
     [status, setStatus] = useState<string>();
+  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("document");
+  const workspaceRoot = useRef<HTMLElement>(null);
+  const [compactWorkspace, setCompactWorkspace] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia?.("(max-width: 900px)");
+    if (!media) return;
+    const update = () => setCompactWorkspace(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  useEffect(() => {
+    if (!compactWorkspace) return;
+    const selector =
+      workspaceView === "pages"
+        ? ".pdf-editor-pages"
+        : workspaceView === "options"
+          ? ".pdf-editor-properties"
+          : ".pdf-editor-scroll";
+    workspaceRoot.current?.querySelector<HTMLElement>(selector)?.focus({ preventScroll: true });
+  }, [compactWorkspace, workspaceView]);
   const [showPages, setShowPages] = useState(true),
     [showProps, setShowProps] = useState(true);
   const [thumbnails, setThumbnails] = useState<string[]>([]);
@@ -634,6 +656,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
   const tool = (label: Key, icon: React.ReactNode, action: () => void, active = false) => (
     <button
       type="button"
+      aria-label={t(label)}
       disabled={busy}
       aria-pressed={active}
       onClick={() => {
@@ -661,8 +684,10 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
     );
   return (
     <section
+      ref={workspaceRoot}
       className={`pdf-editor ${revision ? "pdf-editor-workspace" : ""}`}
       aria-labelledby={`${id}-title`}
+      data-workspace-view={workspaceView}
     >
       <div className="pdf-editor-topline">
         <button
@@ -758,6 +783,15 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
         </section>
       ) : (
         <>
+          <WorkspaceTabs
+            pages
+            view={workspaceView}
+            onChange={(view) => {
+              setWorkspaceView(view);
+              if (view === "options") setShowProps(true);
+              if (view === "pages") setShowPages(true);
+            }}
+          />
           <div className="pdf-editor-toolbar" role="toolbar" aria-label={t("title")}>
             {tool(
               "select",
@@ -831,7 +865,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
           <div
             className={`pdf-editor-layout ${showPages ? "show-pages" : ""} ${showProps ? "show-props" : ""}`}
           >
-            <aside className="pdf-editor-pages" aria-label={t("pages")}>
+            <aside className="pdf-editor-pages" aria-label={t("pages")} tabIndex={-1}>
               <h2>{t("pages")}</h2>
               {revision.pages.map((_, index) => (
                 <button
@@ -843,6 +877,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                   aria-current={page === index ? "page" : undefined}
                   onClick={() => {
                     void navigate(index);
+                    setWorkspaceView("document");
                   }}
                 >
                   {thumbnails[index] ? (
@@ -859,8 +894,13 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                 <button
                   type="button"
                   aria-label={t("thumbnails")}
-                  aria-expanded={showPages}
-                  onClick={() => setShowPages(!showPages)}
+                  aria-expanded={compactWorkspace ? workspaceView === "pages" : showPages}
+                  onClick={() => {
+                    if (compactWorkspace) {
+                      setShowPages(true);
+                      setWorkspaceView("pages");
+                    } else setShowPages(!showPages);
+                  }}
                 >
                   <PanelLeft size={18} />
                 </button>
@@ -911,8 +951,13 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                 <button
                   type="button"
                   aria-label={t("showProperties")}
-                  aria-expanded={showProps}
-                  onClick={() => setShowProps(!showProps)}
+                  aria-expanded={compactWorkspace ? workspaceView === "options" : showProps}
+                  onClick={() => {
+                    if (compactWorkspace) {
+                      setShowProps(true);
+                      setWorkspaceView("options");
+                    } else setShowProps(!showProps);
+                  }}
                 >
                   <PanelRight size={18} />
                 </button>
@@ -1036,7 +1081,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                 <p className="pdf-editor-warning">{t("noText")}</p>
               )}
             </div>
-            <aside className="pdf-editor-properties" aria-label={t("properties")}>
+            <aside className="pdf-editor-properties" aria-label={t("properties")} tabIndex={-1}>
               <h2>{t("properties")}</h2>
               <label className="pdf-editor-object-list">
                 {t("objects")}
@@ -1331,27 +1376,27 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                   </div>
                 )}
               </fieldset>
-              <div className="pdf-editor-save">
-                {history.truncated && (
-                  <p className="pdf-editor-warning" role="status">
-                    {t("historyTrimmed")}
-                  </p>
-                )}
-                <p>{draftDirty ? t("draft") : t("notes")}</p>
-                <button
-                  className="pdf-editor-primary"
-                  type="button"
-                  disabled={busy || draftDirty}
-                  onClick={() => {
-                    void save();
-                  }}
-                >
-                  <Download size={20} />
-                  {t("save")}
-                </button>
-                <small>{t("privacy")}</small>
-              </div>
             </aside>
+            <div className="pdf-editor-save">
+              {history.truncated && (
+                <p className="pdf-editor-warning" role="status">
+                  {t("historyTrimmed")}
+                </p>
+              )}
+              <p>{draftDirty ? t("draft") : t("notes")}</p>
+              <button
+                className="pdf-editor-primary"
+                type="button"
+                disabled={busy || draftDirty}
+                onClick={() => {
+                  void save();
+                }}
+              >
+                <Download size={20} />
+                {t("save")}
+              </button>
+              <small>{t("privacy")}</small>
+            </div>
           </div>
         </>
       )}

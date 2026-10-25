@@ -58,3 +58,20 @@ it("não inicia worker quando o pedido já foi cancelado", async () => {
   ).rejects.toThrow("OPERACAO_CANCELADA");
   expect(TestWorker.instances).toHaveLength(0);
 });
+it("encerra geração do relatório e copia apenas a solicitação de prévia alinhada", async () => {
+  vi.stubGlobal("Worker", TestWorker);
+  const abort = new AbortController();
+  const onProgress = vi.fn();
+  const task = performBrowserPdfComparison(new Uint8Array([1]), new Uint8Array([2]), [], {
+    signal: abort.signal,
+    onProgress,
+  });
+  const worker = TestWorker.instances[0];
+  worker.onmessage?.({
+    data: { type: "progress", info: { phase: "reporting", progress: 96 } },
+  } as MessageEvent);
+  expect(onProgress).toHaveBeenCalledWith({ phase: "reporting", progress: 96 });
+  abort.abort();
+  await expect(task).rejects.toThrow("OPERACAO_CANCELADA");
+  expect(worker.terminate).toHaveBeenCalledOnce();
+});

@@ -34,6 +34,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @jsquash/webp | 1.5.0 | Apache-2.0 |
 | JavaScript | @napi-rs/canvas | 1.0.9 | MIT |
 | JavaScript | @napi-rs/canvas-linux-x64-gnu | 1.0.9 | MIT |
+| JavaScript | @pdf-lib/fontkit | 1.1.1 | MIT |
 | JavaScript | @pdf-lib/standard-fonts | 1.0.0 | MIT |
 | JavaScript | @pdf-lib/upng | 1.0.1 | MIT |
 | JavaScript | @pdfsmaller/pdf-encrypt | 1.2.0 | MIT |

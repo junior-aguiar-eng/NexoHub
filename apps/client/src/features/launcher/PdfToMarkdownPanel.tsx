@@ -238,10 +238,11 @@ export function PdfToMarkdownPanel({
   };
 
   return (
-    <div className="ilovepdf-compress-container">
+    <div className="ilovepdf-compress-container" data-workspace-panel>
       {/* Coluna Central: Visualização do Documento ou Resultado Markdown */}
       <div
         className="ilovepdf-compress-preview-area"
+        data-workspace-part="document"
         style={{
           flexDirection: "column",
           gap: "1.25rem",
@@ -409,7 +410,7 @@ export function PdfToMarkdownPanel({
       </div>
 
       {/* Coluna Lateral: Opções da Ferramenta */}
-      <aside className="ilovepdf-compress-options-sidebar">
+      <aside className="ilovepdf-compress-options-sidebar" data-workspace-part="options">
         <h3 className="ilovepdf-sidebar-title">{translate("pdfToMarkdown.optionsTitle")}</h3>
 
         <div className="flex flex-col gap-4">

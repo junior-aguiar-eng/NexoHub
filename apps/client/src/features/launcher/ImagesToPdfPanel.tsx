@@ -47,9 +47,9 @@ export function ImagesToPdfPanel({
   }
 
   return (
-    <div className="ilovepdf-merge-container">
+    <div className="ilovepdf-merge-container" data-workspace-panel>
       {/* Grid de Imagens com Miniaturas Reais */}
-      <div className="ilovepdf-merge-preview-area">
+      <div className="ilovepdf-merge-preview-area" data-workspace-part="document">
         <div className="ilovepdf-merge-cards-grid">
           {files.map((file, idx) => {
             const thumb = thumbnails.get(file);
@@ -126,7 +126,7 @@ export function ImagesToPdfPanel({
       </div>
 
       {/* Opções na Barra Lateral */}
-      <aside className="ilovepdf-merge-options-sidebar">
+      <aside className="ilovepdf-merge-options-sidebar" data-workspace-part="options">
         <h3 className="ilovepdf-sidebar-title">{translate("workspace.imagesToPdf.title")}</h3>
         <p className="ilovepdf-sidebar-desc">{translate("workspace.imagesToPdf.desc")}</p>
 

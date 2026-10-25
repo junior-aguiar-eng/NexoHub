@@ -205,6 +205,8 @@ export async function comparePdfDocuments(
   let pdfWorker: pdfjs.PDFWorker | undefined;
   let workPixels = 0;
   let totalCharacters = 0;
+  let renderCount = 0,
+    peakPairPixelBytes = 0;
   const reserve = (pixels: number) => {
     workPixels += pixels;
     if (!Number.isFinite(workPixels) || workPixels > PDF_COMPARISON_LIMITS.maxWorkPixels)
@@ -278,6 +280,7 @@ export async function comparePdfDocuments(
       viewport,
       background: "rgb(255,255,255)",
     });
+    renderCount++;
     try {
       await activeRender.promise;
       abortIfNeeded(signal);
@@ -342,10 +345,42 @@ export async function comparePdfDocuments(
     const leftDoc = await open(left);
     const rightDoc = await open(right);
     const totalPages = leftDoc.numPages + rightDoc.numPages;
-    const leftPages = await read(leftDoc, 0, totalPages);
-    const rightPages = await read(rightDoc, leftPages.length, totalPages);
+    async function previewInfo(
+      doc: pdfjs.PDFDocumentProxy,
+      number: number | null,
+      text: string,
+    ): Promise<PageInfo[]> {
+      if (number === null) return [];
+      if (!Number.isInteger(number) || number < 1 || number > doc.numPages)
+        throw new Error("PDF_COMPARACAO_PDF_INVALIDO");
+      const page = await doc.getPage(number);
+      const viewport = page.getViewport({ scale: 1 });
+      page.cleanup();
+      if (![viewport.width, viewport.height].every((value) => Number.isFinite(value) && value > 0))
+        throw new Error("PDF_COMPARACAO_PDF_INVALIDO");
+      return [
+        {
+          pageNumber: number,
+          width: viewport.width,
+          height: viewport.height,
+          rotation: page.rotate,
+          text,
+          words: new Set(),
+          signature: new Uint8ClampedArray(),
+        },
+      ];
+    }
+    const detail = options.previewPair;
+    const leftPages = detail
+      ? await previewInfo(leftDoc, detail.leftPage, detail.leftText)
+      : await read(leftDoc, 0, totalPages);
+    const rightPages = detail
+      ? await previewInfo(rightDoc, detail.rightPage, detail.rightText)
+      : await read(rightDoc, leftPages.length, totalPages);
     progress("aligning", 0.32);
-    const aligned = align(leftPages, rightPages);
+    const aligned: Alignment[] = detail
+      ? [{ left: leftPages[0] ?? null, right: rightPages[0] ?? null }]
+      : align(leftPages, rightPages);
     const pairs: PdfComparisonPair[] = [];
     const factory = leftDoc.canvasFactory as CanvasFactory;
     for (const [index, alignment] of aligned.entries()) {
@@ -360,6 +395,8 @@ export async function comparePdfDocuments(
       const width = Math.ceil(Math.max(a?.width ?? 0, b?.width ?? 0) * scale);
       const height = Math.ceil(Math.max(a?.height ?? 0, b?.height ?? 0) * scale);
       reserve(width * height * 3);
+      // Três canvases e três ImageData simultâneos; não é o heap/RSS total do processo.
+      peakPairPixelBytes = Math.max(peakPairPixelBytes, width * height * 24);
       const leftCanvas = factory.create(width, height);
       const rightCanvas = factory.create(width, height);
       const diffCanvas = factory.create(width, height);
@@ -397,8 +434,8 @@ export async function comparePdfDocuments(
             : textChanged || visualChanged
               ? "modified"
               : "unchanged";
-        pairs.push({
-          index,
+        const pair: PdfComparisonPair = {
+          index: detail?.index ?? index,
           leftPage: a?.pageNumber ?? null,
           rightPage: b?.pageNumber ?? null,
           status,
@@ -415,10 +452,13 @@ export async function comparePdfDocuments(
               : regions(mask.data, width, height),
           leftImage: a ? await png(leftCanvas) : undefined,
           rightImage: b ? await png(rightCanvas) : undefined,
-          diffImage: await png(diffCanvas),
+          diffImage: options.retainImages === false ? undefined : await png(diffCanvas),
           width,
           height,
-        });
+        };
+        await options.onPair?.(pair);
+        const { leftImage: _l, rightImage: _r, diffImage: _d, ...metadata } = pair;
+        pairs.push(options.retainImages === false ? metadata : pair);
         abortIfNeeded(signal);
       } finally {
         factory.destroy(leftCanvas);
@@ -428,9 +468,21 @@ export async function comparePdfDocuments(
     }
     progress("done", 1);
     return {
+      metrics: {
+        renderCount,
+        peakPairPixelBytes,
+        retainedImageCharacters: pairs.reduce(
+          (sum, pair) =>
+            sum +
+            (pair.leftImage?.length ?? 0) +
+            (pair.rightImage?.length ?? 0) +
+            (pair.diffImage?.length ?? 0),
+          0,
+        ),
+      },
       pairs,
-      leftPageCount: leftPages.length,
-      rightPageCount: rightPages.length,
+      leftPageCount: leftDoc.numPages,
+      rightPageCount: rightDoc.numPages,
       leftHasText: leftPages.some((page) => Boolean(page.text)),
       rightHasText: rightPages.some((page) => Boolean(page.text)),
     };

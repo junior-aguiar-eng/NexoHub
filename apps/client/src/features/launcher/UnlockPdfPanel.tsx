@@ -68,9 +68,9 @@ export function UnlockPdfPanel({
     pageThumbnails?.[previewPage - 1] ?? (previewPage === 1 ? thumbnailUrl : undefined);
 
   return (
-    <div className="unlock-container">
+    <div className="unlock-container" data-workspace-panel>
       {/* Coluna Esquerda: Controles e Inserção de Senha */}
-      <div className="unlock-controls-pane">
+      <div className="unlock-controls-pane" data-workspace-part="options">
         <div className="unlock-header-card">
           <div className="unlock-file-info">
             <div className="unlock-file-icon">
@@ -219,7 +219,7 @@ export function UnlockPdfPanel({
       </div>
 
       {/* Coluna Direita: Pré-visualização do Documento */}
-      <div className="unlock-preview-pane">
+      <div className="unlock-preview-pane" data-workspace-part="document">
         <div className="unlock-preview-header">
           <div className="unlock-preview-title">
             <FileCheck2 size={16} color="#f43f5e" />

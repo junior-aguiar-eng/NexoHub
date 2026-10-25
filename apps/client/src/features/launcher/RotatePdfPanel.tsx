@@ -22,9 +22,9 @@ export function RotatePdfPanel({
   const [aspect, setAspect] = useState(1 / Math.SQRT2);
   const quarterTurn = Math.abs(rotation % 180) === 90;
   return (
-    <div className="ilovepdf-rotate-container">
+    <div className="ilovepdf-rotate-container" data-workspace-panel>
       {/* Centro: Visualização da Página Rotacionada */}
-      <div className="ilovepdf-rotate-preview-area">
+      <div className="ilovepdf-rotate-preview-area" data-workspace-part="document">
         <div className="ilovepdf-rotate-card-center">
           <div
             className="ilovepdf-rotate-rotation-stage"
@@ -69,7 +69,7 @@ export function RotatePdfPanel({
       </div>
 
       {/* Lateral: Controles de Rotação */}
-      <aside className="ilovepdf-rotate-options-sidebar">
+      <aside className="ilovepdf-rotate-options-sidebar" data-workspace-part="options">
         <h3 className="ilovepdf-sidebar-title">{translate("workspace.rotate.title")}</h3>
         <p className="ilovepdf-sidebar-desc">{translate("workspace.rotate.desc")}</p>
 

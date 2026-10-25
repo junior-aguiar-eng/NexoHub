@@ -354,7 +354,7 @@ export function App() {
   return (
     <div
       data-zone={workZone}
-      className={`app-shell ${activeDedicatedTool ? "" : "app-shell--catalog"} app-shell--zone-${workZone}`}
+      className={`app-shell ${activeDedicatedTool ? "app-shell--workspace" : "app-shell--catalog"} app-shell--zone-${workZone}`}
     >
       <a className="skip-link" href="#main-content">
         {translate("app.skip")}

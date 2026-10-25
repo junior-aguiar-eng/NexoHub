@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
+import { workspaceDocument, workspaceOptions } from "./workspace-views";
 
 const route = `${process.env.NEXOHUB_BASE_PATH ?? "/"}recortar-imagem`;
 async function source(page: Page, width = 1200, height = 800) {
@@ -32,11 +33,13 @@ async function open(page: Page) {
   await expect(page.locator(".image-crop-editor")).toHaveAttribute("data-ready", "true");
 }
 async function crop(page: Page, x: number, y: number, w: number, h: number) {
+  await workspaceOptions(page);
   // Reduzir primeiro evita que a coordenada seja limitada pela seleção anterior.
   await page.locator("#crop-w").fill(String(w));
   await page.locator("#crop-h").fill(String(h));
   await page.locator("#crop-x").fill(String(x));
   await page.locator("#crop-y").fill(String(y));
+  await workspaceDocument(page);
 }
 async function rect(page: Page) {
   return Promise.all(

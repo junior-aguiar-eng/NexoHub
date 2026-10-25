@@ -39,3 +39,8 @@ medição: [IMAGE-WEB-QUALITY.md](IMAGE-WEB-QUALITY.md).
 Fabric.js é importado somente no modo avançado da marca d’água. Avisos MIT e OFL da fonte local
 Inter acompanham o build em `apps/client/public/licenses/image-composition/`. O renderizador
 de prévia e download usa Canvas no worker existente; sem dependência de Fabric no worker.
+
+O relatório de comparação incorpora Source Sans 3 3.052R (OFL-1.1), com licença e hash em
+`apps/client/public/fonts/pdf-comparison/`. A incorporação usa `@pdf-lib/fontkit` 1.1.1
+(MIT declarado; README upstream acompanha os arquivos). Fonte, necessidade, manutenção,
+tamanho e validação estão registrados em [COMPARAR-PDF-WEB.md](COMPARAR-PDF-WEB.md).

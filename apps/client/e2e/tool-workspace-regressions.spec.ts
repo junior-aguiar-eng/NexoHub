@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
 import { PDFDocument, StandardFonts } from "pdf-lib";
+import { workspaceOptions } from "./workspace-views";
 
 const toolRoute = (route: string) => `${process.env.NEXOHUB_BASE_PATH ?? "/"}${route}`;
 
@@ -135,10 +136,12 @@ for (const width of [390, 768, 1024, 1440]) {
             };
       await page.locator('input[type="file"]').first().setInputFiles(fixture);
       await expect(page.locator(".dedicated-tool-page--workspace")).toBeVisible();
-      if (route === "preencher-formulario")
+      if (route === "preencher-formulario") {
+        await workspaceOptions(page);
         await expect(page.getByRole("textbox", { name: "nome", exact: true })).toHaveValue(
           "Maria da Silva",
         );
+      }
       if (route === "comparar-textos") {
         await expect(page.locator(".doc-compare-textarea").first()).toHaveValue(
           "Texto de exemplo para trabalhar com documentos.",

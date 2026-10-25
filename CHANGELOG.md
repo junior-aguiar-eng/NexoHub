@@ -1,5 +1,8 @@
 # Changelog
 
+- CMP-C1: navegação por alterações filtradas, ajuste de escala, prévias por demanda e relatório
+  de comparação com fonte local incorporada, texto completo paginado e glifos ausentes explícitos.
+
 Todas as alterações relevantes serão registradas neste arquivo. O projeto usa versionamento
 semântico e os canais `alpha`, `beta`, `rc` e estável.
 

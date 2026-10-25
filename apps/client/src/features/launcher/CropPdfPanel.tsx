@@ -66,9 +66,9 @@ export function CropPdfPanel({
   const visibleHeightPercent = Math.max(10, 100 - margins.top - margins.bottom);
 
   return (
-    <div className="ilovepdf-compress-container">
+    <div className="ilovepdf-compress-container" data-workspace-panel>
       {/* Centro: Pré-visualização com Retângulo Interativo de Recorte */}
-      <div className="ilovepdf-compress-preview-area">
+      <div className="ilovepdf-compress-preview-area" data-workspace-part="document">
         <div
           className="ilovepdf-file-card-center"
           style={{ width: "100%", maxWidth: "var(--workspace-page-width, 860px)" }}
@@ -220,7 +220,7 @@ export function CropPdfPanel({
       </div>
 
       {/* Lateral: Configurações de Recorte */}
-      <aside className="ilovepdf-compress-options-sidebar">
+      <aside className="ilovepdf-compress-options-sidebar" data-workspace-part="options">
         <h3 className="ilovepdf-sidebar-title">{translate("crop.optionsTitle")}</h3>
 
         {/* Escopo de Aplicação */}

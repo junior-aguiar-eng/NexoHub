@@ -122,6 +122,9 @@ for (const name of ["marca-dagua", "numeros-de-pagina", "assinar-pdf", "ocultar-
   test(`${name}: o PDF baixado preserva as mesmas alterações depois de ampliar e navegar`, async ({
     page,
   }) => {
+    // O carimbo de data é um input; fixá-lo isola o efeito do zoom entre as duas saídas.
+    if (name === "assinar-pdf")
+      await page.clock.setFixedTime(new Date("2026-10-25T12:00:00-03:00"));
     const bytes = await fixture();
     const outputs: unknown[] = [];
     for (const zoomed of [false, true]) {

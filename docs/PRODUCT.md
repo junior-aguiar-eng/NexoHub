@@ -42,6 +42,20 @@ offline no computador do usuário.
 Contas obrigatórias, billing, telemetria invasiva, jargões jurídicos e mesas de edição excessivamente
 complexas estão fora do escopo do produto.
 
+## Direção em avaliação — 25/10/2026
+
+Todos os recursos já implementados permanecem gratuitos, inclusive o editor PDF atual.
+O usuário propôs avaliar um módulo futuro de edição avançada pago, composto por capacidades
+novas. Não há autorização para transferir recursos atuais para uma oferta paga. Preços,
+contas, licenciamento e cobrança ainda não estão definidos nem implementados; as garantias
+atuais acima continuam descrevendo o produto disponível.
+
+O usuário confirmou a direção de mesas modernas que ocupem a janela, com documentos em rolagem
+interna e ferramentas/ação principal acessíveis sem percorrer uma página longa. Essa organização
+preserva logo, marca e identidade, e cada ferramenta mantém sua própria mesa. A modernização
+visual contempla as ferramentas gratuitas. Detalhes na
+[proposta de mesas](superpowers/specs/2026-10-24-padrao-mesas-ferramentas-design.md).
+
 ## Idioma
 
 O idioma canônico do NexoHub é português brasileiro (`pt-BR`).

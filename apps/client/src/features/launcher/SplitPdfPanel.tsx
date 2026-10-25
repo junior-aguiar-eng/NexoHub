@@ -85,9 +85,9 @@ export function SplitPdfPanel({
   }
 
   return (
-    <div className="ilovepdf-split-container">
+    <div className="ilovepdf-split-container" data-workspace-panel>
       {/* Área Central de Visualização dos Intervalos */}
-      <div className="ilovepdf-split-preview-area">
+      <div className="ilovepdf-split-preview-area" data-workspace-part="document">
         {splitMode === "interval" ? (
           <div className="ilovepdf-interval-cards-flow">
             {intervals.map((interval, idx) => (
@@ -183,7 +183,7 @@ export function SplitPdfPanel({
       </div>
 
       {/* Painel Lateral Direito de Configuração (Estilo iLovePDF) */}
-      <aside className="ilovepdf-split-options-sidebar">
+      <aside className="ilovepdf-split-options-sidebar" data-workspace-part="options">
         {/* Abas Superiores de Modo */}
         <div className="ilovepdf-split-mode-tabs">
           <button

@@ -27,6 +27,11 @@ export interface PdfComparisonPair {
   readonly height: number;
 }
 export interface PdfComparisonResult {
+  readonly metrics?: {
+    readonly renderCount: number;
+    readonly peakPairPixelBytes: number;
+    readonly retainedImageCharacters: number;
+  };
   readonly pairs: readonly PdfComparisonPair[];
   readonly leftPageCount: number;
   readonly rightPageCount: number;
@@ -35,11 +40,15 @@ export interface PdfComparisonResult {
 }
 export interface PdfComparisonProgress {
   readonly progress: number;
-  readonly phase: "reading" | "aligning" | "comparing" | "done";
+  readonly phase: "reading" | "aligning" | "comparing" | "reporting" | "done";
   readonly currentPage?: number;
   readonly totalPages?: number;
 }
 export interface PdfComparisonOptions {
+  readonly retainImages?: boolean;
+  readonly onPair?: (pair: PdfComparisonPair) => Promise<void>;
+  /** Somente detalhes de um par já alinhado; não substitui a análise completa. */
+  readonly previewPair?: PdfComparisonPair;
   readonly signal?: AbortSignal;
   readonly onProgress?: (info: PdfComparisonProgress) => void;
 }

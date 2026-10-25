@@ -1,5 +1,5 @@
 import { Plus, X } from "lucide-react";
-import { useRef } from "react";
+import { useId, useRef, useState } from "react";
 import { type MessageKey, translate } from "@/i18n";
 import type { ImageBatchEntry } from "@/platform/image-batch";
 
@@ -31,6 +31,8 @@ export function ImageBatchPanel({
   disabled,
   limitExceeded,
 }: Props) {
+  const [expanded, setExpanded] = useState(false);
+  const listId = useId();
   const list = useRef<HTMLOListElement>(null);
   const fileKeys = useRef(new WeakMap<File, string>());
   const nextKey = useRef(0);
@@ -46,7 +48,11 @@ export function ImageBatchPanel({
     return { entry, key: `${key}-${occurrence}` };
   });
   return (
-    <section className="image-batch-panel" aria-label={translate("imageBatch.title")}>
+    <section
+      className="image-batch-panel"
+      aria-label={translate("imageBatch.title")}
+      data-expanded={expanded}
+    >
       <div className="image-batch-heading">
         <div>
           <h2>
@@ -58,8 +64,18 @@ export function ImageBatchPanel({
           <Plus size={16} aria-hidden="true" />
           {translate("imageBatch.add")}
         </button>
+        <button
+          type="button"
+          className="workspace-batch-toggle"
+          aria-label={translate("workspaceLayout.toggleFiles")}
+          aria-expanded={expanded}
+          aria-controls={listId}
+          onClick={() => setExpanded(!expanded)}
+        >
+          {translate("workspaceLayout.files")}
+        </button>
       </div>
-      <ol ref={list} className="image-batch-list">
+      <ol ref={list} id={listId} className="image-batch-list">
         {rows.map(({ entry, key }, index) => (
           <li key={key}>
             <button

@@ -34,6 +34,9 @@ test("mantém ferramentas locais e sugestões quando o website usa o adapter HTT
   await page.getByRole("button", { name: "Digitar Texto" }).click();
   await page.locator("#dedicated-tool-direct-textarea").fill("Eu fasso isso.");
   await page.getByRole("button", { name: "Revisar Texto", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Revisar Texto", exact: true })
+    .waitFor({ state: "visible" });
   await expect(page.getByRole("button", { name: "Revisar Texto", exact: true })).toBeEnabled();
   await expect(page.locator(".text-review-textarea")).toHaveValue("Eu fasso isso.");
   await page.getByRole("button", { name: "Aplicar Todas as Correções" }).click();

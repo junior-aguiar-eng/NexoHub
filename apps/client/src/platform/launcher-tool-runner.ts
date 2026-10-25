@@ -27,7 +27,11 @@ import type { WatermarkPosition } from "./image-engine";
 import { processImage } from "./image-processing";
 import { type ImageResultItem, inspectImageResult } from "./image-results";
 import { performBrowserPdfComparison } from "./pdf-comparison-client";
-import type { PdfComparisonProgress, PdfComparisonResult } from "./pdf-comparison-types";
+import type {
+  PdfComparisonPair,
+  PdfComparisonProgress,
+  PdfComparisonResult,
+} from "./pdf-comparison-types";
 import { renderBrowserPdfPage, reviseBrowserPdf } from "./pdf-editor-client";
 import type { EditorBitmap, EditorRevision, EditorSnapshot } from "./pdf-editor-types";
 import {
@@ -80,6 +84,7 @@ export interface LauncherToolInput {
   readonly editorThumbnails?: boolean;
   readonly editorSignal?: AbortSignal;
   readonly comparisonSignal?: AbortSignal;
+  readonly comparisonPreviewPair?: PdfComparisonPair;
   readonly onComparisonProgress?: (info: PdfComparisonProgress) => void;
   readonly imageSignal?: AbortSignal;
   readonly onImageProgress?: (completed: number, total: number) => void;
@@ -200,6 +205,7 @@ export interface LauncherToolOutput {
   readonly editorRevision?: EditorRevision;
   readonly editorPreview?: EditorBitmap;
   readonly comparison?: PdfComparisonResult;
+  readonly comparisonPreview?: PdfComparisonPair;
   readonly blob: Blob;
   readonly fileName: string;
   readonly categoryKey: "recent.type.pdf" | "recent.type.document";
@@ -529,9 +535,17 @@ async function executeTool(
         input.files.map((file) => file.name),
         {
           signal: input.comparisonSignal,
+          previewPair: input.comparisonPreviewPair,
           onProgress: input.onComparisonProgress,
         },
       );
+      if (input.comparisonPreviewPair)
+        return {
+          blob: input.files[0],
+          fileName: input.files[0].name,
+          categoryKey: "recent.type.document",
+          comparisonPreview: bundle.comparison.pairs[0],
+        };
       return {
         blob: pdfBlob(bundle.report),
         fileName: `${baseName}_comparacao.pdf`,
@@ -1318,6 +1332,7 @@ export async function runLauncherTool(
           PDF_COMPARACAO_SENHA_NECESSARIA: "pdfCompare.errorPassword",
           PDF_COMPARACAO_RENDERIZACAO_INDISPONIVEL: "pdfCompare.errorWorker",
           PDF_COMPARACAO_WORKER_INDISPONIVEL: "pdfCompare.errorWorker",
+          PDF_COMPARACAO_FONTE_INDISPONIVEL: "pdfCompare.errorFont",
           TRADUCAO_DOWNLOAD_TIMEOUT: "workspace.translate.downloadTimeout",
           TRADUCAO_REDE_INDISPONIVEL: "workspace.translate.networkError",
           TRADUCAO_WORKER_INDISPONIVEL: "workspace.translate.workerError",

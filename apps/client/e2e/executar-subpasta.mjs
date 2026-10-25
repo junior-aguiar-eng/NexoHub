@@ -9,7 +9,11 @@ const require = createRequire(import.meta.url);
 const server = await preview({
   root,
   base: "/hub/",
-  preview: { host: "127.0.0.1", port: 4173, strictPort: true },
+  preview: {
+    host: "127.0.0.1",
+    port: Number(process.env.NEXOHUB_E2E_PORT ?? 4173),
+    strictPort: true,
+  },
 });
 
 try {
@@ -23,8 +27,12 @@ try {
         "pdf-viewport.spec.ts",
         "form-preview.spec.ts",
         "pdf-editor.spec.ts",
+        "pdf-compare.spec.ts",
         "security-excel-quality.spec.ts",
         "tool-workspace-regressions.spec.ts",
+        "tool-workspace-layout.spec.ts",
+        "tool-workspace-browser-zoom.spec.ts",
+        "compression-selection.spec.ts",
         "image-batch.spec.ts",
         "image-crop-editor.spec.ts",
         "image-composition.spec.ts",

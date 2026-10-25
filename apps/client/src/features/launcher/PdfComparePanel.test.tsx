@@ -58,6 +58,60 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 describe("PdfComparePanel", () => {
+  it("salta alterações filtradas, mantém zoom e oferece ajuste à largura", async () => {
+    const first = comparison.pairs[0];
+    run.mockResolvedValue({
+      ...output,
+      comparison: {
+        ...comparison,
+        pairs: [
+          { ...first, status: "unchanged", textChanged: false, visualChanged: false },
+          { ...first, index: 1, leftPage: 2, rightPage: 2 },
+          { ...first, index: 2, leftPage: 3, rightPage: 3, leftText: "outra", rightText: "outra" },
+        ],
+      },
+    });
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Comparar PDFs" }));
+    await screen.findByRole("button", { name: "Baixar relatório PDF" });
+    fireEvent.click(screen.getByRole("button", { name: "Visual" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ampliar zoom" }));
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "antigo" } });
+    fireEvent.click(screen.getByRole("button", { name: "Próxima alteração" }));
+    expect(screen.getByText("Par 2 de 3")).toBeInTheDocument();
+    expect(screen.getByText("125%")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Próxima alteração" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Ajustar à largura" }));
+    expect(screen.getByText("100%")).toBeInTheDocument();
+    expect(screen.getByLabelText("Sincronizar rolagem")).toBeChecked();
+  });
+  it("carrega só a prévia visual solicitada e descarta detalhe após troca de arquivo", async () => {
+    const lean = {
+      ...comparison,
+      pairs: comparison.pairs.map(({ leftImage: _l, rightImage: _r, ...pair }) => pair),
+    };
+    let resolve!: (value: LauncherToolOutput) => void;
+    run.mockResolvedValueOnce({ ...output, comparison: lean }).mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        }),
+    );
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Comparar PDFs" }));
+    await screen.findByRole("button", { name: "Baixar relatório PDF" });
+    expect(run).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Visual" }));
+    expect(run).toHaveBeenCalledTimes(2);
+    expect(run.mock.calls[1][2].comparisonPreviewPair).toEqual(lean.pairs[0]);
+    const signal = run.mock.calls[1][2].comparisonSignal;
+    fireEvent.change(screen.getByLabelText("PDF revisado", { selector: "input" }), {
+      target: { files: [files[1]] },
+    });
+    expect(signal?.aborted).toBe(true);
+    await act(async () => resolve({ ...output, comparisonPreview: comparison.pairs[0] }));
+    expect(screen.queryByRole("img", { name: "PDF original" })).not.toBeInTheDocument();
+  });
   it("requires both labeled PDF slots and rejects invalid files", () => {
     render(<PdfComparePanel documentCore={new UnavailableDocumentCorePort()} onBack={vi.fn()} />);
     expect(screen.getByRole("button", { name: "Comparar PDFs" })).toBeDisabled();
@@ -87,6 +141,16 @@ describe("PdfComparePanel", () => {
       const view = setup();
       fireEvent.click(screen.getByRole("button", { name: "Comparar PDFs" }));
       const signal = run.mock.calls[0]?.[2].comparisonSignal;
+      act(() =>
+        run.mock.calls[0]?.[2].onComparisonProgress?.({ phase: "reporting", progress: 96 }),
+      );
+      expect(screen.getAllByText("Gerando relatório").length).toBeGreaterThan(0);
+      expect(
+        screen
+          .getByRole("button", { name: "Cancelar comparação" })
+          .closest(".tool-workspace-actions"),
+      ).not.toBeNull();
+      expect(screen.getByRole("progressbar").closest(".tool-workspace-actions")).not.toBeNull();
       if (action === "cancel")
         fireEvent.click(screen.getByRole("button", { name: "Cancelar comparação" }));
       if (action === "replace")

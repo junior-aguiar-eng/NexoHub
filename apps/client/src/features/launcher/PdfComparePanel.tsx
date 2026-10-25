@@ -5,18 +5,18 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  FileDiff,
   FileUp,
   Minus,
   Plus,
   ShieldCheck,
 } from "lucide-react";
-import { type UIEvent, useEffect, useId, useRef, useState } from "react";
+import { type UIEvent, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { translate } from "@/i18n";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { type LauncherToolOutput, runLauncherTool } from "@/platform/launcher-tool-runner";
 import type { PdfComparisonPair, PdfComparisonProgress } from "@/platform/pdf-comparison-types";
 import { registerToolNavigationGuard } from "@/platform/tool-navigation-guard";
+import { ToolWorkspace } from "./ToolWorkspace";
 import "./PdfComparePanel.css";
 
 export interface PdfComparePanelProps {
@@ -30,6 +30,7 @@ const phaseKeys = {
   reading: "pdfCompare.reading",
   aligning: "pdfCompare.aligning",
   comparing: "pdfCompare.comparing",
+  reporting: "pdfCompare.reporting",
   done: "pdfCompare.done",
 } as const;
 const statusKeys = {
@@ -57,6 +58,14 @@ export function PdfComparePanel({ documentCore, onBack, initialFiles = [] }: Pdf
   const [selected, setSelected] = useState(0);
   const [search, setSearch] = useState("");
   const [zoom, setZoom] = useState(1);
+  const [sizing, setSizing] = useState<"fit" | "actual">("fit");
+  const [detail, setDetail] = useState<PdfComparisonPair | null>(null);
+  const [detailBusy, setDetailBusy] = useState(false);
+  const [detailError, setDetailError] = useState(false);
+  const detailController = useRef<AbortController | null>(null);
+  const detailCache = useRef(new Map<number, PdfComparisonPair>());
+  const pairLabel = useRef<HTMLParagraphElement>(null);
+  const jumpFocus = useRef(false);
   const [sync, setSync] = useState(true);
   const [overlay, setOverlay] = useState(false);
   const [opacity, setOpacity] = useState(0.5);
@@ -74,16 +83,121 @@ export function PdfComparePanel({ documentCore, onBack, initialFiles = [] }: Pdf
   const generation = useRef(0);
   const panes = useRef<(HTMLElement | null)[]>([]);
   const syncing = useRef(false);
+  const zoomAnchors = useRef<{ element: HTMLElement; x: number; y: number }[]>([]);
+  function changeZoom(value: number, size: "fit" | "actual" = sizing) {
+    zoomAnchors.current = panes.current.flatMap((element) =>
+      element
+        ? [
+            {
+              element,
+              x: (element.scrollLeft + element.clientWidth / 2) / Math.max(1, element.scrollWidth),
+              y: (element.scrollTop + element.clientHeight / 2) / Math.max(1, element.scrollHeight),
+            },
+          ]
+        : [],
+    );
+    setZoom(value);
+    setSizing(size);
+  }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Zoom changes the DOM dimensions before restoring the stored scroll anchor.
+  useLayoutEffect(() => {
+    for (const { element, x, y } of zoomAnchors.current) {
+      element.scrollLeft = x * element.scrollWidth - element.clientWidth / 2;
+      element.scrollTop = y * element.scrollHeight - element.clientHeight / 2;
+    }
+    zoomAnchors.current = [];
+  }, [zoom, sizing]);
   const id = useId();
   useEffect(
     () => () => {
       generation.current += 1;
       controller.current?.abort();
+      detailController.current?.abort();
+      detailCache.current.clear();
     },
     [],
   );
   const result = output?.comparison;
-  const pair = result?.pairs[selected];
+  const basePair = result?.pairs[selected];
+  const pair = detail?.index === basePair?.index ? (detail ?? basePair) : basePair;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: A pair change mounts the new panes before focus and scroll are restored.
+  useEffect(() => {
+    if (jumpFocus.current) {
+      for (const pane of panes.current)
+        if (pane) {
+          pane.scrollTop = 0;
+          pane.scrollLeft = 0;
+        }
+      pairLabel.current?.focus({ preventScroll: false });
+      jumpFocus.current = false;
+    }
+  }, [selected]);
+  useEffect(() => {
+    setDetail(null);
+    setDetailError(false);
+    setDetailBusy(false);
+    if (mode !== "visual" || !basePair || basePair.leftImage || basePair.rightImage) return;
+    const cached = detailCache.current.get(basePair.index);
+    if (cached) {
+      setDetail(cached);
+      return;
+    }
+    const [left, right] = files;
+    if (!left || !right) return;
+    const abort = new AbortController();
+    detailController.current = abort;
+    let active = true;
+    setDetailBusy(true);
+    void runLauncherTool(documentCore, "pdf-compare", {
+      files: [left, right],
+      splitMode: "interval",
+      splitIntervals: [],
+      mergeIntervals: false,
+      selectedPages: [],
+      pages: [],
+      rotateAngle: 0,
+      compressionLevel: "recommended",
+      firstText: "",
+      secondText: "",
+      comparisonSignal: abort.signal,
+      comparisonPreviewPair: basePair,
+    })
+      .then((next) => {
+        if (!active || abort.signal.aborted) return;
+        const preview = next.comparisonPreview;
+        if (!preview) throw new Error("COMPARISON_PREVIEW_MISSING");
+        // Dois pares e até 4 MiB estimados de strings; o bitmap decodificado pertence ao DOM ativo.
+        const size = (item: PdfComparisonPair) =>
+          ((item.leftImage?.length ?? 0) +
+            (item.rightImage?.length ?? 0) +
+            (item.diffImage?.length ?? 0)) *
+          2;
+        if (size(preview) <= 4 * 1024 * 1024) {
+          detailCache.current.set(basePair.index, preview);
+          while (
+            detailCache.current.size > 2 ||
+            [...detailCache.current.values()].reduce((sum, item) => sum + size(item), 0) >
+              4 * 1024 * 1024
+          ) {
+            const oldest = detailCache.current.keys().next().value;
+            if (oldest === undefined) break;
+            detailCache.current.delete(oldest);
+          }
+        }
+        setDetail(preview);
+      })
+      .catch(() => {
+        if (active && !abort.signal.aborted) setDetailError(true);
+      })
+      .finally(() => {
+        if (active) setDetailBusy(false);
+      });
+    return () => {
+      active = false;
+      abort.abort();
+      if (detailController.current === abort) detailController.current = null;
+    };
+  }, [basePair, mode, files, documentCore]);
   const canOverlay = !!pair?.leftImage && !!pair?.rightImage;
   const activeOverlay = overlay && canOverlay;
   const textAvailable = !!result?.leftHasText && !!result.rightHasText;
@@ -100,12 +214,21 @@ export function PdfComparePanel({ documentCore, onBack, initialFiles = [] }: Pdf
   function invalidate() {
     generation.current += 1;
     controller.current?.abort();
+    detailController.current?.abort();
+    detailCache.current.clear();
+    setDetail(null);
     controller.current = null;
     setBusy(false);
     setOutput(null);
     setMessage(null);
     setError(null);
     setSelected(0);
+    setZoom(1);
+    setSizing("fit");
+  }
+  function selectPair(index: number) {
+    jumpFocus.current = true;
+    setSelected(index);
   }
   function replace(side: number, file: File | undefined) {
     if (!file) return;
@@ -201,360 +324,428 @@ export function PdfComparePanel({ documentCore, onBack, initialFiles = [] }: Pdf
       <p>{translate("pdfCompare.previewUnavailable")}</p>
     );
   }
-  return (
-    <section className="pdf-compare" aria-labelledby={`${id}-title`}>
-      <button
-        type="button"
-        className="pdf-compare-back"
-        onClick={() => {
-          invalidate();
-          onBack();
-        }}
-      >
-        <ArrowLeft size={18} />
-        {translate("pdfCompare.back")}
-      </button>
-      <header className="pdf-compare-heading">
-        <span className="pdf-compare-emblem">
-          <FileDiff size={30} />
-        </span>
-        <h1 id={`${id}-title`}>{translate("pdfCompare.title")}</h1>
-        <p>{translate("pdfCompare.subtitle")}</p>
-        <span className="pdf-compare-local">
-          <ShieldCheck size={16} />
-          {translate("pdfCompare.local")}
-        </span>
-      </header>
-      <div className="pdf-compare-upload-row">
-        {(["pdfCompare.original", "pdfCompare.revised"] as const).map((key, side) => (
-          <section
-            aria-label={`${translate(key)}: ${translate("pdfCompare.choose")}`}
-            key={key}
-            className="pdf-compare-slot"
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              replace(side, event.dataTransfer.files[0]);
-            }}
-          >
-            <label htmlFor={`${id}-file-${side}`}>
-              <span className="pdf-compare-slot-title">{translate(key)}</span>
-              <FileUp size={30} />
-              <strong title={files[side]?.name}>
-                {files[side]?.name ?? translate("pdfCompare.choose")}
-              </strong>
-              <span>{files[side] ? translate("pdfCompare.replace") : "PDF"}</span>
-            </label>
-            <input
-              id={`${id}-file-${side}`}
-              type="file"
-              aria-label={translate(key)}
-              accept=".pdf,application/pdf"
-              onChange={(event) => {
-                replace(side, event.target.files?.[0]);
-                event.target.value = "";
-              }}
-            />
-          </section>
-        ))}
-      </div>
-      <p className="pdf-compare-note">{translate("pdfCompare.limits")}</p>
-      <div className="pdf-compare-actions">
-        <button
-          type="button"
-          onClick={() => {
-            invalidate();
-            setFiles([files[1], files[0]]);
+  const fileSlots = (
+    <div className="pdf-compare-upload-row">
+      {(["pdfCompare.original", "pdfCompare.revised"] as const).map((key, side) => (
+        <section
+          aria-label={`${translate(key)}: ${translate("pdfCompare.choose")}`}
+          key={key}
+          className="pdf-compare-slot"
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            replace(side, event.dataTransfer.files[0]);
           }}
-          disabled={!files[0] && !files[1]}
         >
-          <ArrowLeftRight size={18} />
-          {translate("pdfCompare.swap")}
-        </button>
-        <button
-          type="button"
-          className="pdf-compare-primary"
-          disabled={!files[0] || !files[1] || busy}
-          onClick={() => void compare()}
-        >
-          {translate("pdfCompare.run")}
-        </button>
-        {busy && (
+          <label htmlFor={`${id}-file-${side}`}>
+            <span className="pdf-compare-slot-title">{translate(key)}</span>
+            <FileUp size={30} />
+            <strong title={files[side]?.name}>
+              {files[side]?.name ?? translate("pdfCompare.choose")}
+            </strong>
+            <span>{files[side] ? translate("pdfCompare.replace") : "PDF"}</span>
+          </label>
+          <input
+            id={`${id}-file-${side}`}
+            type="file"
+            aria-label={translate(key)}
+            accept=".pdf,application/pdf"
+            onChange={(event) => {
+              replace(side, event.target.files?.[0]);
+              event.target.value = "";
+            }}
+          />
+        </section>
+      ))}
+    </div>
+  );
+  return (
+    <ToolWorkspace
+      titleId={`${id}-title`}
+      className="pdf-compare"
+      documentReady={!!result}
+      header={
+        <>
           <button
             type="button"
+            className="pdf-compare-back"
             onClick={() => {
               invalidate();
-              setMessage(translate("pdfCompare.cancelled"));
+              onBack();
             }}
           >
-            {translate("pdfCompare.cancel")}
+            <ArrowLeft size={18} />
+            {translate("pdfCompare.back")}
           </button>
-        )}
-      </div>
-      {error && (
-        <p role="alert" className="pdf-compare-warning">
-          {error}
-        </p>
-      )}
-      {message && <p role="status">{message}</p>}
-      {busy && (
-        <div className="pdf-compare-progress" role="status">
-          <span>{translate(phaseKeys[progress.phase])}</span>
-          <progress
-            max={100}
-            value={progress.progress}
-            aria-label={translate(phaseKeys[progress.phase])}
-          />
-          <span>{Math.round(progress.progress)}%</span>
-        </div>
-      )}
-      {result && (
-        <div className="pdf-compare-results">
-          {!textAvailable && (
-            <p role="status" className="pdf-compare-warning">
-              {translate("pdfCompare.scanned")}
+          <h1 id={`${id}-title`}>{translate("pdfCompare.title")}</h1>
+          <span className="pdf-compare-local">
+            <ShieldCheck size={16} />
+            {translate("pdfCompare.local")}
+          </span>
+        </>
+      }
+      options={
+        <>
+          {result && fileSlots}
+          <p className="pdf-compare-note">{translate("pdfCompare.limits")}</p>
+          <div className="pdf-compare-actions">
+            <button
+              type="button"
+              onClick={() => {
+                invalidate();
+                setFiles([files[1], files[0]]);
+              }}
+              disabled={!files[0] && !files[1]}
+            >
+              <ArrowLeftRight size={18} />
+              {translate("pdfCompare.swap")}
+            </button>
+          </div>
+          {error && (
+            <p role="alert" className="pdf-compare-warning">
+              {error}
             </p>
           )}
-          <p className="pdf-compare-note">{translate("pdfCompare.alignmentNotice")}</p>
-          <div className="pdf-compare-toolbar">
-            <div className="pdf-compare-modes">
-              {(["text", "visual"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={mode === value}
-                  disabled={value === "text" && !textAvailable}
-                  onClick={() => setMode(value)}
-                >
-                  {translate(value === "text" ? "pdfCompare.text" : "pdfCompare.visual")}
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={() => void download(output.blob, output.fileName)}>
-              <Download size={16} />
-              {translate("pdfCompare.report")}
-            </button>
-            {output.secondaryBlob && (
-              <button
-                type="button"
-                onClick={() =>
-                  output.secondaryBlob &&
-                  void download(output.secondaryBlob, output.secondaryFileName ?? "comparacao.json")
-                }
-              >
-                {translate("pdfCompare.json")}
-              </button>
-            )}
-          </div>
-          <div className="pdf-compare-workspace">
-            <aside className="pdf-compare-changes" aria-label={translate("pdfCompare.changes")}>
-              <h2>
-                {translate("pdfCompare.changes")} <span>{changes.length}</span>
-              </h2>
-              <input
-                type="search"
-                aria-label={translate("pdfCompare.search")}
-                placeholder={translate("pdfCompare.search")}
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
-              <div className="pdf-compare-change-list">
-                {changes.map((item) => (
+          {message && <p role="status">{message}</p>}
+
+          {result && (
+            <>
+              <div className="pdf-compare-modes">
+                {(["text", "visual"] as const).map((value) => (
                   <button
-                    key={item.index}
+                    key={value}
                     type="button"
-                    aria-current={pair?.index === item.index ? "true" : undefined}
-                    onClick={() => setSelected(result.pairs.indexOf(item))}
+                    aria-pressed={mode === value}
+                    disabled={value === "text" && !textAvailable}
+                    onClick={() => setMode(value)}
                   >
-                    <strong>{pageLabel(item)}</strong>
-                    <span className={`pdf-compare-status--${item.status}`}>
-                      {translate(statusKeys[item.status])}
-                    </span>
+                    {translate(value === "text" ? "pdfCompare.text" : "pdfCompare.visual")}
                   </button>
                 ))}
-                {changes.length === 0 && <p>{translate("pdfCompare.noChanges")}</p>}
               </div>
-            </aside>
-            <div className="pdf-compare-view">
-              <nav className="pdf-compare-pager" aria-label={translate("pdfCompare.pair")}>
-                <button
-                  type="button"
-                  aria-label={translate("pdfCompare.previous")}
-                  disabled={selected === 0}
-                  onClick={() => setSelected((value) => value - 1)}
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <span>
-                  {translate("pdfCompare.pair")} {selected + 1} {translate("pdfCompare.of")}{" "}
-                  {result.pairs.length}
-                </span>
-                <button
-                  type="button"
-                  aria-label={translate("pdfCompare.next")}
-                  disabled={selected >= result.pairs.length - 1}
-                  onClick={() => setSelected((value) => value + 1)}
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </nav>
-              {mode === "visual" && (
-                <div className="pdf-compare-visual-tools">
-                  <button
-                    type="button"
-                    aria-label={translate("pdfCompare.zoomOut")}
-                    disabled={zoom <= 0.5}
-                    onClick={() => setZoom((value) => Math.max(0.5, value - 0.25))}
-                  >
-                    <Minus size={16} />
-                  </button>
-                  <output aria-live="polite">{Math.round(zoom * 100)}%</output>
-                  <button
-                    type="button"
-                    aria-label={translate("pdfCompare.zoomIn")}
-                    disabled={zoom >= 2}
-                    onClick={() => setZoom((value) => Math.min(2, value + 0.25))}
-                  >
-                    <Plus size={16} />
-                  </button>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={sync}
-                      onChange={(event) => setSync(event.target.checked)}
-                    />
-                    {translate("pdfCompare.sync")}
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={activeOverlay}
-                      disabled={!canOverlay}
-                      onChange={(event) => setOverlay(event.target.checked)}
-                    />
-                    {translate("pdfCompare.overlay")}
-                  </label>
-                  {activeOverlay && (
-                    <label>
-                      {translate("pdfCompare.opacity")}
-                      <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.05"
-                        value={opacity}
-                        onChange={(event) => setOpacity(Number(event.target.value))}
-                      />
-                    </label>
-                  )}
-                </div>
+
+              {!textAvailable && (
+                <p role="status" className="pdf-compare-warning">
+                  {translate("pdfCompare.scanned")}
+                </p>
               )}
-              {pair && (
-                <>
-                  <p className="pdf-compare-pair-label">
-                    {pageLabel(pair)} · {translate(statusKeys[pair.status])}
-                  </p>
-                  {pair.geometryChanged && (
-                    <p className="pdf-compare-warning">{translate("pdfCompare.geometryChanged")}</p>
-                  )}
-                  {mode === "text" ? (
-                    <section className="pdf-compare-text" aria-label={translate("pdfCompare.text")}>
-                      {!pair.leftText.trim() || !pair.rightText.trim() ? (
-                        <p className="pdf-compare-warning">
-                          {translate("pdfCompare.pageTextUnavailable")}
-                        </p>
-                      ) : null}
-                      {pair.textDiff.lines.map((line) => (
-                        <div
-                          key={line.id}
-                          className={`pdf-compare-line pdf-compare-line--${line.type}`}
-                        >
-                          <span aria-hidden="true">
-                            {line.type === "added" ? "+" : line.type === "removed" ? "−" : " "}
-                          </span>
-                          <p>
-                            {line.words?.length
-                              ? line.words.map((word) =>
-                                  word.type === "unchanged" ? (
-                                    <span key={word.id}>{word.text}</span>
-                                  ) : (
-                                    <mark
-                                      key={word.id}
-                                      className={`pdf-compare-word--${word.type}`}
-                                    >
-                                      {word.text}
-                                    </mark>
-                                  ),
-                                )
-                              : line.content}
-                          </p>
-                        </div>
-                      ))}
-                    </section>
-                  ) : (
-                    <div
-                      className={`pdf-compare-previews ${activeOverlay ? "pdf-compare-previews--overlay" : ""}`}
+              <p className="pdf-compare-note">{translate("pdfCompare.alignmentNotice")}</p>
+              <aside className="pdf-compare-changes" aria-label={translate("pdfCompare.changes")}>
+                <h2>
+                  {translate("pdfCompare.changes")} <span>{changes.length}</span>
+                </h2>
+                <input
+                  type="search"
+                  aria-label={translate("pdfCompare.search")}
+                  placeholder={translate("pdfCompare.search")}
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+                <div className="pdf-compare-change-list">
+                  {changes.map((item) => (
+                    <button
+                      key={item.index}
+                      type="button"
+                      aria-current={pair?.index === item.index ? "true" : undefined}
+                      onClick={() => selectPair(result.pairs.indexOf(item))}
                     >
-                      {(activeOverlay ? [0] : [0, 1]).map((side) => (
-                        <section key={side} className="pdf-compare-preview">
-                          <h3>
-                            {translate(side === 0 ? "pdfCompare.original" : "pdfCompare.revised")}
-                          </h3>
-                          <section
-                            className="pdf-compare-scroll"
-                            ref={(element) => {
-                              panes.current[side] = element;
-                            }}
-                            onScroll={(event) => syncScroll(event, side)}
-                            // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users must be able to scroll the PDF preview.
-                            tabIndex={0}
-                            aria-label={translate(
-                              side === 0 ? "pdfCompare.original" : "pdfCompare.revised",
-                            )}
-                          >
-                            <div className="pdf-compare-image" style={{ width: `${zoom * 100}%` }}>
-                              {(side === 0 ? pair.leftPage : pair.rightPage) === null ? (
-                                <p>{translate("pdfCompare.missingPage")}</p>
-                              ) : (
-                                renderImage(
-                                  side === 0 ? pair.leftImage : pair.rightImage,
-                                  translate(
-                                    side === 0 ? "pdfCompare.original" : "pdfCompare.revised",
-                                  ),
-                                )
-                              )}
-                              {activeOverlay && pair.rightImage && (
-                                <div className="pdf-compare-overlay" style={{ opacity }}>
-                                  {renderImage(pair.rightImage, translate("pdfCompare.revised"))}
-                                </div>
-                              )}
-                              {pair.regions.map((region) => (
-                                <span
-                                  key={`${region.x}-${region.y}-${region.width}-${region.height}`}
-                                  className="pdf-compare-region"
-                                  aria-hidden="true"
-                                  style={{
-                                    left: `${region.x * 100}%`,
-                                    top: `${region.y * 100}%`,
-                                    width: `${region.width * 100}%`,
-                                    height: `${region.height * 100}%`,
-                                  }}
-                                />
-                              ))}
-                            </div>
-                          </section>
-                        </section>
-                      ))}
-                    </div>
-                  )}
-                  <p className="pdf-compare-note">{translate("pdfCompare.legend")}</p>
-                </>
+                      <strong>{pageLabel(item)}</strong>
+                      <span className={`pdf-compare-status--${item.status}`}>
+                        {translate(statusKeys[item.status])}
+                      </span>
+                    </button>
+                  ))}
+                  {changes.length === 0 && <p>{translate("pdfCompare.noChanges")}</p>}
+                </div>
+              </aside>
+            </>
+          )}
+        </>
+      }
+      actions={
+        <>
+          {busy ? (
+            <>
+              <div className="pdf-compare-progress" role="status">
+                <span>{translate(phaseKeys[progress.phase])}</span>
+                <progress
+                  max={100}
+                  value={progress.progress}
+                  aria-label={translate(phaseKeys[progress.phase])}
+                />
+                <span>{Math.round(progress.progress)}%</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  invalidate();
+                  setMessage(translate("pdfCompare.cancelled"));
+                }}
+              >
+                {translate("pdfCompare.cancel")}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="pdf-compare-primary"
+              disabled={!files[0] || !files[1]}
+              onClick={() => void compare()}
+            >
+              {translate("pdfCompare.run")}
+            </button>
+          )}
+          {result && output && (
+            <>
+              <button type="button" onClick={() => void download(output.blob, output.fileName)}>
+                <Download size={16} />
+                {translate("pdfCompare.report")}
+              </button>
+              {output.secondaryBlob && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    output.secondaryBlob &&
+                    void download(
+                      output.secondaryBlob,
+                      output.secondaryFileName ?? "comparacao.json",
+                    )
+                  }
+                >
+                  {translate("pdfCompare.json")}
+                </button>
+              )}
+            </>
+          )}
+        </>
+      }
+    >
+      {!result ? (
+        <div className="pdf-compare-entry">
+          <p>{translate("pdfCompare.subtitle")}</p>
+          {fileSlots}
+        </div>
+      ) : (
+        <div className="pdf-compare-view">
+          <nav className="pdf-compare-pager" aria-label={translate("pdfCompare.pair")}>
+            <button
+              type="button"
+              aria-label={translate("pdfCompare.previous")}
+              disabled={selected === 0}
+              onClick={() => selectPair(selected - 1)}
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <span>
+              {translate("pdfCompare.pair")} {selected + 1} {translate("pdfCompare.of")}{" "}
+              {result.pairs.length}
+            </span>
+            <button
+              type="button"
+              aria-label={translate("pdfCompare.next")}
+              disabled={selected >= result.pairs.length - 1}
+              onClick={() => selectPair(selected + 1)}
+            >
+              <ChevronRight size={18} />
+            </button>
+          </nav>
+          <nav className="pdf-compare-change-nav" aria-label={translate("pdfCompare.changes")}>
+            <button
+              type="button"
+              disabled={!changes.some((item) => item.index < selected)}
+              onClick={() => {
+                const target = changes.filter((item) => item.index < selected).at(-1);
+                if (target) selectPair(target.index);
+              }}
+            >
+              {translate("pdfCompare.previousChange")}
+            </button>
+            <button
+              type="button"
+              disabled={!changes.some((item) => item.index > selected)}
+              onClick={() => {
+                const target = changes.find((item) => item.index > selected);
+                if (target) selectPair(target.index);
+              }}
+            >
+              {translate("pdfCompare.nextChange")}
+            </button>
+          </nav>
+          {mode === "visual" && (
+            <div className="pdf-compare-visual-tools">
+              <button
+                type="button"
+                aria-pressed={sizing === "fit" && zoom === 1}
+                onClick={() => {
+                  changeZoom(1, "fit");
+                }}
+              >
+                {translate("pdfCompare.fitWidth")}
+              </button>
+              <button
+                type="button"
+                aria-pressed={sizing === "actual" && zoom === 1}
+                onClick={() => {
+                  changeZoom(1, "actual");
+                }}
+              >
+                {translate("pdfCompare.actualSize")}
+              </button>
+              <button
+                type="button"
+                aria-label={translate("pdfCompare.zoomOut")}
+                disabled={zoom <= 0.5}
+                onClick={() => changeZoom(Math.max(0.5, zoom - 0.25))}
+              >
+                <Minus size={16} />
+              </button>
+              <output aria-live="polite">{Math.round(zoom * 100)}%</output>
+              <button
+                type="button"
+                aria-label={translate("pdfCompare.zoomIn")}
+                disabled={zoom >= 2}
+                onClick={() => changeZoom(Math.min(2, zoom + 0.25))}
+              >
+                <Plus size={16} />
+              </button>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={sync}
+                  onChange={(event) => setSync(event.target.checked)}
+                />
+                {translate("pdfCompare.sync")}
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={activeOverlay}
+                  disabled={!canOverlay}
+                  onChange={(event) => setOverlay(event.target.checked)}
+                />
+                {translate("pdfCompare.overlay")}
+              </label>
+              {activeOverlay && (
+                <label>
+                  {translate("pdfCompare.opacity")}
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={opacity}
+                    onChange={(event) => setOpacity(Number(event.target.value))}
+                  />
+                </label>
               )}
             </div>
-          </div>
+          )}
+          {pair && (
+            <>
+              <p className="pdf-compare-pair-label" ref={pairLabel} tabIndex={-1}>
+                {pageLabel(pair)} · {translate(statusKeys[pair.status])}
+              </p>
+              {detailBusy && <p role="status">{translate("pdfCompare.loadingPreview")}</p>}
+              {detailError && <p role="alert">{translate("pdfCompare.previewUnavailable")}</p>}
+              {pair.geometryChanged && (
+                <p className="pdf-compare-warning">{translate("pdfCompare.geometryChanged")}</p>
+              )}
+              {mode === "text" ? (
+                <section className="pdf-compare-text" aria-label={translate("pdfCompare.text")}>
+                  {!pair.leftText.trim() || !pair.rightText.trim() ? (
+                    <p className="pdf-compare-warning">
+                      {translate("pdfCompare.pageTextUnavailable")}
+                    </p>
+                  ) : null}
+                  {pair.textDiff.lines.map((line) => (
+                    <div
+                      key={line.id}
+                      className={`pdf-compare-line pdf-compare-line--${line.type}`}
+                    >
+                      <span aria-hidden="true">
+                        {line.type === "added" ? "+" : line.type === "removed" ? "−" : " "}
+                      </span>
+                      <p>
+                        {line.words?.length
+                          ? line.words.map((word) =>
+                              word.type === "unchanged" ? (
+                                <span key={word.id}>{word.text}</span>
+                              ) : (
+                                <mark key={word.id} className={`pdf-compare-word--${word.type}`}>
+                                  {word.text}
+                                </mark>
+                              ),
+                            )
+                          : line.content}
+                      </p>
+                    </div>
+                  ))}
+                </section>
+              ) : (
+                <div
+                  className={`pdf-compare-previews ${activeOverlay ? "pdf-compare-previews--overlay" : ""}`}
+                >
+                  {(activeOverlay ? [0] : [0, 1]).map((side) => (
+                    <section key={side} className="pdf-compare-preview">
+                      <h3>
+                        {translate(side === 0 ? "pdfCompare.original" : "pdfCompare.revised")}
+                      </h3>
+                      <section
+                        className="pdf-compare-scroll"
+                        ref={(element) => {
+                          panes.current[side] = element;
+                        }}
+                        onScroll={(event) => syncScroll(event, side)}
+                        // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users must be able to scroll the PDF preview.
+                        tabIndex={0}
+                        aria-label={translate(
+                          side === 0 ? "pdfCompare.original" : "pdfCompare.revised",
+                        )}
+                      >
+                        <div
+                          className="pdf-compare-image"
+                          style={{
+                            width: sizing === "fit" ? `${zoom * 100}%` : `${pair.width * zoom}px`,
+                          }}
+                        >
+                          {(side === 0 ? pair.leftPage : pair.rightPage) === null ? (
+                            <p>{translate("pdfCompare.missingPage")}</p>
+                          ) : (
+                            renderImage(
+                              side === 0 ? pair.leftImage : pair.rightImage,
+                              translate(side === 0 ? "pdfCompare.original" : "pdfCompare.revised"),
+                            )
+                          )}
+                          {activeOverlay && pair.rightImage && (
+                            <div className="pdf-compare-overlay" style={{ opacity }}>
+                              {renderImage(pair.rightImage, translate("pdfCompare.revised"))}
+                            </div>
+                          )}
+                          {pair.regions.map((region) => (
+                            <span
+                              key={`${region.x}-${region.y}-${region.width}-${region.height}`}
+                              className="pdf-compare-region"
+                              aria-hidden="true"
+                              style={{
+                                left: `${region.x * 100}%`,
+                                top: `${region.y * 100}%`,
+                                width: `${region.width * 100}%`,
+                                height: `${region.height * 100}%`,
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    </section>
+                  ))}
+                </div>
+              )}
+              <p className="pdf-compare-note">{translate("pdfCompare.legend")}</p>
+            </>
+          )}
         </div>
       )}
-    </section>
+    </ToolWorkspace>
   );
 }

@@ -56,7 +56,7 @@ export async function performBrowserPdfComparison(
       };
       const l = left.slice().buffer,
         r = right.slice().buffer;
-      worker.postMessage({ left: l, right: r, names }, [l, r]);
+      worker.postMessage({ left: l, right: r, names, previewPair: options.previewPair }, [l, r]);
     } catch {
       cleanup();
       reject(new Error("PDF_COMPARACAO_WORKER_INDISPONIVEL"));

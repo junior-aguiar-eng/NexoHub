@@ -69,9 +69,9 @@ export function PdfToExcelPanel({
   const displayRows = previewRows ?? [];
 
   return (
-    <div className="pdf-excel-container" data-testid="pdf-to-excel-panel">
+    <div className="pdf-excel-container" data-workspace-panel data-testid="pdf-to-excel-panel">
       {/* Coluna Lateral: Opções da Planilha */}
-      <div className="pdf-excel-sidebar">
+      <div className="pdf-excel-sidebar" data-workspace-part="options">
         <div className="pdf-excel-card">
           <div className="pdf-excel-header">
             <FileSpreadsheet className="text-emerald-500" size={20} />
@@ -208,7 +208,7 @@ export function PdfToExcelPanel({
       </div>
 
       {/* Coluna Central: Visualização e Prévia */}
-      <div className="pdf-excel-main">
+      <div className="pdf-excel-main" data-workspace-part="document">
         {/* Cartão de Resumo do Arquivo */}
         <div className="pdf-excel-file-card">
           <div className="file-card-details">

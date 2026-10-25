@@ -97,10 +97,11 @@ export function ExtractImagesPanel({
   }
 
   return (
-    <div className="ilovepdf-compress-container">
+    <div className="ilovepdf-compress-container" data-workspace-panel>
       {/* Centro: Galeria Interativa ou Miniatura Principal */}
       <div
         className="ilovepdf-compress-preview-area"
+        data-workspace-part="document"
         style={{ overflowY: "auto", maxHeight: "80vh" }}
       >
         {extractedImages.length > 0 ? (
@@ -388,7 +389,7 @@ export function ExtractImagesPanel({
       </div>
 
       {/* Barra Lateral: Configurações de Extração */}
-      <aside className="ilovepdf-compress-options-sidebar">
+      <aside className="ilovepdf-compress-options-sidebar" data-workspace-part="options">
         <h3 className="ilovepdf-sidebar-title">{translate("extractImages.optionsTitle")}</h3>
 
         {/* Escopo de Páginas */}

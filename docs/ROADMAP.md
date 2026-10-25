@@ -19,7 +19,7 @@
 | 14 | Receitas NexoFlow (DAG visual, presets e runner topológico integrados) | Concluída |
 | 15 | Hardening orientado a falhas, limites de segurança e mitigação de vulnerabilidades | Concluída |
 | 16 | Release engineering (Instalador Windows Inno Setup Authenticode, CI multi-job e Deploy Cloud Run contínuo) | Concluída |
-| 17 | Recuperação Estrutural de PDF (`pdf-repair` local-first para reconstrução de xref e trailers corrompidos) | Planejada |
+| 17 | Recuperação Estrutural de PDF (`pdf-repair` local-first para reconstrução de xref e trailers corrompidos) | Motor web implementado; homologação nativa pendente |
 | 18 | Motor de Documentos Office (ADR e sidecar para conversão fiel bidirecional Word, PowerPoint e Excel) | Planejada |
 | 19 | Arquivamento Padronizado PDF/A (Conversão com conformidade ISO 19005-1/2 e validação estrita) | Planejada |
 | 20 | PDF Intelligence Local (Resumo documental via modelos neurais estritamente locais em WebGPU/ONNX) | Planejada |
@@ -49,7 +49,7 @@ para relatórios de auditoria ou planos novos.
 | 9 | OCR-C1/DOC-C2: preparação de digitalizações para OCR | Estabilização / Quatro ferramentas | Prova técnica; um único pré-processador compartilhado |
 | 10 | XL-C1/MD-C1: tabelas e ordem de leitura mais controláveis | Estabilização | Planejado para web local; Camelot/Docling condicionados a decisão de runtime |
 | 11 | IM-C4: qualidade de exportação e AVIF; DOC-C3: paginação HTML; TR-C1: tradução | Respectivos planos acima | Qualidade de exportação IM-C4 entregue; AVIF/DOC-C3 condicionados; TR-C1 deve anteceder qualquer declaração de licença comercial do tradutor |
-| 12 | R-C1: avaliar qpdf para Reparar PDF | [Reparar PDF](REPARAR-PDF.md#complementação-do-motor--24102026) | Prova técnica dentro da fase 17 já existente; ferramenta continua planejada |
+| 12 | R-C1: avaliar qpdf para Reparar PDF | [Reparar PDF](REPARAR-PDF.md#complementação-do-motor--24102026) | Avaliação qpdf pendente; motor web existente preservado na integração |
 
 ### Regras comuns de execução e aceite
 
@@ -63,6 +63,13 @@ com a tarefa 4 concluída no website local: check, 704 unitários com dois worke
 Homologação nativa Windows e publicação permanecem separadas; a migração não foi publicada. Todos os recursos atuais
 continuam gratuitos; um futuro editor avançado pago é uma hipótese comercial em avaliação.
 Essa proposta não muda o escopo das complementações funcionais abaixo.
+
+**Consolidação local (25/10/2026):** as melhorias e as mesas foram integradas com a `main`
+em `a5aef3f`, preservando Reparar PDF. A base web integrada passou em 714 unitários com dois
+workers, 267 E2E na raiz (cinco exclusivos da subpasta pulados) e 156 em `/hub/`, além de
+check, builds e licenças. [Registro da integração](INTEGRACAO-FERRAMENTAS-MESAS-2026-10-25.md).
+O checkout principal com alterações locais de PDF→Word foi preservado; não houve publicação.
+OCR-C1/DOC-C2 continua sendo o próximo complemento, sem implementação nesta consolidação.
 
 - **Uma tarefa por vez:** reprovar o cenário antes da correção, implementar, validar o resultado
   exportado e registrar evidências no plano responsável antes de marcar concluído.

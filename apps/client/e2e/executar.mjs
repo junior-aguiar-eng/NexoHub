@@ -13,9 +13,10 @@ try {
   const codigoSaida = await new Promise((resolve, reject) => {
     const windows = process.platform === "win32";
     const comando = windows ? (process.env.ComSpec ?? "cmd.exe") : "pnpm";
+    const argumentosExtras = process.argv.slice(2);
     const argumentos = windows
-      ? ["/d", "/s", "/c", "pnpm exec playwright test"]
-      : ["exec", "playwright", "test"];
+      ? ["/d", "/s", "/c", `pnpm exec playwright test ${argumentosExtras.join(" ")}`.trim()]
+      : ["exec", "playwright", "test", ...argumentosExtras];
     const processo = spawn(comando, argumentos, {
       stdio: "inherit",
       windowsHide: true,

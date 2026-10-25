@@ -8,6 +8,14 @@ semântico e os canais `alpha`, `beta`, `rc` e estável.
 
 ## [Não publicado] - 2026-10-23
 
+### Adicionado
+
+- **Reparar PDF (`pdf-repair`)**:
+  - Implementação do motor de recuperação resiliente `pdf-repair-engine.ts` capaz de higienizar cabeçalhos corrompidos (`%PDF-`), remover lixo inicial/BOM, restaurar marcadores truncados no rodapé (`%%EOF`, `startxref`), reconectar referências a Cross-Reference Streams (`/Type /XRef`) e resgatar páginas íntegras página a página.
+  - Tela dedicada `PdfRepairPanel` exibindo diagnóstico detalhado de reparo (Xref, Trailer, EOF, Cabeçalho, contagem de páginas salvas e comparação de bytes recuperados vs. originais) com pré-visualização de página e botão de download.
+  - Cobertura integral com 6 testes unitários no motor e testes de interface no Vitest, além de cenário de qualidade ponta a ponta no Playwright.
+  - Expansão do catálogo de ferramentas ativas para 35 ferramentas operacionais.
+
 ### Modificado
 
 - Editor PDF navega na revisão validada por renderização isolada e cache LRU de páginas;

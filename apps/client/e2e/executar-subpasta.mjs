@@ -28,6 +28,7 @@ try {
         "form-preview.spec.ts",
         "pdf-editor.spec.ts",
         "pdf-compare.spec.ts",
+        "pdf-repair-integration.spec.ts",
         "security-excel-quality.spec.ts",
         "tool-workspace-regressions.spec.ts",
         "tool-workspace-layout.spec.ts",

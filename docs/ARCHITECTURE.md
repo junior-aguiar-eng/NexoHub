@@ -63,7 +63,7 @@ O `@nexohub/tool-registry` é o catálogo canônico consumido pelas superfícies
 `@nexohub/tool-sdk` valida manifestos, antecipa indisponibilidade e encaminha execuções canceláveis
 ao adapter declarado.
 
-O ecossistema conta com 34 ferramentas ativas no website, descritas no
+O ecossistema conta com 35 ferramentas ativas no catálogo web deste checkout, descritas no
 [catálogo canônico](CATALOGO-FERRAMENTAS.md). Entre seus grupos estão:
 - **Manipulação documental de PDF:** `pdf-organize`, `pdf-merge`, `pdf-split`, `pdf-rotate`, `pdf-compress`,
   `images-to-pdf`, `pdf-to-jpg`, `pdf-watermark` e `pdf-page-numbers` (executores em `pdf-lib` no

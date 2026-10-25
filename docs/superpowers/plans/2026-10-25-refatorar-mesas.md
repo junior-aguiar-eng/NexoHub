@@ -15,7 +15,9 @@ registry, workers e executores documentais existentes permanecem responsáveis p
 - Apenas mesas: sem edição avançada nova, autenticação, cobrança, bloqueios ou substituição de motor.
 - Manter logo/brand, catálogo, rotas, todos os recursos atuais gratuitos e originais imutáveis.
 - Seletor de famílias existe apenas na maquete; cada ferramenta continua independente.
-- Sem commit, push, merge ou deploy. Preservar CMP-C1 e demais alterações locais preexistentes.
+- Na execução original, sem commit, push, merge ou deploy. Preservar CMP-C1 e demais alterações
+  locais preexistentes. Em solicitação posterior de 25/10/2026, o usuário autorizou consolidar
+  commits e integrar com a `main`; push, publicação e deploy continuam fora dessa autorização.
 - Não duplicar o backlog funcional: o próximo complemento continua OCR-C1/DOC-C2 depois desta adequação.
 - Website local; preservar contratos e exportações. Textos novos usam chaves pt-BR.
 
@@ -221,4 +223,5 @@ a largura interna passou de 1358 para 679 px e o DPR passou de 1 para 2. O regis
 das rodadas, falhas reproduzidas e regressões está em `progress.md` na mesma pasta de evidências.
 
 A execução nativa Windows permanece inconclusiva e separada do aceite do website local.
-Integração à `main`, commit, push e publicação continuam fora desta autorização.
+Este fechamento antecedeu a autorização posterior de consolidação dos commits e integração
+com a `main`, em 25/10/2026. Push e publicação continuam separados e não foram solicitados.

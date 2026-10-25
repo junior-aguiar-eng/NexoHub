@@ -9,9 +9,9 @@ Data da última auditoria canônica: 23/10/2026.
 ## 1. Visão Geral do Inventário
 
 - **Total mapeado no ecossistema:** 42 ferramentas
-- **Implementadas e operacionais:** 34 ferramentas (28 PDF/Texto + 6 Imagem)
+- **Implementadas e operacionais:** 35 ferramentas (29 PDF/Texto + 6 Imagem)
 - **Parciais / Em homologação técnica:** 1 ferramenta (DOCX via sidecar na Fase 11)
-- **Planejadas / Pendentes de ADR ou implementação:** 8 ferramentas
+- **Planejadas / Pendentes de ADR ou implementação:** 7 ferramentas
 
 ---
 
@@ -36,6 +36,7 @@ Data da última auditoria canônica: 23/10/2026.
 | `pdf-redact` | Ocultar PDF (Tarja) | Segurança | Implementada | Web, Desktop, HTTP | browser | Modo imagem padrão; preservação opcional para PDFs simples, com remoção nativa, recusas explícitas e revisão do arquivo gerado. |
 | `pdf-compare` | Comparar PDF | Segurança | Implementada | Web, Desktop, HTTP | browser | Análise estrutural/visual entre duas versões com relatório gerado. |
 | `pdf-compress` | Comprimir PDF | Otimizar | Implementada | Web, Desktop, HTTP | native (fallback browser) | Perfis de compressão estrutural e reencodagem de imagens. Rejeita PDFs assinados. |
+| `pdf-repair` | Reparar PDF | Otimizar | Implementada | Web, Desktop, HTTP | browser | Reconstrução de xref/trailer, resgate resiliente de páginas legíveis e relatório diagnóstico. |
 | `pdf-ocr` | OCR em PDF | Otimizar / Texto | Implementada | Web, Desktop, HTTP | browser (fallback native) | Reconhecimento óptico local. Gera texto e PDF pesquisável. |
 | `images-to-pdf` | Imagem para PDF | Converter em PDF | Implementada | Web, Desktop, HTTP | browser | Suporta JPG, PNG e WebP com orientação e margens. |
 | `html-to-pdf` | HTML para PDF | Converter em PDF | Implementada | Web, Desktop, HTTP | browser | Converte títulos, parágrafos, listas e tabelas em layout próprio. Não preserva o layout CSS original nem executa scripts ou carrega recursos externos. |
@@ -62,7 +63,6 @@ As ferramentas abaixo compõem o catálogo visual planejado ou dependem de decis
 
 | Ferramenta | Identificador Previsto | Categoria | Dependência Arquitetural / Bloqueio |
 |---|---|---|---|
-| **Reparar PDF** | `pdf-repair` | Otimizar | Especificação dos tipos de corrupção tratáveis (xref reconstruído, streams truncados, trailer ausente) com biblioteca local (`pdf-lib` / `qpdf`). |
 | **Word para PDF** | `word-to-pdf` | Converter em PDF | ADR de Motor Office: conversão de DOC/DOCX preservando layout completo. Requer sidecar com motor de renderização (ex: LibreOffice / headless unoconv). |
 | **PDF para Word** | `pdf-to-word` | Converter de PDF | ADR de Motor Office: reconstrução de parágrafos, fluxos de texto e tabelas em DOCX. |
 | **PowerPoint para PDF** | `powerpoint-to-pdf` | Converter em PDF | Dependente do mesmo ADR de Motor Office (LibreOffice). |
@@ -76,14 +76,15 @@ As ferramentas abaixo compõem o catálogo visual planejado ou dependem de decis
 ## 4. Política de Disponibilidade e Plataformas
 
 1. **Fonte Única:** A disponibilidade ativa é governada por `@/platform/tool-availability.ts`, derivado diretamente de `coreToolRegistry`.
-2. **Paridade Funcional:** O client desktop (Tauri) e o website (Browser/PWA) compartilham o mesmo catálogo de 34 ferramentas ativas. Nenhuma ferramenta é exibida com selo "Em breve" ou sem executor associado.
+2. **Catálogo compartilhado:** O client desktop (Tauri) e o website (Browser/PWA) compartilham o catálogo de 35 ferramentas ativas neste checkout. A existência do executor web não substitui a homologação do aplicativo instalado. Nenhuma ferramenta é exibida com selo "Em breve" ou sem executor associado.
 3. **Privacidade e Local-First:** Toda operação de transformação executa localmente. Nenhum documento é transmitido para servidores remotos.
 
 ## 5. Complementação das ferramentas atuais
 
 Índice dos planos responsáveis, adicionado em 24/10/2026. O estado de cada complemento consta
-no roadmap e no responsável; IM-C1–IM-C3, a qualidade de exportação do IM-C4 e os controles PDF do UX-C1 e a prévia de formulários do DOC-C1 foram entregues no website; AVIF segue condicionado. Os complementos não alteram a
-contagem de 34 ferramentas nem indicam homologação adicional de desktop/HTTP.
+no roadmap e no responsável; IM-C1–IM-C3, a qualidade de exportação do IM-C4 e os controles PDF do UX-C1 e a prévia de formulários do DOC-C1 foram entregues no website; AVIF segue condicionado. Os complementos preservam o
+catálogo existente; a integração de Reparar PDF elevou a contagem de 34 para 35 ferramentas. Esses
+complementos não indicam homologação adicional de desktop/HTTP.
 Ordem e critérios comuns: [roadmap](ROADMAP.md#complementação-das-ferramentas-atuais--24102026).
 O checklist vive apenas no plano responsável, não nesta matriz.
 
@@ -96,7 +97,7 @@ O checklist vive apenas no plano responsável, não nesta matriz.
 | `pdf-form-fill`, `scan-to-pdf`, `html-to-pdf`, `pdf-remove-pages`, `pdf-extract-pages` | [Quatro ferramentas](superpowers/plans/2026-10-23-corrigir-quatro-ferramentas.md#fase-de-complementação--24102026): DOC-C1 a DOC-C4 |
 | `pdf-edit` | [Editar PDF](superpowers/plans/2026-10-23-editar-pdf.md#fase-de-complementação--24102026): ED-C1 compatibilidade, ED-C2 desempenho |
 | `pdf-compare` | [Comparar PDF](superpowers/plans/2026-10-23-comparar-pdf.md#fase-de-complementação--24102026): CMP-C1 navegação/relatório |
-| `pdf-repair` (continua planejada) | [Especificação existente](REPARAR-PDF.md#complementação-do-motor--24102026): R-C1 prova do motor |
+| `pdf-repair` (motor web implementado) | [Especificação existente](REPARAR-PDF.md#complementação-do-motor--24102026): avaliação qpdf de R-C1 permanece separada |
 
 Ferramentas sem complemento específico mantêm seu contrato atual e a regressão em Q-C0;
 não ganham nova promessa funcional por associação ao grupo.

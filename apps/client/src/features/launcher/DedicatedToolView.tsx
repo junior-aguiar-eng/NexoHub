@@ -51,6 +51,7 @@ import {
   type SignaturePlacement,
 } from "@/platform/pdf-engine";
 import { PdfPreviewQueue } from "@/platform/pdf-preview-queue";
+import type { PdfRepairReport } from "@/platform/pdf-repair-engine";
 import type { ScannedPageItem } from "@/platform/scan-to-pdf-engine";
 import { registerToolNavigationGuard } from "@/platform/tool-navigation-guard";
 import { addCustomWord, ignoreWordInSession } from "@/platform/user-vocabulary";
@@ -77,6 +78,7 @@ import { PageNumbersPdfPanel } from "./PageNumbersPdfPanel";
 import { PdfComparePanel } from "./PdfComparePanel";
 import { PdfEditorPanel } from "./PdfEditorPanel";
 import { PdfPageGridPanel, type PdfPageItem } from "./PdfPageGridPanel";
+import { PdfRepairPanel } from "./PdfRepairPanel";
 import { PdfToExcelPanel } from "./PdfToExcelPanel";
 import { PdfToJpgPanel } from "./PdfToJpgPanel";
 import { PdfToMarkdownPanel } from "./PdfToMarkdownPanel";
@@ -427,6 +429,7 @@ export function DedicatedToolView({
     savedBytes: number;
     savedPercent: number;
   } | null>(null);
+  const [pdfRepairReport, setPdfRepairReport] = useState<PdfRepairReport | null>(null);
 
   // Estados de Ferramentas de Imagem (Modo Imagem)
   const [imageCompressionLevel, setImageCompressionLevel] =
@@ -1398,6 +1401,9 @@ export function DedicatedToolView({
         setExtractedImages(output.extractedImages);
         setSelectedImageIds(output.extractedImages.map((img) => img.id));
       }
+      if (tool.id === "pdf-repair" && output.pdfRepairReport) {
+        setPdfRepairReport(output.pdfRepairReport);
+      }
       setProgress(100);
       setOutputFileName(outName);
 
@@ -1409,7 +1415,8 @@ export function DedicatedToolView({
         tool.id === "text-translate" ||
         tool.id === "text-review" ||
         tool.id === "pdf-to-markdown" ||
-        tool.id === "pdf-extract-images";
+        tool.id === "pdf-extract-images" ||
+        tool.id === "pdf-repair";
 
       if (shouldStayInWorkspace) {
         setStatus("idle");
@@ -1483,6 +1490,7 @@ export function DedicatedToolView({
     setReviewFindings([]);
     setCompressionResult(null);
     setImageResults([]);
+    setPdfRepairReport(null);
   }
 
   async function handleSaveOutput() {
@@ -1499,6 +1507,7 @@ export function DedicatedToolView({
   function getActionLabel() {
     if (tool.id === "pdf-split") return translate("dedicated.actionSplit");
     if (tool.id === "pdf-compress") return translate("dedicated.actionCompress");
+    if (tool.id === "pdf-repair") return translate("dedicated.actionRepair");
     if (tool.id === "pdf-merge") return translate("dedicated.actionMerge");
     if (tool.id === "pdf-rotate") return translate("dedicated.actionRotate");
     if (tool.id === "pdf-crop") return translate("dedicated.actionCrop");
@@ -1564,6 +1573,28 @@ export function DedicatedToolView({
           compressionLevel={compressionLevel}
           onCompressionLevelChange={setCompressionLevel}
           onAddMoreFiles={() => fileInputRef.current?.click()}
+        />
+      );
+    }
+
+    // REPARAR PDF
+    if (tool.id === "pdf-repair") {
+      return (
+        <PdfRepairPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          isRunning={status === "running"}
+          progressPercent={progress}
+          report={pdfRepairReport}
+          errorMessage={status === "error" ? errorMessage : null}
+          downloadUrl={downloadUrl}
+          outputFileName={
+            outputFileName ||
+            `${files[0]?.name?.replace(/\.[^/.]+$/, "") ?? "documento"}_reparado.pdf`
+          }
+          thumbnail={firstPageThumb}
+          onRunRepair={() => void handleExecute()}
+          onReset={handleReset}
         />
       );
     }

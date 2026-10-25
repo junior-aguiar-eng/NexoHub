@@ -26,13 +26,14 @@ test("catálogo, histórico, acesso direto e favicons ficam em /hub/", async ({ 
   });
   await page.goto("/hub/");
   await expect(page).toHaveURL(/\/hub\/pdf$/);
-  await expect(page.locator(".tool-card")).toHaveCount(28);
+  await expect(page.locator(".tool-card")).toHaveCount(29);
+  await expect(page.locator('.tool-card[aria-label="Reparar PDF"]')).toHaveCount(1);
   await page.getByRole("button", { name: /alternar para modo imagem/i }).click();
   await expect(page).toHaveURL(/\/hub\/img$/);
   await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", "/hub/favicon-img.svg");
   await page.goBack();
   await expect(page).toHaveURL(/\/hub\/pdf$/);
-  await expect(page.locator(".tool-card")).toHaveCount(28);
+  await expect(page.locator(".tool-card")).toHaveCount(29);
   await page.locator('.tool-card[aria-label="Juntar PDF"]').click();
   await expect(page).toHaveURL(/\/hub\/juntar-pdf$/);
   await page.reload();

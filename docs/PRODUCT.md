@@ -22,7 +22,7 @@ offline no computador do usuário.
   - **Texto e OCR:** Reconhecimento óptico de caracteres (OCR) local, Comparação semântica de textos, Revisão ortográfica/morfológica contextual e Tradução rápida offline.
   - **Segurança:** Inserção de Marca d'água com carimbo textual configurável.
   
-  *Critério estrito de vitrine:* Somente são anunciadas e disponibilizadas ferramentas com executor funcional ativo e testado (34 ferramentas ativas no website e no desktop). Ferramentas planejadas dependentes de novos motores ou ADRs (como conversores Office complexos e PDF/A) são documentadas no [Catálogo de Ferramentas](CATALOGO-FERRAMENTAS.md) e permanecem desativadas da vitrine até sua homologação completa.
+  *Critério estrito de vitrine:* Somente são anunciadas e disponibilizadas ferramentas com executor funcional ativo e testado (35 ferramentas ativas no catálogo web deste checkout; a homologação instalada do desktop permanece separada). Ferramentas planejadas dependentes de novos motores ou ADRs (como conversores Office complexos e PDF/A) são documentadas no [Catálogo de Ferramentas](CATALOGO-FERRAMENTAS.md) e permanecem desativadas da vitrine até sua homologação completa.
 
 - **Tela Dedicada por Ferramenta (`DedicatedToolView`):** experiência sem fricção ao estilo iLovePDF:
   1. O usuário clica na ferramenta desejada.

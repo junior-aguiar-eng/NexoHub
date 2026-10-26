@@ -42,3 +42,7 @@ sem usar uma entrega web como certificação do aplicativo instalado.
 Em IM-C1, o corpus de imagens e os critérios específicos pertencem a `IMAGE-WEB-QUALITY.md`.
 Os gates de licenças/modelos e corpus de PDF/OCR/Excel permanecem nas entregas correspondentes,
 sem declaração de homologação comercial integral do catálogo.
+
+Em OCR-C1, corpus versionado, CER/WER, política de páginas mistas, limites de confiança e
+avaliação negativa de OpenCV pertencem a [OCR-C1.md](OCR-C1.md). A medição sintética não
+homologa fotografias de campo nem o runtime Windows; DOC-C2 permanece fora dessa entrega.

@@ -3,319 +3,336 @@ import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { Page as TesseractPage } from "tesseract.js";
 import { withAppBase } from "./app-paths";
+import { createOcrRecognitionSession, type OcrRecognitionSession } from "./ocr-recognition-session";
 import { generateSearchablePdf, type OcrPageData } from "./pdf-engine";
 
-if (typeof window !== "undefined") {
-  try {
-    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
-    }
-  } catch {
-    // Fallback silencioso
-  }
-}
-
+if (typeof window !== "undefined") pdfjsLib.GlobalWorkerOptions.workerSrc ||= pdfjsWorker;
 export interface OcrProgressInfo {
   status: string;
   page: number;
   totalPages: number;
   progress: number;
 }
-
+export interface OcrPageReport {
+  pageNumber: number;
+  source: "existing-text" | "ocr";
+  /** Indicador do motor, sem garantia de acerto. Não se aplica a texto existente. */
+  confidence: number | null;
+  durationMs: number;
+}
 export interface BrowserOcrOptions {
   language?: "por" | "eng" | "spa";
   enhanceContrast?: boolean;
+  signal?: AbortSignal;
   onProgress?: (info: OcrProgressInfo) => void;
 }
-
 export interface BrowserOcrOutcome {
   text: string;
   pages: number;
   lines: OcrLineResult[];
   pageResults: OcrPageData[];
+  pageReports: OcrPageReport[];
   engine: string;
   searchablePdfBytes?: Uint8Array;
 }
-
+function checkAbort(signal?: AbortSignal): void {
+  if (signal?.aborted) throw new DOMException("OCR_CANCELLED", "AbortError");
+}
+/** Não depende de a biblioteca resolver um job depois de terminate(). */
+async function abortable<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  checkAbort(signal);
+  if (!signal) return promise;
+  let onAbort!: () => void;
+  const aborted = new Promise<never>((_, reject) => {
+    onAbort = () => reject(new DOMException("OCR_CANCELLED", "AbortError"));
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+  try {
+    return await Promise.race([promise, aborted]);
+  } finally {
+    signal.removeEventListener("abort", onAbort);
+  }
+}
+function confidence(value: number | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.min(1, Math.max(0, value / 100))
+    : null;
+}
 function readOcrLines(data: Pick<TesseractPage, "blocks" | "confidence">): OcrPageData["lines"] {
   return (data.blocks ?? []).flatMap((block) =>
     block.paragraphs.flatMap((paragraph) =>
       paragraph.lines.map((line) => ({
         text: line.text.trim(),
-        confidence: (line.confidence ?? data.confidence) / 100,
+        confidence: confidence(line.confidence ?? data.confidence) ?? undefined,
         bbox: line.bbox,
       })),
     ),
   );
 }
-
-/**
- * Aplica realce de contraste adaptativo e conversão para escala de cinza em canvas 2D
- * para maximizar a acurácia de OCR em digitalizações com sombras ou ruído.
- */
+/** Ganho linear 1,35 em escala de cinza; não é contraste adaptativo. */
 export function applyContrastEnhancement(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
 ): void {
-  const imgData = ctx.getImageData(0, 0, width, height);
-  const data = imgData.data;
-  const len = data.length;
-  const contrast = 1.35;
-  const factor = contrast;
-
-  for (let i = 0; i < len; i += 4) {
-    const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-    let adjusted = factor * (gray - 128) + 128;
-    if (adjusted < 0) adjusted = 0;
-    if (adjusted > 255) adjusted = 255;
-    data[i] = adjusted;
-    data[i + 1] = adjusted;
-    data[i + 2] = adjusted;
+  const image = ctx.getImageData(0, 0, width, height);
+  for (let i = 0; i < image.data.length; i += 4) {
+    const gray = 0.299 * image.data[i] + 0.587 * image.data[i + 1] + 0.114 * image.data[i + 2];
+    const adjusted = Math.min(255, Math.max(0, 1.35 * (gray - 128) + 128));
+    image.data[i] = image.data[i + 1] = image.data[i + 2] = adjusted;
   }
-  ctx.putImageData(imgData, 0, 0);
+  ctx.putImageData(image, 0, 0);
 }
-
-async function imageBlobToCanvas(
-  blob: Blob,
-): Promise<{ canvas: HTMLCanvasElement; width: number; height: number }> {
-  let imgWidth = 0;
-  let imgHeight = 0;
-  let source: CanvasImageSource | null = null;
-
+const MAX_PIXELS = 20_000_000;
+function canvasFor(width: number, height: number): HTMLCanvasElement {
+  if (!Number.isFinite(width * height) || width <= 0 || height <= 0 || width * height > MAX_PIXELS)
+    throw new Error("OCR_PAGE_LIMIT");
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.ceil(width);
+  canvas.height = Math.ceil(height);
+  return canvas;
+}
+async function imageBlobToCanvas(blob: Blob, signal?: AbortSignal): Promise<HTMLCanvasElement> {
+  checkAbort(signal);
   if (typeof createImageBitmap === "function") {
+    const pending = createImageBitmap(blob);
+    void pending.then(
+      (bitmap) => {
+        if (signal?.aborted) bitmap.close?.();
+      },
+      () => {},
+    );
+    const bitmap = await abortable(pending, signal);
     try {
-      const bitmap = await createImageBitmap(blob);
-      imgWidth = bitmap.width;
-      imgHeight = bitmap.height;
-      source = bitmap;
-    } catch {
-      // Fallback para Image element
-    }
-  }
-
-  if (!source) {
-    const img = new Image();
-    const url = URL.createObjectURL(blob);
-    try {
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error("IMAGE_LOAD_FAILED"));
-        img.src = url;
-      });
-      imgWidth = img.naturalWidth || img.width;
-      imgHeight = img.naturalHeight || img.height;
-      source = img;
+      const canvas = canvasFor(bitmap.width, bitmap.height);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("CANVAS_CONTEXT_UNAVAILABLE");
+      ctx.drawImage(bitmap, 0, 0);
+      return canvas;
     } finally {
-      URL.revokeObjectURL(url);
+      bitmap.close?.();
     }
   }
-
-  const canvas = document.createElement("canvas");
-  canvas.width = imgWidth;
-  canvas.height = imgHeight;
-  const ctx = canvas.getContext("2d");
-  if (ctx && source) {
-    ctx.drawImage(source, 0, 0);
+  const image = new Image();
+  const url = URL.createObjectURL(blob);
+  try {
+    await abortable(
+      new Promise<void>((resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = () => reject(new Error("IMAGE_LOAD_FAILED"));
+        image.src = url;
+      }),
+      signal,
+    );
+    const canvas = canvasFor(
+      image.naturalWidth || image.width,
+      image.naturalHeight || image.height,
+    );
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("CANVAS_CONTEXT_UNAVAILABLE");
+    ctx.drawImage(image, 0, 0);
+    return canvas;
+  } finally {
+    image.onload = image.onerror = null;
+    image.src = "";
+    URL.revokeObjectURL(url);
   }
-  return { canvas, width: imgWidth, height: imgHeight };
 }
-
-async function renderPdfPageToCanvas(
-  pdfDoc: pdfjsLib.PDFDocumentProxy,
-  pageNumber: number,
-  scale = 2.0,
-): Promise<{ canvas: HTMLCanvasElement; width: number; height: number }> {
-  const page = await pdfDoc.getPage(pageNumber);
-  const viewport = page.getViewport({ scale });
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.floor(viewport.width);
-  canvas.height = Math.floor(viewport.height);
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("CANVAS_CONTEXT_UNAVAILABLE");
-
-  await page.render({
-    canvasContext: ctx,
-    viewport,
-    canvas,
-  }).promise;
-
-  return {
-    canvas,
-    width: canvas.width,
-    height: canvas.height,
-  };
-}
-
-/**
- * Executa OCR local usando Tesseract.js (WebAssembly) no navegador.
- * Suporta documentos PDF multipágina e imagens (JPG, PNG, WebP) escaneadas,
- * com pré-processamento de contraste e geração de PDF pesquisável.
- */
+/** Páginas com texto extraível mantêm a camada original, sem texto duplicado. */
 export async function performBrowserOcr(
   blob: Blob,
   options: BrowserOcrOptions = {},
 ): Promise<BrowserOcrOutcome> {
-  if (typeof window === "undefined" || typeof Worker === "undefined") {
+  const { signal } = options;
+  checkAbort(signal);
+  if (typeof window === "undefined" || typeof Worker === "undefined")
     throw new Error("OCR_WORKER_UNAVAILABLE");
-  }
-
+  if (!blob.size || blob.size > 64 * 1024 * 1024) throw new Error("OCR_INPUT_LIMIT");
+  const rawBytes = new Uint8Array(await abortable(blob.arrayBuffer(), signal));
   const isPdf =
-    blob.type === "application/pdf" ||
-    blob.type.includes("pdf") ||
-    ("name" in blob && typeof blob.name === "string" && blob.name.toLowerCase().endsWith(".pdf"));
-
-  const rawBytes = new Uint8Array(await blob.arrayBuffer());
-  const langCode = options.language === "eng" ? "eng" : options.language === "spa" ? "spa" : "por";
-  const enhanceContrast = options.enhanceContrast ?? true;
-
-  try {
-    const { createWorker } = await import("tesseract.js");
-
-    let currentWorkerPage = 1;
-    let totalWorkerPages = 1;
-
-    const worker = await createWorker(langCode, 1, {
-      logger: (m) => {
-        if (options.onProgress && typeof m.progress === "number") {
-          const pageBase = (currentWorkerPage - 1) / totalWorkerPages;
-          const pageFraction = (1 / totalWorkerPages) * (m.progress || 0);
-          const totalProgress = Math.min(Math.round((pageBase + pageFraction) * 100), 99);
-          options.onProgress({
-            status: m.status || "recognizing text",
-            page: currentWorkerPage,
-            totalPages: totalWorkerPages,
-            progress: totalProgress,
-          });
-        }
-      },
-    });
-
-    const pageResults: OcrPageData[] = [];
-    const allLines: OcrLineResult[] = [];
-    const pageTexts: string[] = [];
-
-    try {
-      if (isPdf) {
-        const loadingTask = pdfjsLib.getDocument({
-          data: rawBytes.slice(),
-          useSystemFonts: true,
-          standardFontDataUrl:
-            typeof window !== "undefined" && window.location?.origin
-              ? new URL(withAppBase("standard_fonts/"), window.location.origin).href
-              : undefined,
-        });
-        const pdfDoc = await loadingTask.promise;
-        totalWorkerPages = pdfDoc.numPages;
-
-        for (let i = 1; i <= totalWorkerPages; i++) {
-          currentWorkerPage = i;
-          const { canvas, width, height } = await renderPdfPageToCanvas(pdfDoc, i);
-          const ctx = canvas.getContext("2d");
-          if (ctx && enhanceContrast) {
-            applyContrastEnhancement(ctx, width, height);
-          }
-
-          const ret = await worker.recognize(canvas, {}, { blocks: true });
-          const pageText = ret.data.text.trim();
-          pageTexts.push(pageText);
-
-          const pageLines = readOcrLines(ret.data);
-
-          for (const line of pageLines) {
-            const { x0 = 0, y0 = 0, x1 = 0, y1 = 0 } = line.bbox ?? {};
-            allLines.push({
-              pageNumber: i,
-              text: line.text,
-              confidence: line.confidence ?? 0.8,
-              bounds: [x0, y0, x1, y1],
-            });
-          }
-
-          pageResults.push({
-            pageNumber: i,
-            text: pageText,
-            width,
-            height,
-            lines: pageLines,
-          });
-        }
-      } else {
-        totalWorkerPages = 1;
-        currentWorkerPage = 1;
-
-        const { canvas, width, height } = await imageBlobToCanvas(blob);
-        const ctx = canvas.getContext("2d");
-        if (ctx && enhanceContrast) {
-          applyContrastEnhancement(ctx, width, height);
-        }
-
-        const ret = await worker.recognize(canvas, {}, { blocks: true });
-        const text = ret.data.text.trim();
-        pageTexts.push(text);
-
-        const pageLines = readOcrLines(ret.data);
-
-        for (const line of pageLines) {
-          const { x0 = 0, y0 = 0, x1 = 0, y1 = 0 } = line.bbox ?? {};
-          allLines.push({
-            pageNumber: 1,
-            text: line.text,
-            confidence: line.confidence ?? 0.8,
-            bounds: [x0, y0, x1, y1],
-          });
-        }
-
-        pageResults.push({
-          pageNumber: 1,
-          text,
-          width,
-          height,
-          lines: pageLines,
-        });
-      }
-    } finally {
+    rawBytes[0] === 37 && rawBytes[1] === 80 && rawBytes[2] === 68 && rawBytes[3] === 70;
+  let worker: OcrRecognitionSession | undefined;
+  let workerPromise: Promise<OcrRecognitionSession> | undefined;
+  let terminated = false;
+  let loading: ReturnType<typeof pdfjsLib.getDocument> | undefined;
+  let render: ReturnType<pdfjsLib.PDFPageProxy["render"]> | undefined;
+  let current = 1;
+  let total = 1;
+  const pageResults: OcrPageData[] = [],
+    pageReports: OcrPageReport[] = [],
+    lines: OcrLineResult[] = [],
+    texts: string[] = [];
+  const terminate = async () => {
+    if (worker && !terminated) {
+      terminated = true;
       await worker.terminate();
     }
-
-    if (!pageTexts.some((text) => text.trim())) {
-      throw new Error("OCR_NO_TEXT_FOUND");
+  };
+  const abort = () => {
+    render?.cancel();
+    void terminate().catch(() => {});
+  };
+  signal?.addEventListener("abort", abort, { once: true });
+  const progress = (status: string, value: number) => {
+    if (!signal?.aborted)
+      options.onProgress?.({
+        status,
+        page: current,
+        totalPages: total,
+        progress: Math.min(99, Math.round(((current - 1 + value) / total) * 100)),
+      });
+  };
+  async function recognize(canvas: HTMLCanvasElement): Promise<void> {
+    checkAbort(signal);
+    if (!workerPromise) {
+      checkAbort(signal);
+      workerPromise = createOcrRecognitionSession(
+        options.language ?? "por",
+        (message) => {
+          if (typeof message.progress === "number") progress(message.status, message.progress);
+        },
+        signal,
+      );
+      void workerPromise
+        .then(
+          async (ready) => {
+            worker = ready;
+            if (signal?.aborted) await terminate();
+          },
+          () => {},
+        )
+        .catch(() => {});
     }
-
-    const fullText =
-      pageTexts.length > 1
-        ? pageTexts.map((txt, idx) => `--- Página ${idx + 1} ---\n${txt}`).join("\n\n")
-        : pageTexts[0] || "";
-
-    if (options.onProgress) {
-      options.onProgress({
-        status: "completed",
-        page: totalWorkerPages,
-        totalPages: totalWorkerPages,
-        progress: 100,
+    worker = await abortable(workerPromise, signal);
+    checkAbort(signal);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("CANVAS_CONTEXT_UNAVAILABLE");
+    if (options.enhanceContrast ?? true) applyContrastEnhancement(ctx, canvas.width, canvas.height);
+    const result = await abortable(worker.recognize(canvas, {}, { blocks: true }), signal);
+    checkAbort(signal);
+    const pageLines = readOcrLines(result.data);
+    texts.push(result.data.text.trim());
+    pageResults.push({
+      pageNumber: current,
+      text: result.data.text.trim(),
+      width: canvas.width,
+      height: canvas.height,
+      lines: pageLines,
+    });
+    for (const line of pageLines) {
+      if (!line.bbox) continue;
+      const { x0, y0, x1, y1 } = line.bbox;
+      lines.push({
+        pageNumber: current,
+        text: line.text,
+        confidence: line.confidence ?? 0,
+        bounds: [x0, y0, x1, y1],
       });
     }
-
-    // Gera o PDF pesquisável com camada de texto invisível sobre o documento original
+    pageReports.push({
+      pageNumber: current,
+      source: "ocr",
+      confidence: confidence(result.data.confidence),
+      durationMs: 0,
+    });
+  }
+  try {
+    if (isPdf) {
+      loading = pdfjsLib.getDocument({
+        data: rawBytes.slice(),
+        useSystemFonts: true,
+        standardFontDataUrl: new URL(withAppBase("standard_fonts/"), window.location.origin).href,
+      });
+      const pdf = await abortable(loading.promise, signal);
+      total = pdf.numPages;
+      if (total < 1 || total > 500) throw new Error("OCR_PAGE_LIMIT");
+      for (current = 1; current <= total; current++) {
+        checkAbort(signal);
+        const started = performance.now();
+        const page = await abortable(pdf.getPage(current), signal);
+        let canvas: HTMLCanvasElement | undefined;
+        try {
+          const content = await abortable(page.getTextContent(), signal);
+          const text = content.items
+            .filter((item) => "str" in item)
+            .map((item) => ("str" in item ? item.str + (item.hasEOL ? "\n" : "") : ""))
+            .join("")
+            .trim();
+          const viewport = page.getViewport({ scale: 2 });
+          if (text) {
+            texts.push(text);
+            pageResults.push({
+              pageNumber: current,
+              text,
+              width: viewport.width,
+              height: viewport.height,
+              lines: [],
+            });
+            pageReports.push({
+              pageNumber: current,
+              source: "existing-text",
+              confidence: null,
+              durationMs: 0,
+            });
+          } else {
+            canvas = canvasFor(viewport.width, viewport.height);
+            const ctx = canvas.getContext("2d");
+            if (!ctx) throw new Error("CANVAS_CONTEXT_UNAVAILABLE");
+            render = page.render({ canvasContext: ctx, viewport, canvas });
+            await abortable(render.promise, signal);
+            render = undefined;
+            await recognize(canvas);
+          }
+          pageReports[pageReports.length - 1].durationMs = performance.now() - started;
+          progress("page-completed", 1);
+        } finally {
+          render = undefined;
+          if (canvas) canvas.width = canvas.height = 0;
+          page.cleanup();
+        }
+      }
+    } else {
+      const started = performance.now();
+      const canvas = await imageBlobToCanvas(blob, signal);
+      try {
+        await recognize(canvas);
+        pageReports[0].durationMs = performance.now() - started;
+      } finally {
+        canvas.width = canvas.height = 0;
+      }
+    }
+    checkAbort(signal);
+    if (!texts.some((text) => text.trim())) throw new Error("OCR_NO_TEXT_FOUND");
     let searchablePdfBytes: Uint8Array | undefined;
     try {
-      searchablePdfBytes = await generateSearchablePdf(rawBytes, pageResults, blob.type);
-    } catch (pdfErr) {
-      console.warn("Falha ao gerar camada de PDF pesquisável:", pdfErr);
+      searchablePdfBytes = await abortable(
+        generateSearchablePdf(rawBytes, pageResults, blob.type, { signal }),
+        signal,
+      );
+    } catch {
+      checkAbort(signal);
     }
-
+    checkAbort(signal);
+    options.onProgress?.({ status: "completed", page: total, totalPages: total, progress: 100 });
     return {
-      text: fullText,
-      pages: totalWorkerPages,
-      lines: allLines,
+      text:
+        total > 1
+          ? texts.map((text, index) => `--- Página ${index + 1} ---\n${text}`).join("\n\n")
+          : texts[0],
+      pages: total,
+      lines,
       pageResults,
+      pageReports,
       engine: "tesseract.js-wasm",
       searchablePdfBytes,
     };
-  } catch (err) {
-    if (err instanceof Error && err.message === "OCR_NO_TEXT_FOUND") {
-      throw err;
-    }
+  } catch (error) {
+    checkAbort(signal);
+    if (error instanceof Error && /^(OCR_|CANVAS_)/.test(error.message)) throw error;
     throw new Error("OCR_PROCESSING_FAILED");
+  } finally {
+    signal?.removeEventListener("abort", abort);
+    await terminate();
+    await loading?.destroy();
   }
 }

@@ -194,15 +194,45 @@ fora da homologação; não ampliar fontes, imagens ou classes sem novas provas.
 signal?: AbortSignal): Promise<Blob>`; opções tipadas de perspectiva/alinhamento/contraste;
 nenhuma mutação da imagem original. DOC-C2 consome este mesmo adaptador.
 
-- [ ] Medir Tesseract.js já instalado em corpus pt-BR com acentos, números, fotos inclinadas,
+- [x] Medir Tesseract.js já instalado em corpus pt-BR com acentos, números, fotos inclinadas,
   baixo contraste e PDFs mistos; separar página digitalizada de página com texto extraível.
-- [ ] Comparar pré-processamento atual com OpenCV.js de release estável Apache-2.0, sob demanda
+- [x] Comparar pré-processamento atual com OpenCV.js de release estável Apache-2.0, sob demanda
   em worker. Preservar opção de original e rejeitar correção automática que corte conteúdo.
-- [ ] Testar cancelamento e descarte entre páginas; PDF pesquisável mantém imagem e alinha texto
+- [x] Testar cancelamento e descarte entre páginas; PDF pesquisável mantém imagem e alinha texto
   às caixas reais. Exibir confiança como indicador de OCR, sem garantia de acerto.
-- [ ] PaddleOCR/Docling são candidatos de avaliação fora do browser atual, não instalações
+- [x] PaddleOCR/Docling são candidatos de avaliação fora do browser atual, não instalações
   automáticas. Exigem decisão de runtime, recursos, privacidade e licenças dos pesos; não anunciar
   suporte pela existência de pacote Python ou por fallback remoto invisível.
+
+**Execução OCR-C1 — 26/10/2026:** entrega no website local, sem iniciar DOC-C2. Corpus e
+resultado técnico em [OCR-C1](../../OCR-C1.md); quatro PNGs sintéticos versionados, com texto
+esperado e hashes, mais PDF misto de duas páginas. As imagens de inclinação/perspectiva são
+simulações, sem homologação de fotografias de campo. Tesseract/core 7.0.0 existentes, 24
+reconhecimentos reais; CER/WER, custo e política de cache registrados no JSON de medições.
+
+OpenCV 4.12.0 (`@techstark/opencv-js@4.12.0-release.1`) foi testado em worker isolado e
+**reprovado para integração**: sem ganho sobre o preparo linear e com regressão em perspectiva,
+mais 10,9 MB de JS/WASM. Não foi adicionado ao package.json/lockfile nem foi criado o adaptador
+condicionado `prepareDocumentImage`. Preservada a opção original; nenhuma correção geométrica
+automática foi habilitada. PaddleOCR/Docling permanecem sujeitos a decisão de runtime, sem instalação.
+
+Implementados: classificação por página, preservação da camada textual existente sem espaços
+artificiais entre fragmentos, worker proprietário cancelável desde a inicialização, descarte de
+recursos e resultados tardios, sinal na geração da camada, validação de caixas e relatório pt-BR
+por página. O PDF misto preservou streams de imagem, texto nativo único e alinhamento real da
+primeira linha OCR. A revisão independente identificou fragmentação textual e inicialização
+não cancelável; ambos corrigidos com regressões RED→GREEN. Não há homologação nativa nem
+equivalência comercial universal.
+
+**Fechamento local:** formatter/lint/typecheck (`pnpm check`) aprovados; 728 unitários (665 client,
+44 domínio, 16 SDK, 3 registry) com dois workers e revalidação final dos 24 testes de UI afetada;
+builds raiz e `/hub/` aprovados; suíte geral da raiz com 284 E2E aprovados e cinco exclusivos da
+subpasta pulados; executor oficial de `/hub/` com 175 aprovados. OCR está incluído nesse executor.
+Inventário de licenças aprovado; package.json e lockfile inalterados. Capturas em
+390/768/1024/1440 px, tema escuro e movimento reduzido preservadas e inspecionadas. Logs,
+PDFs e capturas em `.superpowers/sdd/2026-10-25-ocr-c1/`; dados e corpus versionados no documento
+técnico. Commit local autorizado posteriormente em 26/10/2026; sem push, deploy ou início de
+DOC-C2. A principal permanece preservada.
 
 ### XL-C1 / MD-C1 — Tabelas e leitura documental verificáveis
 

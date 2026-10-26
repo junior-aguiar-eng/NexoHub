@@ -133,4 +133,23 @@ describe("camada OCR Unicode invisível", () => {
     await addOcrTextLayer(doc, [{ ...pageData()[0], text: "", lines: [] }]);
     expect(fetch).not.toHaveBeenCalled();
   });
+
+  it("recusa caixas que extrapolam a imagem em vez de inserir texto desalinhado", async () => {
+    const doc = await PDFDocument.create();
+    doc.addPage([200, 100]);
+    const data = pageData();
+    data[0].lines[0].bbox = { x0: -1, y0: 10, x1: 201, y1: 30 };
+    await expect(addOcrTextLayer(doc, data)).rejects.toThrow("OCR_INVALID_LINE_GEOMETRY");
+  });
+
+  it("aborta antes de baixar a fonte ou escrever uma camada", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const doc = await PDFDocument.create();
+    doc.addPage([200, 100]);
+    await expect(
+      addOcrTextLayer(doc, pageData(), { signal: controller.signal }),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });

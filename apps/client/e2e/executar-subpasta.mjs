@@ -24,6 +24,7 @@ try {
         require.resolve("@playwright/test/cli"),
         "test",
         "hub-subpath.spec.ts",
+        "language-image-quality.spec.ts",
         "pdf-viewport.spec.ts",
         "form-preview.spec.ts",
         "pdf-editor.spec.ts",

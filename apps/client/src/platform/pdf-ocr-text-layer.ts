@@ -58,8 +58,9 @@ function utf16Hex(text: string): string {
 export async function addOcrTextLayer(
   doc: PDFDocument,
   pagesData: readonly OcrPageData[],
-  options: { preserveDrawingOrder?: boolean } = {},
+  options: { preserveDrawingOrder?: boolean; signal?: AbortSignal } = {},
 ): Promise<void> {
+  options.signal?.throwIfAborted();
   const populatedPages = pagesData.filter((data) => data.lines.some((line) => line.text.trim()));
   if (!populatedPages.length) return;
 
@@ -67,9 +68,11 @@ export async function addOcrTextLayer(
   if (!descriptor) {
     const response = await fetch(
       `${import.meta.env.BASE_URL}standard_fonts/LiberationSans-Regular.ttf`,
+      { signal: options.signal },
     );
     if (!response.ok) throw new Error("OCR_FONT_UNAVAILABLE");
     const fontBytes = new Uint8Array(await response.arrayBuffer());
+    options.signal?.throwIfAborted();
     if (!fontBytes.length) throw new Error("OCR_FONT_UNAVAILABLE");
     const fontFile = doc.context.register(
       doc.context.flateStream(fontBytes, { Length1: fontBytes.length }),
@@ -94,6 +97,7 @@ export async function addOcrTextLayer(
 
   const pages = doc.getPages();
   for (const data of populatedPages) {
+    options.signal?.throwIfAborted();
     const page = pages[data.pageNumber - 1];
     if (!page) continue;
     const geometry = getVisiblePageGeometry(page);
@@ -167,7 +171,15 @@ export async function addOcrTextLayer(
     for (const line of data.lines) {
       if (!line.bbox || !line.text.trim()) continue;
       const { x0, y0, x1, y1 } = line.bbox;
-      if (![x0, y0, x1, y1].every(Number.isFinite) || x1 <= x0 || y1 <= y0) {
+      if (
+        ![x0, y0, x1, y1].every(Number.isFinite) ||
+        x1 <= x0 ||
+        y1 <= y0 ||
+        x0 < 0 ||
+        y0 < 0 ||
+        x1 > data.width ||
+        y1 > data.height
+      ) {
         throw new Error("OCR_INVALID_LINE_GEOMETRY");
       }
       const glyphTokens = graphemes(line.text);

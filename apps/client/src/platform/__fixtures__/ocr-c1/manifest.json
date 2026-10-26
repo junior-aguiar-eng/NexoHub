@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "origin": "Gerado por scripts/medir-ocr-c1.mjs, Canvas 1600x550; inclinação de 5 graus e transformação afim simulam captura. Não são fotos de campo.",
+  "license": "MPL-2.0 (conteúdo sintético do projeto); rasterização com Liberation Sans já distribuída pelo projeto",
+  "expectedText": "Ação pública e certidão de São Luís.\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+  "normalization": "NFC e sequências de espaços convertidas em um espaço; pontuação, acentos, caixa e números preservados",
+  "fixtures": [
+    {
+      "kind": "acentos-numeros",
+      "sha256": "77b159895600c39dd31a22ec576894c76045bdc672a0c950de9f5f79cb5e51a8",
+      "size": 87284
+    },
+    {
+      "kind": "baixo-contraste",
+      "sha256": "17457af466e8ce982bd4475b83598dc217358cb5d3489b72f0f0103939343955",
+      "size": 76243
+    },
+    {
+      "kind": "foto-inclinada",
+      "sha256": "77403f04f870892d90a8958595f5c6ce3d953be53950be2b254e410215acab51",
+      "size": 130571
+    },
+    {
+      "kind": "foto-perspectiva",
+      "sha256": "d64f2dcd0c8aa9f7afdd9d72f2c6d9c213ba4ffb5563e6278f4a8f6c909b30c0",
+      "size": 105498
+    }
+  ]
+}

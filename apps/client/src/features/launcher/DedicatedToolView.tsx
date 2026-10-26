@@ -23,6 +23,7 @@ import {
 } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
+import type { OcrPageReport } from "@/platform/browser-ocr";
 import type { TranslationProgressInfo } from "@/platform/browser-translator";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { readDocumentText } from "@/platform/document-reader";
@@ -240,6 +241,22 @@ export function DedicatedToolView({
   const [ocrOutputMode, setOcrOutputMode] = useState<"searchable-pdf" | "text">("searchable-pdf");
   const [ocrEnhanceContrast, setOcrEnhanceContrast] = useState<boolean>(true);
   const [ocrProgressStatus, setOcrProgressStatus] = useState<string>("");
+  const ocrController = useRef<AbortController | null>(null);
+  const [ocrPageReports, setOcrPageReports] = useState<readonly OcrPageReport[]>([]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: arquivo e ferramenta delimitam a vida do reconhecimento.
+  useEffect(() => {
+    if (tool.id === "pdf-ocr") {
+      setRecognizedOcrText("");
+      setOcrPageReports([]);
+      setDownloadUrl(null);
+      setOutputBlob(null);
+      setStatus("idle");
+    }
+    return () => {
+      ocrController.current?.abort();
+      ocrController.current = null;
+    };
+  }, [files, tool.id, ocrLanguage, ocrEnhanceContrast, ocrOutputMode]);
   const [markdownDetectHeadings, setMarkdownDetectHeadings] = useState<boolean>(true);
   const [markdownDetectTables, setMarkdownDetectTables] = useState<boolean>(true);
   const [markdownIncludePageBreaks, setMarkdownIncludePageBreaks] = useState<boolean>(true);
@@ -1136,6 +1153,16 @@ export function DedicatedToolView({
   // Execução da ferramenta selecionada
   // =========================================================================
   async function handleExecute() {
+    const ocrRun = tool.id === "pdf-ocr" ? new AbortController() : undefined;
+    if (ocrRun) {
+      ocrController.current?.abort();
+      ocrController.current = ocrRun;
+      setOcrPageReports([]);
+      setRecognizedOcrText("");
+      setDownloadUrl(null);
+      setOutputBlob(null);
+      setOutputFileName("");
+    }
     const isDirectTextInput = inputTab === "text" && directText.trim().length > 0;
     const isDocless =
       tool.id === "text-compare" || tool.id === "html-to-pdf" || tool.id === "scan-to-pdf";
@@ -1277,6 +1304,7 @@ export function DedicatedToolView({
         pageNumbersFormat,
         pageNumbersStartPage,
         ocrLanguage,
+        ocrSignal: ocrRun?.signal,
         ocrEnhanceContrast,
         ocrOutputMode,
         detectHeadings: markdownDetectHeadings,
@@ -1324,10 +1352,25 @@ export function DedicatedToolView({
         scanOrientation,
         scanMargin,
         onOcrProgress: (info) => {
+          if (ocrRun?.signal.aborted) return;
           setProgress(info.progress);
-          setOcrProgressStatus(`Pág. ${info.page}/${info.totalPages} - ${info.status}`);
+          const label =
+            info.status === "completed"
+              ? translate("workspace.ocr.completed")
+              : info.status === "page-completed"
+                ? translate("workspace.ocr.pageComplete")
+                : info.status === "recognizing text"
+                  ? translate("workspace.ocr.recognizing")
+                  : translate("workspace.ocr.preparing");
+          setOcrProgressStatus(
+            translate("workspace.ocr.progressLabel")
+              .replace("{page}", String(info.page))
+              .replace("{total}", String(info.totalPages))
+              .replace("{status}", label),
+          );
         },
         onOcrTextExtracted: (text) => {
+          if (ocrRun?.signal.aborted) return;
           setRecognizedOcrText(text);
         },
         translationSourceLang: translationSourceLang as "en" | "pt" | "es",
@@ -1355,6 +1398,7 @@ export function DedicatedToolView({
         },
       });
       if (redactionRun?.signal.aborted) return;
+      if (ocrRun?.signal.aborted) return;
       if (tool.id === "pdf-form-fill" && formGeneration !== formRunGeneration.current) return;
       if (isTranslation && run !== translationRun.current) return;
       if (currentImageRun?.signal.aborted) return;
@@ -1396,6 +1440,7 @@ export function DedicatedToolView({
       }
       if (tool.id === "pdf-ocr" && output.extractedText) {
         setRecognizedOcrText(output.extractedText);
+        setOcrPageReports(output.ocrPageReports ?? []);
       }
       if (tool.id === "pdf-extract-images" && output.extractedImages) {
         setExtractedImages(output.extractedImages);
@@ -1412,6 +1457,7 @@ export function DedicatedToolView({
       setOutputBlob(outputBlob);
 
       const shouldStayInWorkspace =
+        tool.id === "pdf-ocr" ||
         tool.id === "text-translate" ||
         tool.id === "text-review" ||
         tool.id === "pdf-to-markdown" ||
@@ -1433,6 +1479,7 @@ export function DedicatedToolView({
         categoryKey,
       });
     } catch (err) {
+      if (ocrRun?.signal.aborted) return;
       if (redactionRun?.signal.aborted) return;
       if (tool.id === "pdf-form-fill" && formGeneration !== formRunGeneration.current) return;
       if (
@@ -1465,11 +1512,15 @@ export function DedicatedToolView({
       );
       setStatus("error");
     } finally {
+      if (ocrRun === ocrController.current) ocrController.current = null;
       if (isTranslation && run === translationRun.current) translationController.current = null;
     }
   }
 
   function handleReset() {
+    ocrController.current?.abort();
+    ocrController.current = null;
+    setOcrPageReports([]);
     redactionController.current?.abort();
     setRedactionAreas([]);
     setHtmlCodeContent("");
@@ -2018,7 +2069,11 @@ export function DedicatedToolView({
           progress={progress}
           progressStatus={ocrProgressStatus}
           recognizedText={recognizedOcrText}
-          onTextChange={setRecognizedOcrText}
+          onTextChange={(text) => {
+            setRecognizedOcrText(text);
+            setDownloadUrl(null);
+            setOutputBlob(null);
+          }}
           fileName={files[0]?.name || "documento_ocr.pdf"}
           language={ocrLanguage}
           onLanguageChange={setOcrLanguage}
@@ -2026,6 +2081,16 @@ export function DedicatedToolView({
           onOutputModeChange={setOcrOutputMode}
           enhanceContrast={ocrEnhanceContrast}
           onEnhanceContrastChange={setOcrEnhanceContrast}
+          pageReports={ocrPageReports}
+          downloadUrl={downloadUrl}
+          outputFileName={outputFileName}
+          onCancel={() => {
+            ocrController.current?.abort();
+            ocrController.current = null;
+            setStatus("idle");
+            setProgress(0);
+            setOcrProgressStatus(translate("workspace.ocr.cancelled"));
+          }}
         />
       );
     }

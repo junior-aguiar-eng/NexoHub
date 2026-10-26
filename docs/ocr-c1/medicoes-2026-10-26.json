@@ -1,0 +1,415 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-10-26T03:09:42.012Z",
+  "baseCommit": "130d0bf19c18f59fd614ad0112231a3b7adc9c0e",
+  "device": {
+    "cpu": "AMD Ryzen 5 3550H with Radeon Vega Mobile Gfx  ",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 32147910656,
+    "platform": "win32",
+    "arch": "x64",
+    "node": "v24.19.0"
+  },
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+  "tesseractVersion": "7.0.0",
+  "tesseractCoreVersion": "7.0.0",
+  "expected": "Ação pública e certidão de São Luís.\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+  "fixtures": [
+    {
+      "kind": "acentos-numeros",
+      "sha256": "77b159895600c39dd31a22ec576894c76045bdc672a0c950de9f5f79cb5e51a8",
+      "size": 87284
+    },
+    {
+      "kind": "baixo-contraste",
+      "sha256": "17457af466e8ce982bd4475b83598dc217358cb5d3489b72f0f0103939343955",
+      "size": 76243
+    },
+    {
+      "kind": "foto-inclinada",
+      "sha256": "77403f04f870892d90a8958595f5c6ce3d953be53950be2b254e410215acab51",
+      "size": 130571
+    },
+    {
+      "kind": "foto-perspectiva",
+      "sha256": "d64f2dcd0c8aa9f7afdd9d72f2c6d9c213ba4ffb5563e6278f4a8f6c909b30c0",
+      "size": 105498
+    }
+  ],
+  "rows": [
+    {
+      "fixture": "acentos-numeros",
+      "method": "original",
+      "temperature": "cold",
+      "ms": 1713.300000011921,
+      "pipelineMs": 1714.9000000059605,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 132844,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "acentos-numeros",
+      "method": "original",
+      "temperature": "warm",
+      "ms": 957.4000000059605,
+      "pipelineMs": 958.2999999821186,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 132844,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "acentos-numeros",
+      "method": "linear-1.35",
+      "temperature": "cold",
+      "ms": 1048.800000011921,
+      "pipelineMs": 1049.800000011921,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 132844,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "acentos-numeros",
+      "method": "linear-1.35",
+      "temperature": "warm",
+      "ms": 1004,
+      "pipelineMs": 1004.7999999821186,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 132844,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "acentos-numeros",
+      "method": "opencv-adaptive",
+      "temperature": "cold",
+      "ms": 978.4000000059605,
+      "pipelineMs": 1619.300000011921,
+      "preparationMs": 392.2000000178814,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 106416,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "acentos-numeros",
+      "method": "opencv-adaptive",
+      "temperature": "warm",
+      "ms": 1003.3999999761581,
+      "pipelineMs": 1584.699999988079,
+      "preparationMs": 348.5,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 106416,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "baixo-contraste",
+      "method": "original",
+      "temperature": "cold",
+      "ms": 981.4000000059605,
+      "pipelineMs": 982.2000000178814,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 124429,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "baixo-contraste",
+      "method": "original",
+      "temperature": "warm",
+      "ms": 1063.7000000178814,
+      "pipelineMs": 1064.5,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 124429,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "baixo-contraste",
+      "method": "linear-1.35",
+      "temperature": "cold",
+      "ms": 998.5,
+      "pipelineMs": 999.2999999821186,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 124429,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "baixo-contraste",
+      "method": "linear-1.35",
+      "temperature": "warm",
+      "ms": 1076.300000011921,
+      "pipelineMs": 1077.2000000178814,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 124429,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "baixo-contraste",
+      "method": "opencv-adaptive",
+      "temperature": "cold",
+      "ms": 1007,
+      "pipelineMs": 1520.699999988079,
+      "preparationMs": 322.7000000178814,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 106349,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "baixo-contraste",
+      "method": "opencv-adaptive",
+      "temperature": "warm",
+      "ms": 1038.1000000238419,
+      "pipelineMs": 1544.2000000178814,
+      "preparationMs": 319.60000002384186,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 106348,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "foto-inclinada",
+      "method": "original",
+      "temperature": "cold",
+      "ms": 1077.2999999821186,
+      "pipelineMs": 1079.8999999761581,
+      "preparationMs": 0,
+      "text": "Ação pública € certidão de São Luís.\n\nÓrgão responsável: informação e saúde,\nProcesso 09001234-56.2026.8.02.0001\nValor R$ 1.234,56 — Vencimento 25/10/2026.",
+      "confidence": 0.86,
+      "searchableBytes": 158406,
+      "cer": 0.026143790849673203,
+      "wer": 0.2
+    },
+    {
+      "fixture": "foto-inclinada",
+      "method": "original",
+      "temperature": "warm",
+      "ms": 1025.5,
+      "pipelineMs": 1027,
+      "preparationMs": 0,
+      "text": "Ação pública € certidão de São Luís.\n\nÓrgão responsável: informação e saúde,\nProcesso 09001234-56.2026.8.02.0001\nValor R$ 1.234,56 — Vencimento 25/10/2026.",
+      "confidence": 0.86,
+      "searchableBytes": 158405,
+      "cer": 0.026143790849673203,
+      "wer": 0.2
+    },
+    {
+      "fixture": "foto-inclinada",
+      "method": "linear-1.35",
+      "temperature": "cold",
+      "ms": 980.5,
+      "pipelineMs": 981.7000000178814,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde,\nProcesso 9001234-56.2026.8.02.0001\nValor R$ 1.234,56 — Vencimento 25/10/2026.",
+      "confidence": 0.86,
+      "searchableBytes": 158395,
+      "cer": 0.0196078431372549,
+      "wer": 0.15
+    },
+    {
+      "fixture": "foto-inclinada",
+      "method": "linear-1.35",
+      "temperature": "warm",
+      "ms": 1019.5999999940395,
+      "pipelineMs": 1020.5,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde,\nProcesso 9001234-56.2026.8.02.0001\nValor R$ 1.234,56 — Vencimento 25/10/2026.",
+      "confidence": 0.86,
+      "searchableBytes": 158395,
+      "cer": 0.0196078431372549,
+      "wer": 0.15
+    },
+    {
+      "fixture": "foto-inclinada",
+      "method": "opencv-adaptive",
+      "temperature": "cold",
+      "ms": 961.9000000059605,
+      "pipelineMs": 1522.199999988079,
+      "preparationMs": 370.2999999821186,
+      "text": "Ação pública € certidão de São Luís.\n\nÓrgão responsável: informação e saúde,\nProcesso P001234-56.2026.8.02.0001\nValor R$ 1.234,56 — Vencimento 25/10/2026.",
+      "confidence": 0.83,
+      "searchableBytes": 108447,
+      "cer": 0.026143790849673203,
+      "wer": 0.2
+    },
+    {
+      "fixture": "foto-inclinada",
+      "method": "opencv-adaptive",
+      "temperature": "warm",
+      "ms": 997,
+      "pipelineMs": 1501.5999999940395,
+      "preparationMs": 319.19999998807907,
+      "text": "Ação pública € certidão de São Luís.\n\nÓrgão responsável: informação e saúde,\nProcesso P001234-56.2026.8.02.0001\nValor R$ 1.234,56 — Vencimento 25/10/2026.",
+      "confidence": 0.83,
+      "searchableBytes": 108448,
+      "cer": 0.026143790849673203,
+      "wer": 0.2
+    },
+    {
+      "fixture": "foto-perspectiva",
+      "method": "original",
+      "temperature": "cold",
+      "ms": 982.9000000059605,
+      "pipelineMs": 984.7000000178814,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 142532,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "foto-perspectiva",
+      "method": "original",
+      "temperature": "warm",
+      "ms": 1036,
+      "pipelineMs": 1037.9000000059605,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 142532,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "foto-perspectiva",
+      "method": "linear-1.35",
+      "temperature": "cold",
+      "ms": 1066.2000000178814,
+      "pipelineMs": 1067.5999999940395,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 142532,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "foto-perspectiva",
+      "method": "linear-1.35",
+      "temperature": "warm",
+      "ms": 1085,
+      "pipelineMs": 1086.199999988079,
+      "preparationMs": 0,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2026.",
+      "confidence": 0.94,
+      "searchableBytes": 142532,
+      "cer": 0,
+      "wer": 0
+    },
+    {
+      "fixture": "foto-perspectiva",
+      "method": "opencv-adaptive",
+      "temperature": "cold",
+      "ms": 1065.7999999821186,
+      "pipelineMs": 1611.5,
+      "preparationMs": 318.90000000596046,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2076.",
+      "confidence": 0.93,
+      "searchableBytes": 105841,
+      "cer": 0.006535947712418301,
+      "wer": 0.05
+    },
+    {
+      "fixture": "foto-perspectiva",
+      "method": "opencv-adaptive",
+      "temperature": "warm",
+      "ms": 979.4000000059605,
+      "pipelineMs": 1487.800000011921,
+      "preparationMs": 322.5,
+      "text": "Ação pública e certidão de São Luís.\n\nÓrgão responsável: informação e saúde.\nProcesso 0001234-56.2026.8.02.0001\n\nValor R$ 1.234,56 — vencimento 25/10/2076.",
+      "confidence": 0.93,
+      "searchableBytes": 105841,
+      "cer": 0.006535947712418301,
+      "wer": 0.05
+    }
+  ],
+  "candidate": {
+    "package": "@techstark/opencv-js",
+    "version": "4.12.0-release.1",
+    "bytes": 10872779,
+    "sha256": "bd0c3e6448043de04f6a64a12cb7b759f78c3ab8f7c35c9f2e0f71c88bb17103"
+  },
+  "cvInitMs": 788.7000000178814,
+  "cachePolicy": "cold = primeira chamada de cada método/fixture com worker novo; warm = repetição com worker novo. Apenas a primeira chamada da sessão começa com IndexedDB vazio. Rotas de runtime são interceptadas pelo harness, sem cache HTTP; não representam rede do usuário.",
+  "runtimeDownloads": [
+    {
+      "url": "https://cdn.jsdelivr.net/npm/@tesseract.js-data/por/4.0.0_best_int/por.traineddata.gz",
+      "requests": 1,
+      "bytes": 1392239,
+      "sha256": "dacebc1386ddaaf8389f81094236cca0d690897cde693d48cbdaa881c86e2b4c"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/tesseract.js-core@v7.0.0/tesseract-core-relaxedsimd-lstm.wasm.js",
+      "requests": 25,
+      "bytes": 3905767,
+      "sha256": "861a536cf9ef8e63cb644d57bab39c388f37f7d6b6f60024b741c5f6b39a59b3"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/tesseract.js@v7.0.0/dist/worker.min.js",
+      "requests": 25,
+      "bytes": 111307,
+      "sha256": "576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d"
+    }
+  ],
+  "pageHeapSnapshot": {
+    "usedJSHeapSize": 123000000,
+    "totalJSHeapSize": 188000000
+  },
+  "memoryLimitation": "Snapshot JS da página, não pico nem memória dos workers/WASM",
+  "mixed": {
+    "sourceSha256": "af81fea7c3381e0da3d6e0c9eb6b59b77649233b9d1f560cf4672ebc43401268",
+    "outputSha256": "71db5e8c347744392ff9f727e87d3dfc14f4ae59fb19d753661414f1c121346f",
+    "originalUnchanged": true,
+    "imagesUnchanged": true,
+    "nativeText": "Original 000123",
+    "ocrPageReports": [
+      {
+        "pageNumber": 1,
+        "source": "existing-text",
+        "confidence": null,
+        "durationMs": 13.699999988079071
+      },
+      {
+        "pageNumber": 2,
+        "source": "ocr",
+        "confidence": 0.94,
+        "durationMs": 934.6999999880791
+      }
+    ],
+    "firstLineBbox": {
+      "x0": 60,
+      "y0": 74,
+      "x1": 837,
+      "y1": 120
+    },
+    "firstTextTransformAtScale2": [21.58333333333333, 0, 0, -46, 60, 120],
+    "textWidthAtScale2": 777
+  }
+}

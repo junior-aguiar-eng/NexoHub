@@ -11,6 +11,8 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
+import type { OcrPageReport } from "@/platform/browser-ocr";
+import "./OcrScannerPanel.css";
 
 export type OcrScannerPanelProps = {
   isScanning: boolean;
@@ -25,6 +27,10 @@ export type OcrScannerPanelProps = {
   onOutputModeChange: (mode: "searchable-pdf" | "text") => void;
   enhanceContrast: boolean;
   onEnhanceContrastChange: (enhance: boolean) => void;
+  pageReports?: readonly OcrPageReport[];
+  onCancel?: () => void;
+  downloadUrl?: string | null;
+  outputFileName?: string;
 };
 
 export function OcrScannerPanel({
@@ -40,6 +46,10 @@ export function OcrScannerPanel({
   onOutputModeChange,
   enhanceContrast,
   onEnhanceContrastChange,
+  pageReports = [],
+  onCancel,
+  downloadUrl,
+  outputFileName,
 }: OcrScannerPanelProps) {
   const [copied, setCopied] = useState(false);
 
@@ -71,7 +81,7 @@ export function OcrScannerPanel({
   const charCount = recognizedText.length;
 
   return (
-    <div className="ilovepdf-compress-container" data-workspace-panel>
+    <div className="ilovepdf-compress-container ocr-scanner-panel" data-workspace-panel>
       {/* Área Central: Visualização do Scanner e Editor de Texto Reconhecido */}
       <div
         className="ilovepdf-compress-preview-area"
@@ -123,21 +133,60 @@ export function OcrScannerPanel({
             </div>
 
             {progressStatus && (
-              <span style={{ fontSize: "0.75rem", color: "#64748b", display: "block" }}>
+              <span
+                style={{ fontSize: "0.75rem", color: "var(--color-ink-muted)", display: "block" }}
+              >
                 {progressStatus}
               </span>
             )}
 
             {isScanning && (
-              <div className="ocr-progress-track">
+              <div
+                className="ocr-progress-track"
+                role="progressbar"
+                aria-label={translate("workspace.ocr.scanning")}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progress}
+              >
                 <div className="ocr-progress-bar" style={{ width: `${progress}%` }} />
               </div>
             )}
           </div>
+          {isScanning && onCancel && (
+            <Button variant="secondary" onClick={onCancel}>
+              {translate("workspace.ocr.cancel")}
+            </Button>
+          )}
         </div>
 
         {/* Caixa de Texto Reconhecido com Cópia e Download Imediato */}
         <div className="ocr-result-container" style={{ width: "100%", margin: 0 }}>
+          <p className="ilovepdf-control-hint">{translate("workspace.ocr.pagePolicy")}</p>
+          {pageReports.length > 0 && (
+            <section aria-label={translate("workspace.ocr.pageReport")}>
+              <p>{translate("workspace.ocr.confidenceNotice")}</p>
+              <ul>
+                {pageReports.map((report) => (
+                  <li key={report.pageNumber}>
+                    {translate("workspace.ocr.pageNumber").replace(
+                      "{page}",
+                      String(report.pageNumber),
+                    )}
+                    {" — "}
+                    {report.source === "existing-text"
+                      ? translate("workspace.ocr.existingText")
+                      : translate("workspace.ocr.indicator").replace(
+                          "{value}",
+                          report.confidence === null
+                            ? translate("workspace.ocr.unmeasured")
+                            : `${Math.round(report.confidence * 100)}%`,
+                        )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           <div className="ocr-result-header">
             <div className="ocr-result-title-group">
               <Sparkles size={16} style={{ color: "var(--color-brand)" }} />
@@ -183,8 +232,14 @@ export function OcrScannerPanel({
               </Button>
             </div>
           </div>
+          {downloadUrl && outputFileName && (
+            <a href={downloadUrl} download={outputFileName} className="ocr-result-download">
+              {translate("workspace.ocr.downloadResult")}
+            </a>
+          )}
 
           <textarea
+            aria-label={translate("workspace.ocr.resultTitle")}
             className="ocr-result-textarea"
             value={recognizedText}
             onChange={(e) => onTextChange?.(e.target.value)}
@@ -204,7 +259,12 @@ export function OcrScannerPanel({
         <h3 className="ilovepdf-sidebar-title">{translate("workspace.ocr.optionsTitle")}</h3>
         <p
           className="ilovepdf-control-hint"
-          style={{ margin: 0, fontSize: "0.85rem", color: "#64748b", lineHeight: 1.4 }}
+          style={{
+            margin: 0,
+            fontSize: "0.85rem",
+            color: "var(--color-ink-muted)",
+            lineHeight: 1.4,
+          }}
         >
           {translate("workspace.ocr.optionsDesc")}
         </p>
@@ -218,7 +278,7 @@ export function OcrScannerPanel({
               gap: "0.3rem",
               fontSize: "0.85rem",
               fontWeight: 600,
-              color: "#334155",
+              color: "var(--color-ink)",
               marginBottom: "0.4rem",
             }}
           >
@@ -238,6 +298,7 @@ export function OcrScannerPanel({
                   type="button"
                   className={`ilovepdf-level-card ${isSelected ? "ilovepdf-level-card--selected" : ""}`}
                   onClick={() => onLanguageChange(lang.code)}
+                  disabled={isScanning}
                   style={{
                     padding: "0.5rem 0.75rem",
                     display: "flex",
@@ -265,7 +326,7 @@ export function OcrScannerPanel({
               gap: "0.3rem",
               fontSize: "0.85rem",
               fontWeight: 600,
-              color: "#334155",
+              color: "var(--color-ink)",
               marginBottom: "0.4rem",
             }}
           >
@@ -277,6 +338,7 @@ export function OcrScannerPanel({
               type="button"
               className={`ilovepdf-level-card ${outputMode === "searchable-pdf" ? "ilovepdf-level-card--selected" : ""}`}
               onClick={() => onOutputModeChange("searchable-pdf")}
+              disabled={isScanning}
               style={{ padding: "0.6rem 0.75rem", textAlign: "left" }}
               aria-pressed={outputMode === "searchable-pdf"}
             >
@@ -284,7 +346,7 @@ export function OcrScannerPanel({
                 <strong style={{ fontSize: "0.85rem" }}>
                   {translate("workspace.ocr.outputSearchablePdf")}
                 </strong>
-                <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                <span style={{ fontSize: "0.75rem", color: "var(--color-ink-muted)" }}>
                   {translate("workspace.ocr.outputSearchablePdfDesc")}
                 </span>
               </div>
@@ -293,6 +355,7 @@ export function OcrScannerPanel({
               type="button"
               className={`ilovepdf-level-card ${outputMode === "text" ? "ilovepdf-level-card--selected" : ""}`}
               onClick={() => onOutputModeChange("text")}
+              disabled={isScanning}
               style={{ padding: "0.6rem 0.75rem", textAlign: "left" }}
               aria-pressed={outputMode === "text"}
             >
@@ -300,7 +363,7 @@ export function OcrScannerPanel({
                 <strong style={{ fontSize: "0.85rem" }}>
                   {translate("workspace.ocr.outputText")}
                 </strong>
-                <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                <span style={{ fontSize: "0.75rem", color: "var(--color-ink-muted)" }}>
                   {translate("workspace.ocr.outputTextDesc")}
                 </span>
               </div>
@@ -317,7 +380,7 @@ export function OcrScannerPanel({
               gap: "0.3rem",
               fontSize: "0.85rem",
               fontWeight: 600,
-              color: "#334155",
+              color: "var(--color-ink)",
               marginBottom: "0.4rem",
             }}
           >
@@ -328,11 +391,12 @@ export function OcrScannerPanel({
             type="button"
             className={`ilovepdf-level-card ${enhanceContrast ? "ilovepdf-level-card--selected" : ""}`}
             onClick={() => onEnhanceContrastChange(!enhanceContrast)}
+            disabled={isScanning}
             style={{ padding: "0.6rem 0.75rem", textAlign: "left", width: "100%" }}
             aria-pressed={enhanceContrast}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "0.8rem", color: "#475569" }}>
+              <span style={{ fontSize: "0.8rem", color: "var(--color-ink-muted)" }}>
                 {translate("workspace.ocr.enhanceContrastDesc")}
               </span>
               <div

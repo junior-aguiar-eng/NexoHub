@@ -9,7 +9,7 @@ import {
   type ToolRunRequest,
 } from "@nexohub/tool-sdk";
 import { translate } from "@/i18n";
-import { performBrowserOcr } from "./browser-ocr";
+import { type OcrPageReport, performBrowserOcr } from "./browser-ocr";
 import { createZipArchive } from "./browser-pdf-utils";
 import { performBrowserReview } from "./browser-reviewer";
 import {
@@ -117,6 +117,7 @@ export interface LauncherToolInput {
   readonly pageNumbersStartPage?: number;
   readonly ocrLanguage?: "por" | "eng" | "spa";
   readonly ocrEnhanceContrast?: boolean;
+  readonly ocrSignal?: AbortSignal;
   readonly ocrOutputMode?: "searchable-pdf" | "text";
   readonly onOcrProgress?: (info: {
     status: string;
@@ -211,6 +212,7 @@ export interface LauncherToolOutput {
   readonly fileName: string;
   readonly categoryKey: "recent.type.pdf" | "recent.type.document";
   readonly extractedText?: string;
+  readonly ocrPageReports?: readonly OcrPageReport[];
   readonly secondaryBlob?: Blob;
   readonly secondaryFileName?: string;
   readonly reviewFindings?: readonly ReviewFinding[];
@@ -609,6 +611,7 @@ async function executeTool(
 
       let recognizedText = "";
       let searchablePdfBytes: Uint8Array | undefined;
+      let ocrPageReports: readonly OcrPageReport[] = [];
 
       if (documentCore.ocrEngine !== "browser" && documentCore.invoke) {
         try {
@@ -636,10 +639,12 @@ async function executeTool(
           const outcome = await performBrowserOcr(first, {
             language: input.ocrLanguage ?? "por",
             enhanceContrast: input.ocrEnhanceContrast ?? true,
+            signal: input.ocrSignal,
             onProgress: input.onOcrProgress,
           });
           recognizedText = outcome.text;
           searchablePdfBytes = outcome.searchablePdfBytes;
+          ocrPageReports = outcome.pageReports;
         } catch (error) {
           if (error instanceof Error && error.message === "OCR_NO_TEXT_FOUND") {
             throw new ToolRunError("INVALID_INPUT", translate("workspace.ocr.noTextFound"));
@@ -649,6 +654,8 @@ async function executeTool(
       }
 
       if (input.onOcrTextExtracted) {
+        if (input.ocrSignal?.aborted)
+          throw new ToolRunError("CANCELLED", translate("workspace.ocr.cancelled"));
         input.onOcrTextExtracted(recognizedText);
       }
 
@@ -665,6 +672,7 @@ async function executeTool(
           fileName: `${baseName}_ocr_pesquisavel.pdf`,
           categoryKey: "recent.type.pdf",
           extractedText: recognizedText,
+          ocrPageReports,
           secondaryBlob: txtBlob,
           secondaryFileName: txtFileName,
         };
@@ -675,6 +683,7 @@ async function executeTool(
         fileName: txtFileName,
         categoryKey: "recent.type.document",
         extractedText: recognizedText,
+        ocrPageReports,
         secondaryBlob: searchablePdfBytes ? pdfBlob(searchablePdfBytes) : undefined,
         secondaryFileName: searchablePdfBytes ? `${baseName}_ocr_pesquisavel.pdf` : undefined,
       };
@@ -1419,6 +1428,7 @@ export async function runLauncherTool(
     toolId,
     input,
     signal:
+      input.ocrSignal ??
       input.imageSignal ??
       input.translationSignal ??
       input.comparisonSignal ??

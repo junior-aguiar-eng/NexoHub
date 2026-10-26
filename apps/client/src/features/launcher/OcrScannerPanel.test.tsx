@@ -85,4 +85,25 @@ describe("OcrScannerPanel - Scanner a Laser e Reconhecimento OCR", () => {
     fireEvent.click(screen.getByRole("button", { name: /Texto Editável \(\.txt\)/i }));
     expect(onOutputModeChange).toHaveBeenCalledWith("text");
   });
+
+  it("mostra origem e indicador por página sem prometer acerto e permite cancelar", () => {
+    const onCancel = vi.fn();
+    render(
+      <OcrScannerPanel
+        {...defaultProps}
+        isScanning
+        onCancel={onCancel}
+        pageReports={[
+          { pageNumber: 1, source: "existing-text", confidence: null, durationMs: 10 },
+          { pageNumber: 2, source: "ocr", confidence: 0.87, durationMs: 200 },
+        ]}
+      />,
+    );
+    expect(screen.getByText(/Texto existente/)).toBeInTheDocument();
+    expect(screen.getByText(/87%/)).toBeInTheDocument();
+    expect(screen.getByText(/não garante acerto/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Português/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /Cancelar OCR/ }));
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
 });

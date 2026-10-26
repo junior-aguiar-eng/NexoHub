@@ -17,6 +17,7 @@ it("OCR web respeita idioma, contraste e saída pesquisável mesmo com core HTTP
     searchablePdfBytes: bytes,
     pages: 1,
     pageResults: [],
+    pageReports: [],
     engine: "tesseract.js",
   });
   const port = new HttpDocumentCorePort("https://teste.invalid");
@@ -60,6 +61,7 @@ it("não troca silenciosamente PDF pesquisável por TXT quando a camada falha", 
     lines: [],
     pages: 1,
     pageResults: [],
+    pageReports: [],
     engine: "tesseract.js",
   });
   const port = new HttpDocumentCorePort("https://teste.invalid");

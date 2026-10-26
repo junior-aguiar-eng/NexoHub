@@ -44,3 +44,9 @@ O relatório de comparação incorpora Source Sans 3 3.052R (OFL-1.1), com licen
 `apps/client/public/fonts/pdf-comparison/`. A incorporação usa `@pdf-lib/fontkit` 1.1.1
 (MIT declarado; README upstream acompanha os arquivos). Fonte, necessidade, manutenção,
 tamanho e validação estão registrados em [COMPARAR-PDF-WEB.md](COMPARAR-PDF-WEB.md).
+
+OCR-C1 (26/10/2026) mantém Tesseract.js/core 7.0.0 já instalados, sem dependência nova.
+O binário `@techstark/opencv-js@4.12.0-release.1` (Apache-2.0 declarado) foi medido em
+prova isolada e reprovado para integração; não integra o bundle nem o lockfile. Tamanho,
+SHA-256, origem, custo dos recursos existentes e limites da avaliação estão em
+[OCR-C1.md](OCR-C1.md) e seu JSON de medições. Não há aprovação de redistribuição desse candidato.

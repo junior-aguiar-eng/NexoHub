@@ -1,0 +1,54 @@
+.dedicated-tool-page .ocr-scanner-panel .ilovepdf-compress-preview-area,
+.dedicated-tool-page .ocr-scanner-panel .ilovepdf-compress-options-sidebar {
+  color: var(--color-ink);
+  background: var(--color-surface-raised);
+  border-color: var(--color-border);
+}
+.ocr-scanner-panel .ilovepdf-sidebar-title,
+.ocr-scanner-panel .ocr-result-title-group,
+.ocr-scanner-panel .ocr-result-container {
+  color: var(--color-ink);
+}
+.ocr-scanner-panel .ilovepdf-level-card {
+  color: var(--color-ink);
+  background: var(--color-surface-raised);
+  border-color: var(--color-border);
+  min-height: 44px;
+}
+.ocr-scanner-panel .ilovepdf-level-card--selected {
+  background: var(--color-brand-soft);
+  border-color: var(--color-brand);
+}
+.ocr-scanner-panel .ocr-result-title-group {
+  flex-wrap: wrap;
+}
+.ocr-scanner-panel section[aria-label] {
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+.ocr-scanner-panel .ocr-result-download {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  color: var(--color-ink);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  font-weight: 600;
+}
+.ocr-scanner-panel :is(button, a, textarea):focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ocr-scanner-panel .ocr-laser-beam,
+  .ocr-scanner-panel .ocr-laser-glow {
+    animation: none;
+  }
+}

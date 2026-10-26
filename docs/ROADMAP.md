@@ -46,7 +46,7 @@ para relatórios de auditoria ou planos novos.
 | 6 | IM-C3: composição de imagem com objetos e histórico | Plano de PDF e Imagem | Concluído no website; modo avançado na marca d’água, Fabric.js 7.4.0 e renderizador compartilhado |
 | 7 | ED-C1/ED-C2: compatibilidade e desempenho do editor PDF | [Editar PDF](superpowers/plans/2026-10-23-editar-pdf.md#fase-de-complementação--24102026) | Concluídos no website: corpus, recusas, render por página e orçamentos; limites mantidos |
 | 8 | CMP-C1: comparação e relatório mais legíveis | [Comparar PDF](superpowers/plans/2026-10-23-comparar-pdf.md#fase-de-complementação--24102026) | Concluído no website: corpus, navegação, fonte TTF incorporada e prévias sob demanda; motor mantido |
-| 9 | OCR-C1/DOC-C2: preparação de digitalizações para OCR | Estabilização / Quatro ferramentas | Prova técnica; um único pré-processador compartilhado |
+| 9 | OCR-C1: OCR medido e preparação de digitalizações | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#ocr-c1--ocr-medido-e-preparação-compartilhada-com-o-scanner) | Entrega local: corpus, cancelamento e PDF misto; candidato OpenCV reprovado para integração. DOC-C2 não iniciado, fora do escopo desta entrega |
 | 10 | XL-C1/MD-C1: tabelas e ordem de leitura mais controláveis | Estabilização | Planejado para web local; Camelot/Docling condicionados a decisão de runtime |
 | 11 | IM-C4: qualidade de exportação e AVIF; DOC-C3: paginação HTML; TR-C1: tradução | Respectivos planos acima | Qualidade de exportação IM-C4 entregue; AVIF/DOC-C3 condicionados; TR-C1 deve anteceder qualquer declaração de licença comercial do tradutor |
 | 12 | R-C1: avaliar qpdf para Reparar PDF | [Reparar PDF](REPARAR-PDF.md#complementação-do-motor--24102026) | Avaliação qpdf pendente; motor web existente preservado na integração |
@@ -103,6 +103,12 @@ do motor nesta adequação.
   com iLovePDF/Smallpdf. Commit, push e deploy somente quando solicitados.
 
 ## Escopo de plataforma
+
+**OCR-C1 (26/10/2026):** resultado e limites em [OCR-C1](OCR-C1.md). O adaptador compartilhado
+continua condicionado a ganho demonstrado; o candidato avaliado não foi integrado. DOC-C2
+permanece no plano de Quatro ferramentas, sem implementação. Alterações locais no worktree
+`nexohub-editor-compatibilidade`; commit local autorizado em 26/10/2026, sem integração na principal,
+push ou deploy.
 
 As fases cobrem o aplicativo Windows x64 nativo e o client web moderno compartilhado. Linux, Android, iOS e
 demais sistemas nativos estão congelados por prazo indeterminado e não integram este roadmap ativo: não

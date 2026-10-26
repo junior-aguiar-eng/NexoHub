@@ -1091,7 +1091,9 @@ export async function generateSearchablePdf(
   sourceBytes: Uint8Array,
   pagesData: readonly OcrPageData[],
   sourceMimeType?: string,
+  options: { signal?: AbortSignal } = {},
 ): Promise<Uint8Array> {
+  options.signal?.throwIfAborted();
   const isPdf =
     sourceBytes.length >= 4 &&
     sourceBytes[0] === 0x25 &&
@@ -1141,7 +1143,8 @@ export async function generateSearchablePdf(
     page.drawImage(embedded, { x: 0, y: 0, width: imgWidth, height: imgHeight });
   }
 
-  await addOcrTextLayer(doc, pagesData);
+  options.signal?.throwIfAborted();
+  await addOcrTextLayer(doc, pagesData, options);
 
   return await doc.save({ useObjectStreams: true });
 }

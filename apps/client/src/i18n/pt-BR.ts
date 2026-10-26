@@ -1,4 +1,20 @@
 export const ptBR = {
+  "workspace.ocr.cancel": "Cancelar OCR",
+  "workspace.ocr.progressLabel": "Página {page}/{total}: {status}",
+  "workspace.ocr.preparing": "Preparando reconhecimento local",
+  "workspace.ocr.recognizing": "Reconhecendo texto",
+  "workspace.ocr.pageComplete": "Página processada",
+  "workspace.ocr.downloadResult": "Baixar resultado do OCR",
+  "workspace.ocr.cancelled": "OCR cancelado.",
+  "workspace.ocr.pageReport": "Resultado por página",
+  "workspace.ocr.confidenceNotice":
+    "O indicador do OCR não garante acerto. Revise acentos, nomes e números.",
+  "workspace.ocr.pageNumber": "Página {page}",
+  "workspace.ocr.existingText": "Texto existente preservado",
+  "workspace.ocr.indicator": "Indicador do OCR: {value}",
+  "workspace.ocr.unmeasured": "não medido",
+  "workspace.ocr.pagePolicy":
+    "Páginas com texto extraível usam a camada existente. OCR é aplicado às páginas sem texto; imagens dentro de páginas textuais não são reconhecidas. Desative o contraste para reconhecer a imagem original.",
   "workspaceLayout.views": "Regiões da mesa",
   "workspaceLayout.document": "Documento",
   "workspaceLayout.documentRegion": "Área do documento",

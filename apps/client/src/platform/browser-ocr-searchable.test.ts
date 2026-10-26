@@ -7,8 +7,8 @@ import { performBrowserOcr } from "./browser-ocr";
 const recognition = vi.hoisted(() => ({ text: "Texto OCR № 漢字 😀 e\u0301" }));
 
 // Só o reconhecimento e a rasterização são substituídos; o PDF de saída é real.
-vi.mock("tesseract.js", () => ({
-  createWorker: async () => ({
+vi.mock("./ocr-recognition-session", () => ({
+  createOcrRecognitionSession: async () => ({
     recognize: async (_image: unknown, _options: unknown, output?: { blocks?: boolean }) => ({
       data: {
         text: recognition.text,
@@ -42,10 +42,13 @@ vi.mock("pdfjs-dist", () => ({
     promise: Promise.resolve({
       numPages: 2,
       getPage: async () => ({
+        getTextContent: async () => ({ items: [] }),
+        cleanup: () => {},
         getViewport: () => ({ width: 100, height: 100 }),
         render: () => ({ promise: Promise.resolve() }),
       }),
     }),
+    destroy: async () => {},
   }),
 }));
 

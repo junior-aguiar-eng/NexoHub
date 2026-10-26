@@ -85,4 +85,71 @@ describe("PdfToMarkdownPanel - Painel de Conversão de PDF para Markdown", () =>
     expect(writeTextMock).toHaveBeenCalledWith("# Conteúdo para teste de cópia");
     expect(await screen.findByText(/Copiado!/i)).toBeInTheDocument();
   });
+  it("mostra páginas sem texto por relatório e abre OCR somente por clique", () => {
+    const requestOcr = vi.fn();
+    render(
+      <PdfToMarkdownPanel
+        {...defaultProps}
+        markdownResult="Texto curto."
+        pagesWithoutText={[2]}
+        onRequestOcr={requestOcr}
+      />,
+    );
+    expect(screen.getByText(/Páginas sem texto selecionável: 2/)).toBeInTheDocument();
+    expect(requestOcr).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Abrir Reconhecer Texto (OCR)" }));
+    expect(requestOcr).toHaveBeenCalledOnce();
+  });
+
+  it("não sinaliza documento escaneado apenas porque o texto é curto", () => {
+    render(<PdfToMarkdownPanel {...defaultProps} markdownResult="Fim." pagesWithoutText={[]} />);
+    expect(screen.queryByText(/Pouco texto encontrado/)).not.toBeInTheDocument();
+  });
+
+  it("mantém barras e HTML literal dentro da mesma célula na visualização segura", () => {
+    const { container } = render(
+      <PdfToMarkdownPanel
+        {...defaultProps}
+        markdownResult={"| Código | Descrição |\n| --- | --- |\n| 00123 | A \\| B &lt;teste&gt; |"}
+      />,
+    );
+    expect(screen.getByRole("cell", { name: "A | B <teste>" })).toBeInTheDocument();
+    expect(container.querySelector("teste")).toBeNull();
+  });
+
+  it("permite revisar a ordem de leitura sem alterar opções silenciosamente", () => {
+    const change = vi.fn();
+    render(
+      <PdfToMarkdownPanel {...defaultProps} readingOrder="auto" onReadingOrderChange={change} />,
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: "Ordem de leitura" }), {
+      target: { value: "columns" },
+    });
+    expect(change).toHaveBeenCalledWith("columns");
+  });
+  it("decodifica traços escapados de células sem remover a linha de dados", () => {
+    render(
+      <PdfToMarkdownPanel
+        {...defaultProps}
+        markdownResult={"| A | B |\n| --- | --- |\n| \\-\\-\\- | valor |"}
+      />,
+    );
+    expect(screen.getByRole("cell", { name: "---" })).toBeInTheDocument();
+  });
+  it("preserva o início da lista numerada depois de um bullet", () => {
+    const { container } = render(
+      <PdfToMarkdownPanel {...defaultProps} markdownResult={"- Primeiro item\n\n7. Sétimo item"} />,
+    );
+    expect(container.querySelector("ol")).toHaveAttribute("start", "7");
+    expect(screen.getByText("Sétimo item")).toBeInTheDocument();
+  });
+
+  it("mantém barras e traços escapados como parágrafo literal", () => {
+    render(
+      <PdfToMarkdownPanel {...defaultProps} markdownResult={"\\| --- \\| --- \\|\n\n\\-\\-\\-"} />,
+    );
+    expect(screen.getByText("| --- | --- |", { exact: true })).toBeInTheDocument();
+    expect(screen.getByText("---", { exact: true })).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
 });

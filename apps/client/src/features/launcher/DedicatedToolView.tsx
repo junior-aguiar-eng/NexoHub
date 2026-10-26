@@ -44,6 +44,7 @@ import {
 import type { ImageCompressionLevel, WatermarkPosition } from "@/platform/image-engine";
 import { type ImageResultItem, summarizeImageResults } from "@/platform/image-results";
 import { runLauncherTool } from "@/platform/launcher-tool-runner";
+import type { MarkdownPageReport, MarkdownReadingOrder } from "@/platform/markdown-converter";
 import {
   type CropMargins,
   checkPdfProtection,
@@ -268,6 +269,30 @@ export function DedicatedToolView({
   const [markdownDetectTables, setMarkdownDetectTables] = useState<boolean>(true);
   const [markdownIncludePageBreaks, setMarkdownIncludePageBreaks] = useState<boolean>(true);
   const [markdownResult, setMarkdownResult] = useState<string>("");
+  const [markdownReadingOrder, setMarkdownReadingOrder] = useState<MarkdownReadingOrder>("auto");
+  const [markdownPageReports, setMarkdownPageReports] = useState<readonly MarkdownPageReport[]>([]);
+  const markdownController = useRef<AbortController | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: entrada e opções invalidam a conversão anterior.
+  useEffect(() => {
+    if (tool.id !== "pdf-to-markdown") return;
+    setMarkdownResult("");
+    setMarkdownPageReports([]);
+    setDownloadUrl(null);
+    setOutputBlob(null);
+    setStatus("idle");
+    return () => {
+      markdownController.current?.abort();
+      markdownController.current = null;
+    };
+  }, [
+    files[0],
+    tool.id,
+    markdownReadingOrder,
+    markdownDetectHeadings,
+    markdownDetectTables,
+    markdownIncludePageBreaks,
+  ]);
+
   const [cropMargins, setCropMargins] = useState<CropMargins>({
     top: 10,
     bottom: 10,
@@ -1260,6 +1285,15 @@ export function DedicatedToolView({
       (!excelPreviewReady || isAnalyzingExcel || excelPreviewError || excelSelection.error)
     )
       return;
+    const markdownRun = tool.id === "pdf-to-markdown" ? new AbortController() : undefined;
+    if (markdownRun) {
+      markdownController.current?.abort();
+      markdownController.current = markdownRun;
+      setMarkdownResult("");
+      setMarkdownPageReports([]);
+      setDownloadUrl(null);
+      setOutputBlob(null);
+    }
     const excelRun = tool.id === "pdf-to-excel" ? new AbortController() : undefined;
     if (excelRun) {
       excelController.current?.abort();
@@ -1421,6 +1455,8 @@ export function DedicatedToolView({
         ocrSignal: ocrRun?.signal,
         ocrEnhanceContrast,
         ocrOutputMode,
+        markdownReadingOrder,
+        markdownSignal: markdownRun?.signal,
         detectHeadings: markdownDetectHeadings,
         detectTables: markdownDetectTables,
         includePageBreaks: markdownIncludePageBreaks,
@@ -1519,6 +1555,7 @@ export function DedicatedToolView({
       if (redactionRun?.signal.aborted) return;
       if (ocrRun?.signal.aborted) return;
       if (excelRun?.signal.aborted) return;
+      if (markdownRun?.signal.aborted) return;
       if (tool.id === "pdf-form-fill" && formGeneration !== formRunGeneration.current) return;
       if (isTranslation && run !== translationRun.current) return;
       if (currentImageRun?.signal.aborted) return;
@@ -1547,7 +1584,9 @@ export function DedicatedToolView({
       }
       if (tool.id === "pdf-to-markdown") {
         const mdText = output.extractedText || (await outputBlob.text());
+        if (markdownRun?.signal.aborted) return;
         setMarkdownResult(mdText);
+        setMarkdownPageReports(output.markdownPageReports ?? []);
       }
       if (tool.id === "text-translate") {
         const text = await outputBlob.text();
@@ -1600,6 +1639,7 @@ export function DedicatedToolView({
       });
     } catch (err) {
       if (excelRun?.signal.aborted) return;
+      if (markdownRun?.signal.aborted) return;
       if (ocrRun?.signal.aborted) return;
       if (redactionRun?.signal.aborted) return;
       if (tool.id === "pdf-form-fill" && formGeneration !== formRunGeneration.current) return;
@@ -1633,6 +1673,7 @@ export function DedicatedToolView({
       );
       setStatus("error");
     } finally {
+      if (markdownRun === markdownController.current) markdownController.current = null;
       if (excelRun === excelController.current) excelController.current = null;
       if (ocrRun === ocrController.current) ocrController.current = null;
       if (isTranslation && run === translationRun.current) translationController.current = null;
@@ -1640,6 +1681,9 @@ export function DedicatedToolView({
   }
 
   function handleReset() {
+    markdownController.current?.abort();
+    markdownController.current = null;
+    setMarkdownPageReports([]);
     excelController.current?.abort();
     excelController.current = null;
     ocrController.current?.abort();
@@ -1848,6 +1892,15 @@ export function DedicatedToolView({
           onDetectTablesChange={setMarkdownDetectTables}
           includePageBreaks={markdownIncludePageBreaks}
           onIncludePageBreaksChange={setMarkdownIncludePageBreaks}
+          readingOrder={markdownReadingOrder}
+          onReadingOrderChange={setMarkdownReadingOrder}
+          pagesWithoutText={markdownPageReports
+            .filter((report) => report.textItemCount === 0)
+            .map((report) => report.pageNumber)}
+          columnPages={markdownPageReports
+            .filter((report) => report.readingOrder === "columns")
+            .map((report) => report.pageNumber)}
+          onRequestOcr={onOpenTool ? () => onOpenTool("pdf-ocr", files) : undefined}
           markdownResult={markdownResult}
           onMarkdownResultChange={setMarkdownResult}
           isConverting={status === "running"}
@@ -2845,6 +2898,20 @@ export function DedicatedToolView({
             }}
           >
             {translate("redact.cancel")}
+          </Button>
+        )}
+        {tool.id === "pdf-to-markdown" && status === "running" && (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              markdownController.current?.abort();
+              markdownController.current = null;
+              setStatus("idle");
+              setProgress(0);
+              setErrorMessage(null);
+            }}
+          >
+            {translate("pdfToMarkdown.cancel")}
           </Button>
         )}
         {tool.id === "pdf-to-excel" && status === "running" && (

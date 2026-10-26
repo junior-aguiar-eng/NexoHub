@@ -12,6 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
+import type { MarkdownReadingOrder } from "@/platform/markdown-converter";
 import { PdfViewport } from "./PdfViewport";
 
 export interface PdfToMarkdownPanelProps {
@@ -30,12 +31,41 @@ export interface PdfToMarkdownPanelProps {
   markdownResult?: string;
   onMarkdownResultChange?: (val: string) => void;
   isConverting?: boolean;
+  readingOrder?: MarkdownReadingOrder;
+  onReadingOrderChange?: (value: MarkdownReadingOrder) => void;
+  pagesWithoutText?: readonly number[];
+  columnPages?: readonly number[];
+  onRequestOcr?: () => void;
 }
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function decodeMarkdownText(text: string): string {
+  return text
+    .replace(/\\([\\|*_[\]`:-])/g, "$1")
+    .replace(/&amp;|&lt;|&gt;/g, (entity) =>
+      entity === "&amp;" ? "&" : entity === "&lt;" ? "<" : ">",
+    );
+}
+
+function tableCells(line: string): string[] {
+  const cells: string[] = [];
+  let cell = "";
+  const text = line.slice(1, -1);
+  for (let index = 0; index < text.length; index++) {
+    if (text[index] === "\\" && index + 1 < text.length) {
+      cell += text[index] + text[++index];
+    } else if (text[index] === "|") {
+      cells.push(decodeMarkdownText(cell.trim()));
+      cell = "";
+    } else cell += text[index];
+  }
+  cells.push(decodeMarkdownText(cell.trim()));
+  return cells;
 }
 
 /**
@@ -49,14 +79,7 @@ function SimpleMarkdownViewer({ content }: { content: string }) {
 
   const flushTable = (keyPrefix: string) => {
     if (tableBuffer.length === 0) return;
-    const rows = tableBuffer
-      .filter((line) => !line.match(/^\|\s*[-:\s|]+\s*\|$/))
-      .map((line) =>
-        line
-          .split("|")
-          .map((c) => c.trim())
-          .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1),
-      );
+    const rows = tableBuffer.filter((line) => !line.match(/^\|\s*[-:\s|]+\s*\|$/)).map(tableCells);
 
     if (rows.length > 0) {
       const header = rows[0];
@@ -131,32 +154,34 @@ function SimpleMarkdownViewer({ content }: { content: string }) {
           key={i}
           className="mt-6 mb-3 text-2xl font-bold text-[var(--color-ink)] tracking-tight border-b border-[var(--color-border)] pb-2"
         >
-          {trimmed.slice(2)}
+          {decodeMarkdownText(trimmed.slice(2))}
         </h1>,
       );
     } else if (trimmed.startsWith("## ")) {
       renderedElements.push(
         <h2 key={i} className="mt-5 mb-2 text-xl font-semibold text-[var(--color-ink)]">
-          {trimmed.slice(3)}
+          {decodeMarkdownText(trimmed.slice(3))}
         </h2>,
       );
     } else if (trimmed.startsWith("### ")) {
       renderedElements.push(
         <h3 key={i} className="mt-4 mb-2 text-lg font-medium text-[var(--color-ink)]">
-          {trimmed.slice(4)}
+          {decodeMarkdownText(trimmed.slice(4))}
         </h3>,
       );
     } else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
       renderedElements.push(
         <li key={i} className="ml-5 list-disc text-[var(--color-ink)] my-0.5 leading-relaxed">
-          {trimmed.slice(2)}
+          {decodeMarkdownText(trimmed.slice(2))}
         </li>,
       );
     } else if (/^\d+\.\s/.test(trimmed)) {
       renderedElements.push(
-        <li key={i} className="ml-5 list-decimal text-[var(--color-ink)] my-0.5 leading-relaxed">
-          {trimmed.replace(/^\d+\.\s/, "")}
-        </li>,
+        <ol key={i} start={Number(trimmed.match(/^\d+/)?.[0] ?? 1)} className="my-0.5">
+          <li className="ml-5 list-decimal text-[var(--color-ink)] leading-relaxed">
+            {decodeMarkdownText(trimmed.replace(/^\d+\.\s/, ""))}
+          </li>
+        </ol>,
       );
     } else if (trimmed.startsWith("> ")) {
       renderedElements.push(
@@ -164,13 +189,13 @@ function SimpleMarkdownViewer({ content }: { content: string }) {
           key={i}
           className="my-2 border-l-4 border-indigo-500 bg-indigo-950/20 px-4 py-2 italic text-[var(--color-ink)] rounded-r"
         >
-          {trimmed.slice(2)}
+          {decodeMarkdownText(trimmed.slice(2))}
         </blockquote>,
       );
     } else if (trimmed.length > 0) {
       renderedElements.push(
         <p key={i} className="my-2 text-[var(--color-ink)] leading-relaxed text-sm md:text-base">
-          {trimmed}
+          {decodeMarkdownText(trimmed)}
         </p>,
       );
     }
@@ -197,6 +222,11 @@ export function PdfToMarkdownPanel({
   markdownResult,
   onMarkdownResultChange,
   isConverting = false,
+  readingOrder = "auto",
+  onReadingOrderChange,
+  pagesWithoutText = [],
+  columnPages = [],
+  onRequestOcr,
 }: PdfToMarkdownPanelProps) {
   const [previewPage, setPreviewPage] = useState(1);
   useEffect(() => {
@@ -211,7 +241,6 @@ export function PdfToMarkdownPanel({
   const charCount = markdownResult?.length ?? 0;
   const wordCount = markdownResult?.trim() ? markdownResult.trim().split(/\s+/).length : 0;
   const lineCount = markdownResult ? markdownResult.split("\n").length : 0;
-  const isScannedHint = Boolean(markdownResult && charCount < 40);
 
   const handleCopy = async () => {
     if (!markdownResult) return;
@@ -309,19 +338,30 @@ export function PdfToMarkdownPanel({
             </div>
 
             {/* Aviso para documento potencialmente escaneado */}
-            {isScannedHint && (
-              <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
+            {pagesWithoutText.length > 0 && (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-[var(--color-ink)]">
                 <AlertCircle size={16} className="shrink-0 text-amber-400" />
-                <span>{translate("pdfToMarkdown.scannedNotice")}</span>
+                <span>
+                  {translate("pdfToMarkdown.missingPages").replace(
+                    "{pages}",
+                    pagesWithoutText.join(", "),
+                  )}
+                </span>
               </div>
             )}
 
+            {columnPages.length > 0 && (
+              <p className="text-xs text-[var(--color-ink-muted)]">
+                {translate("pdfToMarkdown.columnPages").replace("{pages}", columnPages.join(", "))}
+              </p>
+            )}
             {/* Conteúdo: Visualização ou Código Raw */}
             <div className="min-h-[420px] max-h-[620px] overflow-y-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
               {viewTab === "rendered" ? (
                 <SimpleMarkdownViewer content={markdownResult} />
               ) : (
                 <textarea
+                  aria-label={translate("pdfToMarkdown.viewRaw")}
                   value={markdownResult}
                   onChange={(e) => onMarkdownResultChange?.(e.target.value)}
                   className="h-full min-h-[400px] w-full resize-none bg-transparent font-mono text-xs md:text-sm text-[var(--color-ink)] outline-none leading-relaxed"
@@ -412,6 +452,33 @@ export function PdfToMarkdownPanel({
       {/* Coluna Lateral: Opções da Ferramenta */}
       <aside className="ilovepdf-compress-options-sidebar" data-workspace-part="options">
         <h3 className="ilovepdf-sidebar-title">{translate("pdfToMarkdown.optionsTitle")}</h3>
+        <label className="my-3 flex flex-col gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-ink)]">
+          {translate("pdfToMarkdown.readingOrder")}
+          <select
+            aria-label={translate("pdfToMarkdown.readingOrder")}
+            value={readingOrder}
+            onChange={(event) => onReadingOrderChange?.(event.target.value as MarkdownReadingOrder)}
+            disabled={isConverting}
+            className="min-h-11 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-2 text-[var(--color-ink)]"
+          >
+            <option value="auto">{translate("pdfToMarkdown.orderAuto")}</option>
+            <option value="rows">{translate("pdfToMarkdown.orderRows")}</option>
+            <option value="columns">{translate("pdfToMarkdown.orderColumns")}</option>
+          </select>
+          <span className="text-xs text-[var(--color-ink-muted)]">
+            {translate("pdfToMarkdown.orderHint")}
+          </span>
+        </label>
+        {onRequestOcr && (
+          <Button
+            variant="secondary"
+            onClick={onRequestOcr}
+            disabled={isConverting}
+            className="my-3 min-h-11 w-full"
+          >
+            {translate("pdfToMarkdown.openOcr")}
+          </Button>
+        )}
 
         <div className="flex flex-col gap-4">
           {/* Opção 1: Detectar Títulos */}

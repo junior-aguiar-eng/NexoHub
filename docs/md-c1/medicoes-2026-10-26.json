@@ -1,0 +1,266 @@
+{
+  "rows": [
+    {
+      "options": {},
+      "pass": "first",
+      "ms": 741.7000000476837,
+      "markdown": "<!-- Página 1 -->\n\n# Relatório de leitura em duas colunas\n\nA leitura começa na coluna esquerda.\n\nConteúdo contínuo, sem trocar a ordem.\n\n- Primeiro item da coluna esquerda.\n\nConclusão do primeiro bloco integral.\n\nA segunda coluna vem após a primeira.\n\nEste trecho conserva os valores 00123.\n\n1. Item numerado na coluna direita.\n\nFecho completo do segundo bloco textual.\n\n# Notas ao final das duas colunas\n\nEste parágrafo abrange a página e sucede as duas colunas, sem omitir conteúdo.\n\n---\n\n<!-- Página 2 -->\n\n# Tabela de valores\n\n| Código | Descrição | Valor |\n| --- | --- | --- |\n| 00123 |  | 1.234,56 |\n| 123 | A \\| B &lt;teste&gt; &amp; condição | 0,50 |\n\n---\n\n<!-- Página 3: sem texto selecionável -->\n\n---\n\n<!-- Página 4 -->\n\nFim.",
+      "pageCount": 4,
+      "characterCount": 736,
+      "wordCount": 134,
+      "lineCount": 44,
+      "pagesWithoutText": [3],
+      "pageReports": [
+        {
+          "pageNumber": 1,
+          "textItemCount": 11,
+          "readingOrder": "columns"
+        },
+        {
+          "pageNumber": 2,
+          "textItemCount": 9,
+          "readingOrder": "rows"
+        },
+        {
+          "pageNumber": 3,
+          "textItemCount": 0,
+          "readingOrder": "none"
+        },
+        {
+          "pageNumber": 4,
+          "textItemCount": 1,
+          "readingOrder": "rows"
+        }
+      ],
+      "sourceUnchanged": true,
+      "outputSha256": "dcd008da878d001d695a34942ed40a5873ddac01546309139f0942269da69ebe",
+      "utf8Bytes": 755
+    },
+    {
+      "options": {},
+      "pass": "repeat",
+      "ms": 464.69999998807907,
+      "markdown": "<!-- Página 1 -->\n\n# Relatório de leitura em duas colunas\n\nA leitura começa na coluna esquerda.\n\nConteúdo contínuo, sem trocar a ordem.\n\n- Primeiro item da coluna esquerda.\n\nConclusão do primeiro bloco integral.\n\nA segunda coluna vem após a primeira.\n\nEste trecho conserva os valores 00123.\n\n1. Item numerado na coluna direita.\n\nFecho completo do segundo bloco textual.\n\n# Notas ao final das duas colunas\n\nEste parágrafo abrange a página e sucede as duas colunas, sem omitir conteúdo.\n\n---\n\n<!-- Página 2 -->\n\n# Tabela de valores\n\n| Código | Descrição | Valor |\n| --- | --- | --- |\n| 00123 |  | 1.234,56 |\n| 123 | A \\| B &lt;teste&gt; &amp; condição | 0,50 |\n\n---\n\n<!-- Página 3: sem texto selecionável -->\n\n---\n\n<!-- Página 4 -->\n\nFim.",
+      "pageCount": 4,
+      "characterCount": 736,
+      "wordCount": 134,
+      "lineCount": 44,
+      "pagesWithoutText": [3],
+      "pageReports": [
+        {
+          "pageNumber": 1,
+          "textItemCount": 11,
+          "readingOrder": "columns"
+        },
+        {
+          "pageNumber": 2,
+          "textItemCount": 9,
+          "readingOrder": "rows"
+        },
+        {
+          "pageNumber": 3,
+          "textItemCount": 0,
+          "readingOrder": "none"
+        },
+        {
+          "pageNumber": 4,
+          "textItemCount": 1,
+          "readingOrder": "rows"
+        }
+      ],
+      "sourceUnchanged": true,
+      "outputSha256": "dcd008da878d001d695a34942ed40a5873ddac01546309139f0942269da69ebe",
+      "utf8Bytes": 755
+    },
+    {
+      "options": {
+        "includePageBreaks": false
+      },
+      "pass": "first",
+      "ms": 397.7000000476837,
+      "markdown": "# Relatório de leitura em duas colunas\n\nA leitura começa na coluna esquerda.\n\nConteúdo contínuo, sem trocar a ordem.\n\n- Primeiro item da coluna esquerda.\n\nConclusão do primeiro bloco integral.\n\nA segunda coluna vem após a primeira.\n\nEste trecho conserva os valores 00123.\n\n1. Item numerado na coluna direita.\n\nFecho completo do segundo bloco textual.\n\n# Notas ao final das duas colunas\n\nEste parágrafo abrange a página e sucede as duas colunas, sem omitir conteúdo.\n\n# Tabela de valores\n\n| Código | Descrição | Valor |\n| --- | --- | --- |\n| 00123 |  | 1.234,56 |\n| 123 | A \\| B &lt;teste&gt; &amp; condição | 0,50 |\n\n<!-- Página 3: sem texto selecionável -->\n\nFim.",
+      "pageCount": 4,
+      "characterCount": 664,
+      "wordCount": 119,
+      "lineCount": 32,
+      "pagesWithoutText": [3],
+      "pageReports": [
+        {
+          "pageNumber": 1,
+          "textItemCount": 11,
+          "readingOrder": "columns"
+        },
+        {
+          "pageNumber": 2,
+          "textItemCount": 9,
+          "readingOrder": "rows"
+        },
+        {
+          "pageNumber": 3,
+          "textItemCount": 0,
+          "readingOrder": "none"
+        },
+        {
+          "pageNumber": 4,
+          "textItemCount": 1,
+          "readingOrder": "rows"
+        }
+      ],
+      "sourceUnchanged": true,
+      "outputSha256": "c55c118b97d67e5817f0c673e4f1a7056ef47b077dd2165511e4b732c61f774c",
+      "utf8Bytes": 680
+    },
+    {
+      "options": {
+        "includePageBreaks": false
+      },
+      "pass": "repeat",
+      "ms": 385.39999997615814,
+      "markdown": "# Relatório de leitura em duas colunas\n\nA leitura começa na coluna esquerda.\n\nConteúdo contínuo, sem trocar a ordem.\n\n- Primeiro item da coluna esquerda.\n\nConclusão do primeiro bloco integral.\n\nA segunda coluna vem após a primeira.\n\nEste trecho conserva os valores 00123.\n\n1. Item numerado na coluna direita.\n\nFecho completo do segundo bloco textual.\n\n# Notas ao final das duas colunas\n\nEste parágrafo abrange a página e sucede as duas colunas, sem omitir conteúdo.\n\n# Tabela de valores\n\n| Código | Descrição | Valor |\n| --- | --- | --- |\n| 00123 |  | 1.234,56 |\n| 123 | A \\| B &lt;teste&gt; &amp; condição | 0,50 |\n\n<!-- Página 3: sem texto selecionável -->\n\nFim.",
+      "pageCount": 4,
+      "characterCount": 664,
+      "wordCount": 119,
+      "lineCount": 32,
+      "pagesWithoutText": [3],
+      "pageReports": [
+        {
+          "pageNumber": 1,
+          "textItemCount": 11,
+          "readingOrder": "columns"
+        },
+        {
+          "pageNumber": 2,
+          "textItemCount": 9,
+          "readingOrder": "rows"
+        },
+        {
+          "pageNumber": 3,
+          "textItemCount": 0,
+          "readingOrder": "none"
+        },
+        {
+          "pageNumber": 4,
+          "textItemCount": 1,
+          "readingOrder": "rows"
+        }
+      ],
+      "sourceUnchanged": true,
+      "outputSha256": "c55c118b97d67e5817f0c673e4f1a7056ef47b077dd2165511e4b732c61f774c",
+      "utf8Bytes": 680
+    },
+    {
+      "options": {
+        "readingOrder": "rows",
+        "detectTables": false
+      },
+      "pass": "first",
+      "ms": 385.89999997615814,
+      "markdown": "<!-- Página 1 -->\n\n# Relatório de leitura em duas colunas\n\nA leitura começa na coluna esquerda. A segunda coluna vem após a primeira.\n\nConteúdo contínuo, sem trocar a ordem. Este trecho conserva os valores 00123.\n\n- Primeiro item da coluna esquerda. 1. Item numerado na coluna direita.\n\nConclusão do primeiro bloco integral. Fecho completo do segundo bloco textual.\n\n# Notas ao final das duas colunas\n\nEste parágrafo abrange a página e sucede as duas colunas, sem omitir conteúdo.\n\n---\n\n<!-- Página 2 -->\n\n# Tabela de valores\n\nCódigo Descrição Valor\n\n00123 1.234,56\n\n123 A \\| B &lt;teste&gt; &amp; condição 0,50\n\n---\n\n<!-- Página 3: sem texto selecionável -->\n\n---\n\n<!-- Página 4 -->\n\nFim.",
+      "pageCount": 4,
+      "characterCount": 689,
+      "wordCount": 115,
+      "lineCount": 37,
+      "pagesWithoutText": [3],
+      "pageReports": [
+        {
+          "pageNumber": 1,
+          "textItemCount": 11,
+          "readingOrder": "rows"
+        },
+        {
+          "pageNumber": 2,
+          "textItemCount": 9,
+          "readingOrder": "rows"
+        },
+        {
+          "pageNumber": 3,
+          "textItemCount": 0,
+          "readingOrder": "none"
+        },
+        {
+          "pageNumber": 4,
+          "textItemCount": 1,
+          "readingOrder": "rows"
+        }
+      ],
+      "sourceUnchanged": true,
+      "outputSha256": "31ff603e17b6ef807131ccbbe800772a5fc6835448556b245fbb2dcafa533f9f",
+      "utf8Bytes": 708
+    },
+    {
+      "options": {
+        "readingOrder": "rows",
+        "detectTables": false
+      },
+      "pass": "repeat",
+      "ms": 433.4000000357628,
+      "markdown": "<!-- Página 1 -->\n\n# Relatório de leitura em duas colunas\n\nA leitura começa na coluna esquerda. A segunda coluna vem após a primeira.\n\nConteúdo contínuo, sem trocar a ordem. Este trecho conserva os valores 00123.\n\n- Primeiro item da coluna esquerda. 1. Item numerado na coluna direita.\n\nConclusão do primeiro bloco integral. Fecho completo do segundo bloco textual.\n\n# Notas ao final das duas colunas\n\nEste parágrafo abrange a página e sucede as duas colunas, sem omitir conteúdo.\n\n---\n\n<!-- Página 2 -->\n\n# Tabela de valores\n\nCódigo Descrição Valor\n\n00123 1.234,56\n\n123 A \\| B &lt;teste&gt; &amp; condição 0,50\n\n---\n\n<!-- Página 3: sem texto selecionável -->\n\n---\n\n<!-- Página 4 -->\n\nFim.",
+      "pageCount": 4,
+      "characterCount": 689,
+      "wordCount": 115,
+      "lineCount": 37,
+      "pagesWithoutText": [3],
+      "pageReports": [
+        {
+          "pageNumber": 1,
+          "textItemCount": 11,
+          "readingOrder": "rows"
+        },
+        {
+          "pageNumber": 2,
+          "textItemCount": 9,
+          "readingOrder": "rows"
+        },
+        {
+          "pageNumber": 3,
+          "textItemCount": 0,
+          "readingOrder": "none"
+        },
+        {
+          "pageNumber": 4,
+          "textItemCount": 1,
+          "readingOrder": "rows"
+        }
+      ],
+      "sourceUnchanged": true,
+      "outputSha256": "31ff603e17b6ef807131ccbbe800772a5fc6835448556b245fbb2dcafa533f9f",
+      "utf8Bytes": 708
+    }
+  ],
+  "fixture": {
+    "sha256": "a3bdb6f5f72c3d3afed07904c758f7a83210fb8c3c7063e1972637d70a8ef983",
+    "size": 2410
+  },
+  "expected": {
+    "left": [
+      "A leitura começa na coluna esquerda.",
+      "Conteúdo contínuo, sem trocar a ordem.",
+      "• Primeiro item da coluna esquerda.",
+      "Conclusão do primeiro bloco integral."
+    ],
+    "right": [
+      "A segunda coluna vem após a primeira.",
+      "Este trecho conserva os valores 00123.",
+      "1. Item numerado na coluna direita.",
+      "Fecho completo do segundo bloco textual."
+    ],
+    "table": [
+      ["Código", "Descrição", "Valor"],
+      ["00123", "", "1.234,56"],
+      ["123", "A | B <teste> & condição", "0,50"]
+    ]
+  },
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+  "measuredAt": "2026-10-26T21:40:48.922Z",
+  "device": {
+    "cpu": "AMD Ryzen 5 3550H with Radeon Vega Mobile Gfx  ",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 32147910656
+  },
+  "versions": {
+    "pdfjs": "6.3.289",
+    "pdfLib": "1.17.1",
+    "chromium": "151.0.7922.34"
+  },
+  "method": "6 extrações locais do mesmo corpus. ms somente conversão; first/repeat no mesmo navegador e cache de disco não esvaziado. Hash de entrada conferido antes/depois. Todas as linhas das duas colunas presentes uma vez. Não mede pico de memória nem homologa layouts arbitrários."
+}

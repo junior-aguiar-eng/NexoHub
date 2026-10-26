@@ -1,0 +1,29 @@
+{
+  "license": "MPL-2.0",
+  "origin": "Corpus sintético autoral do NexoHub. Gerador corpus.ts; sem dados de terceiros.",
+  "file": "corpus.pdf",
+  "sha256": "a3bdb6f5f72c3d3afed07904c758f7a83210fb8c3c7063e1972637d70a8ef983",
+  "size": 2410,
+  "pageCount": 4,
+  "expected": {
+    "left": [
+      "A leitura começa na coluna esquerda.",
+      "Conteúdo contínuo, sem trocar a ordem.",
+      "• Primeiro item da coluna esquerda.",
+      "Conclusão do primeiro bloco integral."
+    ],
+    "right": [
+      "A segunda coluna vem após a primeira.",
+      "Este trecho conserva os valores 00123.",
+      "1. Item numerado na coluna direita.",
+      "Fecho completo do segundo bloco textual."
+    ],
+    "table": [
+      ["Código", "Descrição", "Valor"],
+      ["00123", "", "1.234,56"],
+      ["123", "A | B <teste> & condição", "0,50"]
+    ]
+  },
+  "pagesWithoutText": [3],
+  "notes": "Página 1: duas colunas e blocos abrangentes; página 2: tabela de 3 colunas com vazios, zeros, barra e HTML literal; página 3: imagem sem camada textual; página 4: texto nativo curto. Testes adicionais para rotação, 180 linhas, separadores literais e cancelamento."
+}

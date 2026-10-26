@@ -27,6 +27,7 @@ import type { ImageCompositionSnapshot } from "./image-composition-types";
 import type { WatermarkPosition } from "./image-engine";
 import { processImage } from "./image-processing";
 import { type ImageResultItem, inspectImageResult } from "./image-results";
+import type { MarkdownPageReport, MarkdownReadingOrder } from "./markdown-converter";
 import { performBrowserPdfComparison } from "./pdf-comparison-client";
 import type {
   PdfComparisonPair,
@@ -132,6 +133,8 @@ export interface LauncherToolInput {
   readonly onTranslationProgress?: (info: TranslationProgressInfo) => void;
   readonly translationSignal?: AbortSignal;
   readonly onReviewProgress?: (info: { progress: number; message: string }) => void;
+  readonly markdownReadingOrder?: MarkdownReadingOrder;
+  readonly markdownSignal?: AbortSignal;
   readonly detectHeadings?: boolean;
   readonly detectTables?: boolean;
   readonly includePageBreaks?: boolean;
@@ -219,6 +222,7 @@ export interface LauncherToolOutput {
   readonly categoryKey: "recent.type.pdf" | "recent.type.document";
   readonly extractedText?: string;
   readonly ocrPageReports?: readonly OcrPageReport[];
+  readonly markdownPageReports?: readonly MarkdownPageReport[];
   readonly secondaryBlob?: Blob;
   readonly secondaryFileName?: string;
   readonly reviewFindings?: readonly ReviewFinding[];
@@ -978,6 +982,8 @@ async function executeTool(
       if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
       const pdfBytes = new Uint8Array(await first.arrayBuffer());
       const conversion = await convertPdfToMarkdown(pdfBytes, {
+        readingOrder: input.markdownReadingOrder,
+        signal: input.markdownSignal,
         detectHeadings: input.detectHeadings ?? true,
         detectTables: input.detectTables ?? true,
         includePageBreaks: input.includePageBreaks ?? true,
@@ -987,6 +993,7 @@ async function executeTool(
         fileName: `${baseName}.md`,
         categoryKey: "recent.type.document",
         extractedText: conversion.markdown,
+        markdownPageReports: conversion.pageReports,
       };
     }
     case "pdf-crop": {
@@ -1401,6 +1408,7 @@ export async function runLauncherTool(
           PDF_OCULTACAO_ROTULO_NAO_SUPORTADO: "redact.labelUnsupported",
           PDF_OCULTACAO_LIMITE_EXCEDIDO: "redact.limitExceeded",
           PDF_SEM_TABELAS: "excel.noTables",
+          OPCOES_MARKDOWN_INVALIDAS: "pdfToMarkdown.invalidOptions",
           OPCOES_PLANILHA_INVALIDAS: "excel.invalidSelection",
           PDF_REGIAO_CORTA_TEXTO: "excel.regionCutsText",
           PDF_SEPARADOR_CORTA_TEXTO: "excel.separatorCutsText",
@@ -1443,6 +1451,7 @@ export async function runLauncherTool(
     toolId,
     input,
     signal:
+      input.markdownSignal ??
       input.excelSignal ??
       input.ocrSignal ??
       input.imageSignal ??

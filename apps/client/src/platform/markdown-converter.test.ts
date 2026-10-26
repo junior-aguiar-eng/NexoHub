@@ -151,6 +151,7 @@ describe("convertPdfToMarkdown", () => {
     });
 
     expect(result.pageCount).toBe(2);
-    expect(result.markdown).not.toContain("---");
+    // O separador de tabela não é uma quebra de página.
+    expect(result.markdown).not.toMatch(/^---$/m);
   });
 });

@@ -1,352 +1,313 @@
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
+import { translate } from "../i18n";
 import { withAppBase } from "./app-paths";
 
 const isTestEnv =
   typeof window === "undefined" ||
-  Boolean(
-    typeof globalThis !== "undefined" &&
-      (globalThis as unknown as { process?: { env?: { NODE_ENV?: string } } }).process?.env
-        ?.NODE_ENV === "test",
-  );
-
-if (typeof window !== "undefined" && !isTestEnv) {
-  try {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
-  } catch {
-    // Fallback silencioso
-  }
-}
-
+  (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV === "test";
+if (!isTestEnv) pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 const STANDARD_FONT_DATA_URL =
   typeof window !== "undefined" && window.location?.origin
     ? new URL(withAppBase("standard_fonts/"), window.location.origin).href
     : undefined;
 
+export type MarkdownReadingOrder = "auto" | "rows" | "columns";
 export interface MarkdownConversionOptions {
   readonly detectHeadings?: boolean;
   readonly detectTables?: boolean;
   readonly includePageBreaks?: boolean;
+  readonly readingOrder?: MarkdownReadingOrder;
+  readonly signal?: AbortSignal;
 }
-
+export interface MarkdownPageReport {
+  readonly pageNumber: number;
+  readonly textItemCount: number;
+  readonly readingOrder: "rows" | "columns" | "none";
+}
 export interface MarkdownConversionResult {
   readonly markdown: string;
   readonly pageCount: number;
   readonly characterCount: number;
   readonly wordCount: number;
   readonly lineCount: number;
+  readonly pagesWithoutText: readonly number[];
+  readonly pageReports: readonly MarkdownPageReport[];
 }
-
-interface RawTextItem {
+interface TextItem {
   readonly str: string;
   readonly x: number;
   readonly y: number;
   readonly width: number;
-  readonly height: number;
   readonly fontSize: number;
-  readonly fontName: string;
+  readonly bold: boolean;
 }
-
-interface ExtractedLine {
+interface Cell {
+  x: number;
+  right: number;
+  text: string;
+}
+interface Line {
   readonly y: number;
   readonly fontSize: number;
-  readonly isBold: boolean;
-  readonly items: readonly RawTextItem[];
+  readonly bold: boolean;
+  readonly items: readonly TextItem[];
+  readonly cells: readonly Cell[];
   readonly text: string;
-  readonly columns: readonly string[];
+}
+const median = (values: readonly number[]) =>
+  [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)] ?? 11;
+
+function groupLines(items: readonly TextItem[]): Line[] {
+  const sorted = [...items].sort((a, b) => a.y - b.y || a.x - b.x);
+  const groups: TextItem[][] = [];
+  for (const item of sorted) {
+    const current = groups.at(-1);
+    if (current && Math.abs(current[0].y - item.y) <= Math.min(3.5, item.fontSize * 0.3))
+      current.push(item);
+    else groups.push([item]);
+  }
+  return groups.map((group) => {
+    group.sort((a, b) => a.x - b.x);
+    const cells: Cell[] = [];
+    for (const item of group) {
+      const previous = cells.at(-1);
+      const gap = previous ? item.x - previous.right : Infinity;
+      if (!previous || gap > 24)
+        cells.push({ x: item.x, right: item.x + item.width, text: item.str });
+      else {
+        previous.text += (gap > item.fontSize * 0.12 ? " " : "") + item.str;
+        previous.right = Math.max(previous.right, item.x + item.width);
+      }
+    }
+    return {
+      y: group[0].y,
+      fontSize: Math.max(...group.map((item) => item.fontSize)),
+      bold: group.some((item) => item.bold),
+      items: group,
+      cells,
+      text: cells.map((cell) => cell.text.trim()).join(" "),
+    };
+  });
 }
 
-/**
- * Converte bytes de um documento PDF em Markdown formatado, com suporte a detecção
- * inteligente de títulos (#, ##, ###), tabelas (| col |) e quebras de página.
- */
+/** Faixas delimitadas por blocos abrangentes; ordem manual para layouts ambíguos. */
+function readingGroups(items: readonly TextItem[], width: number, mode: MarkdownReadingOrder) {
+  const lines = groupLines(items);
+  if (mode === "rows") return { groups: [lines], columns: false };
+  const middle = width / 2;
+  const groups: Line[][] = [];
+  let band: Line[] = [];
+  let columns = false;
+  const flush = () => {
+    if (!band.length) return;
+    const left = groupLines(
+      band.flatMap((line) => line.items.filter((item) => item.x + item.width <= middle)),
+    );
+    const right = groupLines(band.flatMap((line) => line.items.filter((item) => item.x >= middle)));
+    const crosses = band.some((line) =>
+      line.items.some((item) => item.x < middle && item.x + item.width > middle),
+    );
+    const lineWidth = (line: Line) =>
+      Math.max(...line.items.map((item) => item.x + item.width)) - line.items[0].x;
+    const strong =
+      left.length >= 3 &&
+      right.length >= 3 &&
+      median(left.map(lineWidth)) >= width * 0.22 &&
+      median(right.map(lineWidth)) >= width * 0.22 &&
+      Math.max(left[0].y, right[0].y) <= Math.min(left.at(-1)?.y ?? 0, right.at(-1)?.y ?? 0);
+    if (!crosses && left.length && right.length && (mode === "columns" || strong)) {
+      groups.push(left, right);
+      columns = true;
+    } else groups.push(band);
+    band = [];
+  };
+  for (const line of lines) {
+    if (
+      line.cells.length === 1 &&
+      line.items.some((item) => item.x < middle && item.x + item.width > middle)
+    ) {
+      flush();
+      groups.push([line]);
+    } else band.push(line);
+  }
+  flush();
+  return { groups, columns };
+}
+
+function escapeText(text: string): string {
+  const escaped = text
+    .replace(/\\/g, "\\\\")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/([*_[\]`|])/g, "\\$1");
+  return /^[-\s]{3,}$/.test(text) ? escaped.replace(/-/g, "\\-") : escaped;
+}
+
+function normalLine(line: Line, baseSize: number, headings: boolean): string {
+  const text = line.text;
+  const marker = text.match(/^(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|[•◦▪►]\s*)/);
+  if (marker)
+    return `${/^[•◦▪►]/.test(marker[0]) ? "- " : marker[0]}${escapeText(text.slice(marker[0].length))}`;
+  const ratio = line.fontSize / baseSize;
+  if (headings && text.length <= 100 && !/[.!?]$/.test(text)) {
+    if (ratio >= 1.6) return `# ${escapeText(text)}`;
+    if (ratio >= 1.3) return `## ${escapeText(text)}`;
+    if (ratio >= 1.15 || line.bold) return `### ${escapeText(text)}`;
+  }
+  return escapeText(text);
+}
+
+function formatGroup(
+  lines: readonly Line[],
+  baseSize: number,
+  options: MarkdownConversionOptions,
+): string[] {
+  const blocks: string[] = [];
+  let table: Line[] = [];
+  const flush = () => {
+    if (!table.length) return;
+    const anchors: { x: number; count: number }[] = [];
+    for (const line of table)
+      for (const cell of line.cells) {
+        const anchor = anchors.find((candidate) => Math.abs(candidate.x - cell.x) <= 12);
+        if (anchor) anchor.count++;
+        else anchors.push({ x: cell.x, count: 1 });
+      }
+    anchors.sort((a, b) => a.x - b.x);
+    if (
+      table.length >= 2 &&
+      anchors.length >= 2 &&
+      anchors.length <= 12 &&
+      anchors.filter((anchor) => anchor.count >= 2).length >= 2
+    ) {
+      const rows = table.map((line) => {
+        const cells = Array<string>(anchors.length).fill("");
+        for (const cell of line.cells) {
+          const column = anchors.findIndex((anchor) => Math.abs(anchor.x - cell.x) <= 12);
+          const text = escapeText(cell.text.trim());
+          cells[column] = /^[-:\s]+$/.test(text) ? text.replace(/[-:]/g, "\\$&") : text;
+        }
+        return `| ${cells.join(" | ")} |`;
+      });
+      rows.splice(1, 0, `| ${anchors.map(() => "---").join(" | ")} |`);
+      blocks.push(rows.join("\n"));
+    } else
+      blocks.push(
+        ...table.map((line) => normalLine(line, baseSize, options.detectHeadings !== false)),
+      );
+    table = [];
+  };
+  for (const line of lines) {
+    if (options.detectTables !== false && line.cells.length >= 2) {
+      if (table.length && line.y - (table.at(-1)?.y ?? line.y) > baseSize * 4) flush();
+      table.push(line);
+    } else {
+      flush();
+      blocks.push(normalLine(line, baseSize, options.detectHeadings !== false));
+    }
+  }
+  flush();
+  return blocks;
+}
+
+/** Heurística geométrica local, sem OCR ou serviço externo implícito. */
 export async function convertPdfToMarkdown(
   pdfBytes: Uint8Array,
   options: MarkdownConversionOptions = {},
 ): Promise<MarkdownConversionResult> {
-  const { detectHeadings = true, detectTables = true, includePageBreaks = true } = options;
-
-  if (pdfBytes.length === 0) {
-    throw new Error("DOCUMENTO_VAZIO");
-  }
-
+  options.signal?.throwIfAborted();
+  if (!pdfBytes.length) throw new Error("DOCUMENTO_VAZIO");
+  if (!["auto", "rows", "columns"].includes(options.readingOrder ?? "auto"))
+    throw new Error("OPCOES_MARKDOWN_INVALIDAS");
   const loadingTask = pdfjsLib.getDocument({
     data: pdfBytes.slice(),
     useSystemFonts: true,
     standardFontDataUrl: STANDARD_FONT_DATA_URL,
   });
-
-  const pdf = await loadingTask.promise;
-  const numPages = pdf.numPages;
-
-  if (numPages === 0) {
-    return {
-      markdown: "",
-      pageCount: 0,
-      characterCount: 0,
-      wordCount: 0,
-      lineCount: 0,
-    };
-  }
-
-  try {
-    const pagesMarkdown: string[] = [];
-    const allFontSizes: number[] = [];
-
-    // Primeiro passo: Coleta de itens e estatísticas de tamanho de fonte
-    const parsedPages: ExtractedLine[][] = [];
-
-    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const content = await page.getTextContent();
-      const rawItems: RawTextItem[] = [];
-
-      for (const item of content.items) {
-        if (!("str" in item) || typeof item.str !== "string") continue;
-        const text = item.str;
-        if (!text) continue;
-
-        const transform = item.transform || [1, 0, 0, 1, 0, 0];
-        const scaleX = Math.abs(transform[0]) || 12;
-        const scaleY = Math.abs(transform[3]) || 12;
-        const fontSize = Math.max(scaleX, scaleY, item.height || 0);
-        const x = transform[4] || 0;
-        const y = transform[5] || 0;
-        const fontName = (item.fontName || "").toLowerCase();
-
-        rawItems.push({
-          str: text,
-          x,
-          y,
-          width: item.width || 0,
-          height: item.height || fontSize,
-          fontSize,
-          fontName,
-        });
-
-        if (text.trim().length > 0) {
-          allFontSizes.push(fontSize);
-        }
-      }
-
-      // Agrupa itens em linhas com base na coordenada Y (tolerância de linha de 3.5px)
-      rawItems.sort((a, b) => b.y - a.y || a.x - b.x);
-
-      const lines: ExtractedLine[] = [];
-      let currentLineItems: RawTextItem[] = [];
-      let currentLineY: number | null = null;
-
-      for (const item of rawItems) {
-        if (currentLineY === null) {
-          currentLineY = item.y;
-          currentLineItems.push(item);
-        } else if (Math.abs(item.y - currentLineY) <= 3.5) {
-          currentLineItems.push(item);
-        } else {
-          lines.push(buildExtractedLine(currentLineItems, currentLineY));
-          currentLineY = item.y;
-          currentLineItems = [item];
-        }
-      }
-
-      if (currentLineItems.length > 0 && currentLineY !== null) {
-        lines.push(buildExtractedLine(currentLineItems, currentLineY));
-      }
-
-      parsedPages.push(lines);
-    }
-
-    if (allFontSizes.length === 0) throw new Error("PDF_SEM_TEXTO_SELECIONAVEL");
-
-    // Calcula tamanho mediano de fonte no documento
-    allFontSizes.sort((a, b) => a - b);
-    const medianFontSize =
-      allFontSizes.length > 0 ? allFontSizes[Math.floor(allFontSizes.length / 2)] : 12;
-
-    // Segundo passo: Construção do Markdown por página
-    for (let pageIndex = 0; pageIndex < parsedPages.length; pageIndex++) {
-      const pageNum = pageIndex + 1;
-      const lines = parsedPages[pageIndex];
-
-      if (lines.length === 0) {
-        if (includePageBreaks && numPages > 1) {
-          pagesMarkdown.push(`<!-- Página ${pageNum} (sem texto vetorial) -->`);
-        }
-        continue;
-      }
-
-      const pageBlocks: string[] = [];
-      let tableBuffer: ExtractedLine[] = [];
-
-      const flushTableBuffer = () => {
-        if (tableBuffer.length === 0) return;
-        if (detectTables && tableBuffer.length >= 2) {
-          const maxCols = Math.max(...tableBuffer.map((l) => l.columns.length));
-          if (maxCols >= 2) {
-            const tableLines: string[] = [];
-            // Cabeçalho
-            const headerCells = tableBuffer[0].columns;
-            const paddedHeader = Array.from({ length: maxCols }, (_, i) => headerCells[i] || "");
-            tableLines.push(`| ${paddedHeader.join(" | ")} |`);
-            tableLines.push(`| ${Array.from({ length: maxCols }, () => "---").join(" | ")} |`);
-
-            // Linhas de dados
-            for (let r = 1; r < tableBuffer.length; r++) {
-              const rowCells = tableBuffer[r].columns;
-              const paddedRow = Array.from({ length: maxCols }, (_, i) => rowCells[i] || "");
-              tableLines.push(`| ${paddedRow.join(" | ")} |`);
-            }
-            pageBlocks.push(tableLines.join("\n"));
-            tableBuffer = [];
-            return;
-          }
-        }
-
-        // Se não formou tabela, descarrega como texto normal
-        for (const line of tableBuffer) {
-          pageBlocks.push(formatNormalLine(line, medianFontSize, detectHeadings));
-        }
-        tableBuffer = [];
-      };
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-
-        // Linha com múltiplas colunas detectadas pode ser tabela
-        if (detectTables && line.columns.length >= 2) {
-          tableBuffer.push(line);
-          continue;
-        }
-
-        // Não é tabela, descarrega qualquer tabela anterior acumulada
-        flushTableBuffer();
-
-        const formatted = formatNormalLine(line, medianFontSize, detectHeadings);
-        if (formatted) {
-          pageBlocks.push(formatted);
-        }
-      }
-
-      flushTableBuffer();
-
-      let pageOutput = pageBlocks.join("\n\n");
-      if (includePageBreaks) {
-        const header = numPages > 1 ? `<!-- Página ${pageNum} -->\n\n` : "";
-        pageOutput = `${header}${pageOutput}`;
-      }
-
-      pagesMarkdown.push(pageOutput);
-    }
-
-    const separator = includePageBreaks ? "\n\n---\n\n" : "\n\n";
-    const fullMarkdown = pagesMarkdown.join(separator).trim();
-
-    const words = fullMarkdown.trim() ? fullMarkdown.trim().split(/\s+/).length : 0;
-    const linesCount = fullMarkdown ? fullMarkdown.split("\n").length : 0;
-
-    return {
-      markdown: fullMarkdown,
-      pageCount: numPages,
-      characterCount: fullMarkdown.length,
-      wordCount: words,
-      lineCount: linesCount,
-    };
-  } finally {
-    try {
-      pdf.cleanup();
-      await loadingTask.destroy();
-    } catch {
-      // Ignora erro de limpeza
-    }
-  }
-}
-
-function buildExtractedLine(items: RawTextItem[], y: number): ExtractedLine {
-  items.sort((a, b) => a.x - b.x);
-
-  const textParts: string[] = [];
-  const columns: string[] = [];
-  let currentColumnParts: string[] = [];
-  let prevRight = items[0].x;
-  let maxFontSize = 0;
-  let hasBold = false;
-
-  for (let idx = 0; idx < items.length; idx++) {
-    const item = items[idx];
-    maxFontSize = Math.max(maxFontSize, item.fontSize);
-    if (item.fontName.includes("bold") || item.fontName.includes("black")) {
-      hasBold = true;
-    }
-
-    const gap = item.x - prevRight;
-
-    // Se houver um espaçamento substancial (> 24px) entre palavras, consideramos coluna de tabela
-    if (idx > 0 && gap > 24) {
-      if (currentColumnParts.length > 0) {
-        columns.push(currentColumnParts.join("").trim());
-        currentColumnParts = [];
-      }
-    }
-
-    // O PDF pode dividir uma palavra entre fontes/estilos. Só introduz espaço
-    // quando a distância visual corresponde a um intervalo entre palavras.
-    const separator = idx > 0 && gap > item.fontSize * 0.12 ? " " : "";
-    currentColumnParts.push(`${separator}${item.str}`);
-    textParts.push(`${separator}${item.str}`);
-    prevRight = item.x + item.width;
-  }
-
-  if (currentColumnParts.length > 0) {
-    columns.push(currentColumnParts.join("").trim());
-  }
-
-  const lineText = textParts
-    .join("")
-    .replace(/[ \t]+/g, " ")
-    .trim();
-
-  return {
-    y,
-    fontSize: maxFontSize,
-    isBold: hasBold,
-    items,
-    text: lineText,
-    columns: columns.filter(Boolean),
+  let pdf: Awaited<typeof loadingTask.promise> | undefined;
+  const abort = () => {
+    void loadingTask.destroy().catch(() => {});
   };
-}
-
-function formatNormalLine(
-  line: ExtractedLine,
-  medianFontSize: number,
-  detectHeadings: boolean,
-): string {
-  const text = line.text;
-  if (!text) return "";
-
-  // Se já começar com marcador Markdown (#, -, *, 1.), preserva
-  if (/^(#{1,6}\s|[-*+]\s|\d+\.\s|>)/.test(text)) {
-    return text;
-  }
-
-  // Tratamento de bullets comuns
-  if (/^[•◦▪►]\s*/.test(text)) {
-    return `- ${text.replace(/^[•◦▪►]\s*/, "")}`;
-  }
-
-  if (detectHeadings) {
-    const ratio = line.fontSize / (medianFontSize || 12);
-    const isShort = text.length <= 100 && !/[.!?]$/.test(text);
-
-    if (ratio >= 1.6 && isShort) {
-      return `# ${text}`;
+  options.signal?.addEventListener("abort", abort, { once: true });
+  try {
+    pdf = await loadingTask.promise;
+    options.signal?.throwIfAborted();
+    const parsed: { items: TextItem[]; width: number }[] = [];
+    const sizes: number[] = [];
+    for (let number = 1; number <= pdf.numPages; number++) {
+      options.signal?.throwIfAborted();
+      const page = await pdf.getPage(number);
+      try {
+        const viewport = page.getViewport({ scale: 1, rotation: 0 });
+        const content = await page.getTextContent();
+        const items: TextItem[] = [];
+        for (const item of content.items) {
+          if (!("str" in item) || !item.str.trim()) continue;
+          const transform = pdfjsLib.Util.transform(viewport.transform, item.transform);
+          const fontSize = Math.hypot(transform[2], transform[3]) || item.height || 11;
+          items.push({
+            str: item.str,
+            x: transform[4],
+            y: transform[5],
+            width: item.width,
+            fontSize,
+            bold: /bold|black/i.test(item.fontName),
+          });
+          sizes.push(fontSize);
+        }
+        parsed.push({ items, width: viewport.width });
+      } finally {
+        page.cleanup();
+      }
     }
-    if (ratio >= 1.3 && isShort) {
-      return `## ${text}`;
-    }
-    if ((ratio >= 1.15 || line.isBold) && isShort) {
-      return `### ${text}`;
+    options.signal?.throwIfAborted();
+    if (!sizes.length) throw new Error("PDF_SEM_TEXTO_SELECIONAVEL");
+    const baseSize = median(sizes);
+    const pageReports: MarkdownPageReport[] = [];
+    const pagesWithoutText: number[] = [];
+    const pages = parsed.map(({ items, width }, index) => {
+      const pageNumber = index + 1;
+      if (!items.length) {
+        pagesWithoutText.push(pageNumber);
+        pageReports.push({ pageNumber, textItemCount: 0, readingOrder: "none" });
+        return `<!-- ${translate("pdfToMarkdown.emptyPageMarker").replace("{page}", String(pageNumber))} -->`;
+      }
+      const layout = readingGroups(items, width, options.readingOrder ?? "auto");
+      pageReports.push({
+        pageNumber,
+        textItemCount: items.length,
+        readingOrder: layout.columns ? "columns" : "rows",
+      });
+      const text = layout.groups
+        .flatMap((group) => formatGroup(group, baseSize, options))
+        .join("\n\n");
+      return options.includePageBreaks !== false && parsed.length > 1
+        ? `<!-- Página ${pageNumber} -->\n\n${text}`
+        : text;
+    });
+    const markdown = pages
+      .join(options.includePageBreaks !== false ? "\n\n---\n\n" : "\n\n")
+      .trim();
+    return {
+      markdown,
+      pageCount: pdf.numPages,
+      characterCount: markdown.length,
+      wordCount: markdown ? markdown.split(/\s+/).length : 0,
+      lineCount: markdown ? markdown.split("\n").length : 0,
+      pagesWithoutText,
+      pageReports,
+    };
+  } catch (error) {
+    options.signal?.throwIfAborted();
+    throw error;
+  } finally {
+    options.signal?.removeEventListener("abort", abort);
+    try {
+      if (!options.signal?.aborted) await pdf?.cleanup();
+    } finally {
+      await loadingTask.destroy();
     }
   }
-
-  return text;
 }

@@ -261,7 +261,7 @@ Sequência interna de XL-C1 (os checkboxes de aceite abaixo continuam sendo a fo
 - [x] Permitir selecionar página/região e corrigir separadores de colunas antes da exportação,
   reutilizando `extractPdfSpreadsheetData`/`PdfSpreadsheetData`; prévia e saída usam a mesma
   configuração. Não converter código em número nem reconstruir valores por suposição.
-- [ ] MD-C1: testar ordem de leitura em duas colunas, títulos/listas e tabelas; preservar texto
+- [x] MD-C1: testar ordem de leitura em duas colunas, títulos/listas e tabelas; preservar texto
   completo e indicar páginas sem camada textual. Reutilizar OCR-C1 apenas por escolha explícita.
 - [x] Avaliar [Camelot](https://github.com/camelot-dev/camelot) (MIT) para tabelas e
   [Docling](https://github.com/docling-project/docling) (código MIT, pesos separados) para estrutura.
@@ -292,6 +292,49 @@ Sequência interna de XL-C1 (os checkboxes de aceite abaixo continuam sendo a fo
 - Gates: formatter/lint/tipos, 750 testes unitários, builds raiz e `/hub/`, auditoria de licenças;
   290 E2E na raiz (cinco exclusivos da subpasta ignorados) e 181 na suíte oficial `/hub/`.
   Limitações e execução unitária inicialmente interrompida registradas no documento técnico.
+
+### Execução autorizada — MD-C1 (26/10/2026)
+
+Base `74fb3b4`, worktree `fix/auditoria-website` inicialmente limpo. DOC-C2 e integração de
+Camelot/Docling fora do escopo. Execução local sem commit, push ou deploy.
+
+Sequência e interfaces (o checkbox MD-C1 acima permanece o aceite canônico):
+1. Corpus autoral antes do código: duas colunas com blocos abrangentes, títulos/listas,
+   tabela com vazios/zeros/barras e página sem texto, incluindo controle de texto curto.
+2. Corrigir ordenação e formação de tabelas em `markdown-converter.ts`, com opção de ordem
+   automática/por linhas/duas colunas e recusa de adivinhação sem evidência geométrica.
+3. Propagar relatório de páginas pelo Tool Runner à mesa Markdown, indicar páginas sem texto
+   por evidência real e oferecer abertura explícita do OCR-C1, sem executá-lo automaticamente.
+4. Conferir código Markdown, visualização e download; cancelamento/invalidação; gates locais
+   e documentação com limites. Sem nova dependência ou alteração de arquitetura.
+
+Premissa: a geometria não determina semântica universalmente. Ordem automática conservadora,
+com escolha manual; títulos abrangentes particionam as faixas. Texto ambíguo permanece visível.
+Interfaces compartilhadas: resultado do conversor → Tool Runner → estado/painel e exportação;
+novos campos serão opcionais no consumidor legado. E2E/testes/corpus focados adicionais serão
+usados além dos arquivos já propostos, sem modificar módulos de Excel ou scanner.
+
+### Registro local — MD-C1 (26/10/2026)
+
+- [Evidências e limites](../../MD-C1.md), corpus autoral MPL-2.0 de quatro páginas, PDF fixo,
+  matriz esperada, saída `.md` e seis medições com hashes dos originais preservados.
+- Ordem automática conservadora ou manual por linhas/duas colunas; blocos abrangentes delimitam
+  faixas. Âncoras mantêm vazios e valores literais de tabelas. Relatório por página substitui o
+  aviso baseado em quantidade de caracteres. Página sem texto deixa marcador mesmo sem divisores.
+- Mesa, Tool Runner e conversor compartilham opções e AbortSignal; alteração de arquivo/opções
+  invalida resultado anterior. OCR-C1 abre com o original apenas por clique explícito, sem iniciar
+  reconhecimento. `pdf-engine.ts` já reexportava a operação; nenhuma mudança foi necessária nele.
+- Testes antes do código reproduziram ordem intercalada, vazios deslocados e omissão de aviso.
+  Revisão independente única encontrou perda de barras/traços literais na prévia: escape na origem
+  e regressões corrigiram o achado. Capturas detectaram contraste e numeração; controles agora
+  exigem razão 4,5 e preservam início de lista. Campos/avisos novos usam catálogo pt-BR.
+- Gates: formatter/lint/tipos e licenças aprovados; **772 unitários**, **296 E2E na raiz**
+  (cinco exclusivos da subpasta ignorados) e **187 E2E oficiais em `/hub/`** aprovados; builds dos
+  dois caminhos. Capturas de documento/opções em 390/768/1024/1440 px, ambos os temas e movimento
+  reduzido, sem overflow horizontal. Geometria continua heurística, sem homologação universal.
+- Sem dependência nova, integração de Camelot/Docling, alteração de scanner/DOC-C2, commit,
+  push ou deploy durante a implementação. Commit de MD-C1 autorizado posteriormente pelo usuário,
+  sem push/deploy. Base da execução `74fb3b4`; Tauri instalado não homologado.
 
 ### TR-C1 — Tradução: qualidade, carregamento e direitos de uso do modelo
 

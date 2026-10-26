@@ -579,6 +579,19 @@ export const ptBR = {
   "tool.pdfToMarkdown.title": "PDF para Markdown",
   "tool.pdfToMarkdown.description":
     "Converter documentos PDF em arquivos Markdown preservando títulos, formatação e tabelas.",
+  "pdfToMarkdown.emptyPageMarker": "Página {page}: sem texto selecionável",
+  "pdfToMarkdown.readingOrder": "Ordem de leitura",
+  "pdfToMarkdown.orderAuto": "Automática (conservadora)",
+  "pdfToMarkdown.orderRows": "Por linhas / tabelas",
+  "pdfToMarkdown.orderColumns": "Duas colunas (centro da página)",
+  "pdfToMarkdown.orderHint":
+    "A ordem é geométrica, vale para todo o documento e pode exigir revisão. Duas colunas lê a esquerda antes da direita; use Por linhas para tabelas ambíguas.",
+  "pdfToMarkdown.missingPages":
+    "Páginas sem texto selecionável: {pages}. O texto dessas páginas não foi extraído. Se necessário, use OCR por escolha explícita.",
+  "pdfToMarkdown.columnPages": "Leitura em duas colunas aplicada nas páginas: {pages}.",
+  "pdfToMarkdown.openOcr": "Abrir Reconhecer Texto (OCR)",
+  "pdfToMarkdown.cancel": "Cancelar conversão Markdown",
+  "pdfToMarkdown.invalidOptions": "Selecione uma ordem de leitura válida.",
   "pdfToMarkdown.optionsTitle": "Opções de Conversão",
   "pdfToMarkdown.detectHeadings": "Detectar títulos e cabeçalhos (#, ##, ###)",
   "pdfToMarkdown.detectHeadingsDesc":

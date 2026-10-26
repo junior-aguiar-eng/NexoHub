@@ -236,21 +236,62 @@ DOC-C2. A principal permanece preservada.
 
 ### XL-C1 / MD-C1 — Tabelas e leitura documental verificáveis
 
+**Execução XL-C1 autorizada em 26/10/2026**, após o commit OCR-C1 `f44071d` e árvore limpa.
+DOC-C2 e MD-C1 permanecem fora desta execução. Sem commit adicional, push ou deploy implícitos.
+Manter PDF.js, extrator e serializadores locais existentes; sem novos pacotes ou runtimes.
+
+Sequência interna de XL-C1 (os checkboxes de aceite abaixo continuam sendo a fonte de verdade):
+1. Corpus sintético com células verificadas por coordenada no XML XLSX/CSV: bordas, múltiplas
+   páginas, vazios, cabeçalho abrangente, zeros, números pt-BR e fronteiras que cortam texto.
+2. Ampliar `PdfToExcelOptions` com páginas 1-based, região normalizada e separadores de coluna;
+   preservar extração automática compatível e recusar configurações inválidas/cortes de fragmentos.
+   Região e separadores referem-se à página lógica antes da rotação, como o extrator atual.
+3. Controles pt-BR na mesa atual; prévia por página, mesmas opções na exportação, preservação
+   de valores como texto por padrão na UI, cancelamento/invalidação ao trocar entrada ou opções.
+4. Conferir exportações reais, quatro larguras/temas, suítes e builds na raiz e `/hub/`; registrar
+   evidências no documento técnico. A comparação isolada de Camelot/Docling foi autorizada
+   posteriormente e executada conforme o registro abaixo; integração continua condicionada.
+
 **Modificar:** `platform/excel-converter.ts`, `excel-converter.test.ts`,
 `features/launcher/PdfToExcelPanel.tsx`, `PdfToMarkdownPanel.tsx`, `platform/pdf-engine.ts` e
 `e2e/security-excel-quality.spec.ts`, `new-tools-quality.spec.ts`.
 
-- [ ] XL-C1: testar tabelas com borda/sem borda, múltiplas páginas, células vazias/mescladas,
+- [x] XL-C1: testar tabelas com borda/sem borda, múltiplas páginas, células vazias/mescladas,
   códigos com zeros e números pt-BR. Conferir o XLSX por célula e estrutura, não por tamanho.
-- [ ] Permitir selecionar página/região e corrigir separadores de colunas antes da exportação,
+- [x] Permitir selecionar página/região e corrigir separadores de colunas antes da exportação,
   reutilizando `extractPdfSpreadsheetData`/`PdfSpreadsheetData`; prévia e saída usam a mesma
   configuração. Não converter código em número nem reconstruir valores por suposição.
 - [ ] MD-C1: testar ordem de leitura em duas colunas, títulos/listas e tabelas; preservar texto
   completo e indicar páginas sem camada textual. Reutilizar OCR-C1 apenas por escolha explícita.
-- [ ] Avaliar [Camelot](https://github.com/camelot-dev/camelot) (MIT) para tabelas e
+- [x] Avaliar [Camelot](https://github.com/camelot-dev/camelot) (MIT) para tabelas e
   [Docling](https://github.com/docling-project/docling) (código MIT, pesos separados) para estrutura.
-  Registrar comparação por documento e custo. **Integração condicionada:** Python/Node/backend
-  não entram no website local sem decisão arquitetural; a subetapa fica bloqueada, não concluída.
+  Comparação por documento/custo executada isoladamente em 26/10/2026: 14 casos/42 extrações.
+  [Evidências](../../XL-C1-COMPARACAO-ISOLADA.md). **Integração condicionada:** Python/Node/backend
+  não entram no website local sem decisão arquitetural. Avaliação concluída; integração não realizada.
+
+### Registro local — XL-C1 (26/10/2026)
+
+- Entrega funcional e corpus em [XL-C1.md](../../XL-C1.md), com matriz esperada, PDFs autorais,
+  hashes, medições e limites. O cabeçalho visual mesclado conserva texto sem fabricar `mergeCells`.
+- Páginas/região/separadores configuráveis na mesa existente; prévia por página e exportação
+  compartilham opções. XLSX textual por padrão na UI; CSV conserva grafia com proteção de fórmulas.
+  AbortSignal invalida tarefas e resultados; seleções que cortam fragmentos são recusadas.
+- Testes específicos em `excel-selection.test.ts`, `excel-cancellation.test.ts` e
+  `e2e/excel-selection.spec.ts`, além do painel e dos controles legados no E2E de segurança.
+  Não foi necessário alterar Markdown nem `pdf-engine.ts`; o extrator já era reexportado por ele.
+- Revisão reproduziu navegação incorreta de `1,3`, corrigida com teste antes/depois. O descarte
+  da última página também ganhou regressão de cancelamento. Oito cenários de medição passaram
+  na comparação das células, preservando os bytes dos originais.
+- Camelot/Docling inicialmente não executados. Após autorização explícita, comparação isolada
+  concluída em 26/10/2026, com versões/modelos fixados, qualidade por célula, tempo e RSS.
+  Network recuperou a matriz-alvo nos dois PDFs; Docling Accurate não detectou tabela sem bordas.
+  42 extrações e reabertura dos XLSX verificadas; cinco controles do avaliador, Ruff e `pnpm check`
+  aprovados. Hashes de 306 arquivos do aplicativo/manifests preservados nesta avaliação.
+  Integração continua condicionada; MD-C1 e DOC-C2 não iniciados. Commit de XL-C1 e da comparação
+  isolada autorizado posteriormente pelo usuário em 26/10/2026; sem push/deploy.
+- Gates: formatter/lint/tipos, 750 testes unitários, builds raiz e `/hub/`, auditoria de licenças;
+  290 E2E na raiz (cinco exclusivos da subpasta ignorados) e 181 na suíte oficial `/hub/`.
+  Limitações e execução unitária inicialmente interrompida registradas no documento técnico.
 
 ### TR-C1 — Tradução: qualidade, carregamento e direitos de uso do modelo
 

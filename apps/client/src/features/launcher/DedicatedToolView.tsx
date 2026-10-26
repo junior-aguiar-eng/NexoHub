@@ -17,6 +17,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useMemo,
   useReducer,
   useRef,
   useState,
@@ -27,7 +28,13 @@ import type { OcrPageReport } from "@/platform/browser-ocr";
 import type { TranslationProgressInfo } from "@/platform/browser-translator";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { readDocumentText } from "@/platform/document-reader";
-import { extractPdfSpreadsheetData } from "@/platform/excel-converter";
+import {
+  extractPdfSpreadsheetData,
+  type PdfSpreadsheetData,
+  type PdfToExcelOptions,
+  type SpreadsheetRegion,
+  validateSpreadsheetSelection,
+} from "@/platform/excel-converter";
 import { cropBatchConflicts } from "@/platform/image-batch";
 import {
   compositionReducer,
@@ -360,18 +367,101 @@ export function DedicatedToolView({
   const [scanMargin, setScanMargin] = useState<"none" | "small" | "normal">("small");
 
   // Estados de Páginas (Organizador e Extrator)
-  const [excelPreviewRows, setExcelPreviewRows] = useState<string[][] | undefined>();
+  const [pdfPageCount, setPdfPageCount] = useState(1);
+  const [excelPagesText, setExcelPagesText] = useState("");
+  const [excelSeparatorsText, setExcelSeparatorsText] = useState("");
+  const [excelRegion, setExcelRegion] = useState<SpreadsheetRegion>({
+    left: 0,
+    top: 0,
+    width: 1,
+    height: 1,
+  });
+  const [excelPreserveText, setExcelPreserveText] = useState(true);
+  const [excelPreviewPage, setExcelPreviewPage] = useState(1);
+  const excelController = useRef<AbortController | null>(null);
+  const excelSelection = useMemo<{ options?: PdfToExcelOptions; error?: string }>(() => {
+    const selectedPages = excelPagesText.trim()
+      ? parseSelectedPages(excelPagesText, pdfPageCount)
+      : undefined;
+    const columnSeparators = excelSeparatorsText.trim()
+      ? excelSeparatorsText
+          .split(";")
+          .map((value) =>
+            /^\d+(?:[.,]\d+)?$/.test(value.trim())
+              ? Number(value.trim().replace(",", ".")) / 100
+              : Number.NaN,
+          )
+      : undefined;
+    const options: PdfToExcelOptions = {
+      selectedPages,
+      region: excelRegion,
+      columnSeparators,
+      detectTablesOnly: excelDetectTablesOnly,
+      preserveText: excelPreserveText,
+    };
+    try {
+      validateSpreadsheetSelection(options, pdfPageCount);
+      return { options };
+    } catch {
+      return { error: translate("excel.invalidSelection") };
+    }
+  }, [
+    excelPagesText,
+    excelSeparatorsText,
+    excelRegion,
+    excelDetectTablesOnly,
+    excelPreserveText,
+    pdfPageCount,
+  ]);
+  const [excelPreview, setExcelPreview] = useState<{
+    file: File;
+    options: PdfToExcelOptions;
+    data: PdfSpreadsheetData;
+  }>();
+  const excelPreviewReady =
+    excelPreview?.file === files[0] &&
+    excelPreview?.options === excelSelection.options &&
+    Boolean(excelSelection.options);
+  const excelPreviewRows = excelPreviewReady
+    ? excelPreview?.data.sheets
+        .find((sheet) => sheet.pageIndex === excelPreviewPage - 1)
+        ?.rows.slice(0, 15)
+    : undefined;
   const [excelPreviewError, setExcelPreviewError] = useState<string>();
   const [isAnalyzingExcel, setIsAnalyzingExcel] = useState(false);
   const [previewEpoch, setPreviewEpoch] = useState(0);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: seleção revisada pertence ao arquivo e à ferramenta atuais.
   useEffect(() => {
-    let cancelled = false;
-    setExcelPreviewRows(undefined);
+    setExcelPagesText("");
+    setExcelSeparatorsText("");
+    setExcelRegion({ left: 0, top: 0, width: 1, height: 1 });
+    setExcelPreviewPage(1);
+  }, [files[0], tool.id]);
+  useEffect(() => {
+    const pages = excelSelection.options?.selectedPages;
+    if (pages?.length && !pages.includes(excelPreviewPage)) setExcelPreviewPage(pages[0]);
+  }, [excelSelection, excelPreviewPage]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: todas as opções e a entrada invalidam o resultado em andamento.
+  useEffect(() => {
+    if (tool.id !== "pdf-to-excel") return;
+    setDownloadUrl(null);
+    setOutputBlob(null);
+    setStatus("idle");
+    return () => {
+      excelController.current?.abort();
+      excelController.current = null;
+    };
+  }, [files[0], tool.id, excelSelection, excelOutputFormat, excelSheetMode, excelCsvDelimiter]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setExcelPreview(undefined);
     setExcelPreviewError(undefined);
     const file = files[0];
-    if (tool.id !== "pdf-to-excel" || !file) {
+    if (tool.id !== "pdf-to-excel" || !file || !excelSelection.options) {
       setIsAnalyzingExcel(false);
+      if (tool.id === "pdf-to-excel") setExcelPreviewError(excelSelection.error);
       return;
     }
     setIsAnalyzingExcel(true);
@@ -379,37 +469,42 @@ export function DedicatedToolView({
       .arrayBuffer()
       .then((bytes) =>
         extractPdfSpreadsheetData(new Uint8Array(bytes), {
-          detectTablesOnly: excelDetectTablesOnly,
+          ...excelSelection.options,
+          signal: controller.signal,
         }),
       )
       .then((result) => {
-        if (!cancelled) setExcelPreviewRows(result.previewRows);
+        if (!controller.signal.aborted && excelSelection.options)
+          setExcelPreview({ file, options: excelSelection.options, data: result });
       })
       .catch((error: unknown) => {
-        if (cancelled) return;
-        setExcelPreviewRows([]);
+        if (controller.signal.aborted) return;
         const code = error instanceof Error ? error.message : "";
         setExcelPreviewError(
           translate(
             code === "PDF_SEM_TEXTO_SELECIONAVEL"
               ? "document.errorPdfNoText"
-              : code === "PDF_SEM_TABELAS"
-                ? "excel.noTables"
-                : "excel.previewError",
+              : code === "PDF_REGIAO_CORTA_TEXTO"
+                ? "excel.regionCutsText"
+                : code === "PDF_SEPARADOR_CORTA_TEXTO"
+                  ? "excel.separatorCutsText"
+                  : code === "PDF_SEM_DADOS_SELECAO"
+                    ? "excel.emptySelection"
+                    : code === "OPCOES_PLANILHA_INVALIDAS"
+                      ? "excel.invalidSelection"
+                      : code === "PDF_SEM_TABELAS"
+                        ? "excel.noTables"
+                        : "excel.previewError",
           ),
         );
       })
       .finally(() => {
-        if (!cancelled) setIsAnalyzingExcel(false);
+        if (!controller.signal.aborted) setIsAnalyzingExcel(false);
       });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
-  }, [files, tool.id, excelDetectTablesOnly]);
-
-  const [pdfPageCount, setPdfPageCount] = useState<number>(() =>
-    initialFiles && initialFiles.length > 0 ? 1 : 1,
-  );
+  }, [files, tool.id, excelSelection]);
   const [pageItems, setPageItems] = useState<PdfPageItem[]>(() =>
     initialFiles && initialFiles.length > 0
       ? [{ id: "page-1", originalIndex: 1, rotation: 0 }]
@@ -631,6 +726,13 @@ export function DedicatedToolView({
         });
     },
     [files, tool.id, pdfPreviewQueue],
+  );
+  const handleExcelPreviewPageChange = useCallback(
+    (page: number) => {
+      setExcelPreviewPage(page);
+      handlePreviewPageChange(page);
+    },
+    [handlePreviewPageChange],
   );
   const formOriginalOnly =
     tool.id === "pdf-form-fill" &&
@@ -1153,6 +1255,18 @@ export function DedicatedToolView({
   // Execução da ferramenta selecionada
   // =========================================================================
   async function handleExecute() {
+    if (
+      tool.id === "pdf-to-excel" &&
+      (!excelPreviewReady || isAnalyzingExcel || excelPreviewError || excelSelection.error)
+    )
+      return;
+    const excelRun = tool.id === "pdf-to-excel" ? new AbortController() : undefined;
+    if (excelRun) {
+      excelController.current?.abort();
+      excelController.current = excelRun;
+      setDownloadUrl(null);
+      setOutputBlob(null);
+    }
     const ocrRun = tool.id === "pdf-ocr" ? new AbortController() : undefined;
     if (ocrRun) {
       ocrController.current?.abort();
@@ -1337,6 +1451,11 @@ export function DedicatedToolView({
         redactionPreserve,
         redactionSignal: redactionRun?.signal,
         excelOutputFormat,
+        excelSelectedPages: excelSelection.options?.selectedPages,
+        excelRegion: excelSelection.options?.region,
+        excelColumnSeparators: excelSelection.options?.columnSeparators,
+        excelPreserveText,
+        excelSignal: excelRun?.signal,
         excelSheetMode,
         excelCsvDelimiter,
         excelDetectTablesOnly,
@@ -1399,6 +1518,7 @@ export function DedicatedToolView({
       });
       if (redactionRun?.signal.aborted) return;
       if (ocrRun?.signal.aborted) return;
+      if (excelRun?.signal.aborted) return;
       if (tool.id === "pdf-form-fill" && formGeneration !== formRunGeneration.current) return;
       if (isTranslation && run !== translationRun.current) return;
       if (currentImageRun?.signal.aborted) return;
@@ -1479,6 +1599,7 @@ export function DedicatedToolView({
         categoryKey,
       });
     } catch (err) {
+      if (excelRun?.signal.aborted) return;
       if (ocrRun?.signal.aborted) return;
       if (redactionRun?.signal.aborted) return;
       if (tool.id === "pdf-form-fill" && formGeneration !== formRunGeneration.current) return;
@@ -1512,12 +1633,15 @@ export function DedicatedToolView({
       );
       setStatus("error");
     } finally {
+      if (excelRun === excelController.current) excelController.current = null;
       if (ocrRun === ocrController.current) ocrController.current = null;
       if (isTranslation && run === translationRun.current) translationController.current = null;
     }
   }
 
   function handleReset() {
+    excelController.current?.abort();
+    excelController.current = null;
     ocrController.current?.abort();
     ocrController.current = null;
     setOcrPageReports([]);
@@ -1927,14 +2051,25 @@ export function DedicatedToolView({
       return (
         <PdfToExcelPanel
           key={previewEpoch}
-          onPreviewPageChange={handlePreviewPageChange}
+          onPreviewPageChange={handleExcelPreviewPageChange}
+          previewPage={excelPreviewPage}
+          selectedPages={excelSelection.options?.selectedPages}
+          pagesText={excelPagesText}
+          onPagesTextChange={setExcelPagesText}
+          separatorsText={excelSeparatorsText}
+          onSeparatorsTextChange={setExcelSeparatorsText}
+          region={excelRegion}
+          onRegionChange={setExcelRegion}
+          preserveText={excelPreserveText}
+          onPreserveTextChange={setExcelPreserveText}
+          isRunning={status === "running"}
           fileName={files[0]?.name || "documento.pdf"}
           fileSizeBytes={files[0]?.size || 0}
           totalPages={pdfPageCount}
           thumbnailUrl={firstPageThumb}
           pageThumbnails={allPageThumbnails}
           previewRows={excelPreviewRows}
-          previewError={excelPreviewError}
+          previewError={excelSelection.error ?? excelPreviewError}
           isConverting={isAnalyzingExcel || status === "running"}
           outputFormat={excelOutputFormat}
           onOutputFormatChange={setExcelOutputFormat}
@@ -2712,6 +2847,20 @@ export function DedicatedToolView({
             {translate("redact.cancel")}
           </Button>
         )}
+        {tool.id === "pdf-to-excel" && status === "running" && (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              excelController.current?.abort();
+              excelController.current = null;
+              setStatus("idle");
+              setProgress(0);
+              setErrorMessage(null);
+            }}
+          >
+            {translate("excel.cancel")}
+          </Button>
+        )}
         {errorMessage && <p role="alert">{errorMessage}</p>}
         <button
           type="button"
@@ -2733,7 +2882,10 @@ export function DedicatedToolView({
             (tool.id === "pdf-protect" && protectionStatus.isProtected) ||
             (tool.id === "pdf-redact" && redactionAreas.length === 0) ||
             (tool.id === "pdf-form-fill" && !formPreview.revision) ||
-            (tool.id === "pdf-to-excel" && (isAnalyzingExcel || Boolean(excelPreviewError)))
+            (tool.id === "pdf-to-excel" &&
+              (isAnalyzingExcel ||
+                !excelPreviewReady ||
+                Boolean(excelSelection.error ?? excelPreviewError)))
           }
           onClick={handleExecute}
         >

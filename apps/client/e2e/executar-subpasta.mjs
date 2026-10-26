@@ -25,6 +25,7 @@ try {
         "test",
         "hub-subpath.spec.ts",
         "language-image-quality.spec.ts",
+        "excel-selection.spec.ts",
         "pdf-viewport.spec.ts",
         "form-preview.spec.ts",
         "pdf-editor.spec.ts",

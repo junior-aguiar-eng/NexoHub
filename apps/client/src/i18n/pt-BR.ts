@@ -1,4 +1,26 @@
 export const ptBR = {
+  "excel.pagesSelection": "Páginas para exportar",
+  "excel.pagesSelectionHint": "Todas; ou 1, 3-5",
+  "excel.logicalCoordinates":
+    "Região em porcentagem da página lógica, antes da rotação. Origem no canto superior esquerdo.",
+  "excel.regionLeft": "Esquerda da região (%)",
+  "excel.regionTop": "Topo da região (%)",
+  "excel.regionWidth": "Largura da região (%)",
+  "excel.regionHeight": "Altura da região (%)",
+  "excel.columnSeparators": "Separadores de colunas (%)",
+  "excel.columnSeparatorsHint": "Automático; ou 30; 62",
+  "excel.selectionAppliesAll":
+    "A região e os separadores valem para todas as páginas selecionadas. Use ponto ou vírgula decimal e ponto e vírgula entre separadores. O texto não é cortado para caber nas células.",
+  "excel.preserveText": "Preservar valores como texto no XLSX",
+  "excel.invalidSelection":
+    "Confira as páginas, os limites da região e a ordem dos separadores de colunas.",
+  "excel.regionCutsText":
+    "A borda da região atravessa texto. Amplie a região para preservar o valor completo.",
+  "excel.separatorCutsText":
+    "Um separador atravessa texto. Ajuste a posição ou selecione uma região sem esse trecho.",
+  "excel.emptySelection": "Nenhum texto foi encontrado na região selecionada.",
+  "excel.cancel": "Cancelar conversão",
+  "excel.previewPage": "Prévia da página {page}.",
   "workspace.ocr.cancel": "Cancelar OCR",
   "workspace.ocr.progressLabel": "Página {page}/{total}: {status}",
   "workspace.ocr.preparing": "Preparando reconhecimento local",
@@ -256,7 +278,7 @@ export const ptBR = {
   "protect.rc4UnsupportedPassword":
     "Esta senha contém caracteres incompatíveis com RC4. Selecione AES-256 para usar a senha completa.",
   "excel.previewScope":
-    "Amostra das primeiras linhas do documento completo. A navegação acima altera apenas a miniatura do PDF.",
+    "Amostra de até 15 linhas da página selecionada, com a região e as colunas configuradas. A exportação inclui todas as linhas das páginas escolhidas.",
   "excel.formatXlsxHint": "Planilha XLSX com abas",
   "excel.formatCsvHint": "Texto delimitado em UTF-8",
   "excel.rowCount": "Linhas na prévia: {count}",

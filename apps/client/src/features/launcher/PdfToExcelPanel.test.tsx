@@ -2,6 +2,61 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PdfToExcelPanel } from "./PdfToExcelPanel";
 
+it("navega entre páginas selecionadas não contíguas sem parar na página excluída", () => {
+  const onPage = vi.fn();
+  render(
+    <PdfToExcelPanel
+      fileName="dados.pdf"
+      fileSizeBytes={100}
+      totalPages={3}
+      outputFormat="xlsx"
+      onOutputFormatChange={vi.fn()}
+      sheetMode="per-page"
+      onSheetModeChange={vi.fn()}
+      csvDelimiter=";"
+      onCsvDelimiterChange={vi.fn()}
+      detectTablesOnly={false}
+      onDetectTablesOnlyChange={vi.fn()}
+      selectedPages={[1, 3]}
+      onPreviewPageChange={onPage}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Próxima página" }));
+  expect(onPage).toHaveBeenLastCalledWith(3);
+});
+
+it("expõe seleção de páginas, região e separadores sem inventar valores na prévia", () => {
+  const change = vi.fn();
+  render(
+    <PdfToExcelPanel
+      fileName="dados.pdf"
+      fileSizeBytes={100}
+      totalPages={2}
+      outputFormat="xlsx"
+      onOutputFormatChange={vi.fn()}
+      sheetMode="per-page"
+      onSheetModeChange={vi.fn()}
+      csvDelimiter=";"
+      onCsvDelimiterChange={vi.fn()}
+      detectTablesOnly={false}
+      onDetectTablesOnlyChange={vi.fn()}
+      pagesText="2"
+      onPagesTextChange={change}
+      separatorsText="30;62"
+      onSeparatorsTextChange={change}
+      region={{ left: 0, top: 0.1, width: 1, height: 0.2 }}
+      onRegionChange={change}
+      preserveText
+      onPreserveTextChange={change}
+    />,
+  );
+  expect(screen.getByLabelText("Páginas para exportar")).toHaveValue("2");
+  expect(screen.getByLabelText("Separadores de colunas (%)")).toHaveValue("30;62");
+  fireEvent.change(screen.getByLabelText("Topo da região (%)"), { target: { value: "15" } });
+  expect(change).toHaveBeenCalledWith({ left: 0, top: 0.15, width: 1, height: 0.2 });
+  expect(screen.getByLabelText("Preservar valores como texto no XLSX")).toBeChecked();
+});
+
 describe("PdfToExcelPanel", () => {
   it("renderiza opções de formato, modo de planilha e prévia tabular", () => {
     const onFormatChange = vi.fn();

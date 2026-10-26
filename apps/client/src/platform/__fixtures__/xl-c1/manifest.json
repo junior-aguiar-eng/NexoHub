@@ -1,0 +1,28 @@
+{
+  "license": "MPL-2.0",
+  "origin": "Corpus sintético autoral do NexoHub; sem dados de terceiros. Gerador: corpus.ts (pdf-lib 1.17.1).",
+  "fixtures": [
+    {
+      "name": "tabela-sem-bordas.pdf",
+      "sha256": "7ce31d7e3fdb7484fa95a585fa74abfb03779dc663b529e4f8fd24efc0105f50",
+      "size": 1646
+    },
+    {
+      "name": "tabela-com-bordas.pdf",
+      "sha256": "7fb564485212afb02fa4f70e315a02cad3b354a149b895e5499e3cf465865ee2",
+      "size": 1836
+    }
+  ],
+  "expectedCellsByPage": [
+    [["Código", "Produto", "Valor"], ["00123", "", "1.234,56"], ["123", "Teclado", "15.50"]],
+    [["Código", "Produto", "Valor"], ["00456", "Monitor", "2.000,00"], ["00789", "", "0,50"]]
+  ],
+  "selection": {
+    "top": 0.1,
+    "height": 0.2,
+    "left": 0,
+    "width": 1,
+    "columnSeparators": [0.3, 0.62]
+  },
+  "notes": "Duas páginas por PDF; título em célula visual abrangente/mesclada no fixture com bordas, rodapé externo à região. Não se infere mergeCells OpenXML. Os testes usam o gerador; os PDFs fixos permitem inspeção independente."
+}

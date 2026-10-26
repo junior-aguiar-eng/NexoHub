@@ -102,6 +102,9 @@ test("Excel mostra dados reais e exporta células vazias e códigos intactos", a
   );
   await expect(page.getByTestId("excel-preview-table")).toContainText("00123");
   await expect(page.getByTestId("excel-preview-table")).not.toContainText("Notebook Dell");
+  // Mantém a cobertura da inferência numérica legada, agora mediante escolha explícita.
+  await page.getByLabel("Preservar valores como texto no XLSX").uncheck();
+  await expect(page.getByTestId("excel-preview-table")).toContainText("00123");
   await page.locator(".ilovepdf-action-red-btn").click();
   const bytes = await output(page);
   const xml = strFromU8(unzipSync(bytes)["xl/worksheets/sheet1.xml"]);

@@ -1,0 +1,208 @@
+{
+  "fixtures": [
+    {
+      "name": "tabela-sem-bordas.pdf",
+      "sha256": "7ce31d7e3fdb7484fa95a585fa74abfb03779dc663b529e4f8fd24efc0105f50",
+      "size": 1646
+    },
+    {
+      "name": "tabela-com-bordas.pdf",
+      "sha256": "7fb564485212afb02fa4f70e315a02cad3b354a149b895e5499e3cf465865ee2",
+      "size": 1836
+    }
+  ],
+  "rows": [
+    {
+      "borders": false,
+      "mode": "automatic",
+      "pass": "first",
+      "ms": 1083.5,
+      "totalRows": 10,
+      "totalColumns": 3,
+      "totalSheets": 2,
+      "expected": [
+        ["Inventário com cabeçalho abrangente", "", ""],
+        ["Código", "Produto", "Valor"],
+        ["00123", "", "1.234,56"],
+        ["123", "Teclado", "15.50"],
+        ["Rodapé fora da seleção", "", ""],
+        ["Inventário com cabeçalho abrangente", "", ""],
+        ["Código", "Produto", "Valor"],
+        ["00456", "Monitor", "2.000,00"],
+        ["00789", "", "0,50"],
+        ["Rodapé fora da seleção", "", ""]
+      ],
+      "sourceUnchanged": true,
+      "artifactBytes": 5938,
+      "artifactSha256": "8776bfda293f97018e19607ca1ef6a171b204495481174cd856bac711db01228",
+      "cellsVerified": true
+    },
+    {
+      "borders": false,
+      "mode": "automatic",
+      "pass": "repeat",
+      "ms": 913.2000000476837,
+      "totalRows": 10,
+      "totalColumns": 3,
+      "totalSheets": 2,
+      "expected": [
+        ["Inventário com cabeçalho abrangente", "", ""],
+        ["Código", "Produto", "Valor"],
+        ["00123", "", "1.234,56"],
+        ["123", "Teclado", "15.50"],
+        ["Rodapé fora da seleção", "", ""],
+        ["Inventário com cabeçalho abrangente", "", ""],
+        ["Código", "Produto", "Valor"],
+        ["00456", "Monitor", "2.000,00"],
+        ["00789", "", "0,50"],
+        ["Rodapé fora da seleção", "", ""]
+      ],
+      "sourceUnchanged": true,
+      "artifactBytes": 5938,
+      "artifactSha256": "8776bfda293f97018e19607ca1ef6a171b204495481174cd856bac711db01228",
+      "cellsVerified": true
+    },
+    {
+      "borders": false,
+      "mode": "selected-region",
+      "pass": "first",
+      "ms": 942,
+      "totalRows": 3,
+      "totalColumns": 3,
+      "totalSheets": 1,
+      "expected": [
+        ["Código", "Produto", "Valor"],
+        ["00456", "Monitor", "2.000,00"],
+        ["00789", "", "0,50"]
+      ],
+      "sourceUnchanged": true,
+      "artifactBytes": 4043,
+      "artifactSha256": "cdf583a2529aef2202276b851c8fc3fdc48640f19b2a4c38027d0ff3c3a528e6",
+      "cellsVerified": true
+    },
+    {
+      "borders": false,
+      "mode": "selected-region",
+      "pass": "repeat",
+      "ms": 748.8000000119209,
+      "totalRows": 3,
+      "totalColumns": 3,
+      "totalSheets": 1,
+      "expected": [
+        ["Código", "Produto", "Valor"],
+        ["00456", "Monitor", "2.000,00"],
+        ["00789", "", "0,50"]
+      ],
+      "sourceUnchanged": true,
+      "artifactBytes": 4043,
+      "artifactSha256": "cdf583a2529aef2202276b851c8fc3fdc48640f19b2a4c38027d0ff3c3a528e6",
+      "cellsVerified": true
+    },
+    {
+      "borders": true,
+      "mode": "automatic",
+      "pass": "first",
+      "ms": 755.5,
+      "totalRows": 10,
+      "totalColumns": 3,
+      "totalSheets": 2,
+      "expected": [
+        ["Inventário com cabeçalho abrangente", "", ""],
+        ["Código", "Produto", "Valor"],
+        ["00123", "", "1.234,56"],
+        ["123", "Teclado", "15.50"],
+        ["Rodapé fora da seleção", "", ""],
+        ["Inventário com cabeçalho abrangente", "", ""],
+        ["Código", "Produto", "Valor"],
+        ["00456", "Monitor", "2.000,00"],
+        ["00789", "", "0,50"],
+        ["Rodapé fora da seleção", "", ""]
+      ],
+      "sourceUnchanged": true,
+      "artifactBytes": 5938,
+      "artifactSha256": "8776bfda293f97018e19607ca1ef6a171b204495481174cd856bac711db01228",
+      "cellsVerified": true
+    },
+    {
+      "borders": true,
+      "mode": "automatic",
+      "pass": "repeat",
+      "ms": 862.3000000119209,
+      "totalRows": 10,
+      "totalColumns": 3,
+      "totalSheets": 2,
+      "expected": [
+        ["Inventário com cabeçalho abrangente", "", ""],
+        ["Código", "Produto", "Valor"],
+        ["00123", "", "1.234,56"],
+        ["123", "Teclado", "15.50"],
+        ["Rodapé fora da seleção", "", ""],
+        ["Inventário com cabeçalho abrangente", "", ""],
+        ["Código", "Produto", "Valor"],
+        ["00456", "Monitor", "2.000,00"],
+        ["00789", "", "0,50"],
+        ["Rodapé fora da seleção", "", ""]
+      ],
+      "sourceUnchanged": true,
+      "artifactBytes": 5938,
+      "artifactSha256": "8776bfda293f97018e19607ca1ef6a171b204495481174cd856bac711db01228",
+      "cellsVerified": true
+    },
+    {
+      "borders": true,
+      "mode": "selected-region",
+      "pass": "first",
+      "ms": 762.7999999523163,
+      "totalRows": 3,
+      "totalColumns": 3,
+      "totalSheets": 1,
+      "expected": [
+        ["Código", "Produto", "Valor"],
+        ["00456", "Monitor", "2.000,00"],
+        ["00789", "", "0,50"]
+      ],
+      "sourceUnchanged": true,
+      "artifactBytes": 4043,
+      "artifactSha256": "cdf583a2529aef2202276b851c8fc3fdc48640f19b2a4c38027d0ff3c3a528e6",
+      "cellsVerified": true
+    },
+    {
+      "borders": true,
+      "mode": "selected-region",
+      "pass": "repeat",
+      "ms": 808.6999999880791,
+      "totalRows": 3,
+      "totalColumns": 3,
+      "totalSheets": 1,
+      "expected": [
+        ["Código", "Produto", "Valor"],
+        ["00456", "Monitor", "2.000,00"],
+        ["00789", "", "0,50"]
+      ],
+      "sourceUnchanged": true,
+      "artifactBytes": 4043,
+      "artifactSha256": "cdf583a2529aef2202276b851c8fc3fdc48640f19b2a4c38027d0ff3c3a528e6",
+      "cellsVerified": true
+    }
+  ],
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+  "memory": {
+    "usedJSHeapSize": 60300000,
+    "totalJSHeapSize": 68000000
+  },
+  "measuredAt": "2026-10-26T19:23:50.397Z",
+  "device": {
+    "cpu": "AMD Ryzen 5 3550H with Radeon Vega Mobile Gfx  ",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 32147910656,
+    "platform": "win32",
+    "arch": "x64",
+    "node": "v24.19.0"
+  },
+  "versions": {
+    "pdfLib": "1.17.1",
+    "pdfjs": "6.3.289"
+  },
+  "origin": "Corpus sintético MPL-2.0 gerado por apps/client/src/platform/__fixtures__/xl-c1/corpus.ts",
+  "method": "ms inclui extração da prévia e nova extração/serialização do XLSX. first/repeat no mesmo contexto; não são processos frios independentes. Matrizes e todas as células verificadas. Snapshot JS não é pico e não mede workers."
+}

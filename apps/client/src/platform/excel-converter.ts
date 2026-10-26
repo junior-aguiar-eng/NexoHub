@@ -29,6 +29,49 @@ export interface PdfToExcelOptions {
   readonly sheetMode?: "per-page" | "single-sheet";
   readonly csvDelimiter?: "," | ";" | "\t";
   readonly detectTablesOnly?: boolean;
+  readonly selectedPages?: readonly number[];
+  /** Frações da página lógica/CropBox antes da rotação, origem superior esquerda. */
+  readonly region?: SpreadsheetRegion;
+  /** Posições X absolutas normalizadas, estritamente crescentes e dentro da região. */
+  readonly columnSeparators?: readonly number[];
+  readonly preserveText?: boolean;
+  readonly signal?: AbortSignal;
+}
+
+export interface SpreadsheetRegion {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export function validateSpreadsheetSelection(options: PdfToExcelOptions, pageCount: number): void {
+  const region = options.region ?? { left: 0, top: 0, width: 1, height: 1 };
+  const pages = options.selectedPages;
+  const columns = options.columnSeparators;
+  if (
+    (pages &&
+      (!pages.length ||
+        pages.some((page) => !Number.isSafeInteger(page) || page < 1 || page > pageCount))) ||
+    ![region.left, region.top, region.width, region.height].every(Number.isFinite) ||
+    region.left < 0 ||
+    region.top < 0 ||
+    region.width <= 0 ||
+    region.height <= 0 ||
+    region.left + region.width > 1 + 1e-9 ||
+    region.top + region.height > 1 + 1e-9 ||
+    (columns &&
+      (columns.length > 255 ||
+        columns.some(
+          (x, index) =>
+            !Number.isFinite(x) ||
+            x <= region.left ||
+            x >= region.left + region.width ||
+            (index > 0 && x <= columns[index - 1]),
+        )))
+  ) {
+    throw new Error("OPCOES_PLANILHA_INVALIDAS");
+  }
 }
 
 export interface ExtractedSheetData {
@@ -103,6 +146,7 @@ function isNumericValue(val: string): boolean {
 }
 
 export interface PdfSpreadsheetData {
+  readonly pageCount: number;
   readonly sheets: readonly ExtractedSheetData[];
   readonly totalRows: number;
   readonly totalColumns: number;
@@ -112,8 +156,9 @@ export interface PdfSpreadsheetData {
 /** Extrai uma prévia real sem gerar nem baixar um arquivo. Colunas são heurísticas espaciais. */
 export async function extractPdfSpreadsheetData(
   pdfBytes: Uint8Array,
-  options: Pick<PdfToExcelOptions, "detectTablesOnly"> = {},
+  options: PdfToExcelOptions = {},
 ): Promise<PdfSpreadsheetData> {
+  options.signal?.throwIfAborted();
   if (!pdfBytes.length) throw new Error("DOCUMENTO_VAZIO");
   const loadingTask = pdfjsLib.getDocument({
     data: pdfBytes.slice(),
@@ -121,11 +166,19 @@ export async function extractPdfSpreadsheetData(
     standardFontDataUrl: STANDARD_FONT_DATA_URL,
   });
   let pdf: Awaited<typeof loadingTask.promise> | undefined;
+  const abort = () => {
+    void loadingTask.destroy().catch(() => {});
+  };
+  options.signal?.addEventListener("abort", abort, { once: true });
   try {
     pdf = await loadingTask.promise;
+    options.signal?.throwIfAborted();
+    validateSpreadsheetSelection(options, pdf.numPages);
     const sheets: ExtractedSheetData[] = [];
     let hasText = false;
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      options.signal?.throwIfAborted();
+      if (options.selectedPages && !options.selectedPages.includes(pageNum)) continue;
       const page = await pdf.getPage(pageNum);
       const viewport = page.getViewport({ scale: 1, rotation: 0 });
       const content = await page.getTextContent();
@@ -136,29 +189,69 @@ export async function extractPdfSpreadsheetData(
         if (!str) continue;
         hasText = true;
         const transform = pdfjsLib.Util.transform(viewport.transform, item.transform);
+        const fontSize = Math.hypot(transform[2], transform[3]) || 12;
+        if (options.region) {
+          const r = options.region;
+          const left = r.left * viewport.width,
+            right = (r.left + r.width) * viewport.width;
+          const top = r.top * viewport.height,
+            bottom = (r.top + r.height) * viewport.height;
+          const itemTop = transform[5] - (item.height || fontSize),
+            itemRight = transform[4] + item.width;
+          if (
+            itemRight <= left ||
+            transform[4] >= right ||
+            transform[5] <= top ||
+            itemTop >= bottom
+          )
+            continue;
+          if (
+            transform[4] < left - 0.01 ||
+            itemRight > right + 0.01 ||
+            itemTop < top - 0.01 ||
+            transform[5] > bottom + 0.01
+          )
+            throw new Error("PDF_REGIAO_CORTA_TEXTO");
+        }
         items.push({
           str,
           x: transform[4],
           y: transform[5],
           width: item.width,
           height: item.height,
-          fontSize: Math.hypot(transform[2], transform[3]) || 12,
+          fontSize,
         });
       }
       items.sort((a, b) => a.y - b.y || a.x - b.x);
-      const lines: Array<{ y: number; cells: Array<{ x: number; right: number; text: string }> }> =
-        [];
+      const lines: Array<{
+        y: number;
+        cells: Array<{ x: number; right: number; text: string; column?: number }>;
+      }> = [];
       let line: RawTextItem[] = [];
       const flush = () => {
         if (!line.length) return;
         line.sort((a, b) => a.x - b.x);
-        const cells: Array<{ x: number; right: number; text: string }> = [];
+        const cells: Array<{ x: number; right: number; text: string; column?: number }> = [];
         let right = -Infinity;
         for (const item of line) {
+          if (options.columnSeparators) {
+            const boundaries = options.columnSeparators.map((value) => value * viewport.width);
+            const column = boundaries.filter((x) => item.x >= x).length;
+            if (column < boundaries.length && item.x + item.width > boundaries[column] + 0.01)
+              throw new Error("PDF_SEPARADOR_CORTA_TEXTO");
+            const existing = cells.find((cell) => cell.column === column);
+            if (existing) {
+              existing.text +=
+                (item.x - existing.right > item.fontSize * 0.15 ? " " : "") + item.str;
+              existing.right = Math.max(existing.right, item.x + item.width);
+            } else cells.push({ x: item.x, right: item.x + item.width, text: item.str, column });
+            continue;
+          }
           if (!cells.length || item.x - right > 18) {
             cells.push({ x: item.x, right: item.x + item.width, text: item.str });
           } else {
-            cells[cells.length - 1].text += ` ${item.str}`;
+            cells[cells.length - 1].text +=
+              (item.x - right > item.fontSize * 0.15 ? " " : "") + item.str;
             cells[cells.length - 1].right = Math.max(
               cells[cells.length - 1].right,
               item.x + item.width,
@@ -187,9 +280,15 @@ export async function extractPdfSpreadsheetData(
         .filter(
           (entry) =>
             !options.detectTablesOnly ||
+            (options.columnSeparators && options.columnSeparators.length >= 1) ||
             (anchors.length >= 2 && entry.y >= firstTableY && entry.y <= lastTableY),
         )
         .map((entry) => {
+          if (options.columnSeparators) {
+            const row = Array<string>(options.columnSeparators.length + 1).fill("");
+            for (const cell of entry.cells) row[cell.column ?? 0] = cell.text;
+            return row;
+          }
           const row = Array<string>(Math.max(1, anchors.length)).fill("");
           let previousColumn = -1;
           entry.cells.forEach((cell, index) => {
@@ -218,10 +317,13 @@ export async function extractPdfSpreadsheetData(
       sheets.push({ name: `Página ${pageNum}`, pageIndex: pageNum - 1, rows });
       page.cleanup();
     }
+    options.signal?.throwIfAborted();
     if (!hasText) throw new Error("PDF_SEM_TEXTO_SELECIONAVEL");
     const rows = sheets.flatMap((sheet) => sheet.rows);
-    if (!rows.length) throw new Error("PDF_SEM_TABELAS");
+    if (!rows.length)
+      throw new Error(options.detectTablesOnly ? "PDF_SEM_TABELAS" : "PDF_SEM_DADOS_SELECAO");
     return {
+      pageCount: pdf.numPages,
       sheets,
       totalRows: rows.length,
       totalColumns: sheets.reduce(
@@ -230,9 +332,13 @@ export async function extractPdfSpreadsheetData(
       ),
       previewRows: rows.slice(0, 15),
     };
+  } catch (error) {
+    options.signal?.throwIfAborted();
+    throw error;
   } finally {
+    options.signal?.removeEventListener("abort", abort);
     try {
-      await pdf?.cleanup();
+      if (!options.signal?.aborted) await pdf?.cleanup();
     } finally {
       await loadingTask.destroy();
     }
@@ -252,6 +358,7 @@ export async function convertPdfToExcelDocument(
     throw new Error("OPCOES_PLANILHA_INVALIDAS");
   }
   const extracted = await extractPdfSpreadsheetData(pdfBytes, options);
+  options.signal?.throwIfAborted();
   const sheets =
     sheetMode === "single-sheet"
       ? [
@@ -270,7 +377,7 @@ export async function convertPdfToExcelDocument(
           .map((row) => row.map((cell) => escapeCsvCell(cell, csvDelimiter)).join(csvDelimiter))
           .join("\r\n")}`,
       )
-    : buildOpenXmlWorkbook(sheets);
+    : buildOpenXmlWorkbook(sheets, options.preserveText ?? false);
   return {
     data,
     fileName: csv ? "planilha.csv" : "planilha.xlsx",
@@ -287,7 +394,10 @@ export async function convertPdfToExcelDocument(
 /**
  * Monta a estrutura OpenXML (ECMA-376) nativa compactada em ZIP para Microsoft Excel.
  */
-function buildOpenXmlWorkbook(sheets: readonly ExtractedSheetData[]): Uint8Array {
+function buildOpenXmlWorkbook(
+  sheets: readonly ExtractedSheetData[],
+  preserveText = false,
+): Uint8Array {
   const effectiveSheets =
     sheets.length > 0 ? sheets : [{ name: "Planilha 1", pageIndex: 0, rows: [] }];
   const files: Array<{ name: string; data: Uint8Array }> = [];
@@ -383,7 +493,7 @@ function buildOpenXmlWorkbook(sheets: readonly ExtractedSheetData[]): Uint8Array
         const cellValue = row[cIdx];
         const cellRef = `${getExcelColumnLetter(cIdx)}${rowIndexNumber}`;
 
-        if (isNumericValue(cellValue)) {
+        if (!preserveText && isNumericValue(cellValue)) {
           cellElements.push(`<c r="${cellRef}"><v>${cellValue.trim()}</v></c>`);
         } else {
           cellElements.push(

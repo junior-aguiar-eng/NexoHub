@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { translate } from "@/i18n";
+import { getExcelColumnLetter, type SpreadsheetRegion } from "@/platform/excel-converter";
 
 export interface PdfToExcelPanelProps {
   readonly fileName: string;
@@ -29,6 +30,17 @@ export interface PdfToExcelPanelProps {
   readonly previewRows?: Array<string[]>;
   readonly isConverting?: boolean;
   readonly previewError?: string;
+  readonly previewPage?: number;
+  readonly selectedPages?: readonly number[];
+  readonly pagesText?: string;
+  readonly onPagesTextChange?: (value: string) => void;
+  readonly separatorsText?: string;
+  readonly onSeparatorsTextChange?: (value: string) => void;
+  readonly region?: SpreadsheetRegion;
+  readonly onRegionChange?: (value: SpreadsheetRegion) => void;
+  readonly preserveText?: boolean;
+  readonly onPreserveTextChange?: (value: boolean) => void;
+  readonly isRunning?: boolean;
 }
 
 function formatSize(bytes: number): string {
@@ -55,9 +67,29 @@ export function PdfToExcelPanel({
   previewRows,
   isConverting = false,
   previewError,
+  previewPage,
+  selectedPages,
+  pagesText = "",
+  onPagesTextChange,
+  separatorsText = "",
+  onSeparatorsTextChange,
+  region = { left: 0, top: 0, width: 1, height: 1 },
+  onRegionChange,
+  preserveText = true,
+  onPreserveTextChange,
+  isRunning = false,
 }: PdfToExcelPanelProps) {
   const detectTablesInputId = useId();
-  const [activePageIndex, setActivePageIndex] = useState<number>(0);
+  const [localPageIndex, setActivePageIndex] = useState<number>(0);
+  const activePageIndex = previewPage === undefined ? localPageIndex : previewPage - 1;
+  const navigationPages = selectedPages?.length
+    ? selectedPages
+    : Array.from({ length: totalPages }, (_, index) => index + 1);
+  const navigationIndex = navigationPages.indexOf(activePageIndex + 1);
+  function navigate(index: number) {
+    setActivePageIndex(index);
+    onPreviewPageChange?.(index + 1);
+  }
 
   useEffect(() => {
     onPreviewPageChange?.(activePageIndex + 1);
@@ -78,6 +110,65 @@ export function PdfToExcelPanel({
             <h2>{translate("excel.optionsTitle")}</h2>
           </div>
 
+          {onRegionChange && (
+            <div className="pdf-excel-group pdf-excel-selection">
+              <label>
+                {translate("excel.pagesSelection")}
+                <input
+                  value={pagesText}
+                  onChange={(event) => onPagesTextChange?.(event.target.value)}
+                  disabled={isRunning}
+                  placeholder={translate("excel.pagesSelectionHint")}
+                />
+              </label>
+              <p>{translate("excel.logicalCoordinates")}</p>
+              <div className="pdf-excel-region-fields">
+                {(
+                  [
+                    ["left", "excel.regionLeft"],
+                    ["top", "excel.regionTop"],
+                    ["width", "excel.regionWidth"],
+                    ["height", "excel.regionHeight"],
+                  ] as const
+                ).map(([field, key]) => (
+                  <label key={field}>
+                    {translate(key)}
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step="0.1"
+                      value={Number((region[field] * 100).toFixed(4))}
+                      disabled={isRunning}
+                      onChange={(event) =>
+                        onRegionChange({ ...region, [field]: Number(event.target.value) / 100 })
+                      }
+                    />
+                  </label>
+                ))}
+              </div>
+              <label>
+                {translate("excel.columnSeparators")}
+                <input
+                  value={separatorsText}
+                  onChange={(event) => onSeparatorsTextChange?.(event.target.value)}
+                  disabled={isRunning}
+                  placeholder={translate("excel.columnSeparatorsHint")}
+                />
+              </label>
+              <p>{translate("excel.selectionAppliesAll")}</p>
+              <label className="pdf-excel-preserve-text">
+                <input
+                  type="checkbox"
+                  checked={preserveText}
+                  onChange={(event) => onPreserveTextChange?.(event.target.checked)}
+                  disabled={isRunning}
+                />
+                {translate("excel.preserveText")}
+              </label>
+            </div>
+          )}
+
           {/* Formato de Exportação */}
           <div className="pdf-excel-group">
             <span className="pdf-excel-label">{translate("excel.formatLabel")}</span>
@@ -88,6 +179,7 @@ export function PdfToExcelPanel({
                 onClick={() => onOutputFormatChange("xlsx")}
                 aria-pressed={outputFormat === "xlsx"}
                 data-testid="format-xlsx-btn"
+                disabled={isRunning}
               >
                 <div className="format-btn-header">
                   <FileSpreadsheet size={18} className="text-emerald-400" />
@@ -102,6 +194,7 @@ export function PdfToExcelPanel({
                 onClick={() => onOutputFormatChange("csv")}
                 aria-pressed={outputFormat === "csv"}
                 data-testid="format-csv-btn"
+                disabled={isRunning}
               >
                 <div className="format-btn-header">
                   <TableIcon size={18} className="text-amber-400" />
@@ -122,6 +215,7 @@ export function PdfToExcelPanel({
                 onClick={() => onSheetModeChange("per-page")}
                 aria-pressed={sheetMode === "per-page"}
                 data-testid="mode-per-page-btn"
+                disabled={isRunning}
               >
                 <Layers size={16} />
                 <span>{translate("excel.sheetModePerPage")}</span>
@@ -132,6 +226,7 @@ export function PdfToExcelPanel({
                 onClick={() => onSheetModeChange("single-sheet")}
                 aria-pressed={sheetMode === "single-sheet"}
                 data-testid="mode-single-btn"
+                disabled={isRunning}
               >
                 <Database size={16} />
                 <span>{translate("excel.sheetModeSingle")}</span>
@@ -150,6 +245,7 @@ export function PdfToExcelPanel({
                   onClick={() => onCsvDelimiterChange(";")}
                   aria-pressed={csvDelimiter === ";"}
                   data-testid="delimiter-semicolon-btn"
+                  disabled={isRunning}
                 >
                   <span>;</span>
                   <small>{translate("excel.csvDelimiterSemicolon")}</small>
@@ -160,6 +256,7 @@ export function PdfToExcelPanel({
                   onClick={() => onCsvDelimiterChange(",")}
                   aria-pressed={csvDelimiter === ","}
                   data-testid="delimiter-comma-btn"
+                  disabled={isRunning}
                 >
                   <span>,</span>
                   <small>{translate("excel.csvDelimiterComma")}</small>
@@ -170,6 +267,7 @@ export function PdfToExcelPanel({
                   onClick={() => onCsvDelimiterChange("\t")}
                   aria-pressed={csvDelimiter === "\t"}
                   data-testid="delimiter-tab-btn"
+                  disabled={isRunning}
                 >
                   <span>Tab</span>
                   <small>{translate("excel.csvDelimiterTab")}</small>
@@ -188,6 +286,7 @@ export function PdfToExcelPanel({
                 checked={detectTablesOnly}
                 onChange={(e) => onDetectTablesOnlyChange(e.target.checked)}
                 data-testid="detect-tables-only-checkbox"
+                disabled={isRunning}
               />
               <div className="checkbox-text-block">
                 <span className="checkbox-title">{translate("excel.detectTablesOnlyLabel")}</span>
@@ -244,8 +343,10 @@ export function PdfToExcelPanel({
                 type="button"
                 className="page-nav-btn"
                 aria-label={translate("unlock.previousPage")}
-                disabled={activePageIndex === 0}
-                onClick={() => setActivePageIndex((prev) => Math.max(0, prev - 1))}
+                disabled={navigationIndex <= 0}
+                onClick={() =>
+                  navigate((navigationPages[Math.max(0, navigationIndex - 1)] ?? 1) - 1)
+                }
               >
                 <ChevronLeft size={16} />
               </button>
@@ -258,8 +359,13 @@ export function PdfToExcelPanel({
                 type="button"
                 className="page-nav-btn"
                 aria-label={translate("unlock.nextPage")}
-                disabled={activePageIndex >= totalPages - 1}
-                onClick={() => setActivePageIndex((prev) => Math.min(totalPages - 1, prev + 1))}
+                disabled={navigationIndex >= navigationPages.length - 1}
+                onClick={() =>
+                  navigate(
+                    (navigationPages[Math.min(navigationPages.length - 1, navigationIndex + 1)] ??
+                      totalPages) - 1,
+                  )
+                }
               >
                 <ChevronRight size={16} />
               </button>
@@ -283,6 +389,8 @@ export function PdfToExcelPanel({
 
           <p className="info-card-text" style={{ padding: "12px 18px", margin: 0 }}>
             {translate("excel.previewScope")}
+            {previewPage !== undefined &&
+              ` ${translate("excel.previewPage").replace("{page}", String(previewPage))}`}
           </p>
           <div className="preview-table-wrapper">
             {isConverting || previewError || displayRows.length === 0 ? (
@@ -308,7 +416,7 @@ export function PdfToExcelPanel({
                       // biome-ignore lint/suspicious/noArrayIndexKey: matriz estática de cabeçalho
                       <th key={`th-${cIdx}-${headerCell}`}>
                         <div className="col-header-content">
-                          <span className="col-letter">{String.fromCharCode(65 + cIdx)}</span>
+                          <span className="col-letter">{getExcelColumnLetter(cIdx)}</span>
                           <span className="col-text">{headerCell}</span>
                         </div>
                       </th>
@@ -334,6 +442,14 @@ export function PdfToExcelPanel({
       </div>
 
       <style>{`
+        .pdf-excel-container .pdf-excel-selection { padding:12px; border:1px solid var(--color-border); border-radius:10px; background:var(--color-surface-raised); }
+        .pdf-excel-selection label { display:flex; flex-direction:column; gap:6px; color:var(--color-ink); font-size:13px; }
+        .pdf-excel-selection p { color:var(--color-ink-muted); font-size:12px; line-height:1.5; }
+        .pdf-excel-selection input:not([type="checkbox"]), .pdf-excel-selection button { width:100%; min-height:44px; min-width:0; padding:8px; border:1px solid var(--color-border); border-radius:8px; background:var(--color-surface); color:var(--color-ink); }
+        .pdf-excel-region-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+        .pdf-excel-selection label.pdf-excel-preserve-text { flex-direction:row; align-items:center; min-height:44px; }
+        .pdf-excel-selection :focus-visible { outline:2px solid var(--color-brand); outline-offset:2px; }
+        .pdf-excel-container .page-nav-btn { min-width:44px; min-height:44px; }
         .pdf-excel-container {
           display: grid;
           grid-template-columns: 360px 1fr;

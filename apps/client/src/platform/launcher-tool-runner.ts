@@ -19,6 +19,7 @@ import {
 } from "./browser-translator";
 import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
+import type { SpreadsheetRegion } from "./excel-converter";
 import { convertHtmlToPdfDocument } from "./html-to-pdf-converter";
 import { cropBatchConflicts, imageBatchExceedsLimits, inspectImageBatch } from "./image-batch";
 import { validateComposition } from "./image-composition-state";
@@ -162,6 +163,11 @@ export interface LauncherToolInput {
   readonly redactionSignal?: AbortSignal;
   readonly redactionAreas?: readonly RedactionArea[];
   readonly excelOutputFormat?: "xlsx" | "csv";
+  readonly excelSelectedPages?: readonly number[];
+  readonly excelRegion?: SpreadsheetRegion;
+  readonly excelColumnSeparators?: readonly number[];
+  readonly excelPreserveText?: boolean;
+  readonly excelSignal?: AbortSignal;
   readonly excelSheetMode?: "per-page" | "single-sheet";
   readonly excelCsvDelimiter?: "," | ";" | "\t";
   readonly excelDetectTablesOnly?: boolean;
@@ -1087,6 +1093,11 @@ async function executeTool(
       const result = await convertPdfToExcelDocument(pdfBytes, {
         outputFormat: format,
         sheetMode: input.excelSheetMode ?? "per-page",
+        selectedPages: input.excelSelectedPages,
+        region: input.excelRegion,
+        columnSeparators: input.excelColumnSeparators,
+        preserveText: input.excelPreserveText,
+        signal: input.excelSignal,
         csvDelimiter: input.excelCsvDelimiter ?? ";",
         detectTablesOnly: input.excelDetectTablesOnly ?? false,
       });
@@ -1390,6 +1401,10 @@ export async function runLauncherTool(
           PDF_OCULTACAO_ROTULO_NAO_SUPORTADO: "redact.labelUnsupported",
           PDF_OCULTACAO_LIMITE_EXCEDIDO: "redact.limitExceeded",
           PDF_SEM_TABELAS: "excel.noTables",
+          OPCOES_PLANILHA_INVALIDAS: "excel.invalidSelection",
+          PDF_REGIAO_CORTA_TEXTO: "excel.regionCutsText",
+          PDF_SEPARADOR_CORTA_TEXTO: "excel.separatorCutsText",
+          PDF_SEM_DADOS_SELECAO: "excel.emptySelection",
           PDF_SEM_TEXTO_SELECIONAVEL: "toolQuality.noText",
           SENHA_OBRIGATORIA: "toolQuality.passwordRequired",
           SENHA_INCORRETA: "toolQuality.passwordIncorrect",
@@ -1428,6 +1443,7 @@ export async function runLauncherTool(
     toolId,
     input,
     signal:
+      input.excelSignal ??
       input.ocrSignal ??
       input.imageSignal ??
       input.translationSignal ??

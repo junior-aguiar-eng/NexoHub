@@ -42,6 +42,7 @@ try {
         "text-quality.spec.ts",
         "compression-scan-quality.spec.ts",
         "scan-interface-quality.spec.ts",
+        "scan-desktop-policy.spec.ts",
         "tool-quality.spec.ts",
         "security-excel-quality.spec.ts",
         "tool-workspace-regressions.spec.ts",

@@ -54,7 +54,7 @@
     },
     {
       "id": "image-photo",
-      "origin": "Fotografias CC0 e controles sintéticos do ensaio isolado AVIF; fotos externas com SHA-256, não distribuídas no repositório.",
+      "origin": "Fotografias CC0 chelsea e coffee fixadas em scikit-image v0.19.3, agora versionadas para E2E das seis ferramentas ativas; controles sintéticos e ensaio AVIF anterior preservados.",
       "license": "chelsea: Stefan van der Walt; coffee: Rachel Michetti/Pikolo Espresso Bar, CC0 segundo fonte scikit-image. Geradores autorais MPL-2.0. Não é aprovação do codec candidato.",
       "artifacts": [
         {
@@ -71,6 +71,26 @@
           "path": "docs/benchmarks/2026-10-27-imc4-avif.json",
           "kind": "manifest",
           "sha256": "6282596ef63aa1e1cec120be4d8433168db11f8854d48f2bb49e4159c2484296"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/q-c0-photos/chelsea.png",
+          "kind": "file",
+          "sha256": "596aa1e7cb875eb79f437e310381d26b338a81c2da23439704a73c4651e8c4bb"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/q-c0-photos/coffee.png",
+          "kind": "file",
+          "sha256": "cc02f8ca188b167c775a7101b5d767d1e71792cf762c33d6fa15a4599b5a8de7"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/q-c0-photos/README.md",
+          "kind": "file",
+          "sha256": "c3ee55d6a44bd10fb0beb4377cc2eeef6f3a7c844513b6d655feae69be664cb9"
+        },
+        {
+          "path": "apps/client/e2e/image-photo-quality.spec.ts",
+          "kind": "generator",
+          "sha256": "852de353085bae7b857e94254b568c0c3a5400e7dece56445a22c44c9b17adc9"
         }
       ]
     },
@@ -979,10 +999,10 @@
       "supported": ["CER/WER sintéticos, páginas mistas e camada sem texto nativo duplicado."],
       "refused": ["Cancelamento e limites do perfil."],
       "unmeasured": [
-        "Fotografias de campo e precisão universal; pré-processador OpenCV não adotado.",
+        "Fotografias de campo não homologadas: ensaio privado de páginas curvas/inclinadas teve 0/4 referências reconhecidas; precisão universal não demonstrada e pré-processador OpenCV não adotado.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/OCR-C1.md"],
+      "docs": ["docs/OCR-C1.md", "docs/quality/Q-C0-FECHAMENTO.md"],
       "tests": ["apps/client/src/platform/browser-ocr.test.ts"]
     },
     {
@@ -1069,11 +1089,12 @@
         "Identificadores alfanuméricos arbitrários, gramática ampla, equivalência ao sidecar e corpus linguístico representativo não avaliados.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/quality/TEXTO.md"],
+      "docs": ["docs/quality/TEXTO.md", "docs/quality/Q-C0-FECHAMENTO.md"],
       "tests": [
         "apps/client/src/platform/text-quality.test.ts",
         "apps/client/e2e/text-quality.spec.ts",
         "apps/client/src/platform/browser-reviewer.test.ts",
+        "apps/client/src/features/launcher/DedicatedToolView.test.tsx",
         "apps/client/src/features/launcher/ReviewWorkflow.test.tsx"
       ]
     },
@@ -1247,92 +1268,129 @@
         "Thumbnails mostram a captura original; não há prévia pixel a pixel dos filtros. Outros navegadores, leitor de tela e câmera física permanecem sem homologação nesta matriz.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/quality/COMPRESSAO-SCANNER.md"],
+      "docs": ["docs/quality/COMPRESSAO-SCANNER.md", "docs/quality/Q-C0-FECHAMENTO.md"],
       "tests": [
         "apps/client/src/platform/scan-to-pdf-engine.test.ts",
         "apps/client/src/platform/scan-filter-failure.test.ts",
         "apps/client/src/features/launcher/ScanToPdfPanel.test.tsx",
         "apps/client/e2e/compression-scan-quality.spec.ts",
-        "apps/client/e2e/scan-interface-quality.spec.ts"
+        "apps/client/e2e/scan-interface-quality.spec.ts",
+        "apps/client/e2e/scan-desktop-policy.spec.ts"
       ]
     },
     {
       "toolId": "image-compress",
       "level": "restricted-profile",
       "corpora": ["image-basic", "image-photo"],
-      "supported": ["JPEG/WebP com perdas e PNG sem perdas; bytes reais antes/depois."],
+      "supported": [
+        "JPEG/WebP com perdas e PNG sem perdas; bytes reais antes/depois.",
+        "PNG das fotografias CC0 chelsea/coffee: dimensões, pixels/alpha e saída não maior que a fonte, com download reaberto."
+      ],
       "refused": ["Limites de arquivo/pixels/lote e opções inválidas."],
       "unmeasured": [
         "AVIF não integrado; ICC/HDR/animação e pouca RAM não homologados.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
-      "tests": ["apps/client/src/platform/image-results.test.ts"]
+      "docs": ["docs/IMAGE-WEB-QUALITY.md", "docs/quality/IMAGENS-FOTOGRAFICAS.md"],
+      "tests": [
+        "apps/client/src/platform/image-results.test.ts",
+        "apps/client/e2e/image-photo-quality.spec.ts"
+      ]
     },
     {
       "toolId": "image-resize",
       "level": "restricted-profile",
       "corpora": ["image-basic", "image-photo"],
-      "supported": ["Dimensões/proporção, não ampliar e lote."],
+      "supported": [
+        "Dimensões/proporção, não ampliar e lote.",
+        "chelsea/coffee a 50%: dimensões arredondadas e PSNR de pelo menos 30 dB contra referência Canvas de alta qualidade, distinguindo o filtro Pica."
+      ],
       "refused": ["Limites de arquivo/pixels/lote e opções inválidas."],
       "unmeasured": [
         "AVIF não integrado; ICC/HDR/animação e pouca RAM não homologados.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
-      "tests": ["apps/client/src/platform/image-engine.test.ts"]
+      "docs": ["docs/IMAGE-WEB-QUALITY.md", "docs/quality/IMAGENS-FOTOGRAFICAS.md"],
+      "tests": [
+        "apps/client/src/platform/image-engine.test.ts",
+        "apps/client/e2e/image-photo-quality.spec.ts"
+      ]
     },
     {
       "toolId": "image-crop",
       "level": "restricted-profile",
       "corpora": ["image-basic", "image-photo"],
-      "supported": ["Recorte por pixels/gesto, EXIF, proporção e prévia."],
+      "supported": [
+        "Recorte por pixels/gesto, EXIF, proporção e prévia.",
+        "Recorte das fotografias chelsea/coffee em x=10, y=20, 200×100: geometria e pixels da região conferidos no download."
+      ],
       "refused": ["Limites de arquivo/pixels/lote e opções inválidas."],
       "unmeasured": [
         "AVIF não integrado; ICC/HDR/animação e pouca RAM não homologados.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
-      "tests": ["apps/client/src/platform/image-engine.test.ts"]
+      "docs": ["docs/IMAGE-WEB-QUALITY.md", "docs/quality/IMAGENS-FOTOGRAFICAS.md"],
+      "tests": [
+        "apps/client/src/platform/image-engine.test.ts",
+        "apps/client/e2e/image-photo-quality.spec.ts"
+      ]
     },
     {
       "toolId": "image-convert",
       "level": "restricted-profile",
       "corpora": ["image-basic", "image-photo"],
-      "supported": ["Saída JPG/PNG/WebP e transparência sobre branco no JPEG."],
+      "supported": [
+        "Saída JPG/PNG/WebP e transparência sobre branco no JPEG.",
+        "chelsea/coffee convertidas para JPEG 0,92: dimensões, alpha opaco e PSNR de pelo menos 30 dB contra a fonte decodificada."
+      ],
       "refused": ["Limites de arquivo/pixels/lote e opções inválidas."],
       "unmeasured": [
         "AVIF não integrado; ICC/HDR/animação e pouca RAM não homologados.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
-      "tests": ["apps/client/src/platform/image-engine.test.ts"]
+      "docs": ["docs/IMAGE-WEB-QUALITY.md", "docs/quality/IMAGENS-FOTOGRAFICAS.md"],
+      "tests": [
+        "apps/client/src/platform/image-engine.test.ts",
+        "apps/client/e2e/image-photo-quality.spec.ts"
+      ]
     },
     {
       "toolId": "image-rotate",
       "level": "restricted-profile",
       "corpora": ["image-basic", "image-photo"],
-      "supported": ["Rotação 90/180/270 e espelhamento."],
+      "supported": [
+        "Rotação 90/180/270 e espelhamento.",
+        "Fotografias chelsea/coffee giradas 90 graus: dimensões invertidas e pixels na orientação esperada."
+      ],
       "refused": ["Limites de arquivo/pixels/lote e opções inválidas."],
       "unmeasured": [
         "AVIF não integrado; ICC/HDR/animação e pouca RAM não homologados.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
-      "tests": ["apps/client/src/platform/image-engine.test.ts"]
+      "docs": ["docs/IMAGE-WEB-QUALITY.md", "docs/quality/IMAGENS-FOTOGRAFICAS.md"],
+      "tests": [
+        "apps/client/src/platform/image-engine.test.ts",
+        "apps/client/e2e/image-photo-quality.spec.ts"
+      ]
     },
     {
       "toolId": "image-watermark",
       "level": "restricted-profile",
       "corpora": ["image-basic", "image-photo"],
-      "supported": ["Modo rápido e composição avançada com revisão única."],
+      "supported": [
+        "Modo rápido e composição avançada com revisão única.",
+        "Texto Q-C0 nas fotografias chelsea/coffee: região alterada não vazia e menor que 25%, com borda de oito pixels preservada."
+      ],
       "refused": ["Limites de arquivo/pixels/lote e opções inválidas."],
       "unmeasured": [
         "AVIF não integrado; ICC/HDR/animação e pouca RAM não homologados.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
-      "tests": ["apps/client/src/platform/image-composition-state.test.ts"]
+      "docs": ["docs/IMAGE-WEB-QUALITY.md", "docs/quality/IMAGENS-FOTOGRAFICAS.md"],
+      "tests": [
+        "apps/client/src/platform/image-composition-state.test.ts",
+        "apps/client/e2e/image-photo-quality.spec.ts"
+      ]
     }
   ]
 }

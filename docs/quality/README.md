@@ -1,7 +1,8 @@
 # Q-C0 — índice local de evidências
 
-Consolidação de 27/10/2026 sobre a base `a9f3385`. O índice cobre as 35 ferramentas ativas
-do Tool Registry, sem alterar executores, interface ou dependências. DOC-C2 continua fora
+Consolidação inicial de 27/10/2026 sobre a base `a9f3385`, complementada pelo
+[fechamento técnico](Q-C0-FECHAMENTO.md). O índice cobre as 35 ferramentas ativas
+do Tool Registry. DOC-C2 continua fora
 do escopo; Camelot, Docling, qpdf, OpenCV e AVIF não passam a integrar o aplicativo.
 
 ## O que o gate demonstra
@@ -82,10 +83,12 @@ Expectativas, recusas, casos não medidos e links de testes/documentos estão em
 | Markdown | Ordem/estrutura confrontada com a fonte e edição/revisão documentada por página |
 | Tradução/revisão/comparação | Referências textuais, preservação de identificadores e avaliação linguística; sem garantia jurídica ou semântica universal |
 
-Q-C0 global permanece **parcial**. Faltam corpora representativos e medições comparáveis
-além dos perfis restritos documentados; hardware físico, pouca RAM, lotes reais,
-execução fria/quente e Windows instalado continuam gates separados. Os relatórios específicos
-definem quais medições já existem. Nenhum percentual heurístico vira probabilidade de correção.
+O [fechamento técnico Q-C0](Q-C0-FECHAMENTO.md) reúne a matriz de corpus, testes de
+resultado, auditorias e medições locais, incluindo Windows Sandbox limpo de 4 GB.
+O alcance continua sendo os **35 perfis restritos**: documentos arbitrários, todos os
+dispositivos e certificação do NexoHub 1.0 não estão demonstrados. A foto privada de livro
+falhou no OCR e não foi incorporada ao perfil aprovado. Nenhum percentual heurístico vira
+probabilidade de correção. A redistribuição LanguageTool permanece condicionada ao ADR-018.
 
 A auditoria `pnpm licenses:check` avalia o inventário e as famílias de licença configuradas.
 Ela não substitui revisão de wrappers, WASM/binários, fontes/modelos, avisos de distribuição,
@@ -121,8 +124,8 @@ A fatia de [proteger/desbloquear PDF](PDF-ACESSO.md) acrescenta dois perfis rest
 
 A avaliação de [comparação e revisão de texto](TEXTO.md) acrescenta dois perfis restritos e corrige o par exportado e a mensagem de ausência de sugestões.
 
-A avaliação de [compressão e scanner](COMPRESSAO-SCANNER.md) acrescenta os dois perfis restritos restantes. Todos os registros têm perfil delimitado; Q-C0 global continua parcial.
+A avaliação de [compressão e scanner](COMPRESSAO-SCANNER.md) acrescentou os dois perfis restritos restantes. Naquela etapa, Q-C0 global permanecia parcial.
 
 A complementação da interface do scanner registra teclado, quatro larguras e temas na raiz
 e em `/hub/`, incluindo pixels do download e erro recuperável. Mantém 35 perfis/25 corpora;
-os limites físicos, de recursos e de Windows instalado continuam separados.
+os ensaios físicos e de Windows instalado posteriores estão no relatório de fechamento.

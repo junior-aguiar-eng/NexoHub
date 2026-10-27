@@ -1,5 +1,9 @@
 # Q-C0 — compressão de PDF e scanner
 
+Registro histórico desta fatia. A continuação autorizada, com commits, câmera física,
+Windows Sandbox de 4 GB e resultados negativos de OCR, está em
+[Q-C0-FECHAMENTO.md](Q-C0-FECHAMENTO.md). DOC-C2 permanece excluído.
+
 Etapa local sobre `b345b62`, após commit autorizado da comparação/revisão de texto.
 DOC-C2 excluído. Sem dependência nova, integração de candidatos, commit desta nova etapa,
 push, deploy ou alteração do checkout principal. Motores e algoritmos de imagem mantidos.

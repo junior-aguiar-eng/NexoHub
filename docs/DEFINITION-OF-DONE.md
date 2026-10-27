@@ -12,10 +12,10 @@ isolado não substitui validação do produto instalado.
 | OCR e PDF → Markdown | Entregas web locais OCR-C1/MD-C1 com corpus e limites documentados; integração nativa instalada e cobertura ampla pendentes |
 | Rich Text, Markdown e DOCX básico | Parcial |
 | Extração de imagens | Executor web presente no catálogo ativo; filtros suportados restritos, integração instalada separada |
-| Tradução e revisão integradas | Entrega web local TR-C1 e revisor com limites documentados; sidecars e integração instalada pendentes |
+| Tradução e revisão integradas | Entrega web local TR-C1; revisão LanguageTool instalada e exercitada em Sandbox de 4 GB no Q-C0; tradução nativa e cobertura linguística ampla pendentes |
 | Operações canceláveis e crash recovery | Cobertura no core; validação de produto pendente |
 | Testes automatizados | Gates locais e CI devem ser avaliados por branch/commit; testes unitários e web não certificam o app instalado |
-| Instalador funcional | Inno Setup gerado, instalado e atualizado na máquina de desenvolvimento sem duplicar registro ou atalho; validação em máquina limpa pendente |
+| Instalador funcional | Inno Setup instalado em Windows Sandbox limpo de 4 GB e atualizado sem duplicar registro ou atalho; scanner e revisão exercitados, outros fluxos nativos ainda exigem validação |
 | Documentação e privacidade técnica | Atualizadas e ativas no repositório |
 | Auditoria de licenças | Inventário automatizado; não substitui avaliação de componentes, modelos, avisos de distribuição e build instalado |
 | Nenhuma função local depende de servidor NexoHub | Atendido pela arquitetura atual |
@@ -50,4 +50,7 @@ homologa fotografias de campo nem o runtime Windows; DOC-C2 permanece fora dessa
 A [consolidação Q-C0](quality/README.md) indexa as 35 ferramentas ativas, com 35 perfis
 restritos. `pnpm quality:check` confere cobertura, referências e
 hashes, distinguindo arquivo fixo, gerador e manifesto. Esse gate não executa as ferramentas
-nem demonstra fidelidade das saídas. Os critérios globais de Q-C0 continuam parciais.
+nem demonstra fidelidade das saídas. O [fechamento técnico Q-C0](quality/Q-C0-FECHAMENTO.md)
+reúne as evidências adicionais dos cinco critérios do plano, mantendo os perfis restritos,
+a reprovação da foto privada para OCR e a condição de redistribuição do ADR-018.
+Esse fechamento não encerra os demais itens do NexoHub 1.0 nesta tabela.

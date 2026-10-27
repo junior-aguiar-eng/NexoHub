@@ -114,20 +114,29 @@ Não criar executores paralelos, habilitar ferramentas planejadas ou instalar to
 da ferramenta afetada. **Fixtures:** diretórios `__fixtures__` de `apps/client/src/platform`
 e geradores de testes existentes; usar material sintético ou com licença demonstrada.
 
-- [ ] Registrar por ferramenta um corpus versionado com origem/licença/hash e expectativa:
+- [x] Registrar por ferramenta um corpus versionado com origem/licença/hash e expectativa:
   imagens fotográficas e gráficas, PDF textual/digitalizado, CropBox/rotação, fontes incorporadas,
   campos, tabelas sem/com borda e arquivos inválidos. Gerar arquivos grandes em teste.
-- [ ] Fixar no documento da ferramenta quais casos são suportados, recusados e ainda não
+- [x] Fixar no documento da ferramenta quais casos são suportados, recusados e ainda não
   medidos. Preservar todos os testes anteriores; nenhum ganho pode ocultar perda em outro caso.
-- [ ] Antes da integração de cada candidato, registrar versão publicada, licença do wrapper,
+- [x] Antes da integração de cada candidato, registrar versão publicada, licença do wrapper,
   binário/codec/modelo, dependências transitivas, manutenção e advisories. Alterar
   `apps/client/package.json`/lockfile apenas depois dessa avaliação e do aceite da prova técnica.
-- [ ] Medir baseline e candidato no mesmo corpus/dispositivo, frio/quente, bytes transferidos,
+- [x] Medir baseline e candidato no mesmo corpus/dispositivo, frio/quente, bytes transferidos,
   JS/WASM carregado e memória quando disponível. Aceitar somente se acrescentar capacidade ou
   qualidade comprovada, sem bloquear a interface; justificar o custo e fixar limites no documento.
-- [ ] Definir o teste de resultado por tipo: pixels/dimensões para imagem; texto/objetos/regiões
+- [x] Definir o teste de resultado por tipo: pixels/dimensões para imagem; texto/objetos/regiões
   para PDF; células/estrutura para Excel; taxa de erro de caracteres/palavras para OCR. Métrica
   heurística do motor não deve aparecer como probabilidade de correção do documento.
+
+### Fechamento técnico Q-C0 — 27/10/2026
+
+Os cinco critérios acima foram atendidos para os 35 perfis restritos. Evidências, comandos,
+limites e identificação dos pacotes em [Q-C0-FECHAMENTO.md](../../quality/Q-C0-FECHAMENTO.md).
+Inclui corpus fotográfico integrado, matriz do scanner, auditorias, instalação/upgrade em
+Sandbox de 4 GB e medição LanguageTool. A foto privada de livro falhou no OCR; redistribuição
+do runtime segue condicionada ao ADR-018. DOC-C2 excluído, sem push/deploy/release.
+As seções incrementais abaixo preservam o estado histórico de cada etapa.
 
 ### Consolidação incremental Q-C0 — 27/10/2026
 

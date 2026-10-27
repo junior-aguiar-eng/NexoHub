@@ -1,0 +1,56 @@
+# Q-C0 — mapa concreto do corpus do critério 1
+
+Revisão somente por leitura em 27/10/2026. Contrato: `docs/superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md:117` (classes nas linhas 117–119). Não executei testes nesta revisão; li geradores e asserções. Os resultados de execução pertencem às evidências da suíte já registrada pelo implementador, não foram inferidos da presença dos testes.
+
+## Matriz de classes e provas
+
+| Classe literal do contrato | Corpus/entrada comprovada | Teste/asserção efetivamente lida | Limite da prova |
+|---|---|---|---|
+| Imagens fotográficas | `image-photo`: chelsea451×300 e coffee600×400 carregadas em Canvas por `scripts/avif/corpus.mjs:4`; fontes externas CC0 e hashes fixados/verificados pelo downloader em `scripts/avaliar-avif-fontes.py:86`; manifesto `docs/benchmarks/2026-10-27-imc4-avif.json` registra origem, dimensões e hashes RGBA | Harness redecodifica saídas e calcula MSE/PSNR/alpha; função recusa dimensões divergentes em `scripts/avif/metrics.mjs:9`. `scripts/validar-avif.mjs:10` exige 64 saídas/8 corpora, originais imutáveis, recusa inválida, recuperação/hash, bytes iguais ao registrado e alpha zero em AVIF/WebP. Não há nesse validador um limiar universal de PSNR. | Ensaio **isolado de codecs**, não E2E das seis ferramentas de imagem. O índice aponta corpus existente; esse benchmark não homologa a ferramenta ativa por analogia. Validador lê artefatos locais de sua execução, não revalida automaticamente o manifesto27/10 nem refaz downloads. |
+| Imagens gráficas | `image-basic`: Canvas sintético com regiões opacas/transparentes no gerador `apps/client/e2e/image-mode-quality.spec.ts:5`; `image-photo` também possui edges/text/gradient/alpha | E2E percorre comprimir/converter/redimensionar/recortar/girar/marca-dágua, baixa e decodifica; `apps/client/e2e/image-mode-quality.spec.ts:61` verifica dimensões esperadas, compressão não cresce, alpha preservado no PNG e composição branca no JPEG | Gráfico sintético identificado; chamar o arquivo de foto.png não o transforma em fotografia. |
+| PDF textual | `pdf-static`: `apps/client/src/platform/__fixtures__/q-c0-pdf/corpus.ts:11` cria 4 páginas com textos acentuados/códigos, JPEG e datas fixas | `apps/client/src/platform/pdf-basic-quality.test.ts:16` reabre com pdf-lib e PDF.js, exige número de páginas, texto exato por página, MediaBox/CropBox/rotação e JPEG intacto; `apps/client/src/platform/pdf-basic-quality.test.ts:59` e casos seguintes exercitam juntar/dividir/organizar/girar/extrair e imutabilidade da fonte | Representação e operações deste corpus; não fontes/layouts arbitrários. |
+| PDF digitalizado / somente imagem | `pdf-raster`: `apps/client/e2e/pdf-raster-quality.spec.ts:105` gera PNG/JPEG/WebP por Canvas, importa como imagens e produz PDF sem inserir texto. O código embute somente imagens; depois o próprio PDF baixado é reenviado a PDF→JPG | `apps/client/e2e/pdf-raster-quality.spec.ts:150` exige 3 páginas 144×72, 120×60, 96×48 na ordem modificada. Download é rasterizado e `apps/client/e2e/pdf-raster-quality.spec.ts:175` confronta dimensões e faixas RGB/alpha composto com tolerância JPEG 8 | É PDF sintético somente imagem, representando a classe raster/digitalizada. Não é prova de leitura OCR de página física. OCR real da foto de livro teve resultado negativo separado; não usar essa falha como aprovação. |
+| CropBox/rotação | `apps/client/src/platform/__fixtures__/q-c0-pdf/corpus.ts:20` cria CropBox(10,20,w−30,h−50) e rotações0/90/180/270 | `apps/client/src/platform/pdf-basic-quality.test.ts:32` exige CropBox exato; `apps/client/src/platform/pdf-basic-quality.test.ts:38` exige rotação esperada somada às operações. Teste PDF→JPG em `pdf-raster-quality.spec.ts` também confere orientação/dimensões/faixas no ZIP, incluindo controle negativo de cores invertidas | Geometrias explícitas; não certifica todo PDF herdado. |
+| Fontes incorporadas | `editor`: manifesto `apps/client/src/platform/__fixtures__/pdf-editor/corpus.json:3` identifica LiberationSans-Regular.ttf/licença/hash e fixtures embedded-full/subset com hashes | `apps/client/src/platform/pdf-editor-engine.test.ts:27` exige SHA das fixtures e localiza stream de fonte cujo conteúdo decodificado tem hash idêntico à fonte completa licenciada. `apps/client/src/platform/pdf-editor-engine.test.ts:104` edita texto, preserva coluna/formulário/original e exige zero pixels alterados fora da região. Teste subset restringe repertório observado, incluindo ç e excluindo ñ | Isso verifica incorporação efetiva, não apenas chamada embedFont(StandardFonts.Helvetica), que não provaria arquivo de fonte completo incorporado. |
+| Campos | `subset`/`pdf-access`: `apps/client/src/platform/__fixtures__/doc-c4/corpus.ts:14` cria textfields compartilhados, radio e checkbox, com valores concretos, além de geometrias | E2E proteger/desbloquear AES256/RC4 compara snapshot antes/depois, verifica checkbox true/radioB em `apps/client/e2e/pdf-access-quality.spec.ts:85`; `apps/client/e2e/pdf-access-quality.spec.ts:87` altera campo, salva/reabre e exige valor “Controle editável”. Não só conta widgets. | Campos do corpus; nenhuma garantia sobre formulários arbitrários/XFA. |
+| Tabelas sem/com borda | `excel`: `apps/client/src/platform/__fixtures__/xl-c1/corpus.ts:19` cria2páginas com códigos00123/00456/00789, células vazias, números pt-BR e região fixa; `apps/client/src/platform/__fixtures__/xl-c1/corpus.ts:34` alterna presença de linhas | `apps/client/src/platform/excel-selection.test.ts:28` parametriza false/true e exige preview igual à referência da página2; `apps/client/src/platform/excel-selection.test.ts:43` inspeciona XML XLSX, exige 00456 como inlineStr, vazio em B3,2.000,00 em C2. E2E `apps/client/e2e/excel-selection.spec.ts:48` compara tabela visual a referência e cada célula exportada ao mesmo conteúdo | Não infere mergeCells; teste específico exige ausência desse elemento. Mesmas asserções de célula valem para as duas variantes. |
+| Arquivos inválidos | `compression-scan` e `repair`: bytes PDF[1,2], imagem PNG[1,2,3], PDF cifrado/ByteRange e danos estruturais autorais | `apps/client/src/platform/compression-quality.test.ts:23` exige rejeição de PDF inválido/cifrado/ByteRange; `apps/client/src/platform/scan-to-pdf-engine.test.ts:70` mistura imagem válida+inválida e exige FALHA_AO_EMBUTIR_IMAGEM. E2E de falha de filtro exige alerta, histórico vazio e ausência de link em `apps/client/e2e/compression-scan-quality.spec.ts:209`; recuperação em Original reabre PDF | Recusas observadas para entradas controladas; não uma bateria exaustiva de parser/fuzzing. |
+
+## Arquivos grandes realmente gerados
+
+O subitem final **já tem provas concretas**; não há motivo para mantê-lo aberto por falta genérica de “grandes lotes”.
+
+1. **500 páginas reais:** `apps/client/src/platform/__fixtures__/doc-c4/corpus.ts:39` produz 500 páginas com texto PAGINA-n, não é somente File.size adulterado. `apps/client/e2e/doc-c4-pages.spec.ts:132` abre esse PDF nas mesas remover/extrair, verifica cartão 500, seleção1/250/500 e renders<100. Após download, `apps/client/e2e/doc-c4-pages.spec.ts:167` reabre e exige 497 páginas ao remover ou 3 ao extrair. Isso demonstra um caso grande por contagem de páginas, sem prometer memória constante.
+2. **PDF entre 19 e 20 MiB reais:** `apps/client/src/platform/pdf-editor-budget.test.ts:67` cria stream RGB 2048×3400×3 mais texto; `apps/client/src/platform/pdf-editor-budget.test.ts:90` exige tamanho >19 MiB e ≤20 MiB. Usa PDFium real inicializado no beforeAll, revisa e renderiza. Exige igualdade byte a byte dos pixels da renderização isolada e da prévia; `apps/client/src/platform/pdf-editor-budget.test.ts:99` também verifica rejeição de página inexistente e entrada >80 MiB. Não é um objeto que apenas declara tamanho grande.
+3. **30 páginas/3.000 objetos:** `apps/client/src/platform/pdf-editor-budget.test.ts:27` gera 100 textos em cada uma das 30 páginas, exige 30 páginas/3.000 textos, pixels equivalentes na navegação e saída não vazia. Mede tempos/capacidade WASM quando o log é solicitado; asserções não impõem SLA.
+4. **Expansão comprimida adversarial:** `apps/client/src/platform/pdf-repair-quality.test.ts:43` gera PDF com stream Flate de 8 MiB+1 de caracteres; exige PDF_REPAIR_EXPANSION_LIMIT. Teste anterior aloca 16 MiB+1 e exige PDF_REPAIR_LIMIT antes de analisar. Recusa de orçamento não equivale a sucesso no processamento desse tamanho.
+5. **Imagem grande gerada no navegador:** `apps/client/e2e/compression-scan-quality.spec.ts:50` gera JPEG 3000×1800 com ruído. Download dos 3 perfis exige redução real de bytes, estrutura/texto/campos/anexo iguais e dimensões 2800/2000/1400; `apps/client/e2e/compression-scan-quality.spec.ts:122` exige PSNR ≥25 dB contra original redimensionado. Corpus fotográfico isolado também gera coffee-upscale-6mp 3000×2000; ampliação não cria detalhe fotográfico novo.
+
+## Proveniência e vínculo ao índice
+
+`docs/quality/q-c0.json` registra 35 ferramentas, 25 grupos, origem/licença, artefatos file/generator/manifest e SHA-256; cada ferramenta lista corpora/testes/docs. Esses hashes têm escopos distintos: de fonte geradora não é hash do PDF gerado. A presente matriz não transforma todos os corpora em provas de todas as ferramentas. As fontes dos PDFs sintéticos e referências explícitas acima são autorais; fotografias externas usam origem/licença do manifesto; fontes Liberation preservam licença própria.
+
+## Conclusão estrita do critério 1
+
+### Complemento executado após a revisão
+
+As duas fotos CC0 foram versionadas, sem alteração, em
+`apps/client/src/platform/__fixtures__/q-c0-photos/`, com créditos/origem/hash no README.
+`apps/client/e2e/image-photo-quality.spec.ts` agora executa as duas fotos nas seis ferramentas
+ativas: 12 casos aprovados na raiz e os mesmos 12 aprovados no conjunto final de 18 casos
+em `/hub/`. O runner oficial de subpasta passou a incluir esse teste.
+
+Os downloads foram reabertos e comparados por dimensões/pixels, PSNR de JPEG/redimensionamento,
+região de recorte, rotação e área modificada da marca d'água. As 12 saídas preservadas em
+`apps/client/test-results/q-c0-photos-evidence/` foram inspecionadas visualmente, com os
+resultados esperados. Método e limites em [IMAGENS-FOTOGRAFICAS.md](IMAGENS-FOTOGRAFICAS.md).
+Assim, a ressalva acima sobre ausência de E2E fotográfico foi superada nesses dois casos,
+sem estender o resultado a todas as fotografias ou integrar o codec AVIF candidato.
+
+**Não identifiquei classe enumerada ausente do corpus nem ausência de arquivo grande gerado.** O subitem de grandes arquivos está materialmente demonstrado por PDF 500 páginas e PDF 19–20 MiB, entre outros. Não ampliar esse requisito para todas as combinações de hardware/documento.
+
+A distinção permanece documentada: os testes anteriores chamados foto.png usam gráfico Canvas;
+o novo E2E fotográfico usa os PNGs CC0 fixados. A execução integrada está demonstrada nos
+dois casos e configurações descritos no complemento, sem equivalência presumida entre eles.
+
+A execução/aprovação atual deve ser vinculada aos comandos já registrados pelo implementador. Esta revisão por leitura não repetiu benchmarks/testes e não altera checkboxes automaticamente.

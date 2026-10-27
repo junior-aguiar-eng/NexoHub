@@ -1,15 +1,18 @@
-# Pedido técnico de fontes — minuta não enviada
+# Pedido técnico de fontes — issue publicada
 
-Destino proposto: issue pública em `languagetool-org/languagetool`.
-Nenhuma issue foi criada e nenhum mantenedor recebeu mensagem.
-Publicação exige autorização explícita do usuário. Não inclui fotos, documentos privados
-ou caminhos locais.
+Publicada com autorização explícita do usuário em 27/10/2026:
+[LanguageTool #12247](https://github.com/languagetool-org/languagetool/issues/12247).
+Estado `OPEN`, autor `junior-aguiar-eng`, título e corpo conferidos após a criação.
+Na conferência desta etapa a issue ainda não tinha comentários; as respostas e receitas
+pendentes não foram presumidas.
+O conector GitHub retornou 403; a publicação foi concluída pelo GitHub CLI autenticado.
+Não inclui fotos, documentos privados ou caminhos locais.
 
-## Título proposto
+## Título publicado
 
 Identificar entradas e receitas dos dicionários do snapshot 20261027
 
-## Corpo proposto
+## Corpo publicado
 
 Estamos verificando os insumos e receitas de geração de dicionários no snapshot oficial
 `LanguageTool-20261027-snapshot.zip`, versão `6.9-SNAPSHOT-20261027`, SHA-256

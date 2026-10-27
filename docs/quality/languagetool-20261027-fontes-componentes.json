@@ -1,0 +1,60 @@
+{
+  "languageTool": {
+    "url": "https://api.github.com/repos/languagetool-org/languagetool/zipball/4cff70080064056e6ca239f8498368731eb90c6d",
+    "difference": {
+      "gitRawSha256": "2209f919a22528af59a2af2ad97e8d056cca18e39f7d87aa3fd549a73b180150",
+      "rawCrlfCount": 0,
+      "archiveCrlfCount": 94,
+      "gitRawBytes": 2872,
+      "archiveBytes": 2966,
+      "equalAfterCrlfToLf": true,
+      "rawGitBlobVerified": "9d21a21834d5195c278ba17baec3115b2aaab06e"
+    },
+    "archive": {
+      "entries": 5267,
+      "pomFiles": 49,
+      "archiveRoot": "languagetool-org-languagetool-4cff700/",
+      "commit": "4cff70080064056e6ca239f8498368731eb90c6d",
+      "sha256": "cdc961e1a045ec845b8addaf97366bfa69db8e851b71dcc92b40d77e9b512ce9",
+      "javaFiles": 2057,
+      "bytes": 100044631,
+      "gitBlobsVerified": 3642,
+      "archiveDifferences": [
+        {
+          "path": "languagetool-language-modules/crh/src/main/resources/org/languagetool/resource/crh/dev/gradlew.bat",
+          "expectedGitBlob": "9d21a21834d5195c278ba17baec3115b2aaab06e",
+          "actualArchiveBlob": "9b42019c7915b971238526075306ffba3b666dd5",
+          "bytes": 2966
+        }
+      ]
+    },
+    "scope": "3642 blobs do arquivo ZIP idênticos à árvore Git. Um gradlew.bat recuperado também via raw do commit; diferença do ZIP limitada a CRLF. Scripts externos não executados; binários não reconstruídos."
+  },
+  "java": {
+    "buildArchive": {
+      "bytes": 679535,
+      "commit": "e6ba7dec3d07654074559310376a3ae89da5f4ac",
+      "sha256": "a788fed0fb3fb949066f6833f57914c2608c380f0691e42cf54e00b24d7d3de2",
+      "entries": 196,
+      "shellScripts": 48
+    },
+    "sourceCommit": "https://github.com/adoptium/jdk21u/commit/1c417fbfc2f70ab03a565b0af0a5a3c6f5e15ad6",
+    "vendorBinarySha256": "d35f31e712f0fcf6ac5a093edc90204fbff22f720ba3950bd09d331d5e621636",
+    "scope": "Arquivo de fontes conferido contra digest oficial; metadados ligam o ZIP JRE fixado aos commits de fonte/build. Não houve reconstrução do JRE nem avaliação jurídica conclusiva.",
+    "vendorMetadataSha256": "51182cc6073d00caab036059e4c1216b8c4e85d40dd9a72557ba3f3f07d2de9e",
+    "sourceRef": "jdk-21.0.12.1+1_adopt",
+    "vendorMetadataUrl": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_x64_windows_hotspot_21.0.12.1_1.zip.json",
+    "sourceUrl": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jdk-sources_21.0.12.1_1.tar.gz",
+    "buildSource": "https://github.com/adoptium/temurin-build/commit/e6ba7dec3d07654074559310376a3ae89da5f4ac",
+    "sourceArchive": {
+      "hasBuildRecipes": true,
+      "bytes": 115126841,
+      "hasHotspot": true,
+      "entries": 85484,
+      "sha256": "573057d03584ae793fb7ec9a14c76d826d9187a53efeefd99da47403a5308234",
+      "javaFiles": 50623
+    },
+    "buildArchiveUrl": "https://api.github.com/repos/adoptium/temurin-build/zipball/e6ba7dec3d07654074559310376a3ae89da5f4ac"
+  },
+  "date": "2026-10-27"
+}

@@ -1,0 +1,303 @@
+{
+  "snapshotSha256": "d5aa893ca8a86506af6ab0eac81473e86f1b563bfb1fab6fc1d9622552bb9814",
+  "scope": "Coordenadas dos JARs com GPL/LGPL/CDDL declaradas em POM/manifesto ou na resolução de licença do inventário, incluindo coordenadas embutidas desses JARs. Não cobre todos os recursos ou componentes do runtime.",
+  "limitation": "Checksums do mesmo repositório conferem o download, não assinatura independente. Fonte publicada da mesma versão não prova reconstrução do binário nem satisfação integral das obrigações de redistribuição.",
+  "selectedJars": 26,
+  "records": [
+    {
+      "id": "org.languagetool:languagetool-commandline:6.9-SNAPSHOT",
+      "installedJar": "languagetool-commandline.jar",
+      "status": "SNAPSHOT_SOURCE_COMMIT_REQUIRED"
+    },
+    {
+      "id": "org.languagetool:languagetool-server:6.9-SNAPSHOT",
+      "installedJar": "languagetool-server.jar",
+      "status": "SNAPSHOT_SOURCE_COMMIT_REQUIRED"
+    },
+    {
+      "id": "org.languagetool:languagetool-standalone:6.9-SNAPSHOT",
+      "installedJar": "languagetool.jar",
+      "status": "SNAPSHOT_SOURCE_COMMIT_REQUIRED"
+    },
+    {
+      "id": "org.languagetool:asturian-pos-dict:0.1",
+      "installedJar": "libs/asturian-pos-dict.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/org/languagetool/asturian-pos-dict/0.1/asturian-pos-dict-0.1-sources.jar",
+      "status": "SOURCE_404"
+    },
+    {
+      "id": "org.softcatala:catalan-pos-dict:3.3",
+      "installedJar": "libs/catalan-pos-dict.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/org/softcatala/catalan-pos-dict/3.3/catalan-pos-dict-3.3-sources.jar",
+      "status": "SOURCE_404"
+    },
+    {
+      "id": "org.languagetool:dutch-pos-dict:0.1",
+      "installedJar": "libs/dutch-pos-dict.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/org/languagetool/dutch-pos-dict/0.1/dutch-pos-dict-0.1-sources.jar",
+      "status": "SOURCE_404"
+    },
+    {
+      "id": "org.languagetool:english-pos-dict:0.6",
+      "installedJar": "libs/english-pos-dict.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/org/languagetool/english-pos-dict/0.6/english-pos-dict-0.6-sources.jar",
+      "status": "SOURCE_404"
+    },
+    {
+      "id": "javax.annotation:javax.annotation-api:1.3.2",
+      "installedJar": "libs/javax.annotation-api.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2-sources.jar",
+      "filename": "javax.annotation-javax.annotation-api-1.3.2-sources.jar",
+      "bytes": 42279,
+      "sha256": "128971e52e0d84a66e3b6e049dab8ad7b2c58b7e1ad37fa2debd3d40c2947b95",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "e04ba5195bcd555dc95650f7cc614d151e4bcd52d29a10b8aa2197f3ab89ab9b",
+      "installedJarSha256": "e04ba5195bcd555dc95650f7cc614d151e4bcd52d29a10b8aa2197f3ab89ab9b",
+      "binaryMatchesInstalledJar": true,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 14
+    },
+    {
+      "id": "javax.xml.bind:jaxb-api:2.3.1",
+      "installedJar": "libs/jaxb-api.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1-sources.jar",
+      "filename": "javax.xml.bind-jaxb-api-2.3.1-sources.jar",
+      "bytes": 271123,
+      "sha256": "d69dc2c28833df5fb6e916efae01477ae936326b342d479a43539b0131c96b9d",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "88b955a0df57880a26a74708bc34f74dcaf8ebf4e78843a28b50eae945732b06",
+      "installedJarSha256": "88b955a0df57880a26a74708bc34f74dcaf8ebf4e78843a28b50eae945732b06",
+      "binaryMatchesInstalledJar": true,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 99
+    },
+    {
+      "id": "com.sun.istack:istack-commons-runtime:3.0.5",
+      "installedJar": "libs/jaxb-core.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/com/sun/istack/istack-commons-runtime/3.0.5/istack-commons-runtime-3.0.5-sources.jar",
+      "filename": "com.sun.istack-istack-commons-runtime-3.0.5-sources.jar",
+      "bytes": 36415,
+      "sha256": "92235ba19d5776456a89b469100de2033e838aaeffc69ad98044603b8e8f0ea1",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "f19ac45cfbbe12fa952be1e691eae80a74c9c7f4ac46ab3f760ca9cfa3bc694b",
+      "installedJarSha256": "d2ecba63615f317a11fb55c6468f6a9480f6411c10951d9881bafd9a9a8d0467",
+      "binaryMatchesInstalledJar": false,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 19
+    },
+    {
+      "id": "org.glassfish.jaxb:jaxb-core:2.3.0.1",
+      "installedJar": "libs/jaxb-core.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/org/glassfish/jaxb/jaxb-core/2.3.0.1/jaxb-core-2.3.0.1-sources.jar",
+      "filename": "org.glassfish.jaxb-jaxb-core-2.3.0.1-sources.jar",
+      "bytes": 208773,
+      "sha256": "c3b2ac8a47dc81dbb99818283c23e83e63fc6dccb01ee3062437b46614f4e11f",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "2c18be9ca61964ad5a6f37f6c92b50a0c20539a64c04af885ce5d6b4524dbbcd",
+      "installedJarSha256": "d2ecba63615f317a11fb55c6468f6a9480f6411c10951d9881bafd9a9a8d0467",
+      "binaryMatchesInstalledJar": false,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 81
+    },
+    {
+      "id": "org.glassfish.jaxb:txw2:2.3.0.1",
+      "installedJar": "libs/jaxb-core.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/org/glassfish/jaxb/txw2/2.3.0.1/txw2-2.3.0.1-sources.jar",
+      "filename": "org.glassfish.jaxb-txw2-2.3.0.1-sources.jar",
+      "bytes": 99273,
+      "sha256": "7815dad139de674d13fa73af7ae70dfee1db3b4d631f2d2596416ff2ba883cd3",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "2c9c288ddeee4a601d0229a18303ea89cb2fcd1295ba2a1127fffe68c611eca3",
+      "installedJarSha256": "d2ecba63615f317a11fb55c6468f6a9480f6411c10951d9881bafd9a9a8d0467",
+      "binaryMatchesInstalledJar": false,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 43
+    },
+    {
+      "id": "com.sun.xml.bind:jaxb-core:2.3.0.1",
+      "installedJar": "libs/jaxb-core.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/com/sun/xml/bind/jaxb-core/2.3.0.1/jaxb-core-2.3.0.1-sources.jar",
+      "filename": "com.sun.xml.bind-jaxb-core-2.3.0.1-sources.jar",
+      "bytes": 345974,
+      "sha256": "d628f0d4d24e5a89842a81533da9f5eb4dd7c9bd5e2321c3ded3785e3f28a65f",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "d2ecba63615f317a11fb55c6468f6a9480f6411c10951d9881bafd9a9a8d0467",
+      "installedJarSha256": "d2ecba63615f317a11fb55c6468f6a9480f6411c10951d9881bafd9a9a8d0467",
+      "binaryMatchesInstalledJar": true,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 143
+    },
+    {
+      "id": "net.java.dev.jna:jna-platform:5.12.1",
+      "installedJar": "libs/jna-platform.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/net/java/dev/jna/jna-platform/5.12.1/jna-platform-5.12.1-sources.jar",
+      "filename": "net.java.dev.jna-jna-platform-5.12.1-sources.jar",
+      "bytes": 1076178,
+      "sha256": "7e476c950332a6f21c31533325d21f28b290fcbfef82b5c30cac1db53db29f6e",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "8ce969116cac95bd61b07a8d5e07174b352e63301473caac72c395e3c08488d2",
+      "installedJarSha256": "8ce969116cac95bd61b07a8d5e07174b352e63301473caac72c395e3c08488d2",
+      "binaryMatchesInstalledJar": true,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 239
+    },
+    {
+      "id": "net.java.dev.jna:jna:5.12.1",
+      "installedJar": "libs/jna.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1-sources.jar",
+      "filename": "net.java.dev.jna-jna-5.12.1-sources.jar",
+      "bytes": 162650,
+      "sha256": "28f933201a478ff5882fb151cc2a79db68d961934f1d73d35ab8991bf0ed188a",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "91a814ac4f40d60dee91d842e1a8ad874c62197984403d0e3c30d39e55cf53b3",
+      "installedJarSha256": "91a814ac4f40d60dee91d842e1a8ad874c62197984403d0e3c30d39e55cf53b3",
+      "binaryMatchesInstalledJar": true,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 64
+    },
+    {
+      "id": "org.languagetool:languagetool-core:6.9-SNAPSHOT",
+      "installedJar": "libs/languagetool-core-tests.jar",
+      "status": "SNAPSHOT_SOURCE_COMMIT_REQUIRED"
+    },
+    {
+      "id": "io.github.jimregan:languagetool-ga-dicts:0.02",
+      "installedJar": "libs/languagetool-ga-dicts.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/io/github/jimregan/languagetool-ga-dicts/0.02/languagetool-ga-dicts-0.02-sources.jar",
+      "status": "SOURCE_404"
+    },
+    {
+      "id": "org.languagetool:languagetool-gui-commons:6.9-SNAPSHOT",
+      "installedJar": "libs/languagetool-gui-commons.jar",
+      "status": "SNAPSHOT_SOURCE_COMMIT_REQUIRED"
+    },
+    {
+      "id": "org.languagetool:languagetool-tools:6.9-SNAPSHOT",
+      "installedJar": "libs/languagetool-tools.jar",
+      "status": "SNAPSHOT_SOURCE_COMMIT_REQUIRED"
+    },
+    {
+      "id": "ch.qos.logback:logback-classic:1.5.21",
+      "installedJar": "libs/logback-classic.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/ch/qos/logback/logback-classic/1.5.21/logback-classic-1.5.21-sources.jar",
+      "filename": "ch.qos.logback-logback-classic-1.5.21-sources.jar",
+      "bytes": 251074,
+      "sha256": "92d15bc1a4cf9b44ca26d30fb23ffaf4d5ef0584511e559359db98fd570bce27",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "b2523f7b0dabf4386c81312f0371d267e3a9fbce409046f16b042bf68571ba4a",
+      "installedJarSha256": "b2523f7b0dabf4386c81312f0371d267e3a9fbce409046f16b042bf68571ba4a",
+      "binaryMatchesInstalledJar": true,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 181
+    },
+    {
+      "id": "ch.qos.logback:logback-core:1.5.21",
+      "installedJar": "libs/logback-core.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/ch/qos/logback/logback-core/1.5.21/logback-core-1.5.21-sources.jar",
+      "filename": "ch.qos.logback-logback-core-1.5.21-sources.jar",
+      "bytes": 505646,
+      "sha256": "a08a4fe5dc73cf2240422506b844dbf031c042f072ddcc21bf974ee6f9cc4e6d",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "0825ac1fc5296369121e5423e397c52d125b0e3fae743cfc0d8e416159f14f44",
+      "installedJarSha256": "0825ac1fc5296369121e5423e397c52d125b0e3fae743cfc0d8e416159f14f44",
+      "binaryMatchesInstalledJar": true,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 437
+    },
+    {
+      "id": "org.mariadb.jdbc:mariadb-java-client:3.4.1",
+      "installedJar": "libs/mariadb-java-client.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.4.1/mariadb-java-client-3.4.1-sources.jar",
+      "filename": "org.mariadb.jdbc-mariadb-java-client-3.4.1-sources.jar",
+      "bytes": 487968,
+      "sha256": "0c945aa7889e07c03ee371a8fc2bcdb9c445f3961b6a854264640cfa1fe848e7",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "f60e4b282f1f4bdb74f0a26436ba7078a5e480b6f6702f6a7b45d9ba5e604a24",
+      "installedJarSha256": "f60e4b282f1f4bdb74f0a26436ba7078a5e480b6f6702f6a7b45d9ba5e604a24",
+      "binaryMatchesInstalledJar": true,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 242
+    },
+    {
+      "id": "org.qirimca.nlp:morfologik-crh-lt:1.0.1",
+      "installedJar": "libs/morfologik-crh-lt.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/org/qirimca/nlp/morfologik-crh-lt/1.0.1/morfologik-crh-lt-1.0.1-sources.jar",
+      "status": "SOURCE_404"
+    },
+    {
+      "id": "ua.net.nlp:morfologik-ukrainian-lt:6.8.6",
+      "installedJar": "libs/morfologik-ukrainian-lt.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/ua/net/nlp/morfologik-ukrainian-lt/6.8.6/morfologik-ukrainian-lt-6.8.6-sources.jar",
+      "status": "SOURCE_404"
+    },
+    {
+      "id": "org.mybatis:mybatis:3.5.16",
+      "installedJar": "libs/mybatis.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/org/mybatis/mybatis/3.5.16/mybatis-3.5.16-sources.jar",
+      "filename": "org.mybatis-mybatis-3.5.16-sources.jar",
+      "bytes": 1330873,
+      "sha256": "1da7c4d3447c4eb6b616989fa4f67feb2f3eb3735476b338219e8df0e4e85ab5",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "1814d02fccd8dbeadf628cbac8962b1edaab9bfa67e8585c6a3663c48bd8953d",
+      "installedJarSha256": "1814d02fccd8dbeadf628cbac8962b1edaab9bfa67e8585c6a3663c48bd8953d",
+      "binaryMatchesInstalledJar": true,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 761
+    },
+    {
+      "id": "ognl:ognl:3.4.2",
+      "installedJar": "libs/mybatis.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/ognl/ognl/3.4.2/ognl-3.4.2-sources.jar",
+      "filename": "ognl-ognl-3.4.2-sources.jar",
+      "bytes": 252573,
+      "sha256": "c30439ae7adf0427c5ed6ec9808c18124e6d2c0aec6de94a309729f40855af24",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "efb6bf5cb5bcad7a88932bd30a0861e5aac7382215fbd1f714ef59b739912852",
+      "installedJarSha256": "1814d02fccd8dbeadf628cbac8962b1edaab9bfa67e8585c6a3663c48bd8953d",
+      "binaryMatchesInstalledJar": false,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 154
+    },
+    {
+      "id": "org.javassist:javassist:3.30.2-GA",
+      "installedJar": "libs/mybatis.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/org/javassist/javassist/3.30.2-GA/javassist-3.30.2-GA-sources.jar",
+      "filename": "org.javassist-javassist-3.30.2-GA-sources.jar",
+      "bytes": 550248,
+      "sha256": "de11bb82b448696c55eec2bc595e7a804f010f1cf7bacb99e5403adc3b79c46c",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "eba37290994b5e4868f3af98ff113f6244a6b099385d9ad46881307d3cb01aaf",
+      "installedJarSha256": "1814d02fccd8dbeadf628cbac8962b1edaab9bfa67e8585c6a3663c48bd8953d",
+      "binaryMatchesInstalledJar": false,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 221
+    },
+    {
+      "id": "edu.washington.cs.knowitall:openregex:1.1.1",
+      "installedJar": "libs/openregex.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar",
+      "filename": "edu.washington.cs.knowitall-openregex-1.1.1-sources.jar",
+      "bytes": 22735,
+      "sha256": "aacc5c8b962b78fa2a5b758daa7403313af006afb6e1c6f9e02dd42538190157",
+      "mavenSha1Verified": true,
+      "publishedBinarySha256": "33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8",
+      "installedJarSha256": "33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8",
+      "binaryMatchesInstalledJar": true,
+      "status": "SOURCE_ARCHIVE_COLLECTED",
+      "javaFiles": 14
+    },
+    {
+      "id": "org.languagetool:portuguese-pos-dict:1.2.0",
+      "installedJar": "libs/portuguese-pos-dict.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/org/languagetool/portuguese-pos-dict/1.2.0/portuguese-pos-dict-1.2.0-sources.jar",
+      "status": "SOURCE_404"
+    },
+    {
+      "id": "org.softcatala:spanish-pos-dict:2.5",
+      "installedJar": "libs/spanish-pos-dict.jar",
+      "sourceUrl": "https://repo.maven.apache.org/maven2/org/softcatala/spanish-pos-dict/2.5/spanish-pos-dict-2.5-sources.jar",
+      "status": "SOURCE_404"
+    }
+  ],
+  "installedJarsVerified": 26
+}

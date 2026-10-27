@@ -74,6 +74,52 @@ Coleta reproduzível: `node scripts/conferir-fontes-tagalo.mjs <diretório-novo>
 
 **Fonte incluída/determinável:** o próprio arquivo é texto editável, com cabeçalho After the Deadline, URL `data/rules/homophonedb.txt`, GPLv2 e formato documentado. Está incluído e igual ao commit LT. Não é um binário que exija supor decompilação. Preservar cabeçalho, atribuição e estado modificado LT. Não confundir arquivo de candidatos com prova de quais regras foram ativadas ou métricas de qualidade. Histórico upstream exato pode complementar proveniência, mas a forma textual entregue já é inspecionável e editável.
 
+## Fontes dos componentes Java e do JRE
+
+Após a publicação autorizada da issue, a coleta prosseguiu sem alterar o runtime:
+
+- O ZIP do commit LT `4cff70080064056e6ca239f8498368731eb90c6d` foi obtido no GitHub:
+  100.044.631 bytes, SHA-256 `cdc961e1a045ec845b8addaf97366bfa69db8e851b71dcc92b40d77e9b512ce9`.
+  Inclui 2.057 arquivos Java e 49 POMs. Dos 3.643 blobs da árvore completa, 3.642
+  coincidem diretamente; `crh/dev/gradlew.bat` tem CRLF no ZIP e LF no Git. O arquivo
+  raw do mesmo commit foi recuperado e seu Git blob conferido; os textos coincidem
+  após normalizar somente CRLF. Nenhum script do arquivo fonte foi executado.
+- Para JARs com GPL/LGPL/CDDL declaradas ou resolvidas no inventário, o coletor examinou
+  26 JARs e 30 coordenadas únicas, incluindo componentes embutidos. Obteve 15 arquivos
+  `sources.jar`, total de 5.643.782 bytes e 2.712 entradas Java. Todos coincidem com os
+  checksums SHA-1 publicados pelo Maven; esses checksums não são assinatura independente.
+  Dez binários Maven coincidem com o JAR instalado inteiro; cinco comparações não
+  coincidem, em coordenadas embutidas em outros JARs. Isso não prova alteração indevida,
+  nem demonstra reconstrução dos componentes embutidos. Nove endpoints de fontes deram
+  404 e seis coordenadas LT são snapshots cobertos pela investigação do commit acima.
+- O arquivo oficial de fontes Temurin `21.0.12.1+1` foi baixado e conferido contra o
+  digest da release: 115.126.841 bytes, SHA-256
+  `573057d03584ae793fb7ec9a14c76d826d9187a53efeefd99da47403a5308234`.
+  A leitura do tar identificou 85.484 entradas, incluindo Java, HotSpot e receitas `make/`.
+  Os metadados oficiais do ZIP JRE têm SHA-256 conferido e identificam exatamente o
+  ZIP fixado no manifesto, fonte `adoptium/jdk21u` commit
+  `1c417fbfc2f70ab03a565b0af0a5a3c6f5e15ad6` e build `temurin-build` commit
+  `e6ba7dec3d07654074559310376a3ae89da5f4ac`. O ZIP desse build também foi coletado:
+  679.535 bytes, 48 scripts shell; nenhum executado. Não houve reconstrução do JRE.
+
+Metadados/URLs/hashes em [fontes dos componentes](languagetool-20261027-fontes-componentes.json)
+e [fontes dos JARs](languagetool-20261027-fontes-jars.json). Coleta Maven reproduzível:
+`node scripts/coletar-fontes-jars-languagetool.mjs <diretório-novo>`; o destino existente
+é recusado e os downloads são limitados a 32 MiB por arquivo. Os arquivos externos
+permanecem locais e ignorados pelo Git. Nenhum pacote binário foi republicado.
+O coletor relê os hashes dos 26 JARs selecionados antes da coleta; o verificador separado
+também reconferiu o conjunto completo de 155 JARs e o Java instalado coincidiu com seu
+hash fixado. Coleta final, controle negativo de destino, `pnpm check` e sete testes de
+`quality:check` aprovados; revisão independente sem achados materiais. Não foram repetidos
+build/E2E do aplicativo, pois não houve mudança funcional ou substituição do runtime.
+
+Recuperar fontes publicadas não certifica a suficiência jurídica de redistribuição,
+a forma preferida de dados gerados ou reprodução bit a bit dos binários. `sources.jar`
+ausente no Maven não prova ausência de fontes no repositório upstream. Os nove 404s
+incluem POS asturiano, catalão, holandês, inglês, irlandês, tártaro da Crimeia,
+ucraniano, português e espanhol; é preciso examinar as fontes de dados/regras próprias,
+sem apresentar um endereço 404 como conclusão sobre a licença.
+
 ## Bloqueios concretos que permanecem
 
 Validação da continuação: coleta Node executada com os três hashes fixados e comparação
@@ -81,8 +127,10 @@ lexical confirmada por coleta PowerShell independente; 12 blobs italianos confer
 contra a revisão Git fixada. Controle negativo recusou diretório de saída existente.
 `pnpm check`, `pnpm quality:check` (sete testes) e inventário dos 155 JARs aprovados.
 Não houve build ou instalação novos, pois a continuação altera somente evidência e coletor.
-Uma [minuta de pedido técnico aos mantenedores](LANGUAGETOOL-PEDIDO-FONTES.md) foi preparada,
-sem envio ou publicação. Não contém fotos, documentos privados ou caminhos locais.
+O [pedido técnico aos mantenedores](LANGUAGETOOL-PEDIDO-FONTES.md) foi publicado depois,
+com autorização explícita, como [issue #12247](https://github.com/languagetool-org/languagetool/issues/12247).
+Não contém fotos, documentos privados ou caminhos locais. A publicação não resolve por si
+as lacunas nem implica resposta dos mantenedores.
 
 1. **Forma preferida não demonstrada para POS binário:** asturiano, irlandês, árabe, bretão e galego. Repos podem entregar os mesmos binários sem incluir entradas/receitas completas. Exportar automaticamente esses binários não prova que o resultado é a forma preferida usada pelo mantenedor.
 2. **Hunspell italiano/tagalo:** entradas editáveis históricas foram recuperadas na continuação, com hashes e revisões. Faltam provar transformação/frequências e correspondência integral aos binários. Outros Hunspell já incluem `.dic/.aff`, mas geração exata dos `.dict` pode depender de insumos ausentes.

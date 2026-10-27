@@ -468,7 +468,7 @@ export const ptBR = {
   "tool.textReview.tagline": "Suas ideias, com mais clareza.",
   "tool.textReview.title": "Revisar texto",
   "tool.textReview.description":
-    "Verificar ortografia, gramática e estilo com sugestões inteligentes e instantâneas.",
+    "Verificar ortografia, gramática e estilo com sugestões de correção locais.",
   "tool.textTranslate.tagline": "Suas palavras em outro idioma.",
   "tool.textTranslate.title": "Traduzir Texto",
   "tool.textTranslate.description":
@@ -1176,7 +1176,7 @@ export const ptBR = {
   "workspace.review.addToDictionaryTitle": "Salvar palavra no dicionário pessoal do usuário",
   "workspace.review.ignore": "Ignorar",
   "workspace.review.ignoreTitle": "Ignorar esta palavra durante a sessão atual",
-  "workspace.review.offlineBadge": "Correção no Navegador • Total Privacidade",
+  "workspace.review.offlineBadge": "Correção local • Total Privacidade",
   "workspace.review.downloadNotice":
     "Carregando regras de português — processamento seguro no seu dispositivo.",
   "workspace.review.noIssues": "Não há sugestões para exibir.",

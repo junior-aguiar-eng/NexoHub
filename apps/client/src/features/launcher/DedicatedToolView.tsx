@@ -228,6 +228,7 @@ export function DedicatedToolView({
     [files, tool.id],
   );
   const [reviewProgressStatus, setReviewProgressStatus] = useState<string>("");
+  const reviewRunGeneration = useRef(0);
   const [rotateAngle, setRotateAngle] = useState<number>(0);
   const [imageOrientation, setImageOrientation] = useState<"portrait" | "landscape" | "auto">(
     "portrait",
@@ -828,6 +829,32 @@ export function DedicatedToolView({
   const isTextTool =
     tool.id === "text-review" || tool.id === "text-translate" || tool.id === "text-compare";
 
+  const invalidateReviewResult = useCallback(() => {
+    reviewRunGeneration.current++;
+    setStatus("idle");
+    setProgress(0);
+    setReviewProgressStatus("");
+    setErrorMessage(null);
+    setDownloadUrl(null);
+    setOutputBlob(null);
+    setOutputFileName("");
+  }, []);
+  const reviewSourceFile = files[0];
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a identidade do arquivo invalida a revisão mesmo sem leitura antecipada.
+  useEffect(() => {
+    if (tool.id !== "text-review") return;
+    invalidateReviewResult();
+    setReviewedText(inputTab === "text" ? directText : "");
+    try {
+      setReviewFindings(inputTab === "text" ? reviewText(directText) : []);
+    } catch {
+      setReviewFindings([]);
+    }
+    return () => {
+      reviewRunGeneration.current++;
+    };
+  }, [reviewSourceFile, tool.id, directText, inputTab, invalidateReviewResult]);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: valores, arquivo e achatamento invalidam exportações em andamento.
   useEffect(() => {
     if (tool.id !== "pdf-form-fill") return;
@@ -1221,6 +1248,7 @@ export function DedicatedToolView({
     try {
       const current = reviewedText;
       const corrected = applyReviewFindings(current, reviewFindings);
+      invalidateReviewResult();
       setReviewedText(corrected);
       setReviewFindings([]);
     } catch (err) {
@@ -1243,6 +1271,7 @@ export function DedicatedToolView({
       };
       const current = reviewedText;
       const corrected = applyReviewFindings(current, [findingToApply]);
+      invalidateReviewResult();
       setReviewedText(corrected);
       const delta = findingToApply.replacement.length - (singleFinding.end - singleFinding.start);
       setReviewFindings((prev) =>
@@ -1266,12 +1295,14 @@ export function DedicatedToolView({
   function handleIgnoreFinding(findingId: string) {
     const finding = reviewFindings.find((f) => f.id === findingId);
     if (finding) {
+      invalidateReviewResult();
       ignoreWordInSession(finding.original);
       setReviewFindings((prev) => prev.filter((f) => f.id !== findingId));
     }
   }
 
   function handleAddToDictionary(word: string) {
+    invalidateReviewResult();
     addCustomWord(word);
     setReviewFindings((prev) =>
       prev.filter((f) => f.original.toLowerCase() !== word.toLowerCase()),
@@ -1308,6 +1339,7 @@ export function DedicatedToolView({
   // Execução da ferramenta selecionada
   // =========================================================================
   async function handleExecute() {
+    const reviewGeneration = tool.id === "text-review" ? ++reviewRunGeneration.current : undefined;
     if (tool.id === "text-compare" && !hasCompareTexts) return;
     if (
       tool.id === "pdf-to-excel" &&
@@ -1591,10 +1623,12 @@ export function DedicatedToolView({
           setTranslationProgressStatus(message);
         },
         onReviewProgress: (info) => {
+          if (reviewGeneration !== reviewRunGeneration.current) return;
           setProgress(info.progress);
           setReviewProgressStatus(info.message || `${info.progress}%`);
         },
       });
+      if (tool.id === "text-review" && reviewGeneration !== reviewRunGeneration.current) return;
       if (repairRun?.signal.aborted) return;
       if (redactionRun?.signal.aborted) return;
       if (ocrRun?.signal.aborted) return;
@@ -1693,6 +1727,7 @@ export function DedicatedToolView({
         categoryKey,
       });
     } catch (err) {
+      if (tool.id === "text-review" && reviewGeneration !== reviewRunGeneration.current) return;
       if (repairRun?.signal.aborted) return;
       if (excelRun?.signal.aborted) return;
       if (markdownRun?.signal.aborted) return;
@@ -1738,6 +1773,7 @@ export function DedicatedToolView({
   }
 
   function handleReset() {
+    if (tool.id === "text-review") invalidateReviewResult();
     repairController.current?.abort();
     repairController.current = null;
     setPdfRepairReport(null);
@@ -2375,6 +2411,7 @@ export function DedicatedToolView({
           reviewFindings={reviewFindings}
           reviewedText={reviewedText}
           onReviewedTextChange={(text) => {
+            invalidateReviewResult();
             setReviewedText(text);
             setReviewFindings([]);
           }}
@@ -2916,13 +2953,6 @@ export function DedicatedToolView({
                         clearTranslationResult();
                       }
                       setDirectText(e.target.value);
-                      if (tool.id === "text-review") {
-                        try {
-                          const findings = reviewText(e.target.value);
-                          setReviewFindings(findings);
-                          setReviewedText(e.target.value);
-                        } catch {}
-                      }
                     }}
                     placeholder="Digite ou cole o texto do documento aqui para processamento imediato..."
                     rows={12}

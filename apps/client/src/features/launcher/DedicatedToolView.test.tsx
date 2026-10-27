@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReviewFinding } from "@nexohub/domain";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { PDFDocument } from "pdf-lib";
 import { describe, expect, it, vi } from "vitest";
 import { BrowserDocumentCorePort } from "@/platform/browser-document-core";
@@ -129,6 +130,94 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
       review.mockRestore();
     }
   });
+
+  it.each(["sucesso", "erro", "desmontagem"])("ignora revisão obsoleta: %s", async (outcome) => {
+    let finishReview: (findings: readonly ReviewFinding[]) => void = () => {};
+    let failReview: (error: Error) => void = () => {};
+    const pending = new Promise<readonly ReviewFinding[]>((resolve, reject) => {
+      finishReview = resolve;
+      failReview = reject;
+    });
+    const review = vi.spyOn(browserReviewer, "performBrowserReview").mockReturnValueOnce(pending);
+    const onOperationComplete = vi.fn();
+    const view = render(
+      <DedicatedToolView
+        tool={mockTextReviewTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        onOperationComplete={onOperationComplete}
+      />,
+    );
+    try {
+      fireEvent.click(screen.getByRole("button", { name: "Digitar Texto" }));
+      const input = screen.getByLabelText("Conteúdo do Documento:");
+      fireEvent.change(input, { target: { value: "Texto original para revisar." } });
+      fireEvent.click(screen.getByRole("button", { name: /Revisar Texto/i }));
+      await waitFor(() => expect(review).toHaveBeenCalled());
+      if (outcome === "desmontagem") view.unmount();
+      else fireEvent.change(input, { target: { value: "Texto atual preservado." } });
+      await act(async () => {
+        if (outcome === "erro") failReview(new Error("Falha obsoleta"));
+        else finishReview([]);
+        await pending.catch(() => {});
+      });
+      if (outcome !== "desmontagem") {
+        expect(screen.getByPlaceholderText(/O texto corrigido será atualizado/i)).toHaveValue(
+          "Texto atual preservado.",
+        );
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      }
+      expect(onOperationComplete).not.toHaveBeenCalled();
+    } finally {
+      review.mockRestore();
+    }
+  });
+
+  it.each(["todas", "individual", "manual"])(
+    "preserva correção %s feita enquanto a revisão está pendente",
+    async (mode) => {
+      let finishReview: (findings: readonly ReviewFinding[]) => void = () => {};
+      const pending = new Promise<readonly ReviewFinding[]>((resolve) => {
+        finishReview = resolve;
+      });
+      const review = vi.spyOn(browserReviewer, "performBrowserReview").mockReturnValueOnce(pending);
+      const onOperationComplete = vi.fn();
+      render(
+        <DedicatedToolView
+          tool={mockTextReviewTool}
+          documentCore={documentCore}
+          onBack={vi.fn()}
+          onOperationComplete={onOperationComplete}
+        />,
+      );
+      try {
+        fireEvent.click(screen.getByRole("button", { name: "Digitar Texto" }));
+        fireEvent.change(screen.getByLabelText("Conteúdo do Documento:"), {
+          target: { value: "Texto texto." },
+        });
+        fireEvent.click(screen.getByRole("button", { name: /Revisar Texto/i }));
+        await waitFor(() => expect(review).toHaveBeenCalled());
+        const output = screen.getByPlaceholderText(/O texto corrigido será atualizado/i);
+        if (mode === "manual") {
+          fireEvent.change(output, { target: { value: "Correção manual." } });
+        } else {
+          fireEvent.click(
+            screen.getByRole("button", {
+              name: mode === "todas" ? "Aplicar Todas as Correções" : "Aplicar",
+            }),
+          );
+        }
+        await act(async () => {
+          finishReview([]);
+          await pending;
+        });
+        expect(output).toHaveValue(mode === "manual" ? "Correção manual." : "Texto.");
+        expect(onOperationComplete).not.toHaveBeenCalled();
+      } finally {
+        review.mockRestore();
+      }
+    },
+  );
 
   it("renderiza o conversor de Imagem para PDF com controles de orientação e margem", async () => {
     const mockImagesToPdfTool =
@@ -296,7 +385,7 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
       />,
     );
     expect(screen.getByText(/Corretor Ortográfico e Gramatical/i)).toBeInTheDocument();
-    expect(screen.getByText(/Correção no Navegador/i)).toBeInTheDocument();
+    expect(screen.getByText(/Correção local/i)).toBeInTheDocument();
   });
 
   it("renderiza o painel de PDF para Excel com seletores de formato e tabela de prévia", async () => {

@@ -13,7 +13,7 @@ campos desconhecidos e caminhos fora do repositório. O teste de integração ta
 caminhos reais para recusar links simbólicos externos. O checker é usado por testes;
 não está exportado pelo pacote nem importado pelo aplicativo.
 
-Há 24 grupos de corpus. Os rótulos `file`, `generator` e `manifest` identificam **quais bytes
+Há 25 grupos de corpus. Os rótulos `file`, `generator` e `manifest` identificam **quais bytes
 foram hasheados**: arquivo fixo, código gerador/teste ou manifesto de uma medição anterior.
 Hash de gerador não identifica o PDF/imagem que ele produzirá; hash de manifesto não verifica
 novamente as fotos externas ou os resultados nele registrados. Os downloads externos não são
@@ -26,7 +26,7 @@ Expectativas textuais são limites documentados, não assertions executadas pelo
 
 ## Cobertura por ferramenta
 
-**33 perfis restritos e 2 registros de regressão.** Perfil restrito
+**35 perfis restritos.** Perfil restrito
 significa que há uma entrega específica com corpus e limites documentados; não é um selo de
 homologação integral. Regressão identifica cobertura existente, que pode incluir testes com port simulado.
 Esses testes de encaminhamento não demonstram fidelidade da saída. A fatia de
@@ -42,7 +42,7 @@ Expectativas, recusas, casos não medidos e links de testes/documentos estão em
 | `pdf-split` | Perfil restrito | `pdf-static` |
 | `pdf-rotate` | Perfil restrito | `pdf-static` |
 | `pdf-crop` | Perfil restrito | `pdf-static`, `pdf-overlay` |
-| `pdf-compress` | Regressão | `pdf-basic` |
+| `pdf-compress` | Perfil restrito | `pdf-basic`, `compression-scan` |
 | `pdf-repair` | Perfil restrito | `repair` |
 | `images-to-pdf` | Perfil restrito | `pdf-raster`, `image-basic` |
 | `pdf-to-jpg` | Perfil restrito | `pdf-raster`, `pdf-basic` |
@@ -63,7 +63,7 @@ Expectativas, recusas, casos não medidos e links de testes/documentos estão em
 | `pdf-remove-pages` | Perfil restrito | `subset` |
 | `pdf-extract-pages` | Perfil restrito | `subset` |
 | `html-to-pdf` | Perfil restrito | `html` |
-| `scan-to-pdf` | Regressão | `scan` |
+| `scan-to-pdf` | Perfil restrito | `scan`, `compression-scan` |
 | `image-compress` | Perfil restrito | `image-basic`, `image-photo` |
 | `image-resize` | Perfil restrito | `image-basic`, `image-photo` |
 | `image-crop` | Perfil restrito | `image-basic`, `image-photo` |
@@ -83,7 +83,7 @@ Expectativas, recusas, casos não medidos e links de testes/documentos estão em
 | Tradução/revisão/comparação | Referências textuais, preservação de identificadores e avaliação linguística; sem garantia jurídica ou semântica universal |
 
 Q-C0 global permanece **parcial**. Faltam corpora representativos e medições comparáveis
-para ferramentas cobertas apenas por regressões; hardware físico, pouca RAM, lotes reais,
+além dos perfis restritos documentados; hardware físico, pouca RAM, lotes reais,
 execução fria/quente e Windows instalado continuam gates separados. Os relatórios específicos
 definem quais medições já existem. Nenhum percentual heurístico vira probabilidade de correção.
 
@@ -120,3 +120,9 @@ A evolução de [conversão e extração raster](PDF-RASTER.md) acrescenta três
 A fatia de [proteger/desbloquear PDF](PDF-ACESSO.md) acrescenta dois perfis restritos com documentos cifrados, campos e anexos conferidos.
 
 A avaliação de [comparação e revisão de texto](TEXTO.md) acrescenta dois perfis restritos e corrige o par exportado e a mensagem de ausência de sugestões.
+
+A avaliação de [compressão e scanner](COMPRESSAO-SCANNER.md) acrescenta os dois perfis restritos restantes. Todos os registros têm perfil delimitado; Q-C0 global continua parcial.
+
+A complementação da interface do scanner registra teclado, quatro larguras e temas na raiz
+e em `/hub/`, incluindo pixels do download e erro recuperável. Mantém 35 perfis/25 corpora;
+os limites físicos, de recursos e de Windows instalado continuam separados.

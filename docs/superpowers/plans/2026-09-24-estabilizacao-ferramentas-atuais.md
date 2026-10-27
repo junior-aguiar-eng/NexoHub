@@ -242,6 +242,42 @@ integração na principal.
 Validação: 808 testes do cliente, 44 do domínio, check e quality:check aprovados;
 builds raiz e `/hub/` aprovados. E2E e revisão final registrados no relatório vinculado.
 
+### Q-C0 — compressão de PDF e scanner (27/10/2026)
+
+Base `b345b62`, após commit autorizado de texto. Corpus, referências e medições em
+[COMPRESSAO-SCANNER.md](../../quality/COMPRESSAO-SCANNER.md). Compressão: três perfis reais
+de JPEG, estrutura/texto/campos/anexo preservados no corpus, original sem ganho e recusas.
+Scanner: pixels de quatro filtros PNG, JPEG/WebP, ordem/rotação, fit/Letter e margem.
+Falha de filtro deixa de devolver original silenciosamente: erro estruturado e bitmap
+liberado, com regressões observadas antes e verificadas depois. Sem novo motor ou dependência.
+
+Os 35 registros passam a perfis restritos (25 corpora). Isso não conclui Q-C0 global:
+fidelidade ampla, câmera física, pouca RAM, benchmark frio/quente/pico de memória e Windows
+instalado permanecem pendentes. DOC-C2 excluído. Alterações desta etapa locais, sem commit,
+push, deploy ou integração na principal. Validação final: 817 testes do cliente, 96
+pertinentes, 10 do Tool Registry, check e quality:check aprovados; builds raiz e `/hub/`
+e 9 E2E em cada base aprovados. Revisão única sem achados materiais. Falha inicial de
+expectativa antiga do teste de texto foi corrigida, com a repetição integral aprovada;
+detalhes e limites no relatório vinculado.
+
+### Q-C0 — matriz de interface do scanner (27/10/2026)
+
+Complementação no mesmo worktree/base `b345b62`. Matriz Chromium em 390/768/1024/1366 px,
+temas claro/escuro, raiz e `/hub/`: entrada de imagens por teclado, remoção, quatro filtros,
+rotação/reordenação, opções, falha transitória de encoder e recuperação com PDF reaberto e
+pixels conferidos. Relatório, reprodução e limites em
+[COMPRESSAO-SCANNER.md](../../quality/COMPRESSAO-SCANNER.md#complementação--matriz-de-interface-do-scanner-27102026).
+
+Corrige upload inacessível por Tab, grade com overflow em 1024 px/numeração quebrada e aviso
+de erro espremido no móvel. Alterações locais de apresentação; DOC-C2, motores, câmera
+física e os demais gates globais permanecem separados. Sem commit, push ou deploy.
+
+Validação: 17 E2E pertinentes por base (34 aprovados), 35 unitários pertinentes, check,
+quality:check (7 testes) e builds nas duas bases aprovados. Suíte completa: 816 aprovados,
+um timeout AES-256 de 15 s; arquivo repetido isoladamente com 12 aprovados, sem mudar timeout
+ou expectativas. Limitação registrada; não declarar suíte integral verde. Sem E2E integral
+ou instalação Windows nesta complementação.
+
 ### UX-C1 — Visualização PDF reutilizável nas mesas atuais
 
 **Modificar:** painéis `CropPdfPanel`, `SignPdfPanel`, `RedactPdfPanel`, `WatermarkPdfPanel`,

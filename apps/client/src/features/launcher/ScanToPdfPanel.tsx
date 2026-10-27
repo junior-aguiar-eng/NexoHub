@@ -45,6 +45,7 @@ export function ScanToPdfPanel({
   const mounted = useRef(true);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const uploadRef = useRef<HTMLInputElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const stopCamera = useCallback(() => {
@@ -270,19 +271,26 @@ export function ScanToPdfPanel({
             </div>
           )}
 
-          <label className="cursor-pointer">
-            <span className="px-3 py-2 rounded-xl border border-border bg-surface text-xs font-medium text-text-primary hover:bg-surface-secondary transition-colors inline-flex items-center shadow-xs">
+          <div>
+            <Button
+              type="button"
+              variant="secondary"
+              size="compact"
+              className="text-xs h-9"
+              onClick={() => uploadRef.current?.click()}
+            >
               <UploadCloud className="w-3.5 h-3.5 mr-1.5" />
               {translate("scanToPdf.uploadFiles")}
-            </span>
+            </Button>
             <input
+              ref={uploadRef}
               type="file"
               multiple
               accept="image/jpeg,image/png,image/webp"
               className="hidden"
               onChange={handleImageUpload}
             />
-          </label>
+          </div>
         </div>
       </div>
 
@@ -414,7 +422,7 @@ export function ScanToPdfPanel({
               {translate("scanToPdf.capturedPages").replace("{count}", String(pages.length))}
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-4">
               {pages.map((item, idx) => {
                 return (
                   <div
@@ -423,8 +431,8 @@ export function ScanToPdfPanel({
                     className="flex flex-col gap-3 p-3 rounded-2xl border border-border bg-surface shadow-xs"
                   >
                     {/* Top Bar with Number and Actions */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-surface-secondary text-text-secondary">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="shrink-0 whitespace-nowrap text-xs font-semibold px-2 py-0.5 rounded-full bg-surface-secondary text-text-secondary">
                         Pág. {idx + 1}
                       </span>
 

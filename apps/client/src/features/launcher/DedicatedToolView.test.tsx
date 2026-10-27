@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { PDFDocument } from "pdf-lib";
 import { describe, expect, it, vi } from "vitest";
 import { BrowserDocumentCorePort } from "@/platform/browser-document-core";
+import * as browserReviewer from "@/platform/browser-reviewer";
 import { DedicatedToolView } from "./DedicatedToolView";
 import { launcherTools } from "./data";
 
@@ -105,6 +106,8 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
   });
 
   it("executa revisão textual no navegador com feedback de sucesso", async () => {
+    // Contrato de UI; o dicionário real é conferido no Chromium em text-quality.spec.ts.
+    const review = vi.spyOn(browserReviewer, "performBrowserReview").mockResolvedValueOnce([]);
     const onOperationComplete = vi.fn();
     render(
       <DedicatedToolView
@@ -116,13 +119,15 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /Revisar Texto/i }));
-    expect(
-      await screen.findByText(
-        /Nenhum problema ortográfico ou gramatical encontrado/i,
-        {},
-        { timeout: 5000 },
-      ),
-    ).toBeInTheDocument();
+    try {
+      await waitFor(() => expect(onOperationComplete).toHaveBeenCalled());
+      expect(screen.getByText("Não há sugestões para exibir.")).toBeInTheDocument();
+      expect(review).toHaveBeenCalledWith(
+        expect.objectContaining({ text: "Texto inicial sem erros." }),
+      );
+    } finally {
+      review.mockRestore();
+    }
   });
 
   it("renderiza o conversor de Imagem para PDF com controles de orientação e margem", async () => {

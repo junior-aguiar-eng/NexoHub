@@ -40,6 +40,8 @@ try {
         "pdf-raster-quality.spec.ts",
         "pdf-access-quality.spec.ts",
         "text-quality.spec.ts",
+        "compression-scan-quality.spec.ts",
+        "scan-interface-quality.spec.ts",
         "tool-quality.spec.ts",
         "security-excel-quality.spec.ts",
         "tool-workspace-regressions.spec.ts",

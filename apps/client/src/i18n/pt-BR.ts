@@ -1459,6 +1459,8 @@ export const ptBR = {
     "Câmera indisponível ou permissão não concedida. Você pode carregar fotos de documentos pelo botão abaixo.",
   "scanToPdf.filter": "Filtro de Imagem",
   "scanToPdf.filterOriginal": "Original",
+  "scanToPdf.filterFailed":
+    "Não foi possível aplicar o filtro. Tente novamente ou selecione Original.",
   "scanToPdf.filterBw": "Documento P&B",
   "scanToPdf.filterGrayscale": "Tons de Cinza",
   "scanToPdf.filterContrast": "Alto Contraste",

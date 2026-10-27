@@ -484,6 +484,18 @@
   z-index: 2;
 }
 @media (max-width: 900px) {
+  .app-shell--workspace
+    .dedicated-tool-page--workspace:has([data-testid="scan-to-pdf-panel"])
+    > .dedicated-tool-bottom-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .app-shell--workspace
+    .dedicated-tool-page--workspace:has([data-testid="scan-to-pdf-panel"])
+    > .dedicated-tool-bottom-bar
+    > [role="alert"] {
+    flex: none;
+  }
   .workspace-tabs {
     display: flex;
   }

@@ -24,7 +24,8 @@ describe("scan-to-pdf-engine", () => {
         imageBytes: minimalPng,
         mimeType: "image/png",
         rotation: 90,
-        filter: "bw" as const,
+        // Os pixels dos filtros são conferidos no Chromium; aqui não há Canvas real.
+        filter: "original" as const,
       },
     ];
 
@@ -64,6 +65,15 @@ describe("scan-to-pdf-engine", () => {
 
   it("rejeita compilação sem páginas digitalizadas", async () => {
     await expect(compileScannedPagesToPdf([])).rejects.toThrow("NENHUMA_PAGINA_DIGITALIZADA");
+  });
+
+  it("recusa imagem inválida sem produzir um PDF parcial", async () => {
+    await expect(
+      compileScannedPagesToPdf([
+        { id: "valida", imageBytes: minimalPng, mimeType: "image/png" },
+        { id: "invalida", imageBytes: new Uint8Array([1, 2, 3]), mimeType: "image/png" },
+      ]),
+    ).rejects.toThrow("FALHA_AO_EMBUTIR_IMAGEM");
   });
 
   it("mantém os bytes inalterados quando filtro é original", async () => {

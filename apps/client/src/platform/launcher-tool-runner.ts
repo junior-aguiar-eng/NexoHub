@@ -1224,11 +1224,19 @@ async function executeTool(
       if (scannedItems.length === 0) {
         throw new ToolRunError("INVALID_INPUT", translate("scanToPdf.noPages"));
       }
-      const resultBytes = await compileScannedPagesToPdf([...scannedItems], {
-        pageSize: input.scanPageSize ?? "A4",
-        orientation: input.scanOrientation ?? "auto",
-        margin: input.scanMargin ?? "small",
-      });
+      let resultBytes: Uint8Array;
+      try {
+        resultBytes = await compileScannedPagesToPdf([...scannedItems], {
+          pageSize: input.scanPageSize ?? "A4",
+          orientation: input.scanOrientation ?? "auto",
+          margin: input.scanMargin ?? "small",
+        });
+      } catch (error) {
+        if (error instanceof Error && error.message === "SCAN_FILTER_FAILED") {
+          throw new ToolRunError("TOOL_UNAVAILABLE", translate("scanToPdf.filterFailed"));
+        }
+        throw error;
+      }
       const resolvedName = first ? `${baseName}_digitalizado` : "documento_digitalizado";
       return {
         blob: pdfBlob(resultBytes),

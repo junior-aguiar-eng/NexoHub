@@ -65,24 +65,23 @@ export async function applyScanFilter(
 
   // Se não estiver em ambiente de navegador com Canvas disponível
   if (typeof document === "undefined" || !document.createElement) {
-    return imageBytes;
+    throw new Error("SCAN_FILTER_FAILED");
   }
 
+  let imgBitmap: ImageBitmap | undefined;
   try {
     const blob = new Blob([imageBytes as unknown as BlobPart], { type: mimeType });
-    const imgBitmap = await createImageBitmap(blob);
+    imgBitmap = await createImageBitmap(blob);
     const canvas = document.createElement("canvas");
     canvas.width = imgBitmap.width;
     canvas.height = imgBitmap.height;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) {
-      imgBitmap.close();
-      return imageBytes;
+      throw new Error("SCAN_FILTER_FAILED");
     }
 
     ctx.drawImage(imgBitmap, 0, 0);
-    imgBitmap.close();
     const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imgData.data;
     const len = data.length;
@@ -131,21 +130,15 @@ export async function applyScanFilter(
 
     ctx.putImageData(imgData, 0, 0);
 
-    return await new Promise<Uint8Array>((resolve) => {
-      canvas.toBlob(
-        async (resBlob) => {
-          if (!resBlob) {
-            resolve(imageBytes);
-            return;
-          }
-          resolve(new Uint8Array(await resBlob.arrayBuffer()));
-        },
-        mimeType.includes("png") ? "image/png" : "image/jpeg",
-        0.92,
-      );
+    const filtered = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, mimeType.includes("png") ? "image/png" : "image/jpeg", 0.92);
     });
+    if (!filtered) throw new Error("SCAN_FILTER_FAILED");
+    return new Uint8Array(await filtered.arrayBuffer());
   } catch {
-    return imageBytes;
+    throw new Error("SCAN_FILTER_FAILED");
+  } finally {
+    imgBitmap?.close();
   }
 }
 

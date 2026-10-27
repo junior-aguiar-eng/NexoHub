@@ -148,6 +148,28 @@ Validação local: gate Q-C0 com 7 testes, suíte Tool Registry com 10 testes, `
 nesta fatia de metadados/testes. Commit local autorizado posteriormente pelo usuário;
 sem push, deploy ou integração no checkout principal.
 
+### Q-C0 — resultado das operações básicas PDF (27/10/2026)
+
+Base `f50a1c0`, após commit autorizado do índice. Próxima fatia: [PDF estático básico](../../quality/PDF-BASICO.md),
+com corpus autoral para juntar, dividir, organizar e girar. Texto é conferido em PDF.js;
+MediaBox, CropBox, rotação e bytes JPEG em pdf-lib; originais comparados antes/depois.
+Os downloads reais das quatro mesas recebem E2E na raiz e no executor `/hub/`.
+
+O cenário de seleção vazia em `reorganizePdfDocument` produzia PDF em branco. A validação
+agora recusa esse caso, índices inválidos e rotação não finita/fora de múltiplos de 90 com
+código estruturado antes de criar a saída. Teste negativo observado antes da correção.
+Os quatro registros passam a perfil restrito do corpus estático, sem afirmar preservação
+universal de formulários, anexos, assinaturas ou metadados globais. Q-C0 permanece parcial.
+
+Sem dependências, nova interface ou integração de motores candidatos. DOC-C2 excluído;
+commit local desta fatia autorizado posteriormente pelo usuário, sem push, deploy ou
+mudança no checkout principal.
+
+Validação: check, 766 testes do cliente, 10 do Tool Registry, builds raiz e `/hub/`,
+4 E2E específicos na raiz e 248 E2E em `/hub/` aprovados. Testes específicos 15/15;
+revisão única sem achados materiais. Suíte E2E inteira da raiz e instalação Windows
+não repetidas nesta fatia. Evidências e limites no documento vinculado acima.
+
 ### UX-C1 — Visualização PDF reutilizável nas mesas atuais
 
 **Modificar:** painéis `CropPdfPanel`, `SignPdfPanel`, `RedactPdfPanel`, `WatermarkPdfPanel`,

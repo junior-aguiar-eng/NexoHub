@@ -393,6 +393,19 @@ export async function reorganizePdfDocument(
   pageOrders: Array<{ originalIndex: number; rotation: number }>,
 ): Promise<Uint8Array> {
   const srcDoc = await PDFDocument.load(pdfBytes);
+  if (
+    pageOrders.length === 0 ||
+    pageOrders.some(
+      ({ originalIndex, rotation }) =>
+        !Number.isInteger(originalIndex) ||
+        originalIndex < 1 ||
+        originalIndex > srcDoc.getPageCount() ||
+        !Number.isFinite(rotation) ||
+        rotation % 90 !== 0,
+    )
+  ) {
+    throw new Error("SELECAO_DE_PAGINAS_INVALIDA");
+  }
   const newDoc = await PDFDocument.create();
 
   const indices = pageOrders.map((p) => p.originalIndex - 1);

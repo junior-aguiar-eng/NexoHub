@@ -13,7 +13,7 @@ campos desconhecidos e caminhos fora do repositório. O teste de integração ta
 caminhos reais para recusar links simbólicos externos. O checker é usado por testes;
 não está exportado pelo pacote nem importado pelo aplicativo.
 
-Há 19 grupos de corpus. Os rótulos `file`, `generator` e `manifest` identificam **quais bytes
+Há 20 grupos de corpus. Os rótulos `file`, `generator` e `manifest` identificam **quais bytes
 foram hasheados**: arquivo fixo, código gerador/teste ou manifesto de uma medição anterior.
 Hash de gerador não identifica o PDF/imagem que ele produzirá; hash de manifesto não verifica
 novamente as fotos externas ou os resultados nele registrados. Os downloads externos não são
@@ -26,20 +26,21 @@ Expectativas textuais são limites documentados, não assertions executadas pelo
 
 ## Cobertura por ferramenta
 
-**18 perfis restritos e 17 registros de regressão.** Perfil restrito
+**22 perfis restritos e 13 registros de regressão.** Perfil restrito
 significa que há uma entrega específica com corpus e limites documentados; não é um selo de
-homologação integral. Regressão identifica cobertura existente, incluindo testes de encaminhamento
-com port simulado em organizar/girar PDF. Esses testes não demonstram fidelidade da saída.
+homologação integral. Regressão identifica cobertura existente, que pode incluir testes com port simulado.
+Esses testes de encaminhamento não demonstram fidelidade da saída. A fatia de
+[PDF básico](PDF-BASICO.md) acrescenta conferência de conteúdo para quatro ferramentas.
 Expectativas, recusas, casos não medidos e links de testes/documentos estão em cada registro JSON.
 
 | Ferramenta | Evidência registrada | Grupos de corpus |
 | --- | --- | --- |
 | `pdf-edit` | Perfil restrito | `editor` |
 | `pdf-compare` | Perfil restrito | `comparison` |
-| `pdf-organize` | Regressão | `pdf-basic` |
-| `pdf-merge` | Regressão | `pdf-basic` |
-| `pdf-split` | Regressão | `pdf-basic` |
-| `pdf-rotate` | Regressão | `pdf-basic` |
+| `pdf-organize` | Perfil restrito | `pdf-static` |
+| `pdf-merge` | Perfil restrito | `pdf-static` |
+| `pdf-split` | Perfil restrito | `pdf-static` |
+| `pdf-rotate` | Perfil restrito | `pdf-static` |
 | `pdf-crop` | Regressão | `security` |
 | `pdf-compress` | Regressão | `pdf-basic` |
 | `pdf-repair` | Perfil restrito | `repair` |
@@ -100,7 +101,7 @@ Ferramenta nova exige registro próprio; retirar um registro não pode silenciar
 Não adicionar fixture externa sem origem/licença demonstrada. Os testes do gate são executados
 também pela suíte normal do pacote `@nexohub/tool-registry`.
 
-## Validação desta fatia
+## Validação da consolidação inicial
 
 - `pnpm quality:check`: 7 testes aprovados, incluindo o índice real das 35 ferramentas.
 - Suíte completa do Tool Registry com dois workers: 10 testes aprovados.
@@ -109,3 +110,5 @@ também pela suíte normal do pacote `@nexohub/tool-registry`.
 
 Não foram repetidos os benchmarks anteriores nem executados E2E, build ou instalação Windows:
 esta fatia altera documentação e um gate de testes, sem código do aplicativo ou dependências.
+
+A evolução das operações básicas PDF, após a consolidação inicial, está em [PDF-BASICO.md](PDF-BASICO.md).

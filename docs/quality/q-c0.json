@@ -505,6 +505,33 @@
           "sha256": "8f136b4763c02f509e83156f9ad9ba5a730ee18a35573f9805cc94522a552bfc"
         }
       ]
+    },
+    {
+      "id": "pdf-static",
+      "origin": "Quatro páginas sintéticas autorais com referências textuais, JPEG de controle, MediaBox, CropBox e rotação explícita; gerador com datas fixas. Não contém formulários, anexos ou documentos reais.",
+      "license": "Conteúdo, gerador e JPEG autorais MPL-2.0. Helvetica é referenciada como fonte PDF padrão, sem redistribuir arquivo de fonte neste corpus. Bibliotecas mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/__fixtures__/q-c0-pdf/corpus.ts",
+          "kind": "generator",
+          "sha256": "daaba93694308e252403becaf3227daa2bc57d3d10aa9da2d4c2a7ccf2dd2c32"
+        },
+        {
+          "path": "apps/client/src/platform/pdf-basic-quality.test.ts",
+          "kind": "generator",
+          "sha256": "37ce7134ec2ad1d7249f4c9ad6251afffc581fe0e68b095d969bce1efa1c694e"
+        },
+        {
+          "path": "apps/client/e2e/pdf-basic-quality.spec.ts",
+          "kind": "generator",
+          "sha256": "3813daa514ae324ce9f1da9c1373ea3768a540802fef3d76f5645f8afd032c85"
+        },
+        {
+          "path": "apps/client/src/platform/fixtures/extraction-red-2x1.jpg",
+          "kind": "file",
+          "sha256": "8f136b4763c02f509e83156f9ad9ba5a730ee18a35573f9805cc94522a552bfc"
+        }
+      ]
     }
   ],
   "tools": [
@@ -536,57 +563,91 @@
     },
     {
       "toolId": "pdf-organize",
-      "level": "regression",
-      "corpora": ["pdf-basic"],
-      "supported": ["Encaminhamento de ordem, exclusão e rotações pelo runner com port simulado."],
-      "refused": ["PDF inválido ou seleção inválida não deve gerar sucesso."],
+      "level": "restricted-profile",
+      "corpora": ["pdf-static"],
+      "supported": [
+        "Ordem descontínua/exclusão e rotação por página no corpus estático; texto, JPEG e geometria conferidos."
+      ],
+      "refused": [
+        "Seleção vazia, índice fora da faixa/fracionário ou rotação não finita/fora de múltiplos de 90 em organizar PDF."
+      ],
       "unmeasured": [
-        "Fidelidade da saída da operação isolada não demonstrada por este corpus de encaminhamento.",
-        "Formulários, anexos e metadados arbitrários não foram certificados por este registro.",
+        "Formulários, assinaturas, anexos, links internos, fontes arbitrárias e metadados globais não são certificados por este corpus estático.",
+        "Renderização pixel a pixel, PDF digitalizado de campo, hardware de pouca RAM e grandes lotes não medidos nesta fatia.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/TOOL-SPEC.md"],
-      "tests": ["apps/client/src/platform/launcher-tool-runner.test.ts"]
+      "docs": ["docs/quality/PDF-BASICO.md", "docs/TOOL-SPEC.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-basic-quality.test.ts",
+        "apps/client/e2e/pdf-basic-quality.spec.ts",
+        "apps/client/src/platform/pdf-engine.test.ts"
+      ]
     },
     {
       "toolId": "pdf-merge",
-      "level": "regression",
-      "corpora": ["pdf-basic"],
-      "supported": ["Junção de PDFs válidos com sequência de páginas."],
-      "refused": ["PDF inválido ou seleção inválida não deve gerar sucesso."],
+      "level": "restricted-profile",
+      "corpora": ["pdf-static"],
+      "supported": [
+        "Junção em ordem invertida dos documentos no corpus estático; texto, JPEG e geometria conferidos."
+      ],
+      "refused": [
+        "Entrada inválida; demais recusas permanecem nos testes existentes, sem ampliá-las por este corpus."
+      ],
       "unmeasured": [
-        "Formulários, anexos e metadados arbitrários não foram certificados por este registro.",
+        "Formulários, assinaturas, anexos, links internos, fontes arbitrárias e metadados globais não são certificados por este corpus estático.",
+        "Renderização pixel a pixel, PDF digitalizado de campo, hardware de pouca RAM e grandes lotes não medidos nesta fatia.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/TOOL-SPEC.md"],
-      "tests": ["apps/client/src/platform/pdf-engine.test.ts"]
+      "docs": ["docs/quality/PDF-BASICO.md", "docs/TOOL-SPEC.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-basic-quality.test.ts",
+        "apps/client/e2e/pdf-basic-quality.spec.ts",
+        "apps/client/src/platform/pdf-engine.test.ts"
+      ]
     },
     {
       "toolId": "pdf-split",
-      "level": "regression",
-      "corpora": ["pdf-basic"],
-      "supported": ["Intervalos e seleção de páginas dentro da faixa."],
-      "refused": ["PDF inválido ou seleção inválida não deve gerar sucesso."],
+      "level": "restricted-profile",
+      "corpora": ["pdf-static"],
+      "supported": [
+        "Intervalo inclusivo e seleção descontínua no corpus estático; texto, JPEG e geometria conferidos."
+      ],
+      "refused": [
+        "Entrada inválida; demais recusas permanecem nos testes existentes, sem ampliá-las por este corpus."
+      ],
       "unmeasured": [
-        "Formulários, anexos e metadados arbitrários não foram certificados por este registro.",
+        "Formulários, assinaturas, anexos, links internos, fontes arbitrárias e metadados globais não são certificados por este corpus estático.",
+        "Renderização pixel a pixel, PDF digitalizado de campo, hardware de pouca RAM e grandes lotes não medidos nesta fatia.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/TOOL-SPEC.md"],
-      "tests": ["apps/client/src/platform/pdf-engine.test.ts"]
+      "docs": ["docs/quality/PDF-BASICO.md", "docs/TOOL-SPEC.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-basic-quality.test.ts",
+        "apps/client/e2e/pdf-basic-quality.spec.ts",
+        "apps/client/src/platform/pdf-engine.test.ts"
+      ]
     },
     {
       "toolId": "pdf-rotate",
-      "level": "regression",
-      "corpora": ["pdf-basic"],
-      "supported": ["Encaminhamento de ordem, exclusão e rotações pelo runner com port simulado."],
-      "refused": ["PDF inválido ou seleção inválida não deve gerar sucesso."],
+      "level": "restricted-profile",
+      "corpora": ["pdf-static"],
+      "supported": [
+        "Rotação -90/90/180/270 somada à rotação anterior no corpus estático; texto, JPEG e geometria conferidos."
+      ],
+      "refused": [
+        "Entrada inválida; demais recusas permanecem nos testes existentes, sem ampliá-las por este corpus."
+      ],
       "unmeasured": [
-        "Fidelidade da saída da operação isolada não demonstrada por este corpus de encaminhamento.",
-        "Formulários, anexos e metadados arbitrários não foram certificados por este registro.",
+        "Formulários, assinaturas, anexos, links internos, fontes arbitrárias e metadados globais não são certificados por este corpus estático.",
+        "Renderização pixel a pixel, PDF digitalizado de campo, hardware de pouca RAM e grandes lotes não medidos nesta fatia.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/TOOL-SPEC.md"],
-      "tests": ["apps/client/src/platform/launcher-tool-runner.test.ts"]
+      "docs": ["docs/quality/PDF-BASICO.md", "docs/TOOL-SPEC.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-basic-quality.test.ts",
+        "apps/client/e2e/pdf-basic-quality.spec.ts",
+        "apps/client/src/platform/pdf-engine.test.ts"
+      ]
     },
     {
       "toolId": "pdf-crop",

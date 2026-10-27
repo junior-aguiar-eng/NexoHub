@@ -107,6 +107,11 @@ for (const layout of layouts) {
     await expect(page.getByText("1 de 1 páginas recuperadas")).toBeVisible();
     await workspaceDocument(page);
     await expect(page.getByRole("region", { name: "Área do documento" })).toBeVisible();
+    await expect(page.getByAltText("Prévia da página 1 do arquivo reparado")).toBeVisible();
+    await page.screenshot({ path: info.outputPath("r-c1-result-preview.png") });
+    await workspaceOptions(page);
+    await page.getByRole("button", { name: "Ver original", exact: true }).click();
+    await workspaceDocument(page);
     const originalPreview = page.getByAltText(/^Prévia da página 1 do original/);
     await expect(originalPreview).toBeVisible();
     expect((await originalPreview.boundingBox())?.height).toBeGreaterThan(8);
@@ -169,7 +174,8 @@ for (const failure of [
   {
     name: "heurística existente de objetos",
     input: "arquivo sem objetos PDF",
-    expected: "Falha ao executar a ferramenta.",
+    expected:
+      "Documento sem dados estruturais recuperáveis. O arquivo não possui objetos ou cabeçalho PDF legível.",
   },
 ]) {
   test(`erro de reparo (${failure.name}) mantém diagnóstico e tentativa acessíveis sem download`, async ({

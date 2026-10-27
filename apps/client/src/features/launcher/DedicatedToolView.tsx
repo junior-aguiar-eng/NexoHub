@@ -60,7 +60,7 @@ import {
   type SignaturePlacement,
 } from "@/platform/pdf-engine";
 import { PdfPreviewQueue } from "@/platform/pdf-preview-queue";
-import type { PdfRepairReport } from "@/platform/pdf-repair-engine";
+import { PDF_REPAIR_LIMITS, type PdfRepairReport } from "@/platform/pdf-repair-engine";
 import type { ScannedPageItem } from "@/platform/scan-to-pdf-engine";
 import { registerToolNavigationGuard } from "@/platform/tool-navigation-guard";
 import { addCustomWord, ignoreWordInSession } from "@/platform/user-vocabulary";
@@ -567,6 +567,22 @@ export function DedicatedToolView({
     savedPercent: number;
   } | null>(null);
   const [pdfRepairReport, setPdfRepairReport] = useState<PdfRepairReport | null>(null);
+  const [repairThumbnail, setRepairThumbnail] = useState("");
+  const repairController = useRef<AbortController | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: arquivo e ferramenta invalidam o reparo anterior.
+  useEffect(() => {
+    if (tool.id !== "pdf-repair") return;
+    repairController.current?.abort();
+    setPdfRepairReport(null);
+    setRepairThumbnail("");
+    setDownloadUrl(null);
+    setOutputBlob(null);
+    setStatus("idle");
+    setErrorMessage(null);
+    return () => {
+      repairController.current?.abort();
+    };
+  }, [files[0], tool.id]);
 
   // Estados de Ferramentas de Imagem (Modo Imagem)
   const [imageCompressionLevel, setImageCompressionLevel] =
@@ -832,6 +848,7 @@ export function DedicatedToolView({
     const previewAbort = new AbortController();
 
     async function inspectPdf() {
+      if (tool.id === "pdf-repair" && files[0]?.size > PDF_REPAIR_LIMITS.inputBytes) return;
       if (tool.id === "pdf-compare" || tool.id === "pdf-edit") return;
       if (
         files.length > 0 &&
@@ -1285,6 +1302,15 @@ export function DedicatedToolView({
       (!excelPreviewReady || isAnalyzingExcel || excelPreviewError || excelSelection.error)
     )
       return;
+    const repairRun = tool.id === "pdf-repair" ? new AbortController() : undefined;
+    if (repairRun) {
+      repairController.current?.abort();
+      repairController.current = repairRun;
+      setPdfRepairReport(null);
+      setRepairThumbnail("");
+      setDownloadUrl(null);
+      setOutputBlob(null);
+    }
     const markdownRun = tool.id === "pdf-to-markdown" ? new AbortController() : undefined;
     if (markdownRun) {
       markdownController.current?.abort();
@@ -1405,6 +1431,11 @@ export function DedicatedToolView({
       }
       currentImageRun = tool.manifest.category === "image" ? imageController.current : null;
       const output = await runLauncherTool(documentCore, tool.id, {
+        repairSignal: repairRun?.signal,
+        onRepairProgress: (percent) => {
+          if (repairRun && !repairRun.signal.aborted && repairRun === repairController.current)
+            setProgress(percent);
+        },
         imageSignal: currentImageRun?.signal,
         onImageProgress: (completed, total) => setImageBatchProgress(`${completed} / ${total}`),
         files: files.length > 0 ? files : [primaryFile],
@@ -1552,6 +1583,7 @@ export function DedicatedToolView({
           setReviewProgressStatus(info.message || `${info.progress}%`);
         },
       });
+      if (repairRun?.signal.aborted) return;
       if (redactionRun?.signal.aborted) return;
       if (ocrRun?.signal.aborted) return;
       if (excelRun?.signal.aborted) return;
@@ -1560,6 +1592,17 @@ export function DedicatedToolView({
       if (isTranslation && run !== translationRun.current) return;
       if (currentImageRun?.signal.aborted) return;
       const outputBlob = output.blob;
+      if (repairRun) {
+        const preview = await renderPdfPageToDataUrl(
+          new Uint8Array(await outputBlob.arrayBuffer()),
+          1,
+          1.2,
+          repairRun.signal,
+        );
+        if (repairRun.signal.aborted || repairRun !== repairController.current) return;
+        if (!preview) throw new ToolRunError("INVALID_INPUT", translate("repair.errorPreview"));
+        setRepairThumbnail(preview);
+      }
       const outName = output.fileName;
       const categoryKey = output.categoryKey;
       const imageSummary = output.imageResults
@@ -1638,6 +1681,7 @@ export function DedicatedToolView({
         categoryKey,
       });
     } catch (err) {
+      if (repairRun?.signal.aborted) return;
       if (excelRun?.signal.aborted) return;
       if (markdownRun?.signal.aborted) return;
       if (ocrRun?.signal.aborted) return;
@@ -1673,6 +1717,7 @@ export function DedicatedToolView({
       );
       setStatus("error");
     } finally {
+      if (repairRun === repairController.current) repairController.current = null;
       if (markdownRun === markdownController.current) markdownController.current = null;
       if (excelRun === excelController.current) excelController.current = null;
       if (ocrRun === ocrController.current) ocrController.current = null;
@@ -1681,6 +1726,10 @@ export function DedicatedToolView({
   }
 
   function handleReset() {
+    repairController.current?.abort();
+    repairController.current = null;
+    setPdfRepairReport(null);
+    setRepairThumbnail("");
     markdownController.current?.abort();
     markdownController.current = null;
     setMarkdownPageReports([]);
@@ -2768,6 +2817,14 @@ export function DedicatedToolView({
           onBack={onBack}
           onRunRepair={() => void handleExecute()}
           onReset={handleReset}
+          resultThumbnail={repairThumbnail}
+          onCancel={() => {
+            repairController.current?.abort();
+            repairController.current = null;
+            setStatus("idle");
+            setProgress(0);
+            setErrorMessage(null);
+          }}
         />
       </>
     );

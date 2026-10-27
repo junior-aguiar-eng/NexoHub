@@ -1,0 +1,25 @@
+caso,motor,saida,paginas,campo,anexos,titulo,tempo_ms,rss_observado_bytes,erro,original_preservado
+integro,baseline,gerada,2,,0,,33.23,135344128,,True
+integro,qpdf-12.2.0-wasm,gerada,2,Maria Silva,1,Relatório autoral R-C1,370.83,145797120,,True
+integro,r-c1,gerada,2,Maria Silva,1,Relatório autoral R-C1,11.27,148172800,,True
+prefixo,baseline,gerada,2,,0,,7.34,148545536,,True
+prefixo,qpdf-12.2.0-wasm,gerada,2,Maria Silva,1,Relatório autoral R-C1,23.72,153038848,,True
+prefixo,r-c1,gerada,2,Maria Silva,1,Relatório autoral R-C1,10.57,154288128,,True
+sem-eof,baseline,gerada,2,,0,,9.24,154857472,,True
+sem-eof,qpdf-12.2.0-wasm,gerada,2,Maria Silva,1,Relatório autoral R-C1,21.61,158810112,,True
+sem-eof,r-c1,gerada,2,Maria Silva,1,Relatório autoral R-C1,8.64,162164736,,True
+sem-startxref,baseline,gerada,2,,0,,8.62,162836480,,True
+sem-startxref,qpdf-12.2.0-wasm,recusada,,,,,24.52,165216256,[object Object],True
+sem-startxref,r-c1,gerada,2,Maria Silva,1,Relatório autoral R-C1,13.97,165154816,,True
+xref-incorreto,baseline,gerada,2,,0,,7.34,153202688,,True
+xref-incorreto,qpdf-12.2.0-wasm,recusada,,,,,38.95,155312128,[object Object],True
+xref-incorreto,r-c1,gerada,2,Maria Silva,1,Relatório autoral R-C1,6.78,157618176,,True
+sem-xref-trailer,baseline,gerada,2,,0,,10.98,157974528,,True
+sem-xref-trailer,qpdf-12.2.0-wasm,recusada,,,,,96.8,162037760,[object Object],True
+sem-xref-trailer,r-c1,recusada,,,,,1.59,162078720,PDF_REPAIR_UNSUPPORTED,True
+perda-fisica,baseline,recusada,,,,,3.76,162467840,CORRUPTED_DOCUMENT,True
+perda-fisica,qpdf-12.2.0-wasm,recusada,,,,,15.76,165965824,[object Object],True
+perda-fisica,r-c1,recusada,,,,,0.89,165974016,CORRUPTED_DOCUMENT,True
+texto-objetos,baseline,recusada,,,,,6.37,165974016,Cannot read properties of undefined (reading 'Pages'),True
+texto-objetos,qpdf-12.2.0-wasm,recusada,,,,,14.39,154013696,[object Object],True
+texto-objetos,r-c1,recusada,,,,,0.32,154030080,CORRUPTED_DOCUMENT,True

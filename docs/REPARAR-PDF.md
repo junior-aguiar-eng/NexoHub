@@ -1,6 +1,15 @@
 # Especificação e plano de melhoria: Reparar PDF (`pdf-repair`)
 
-## Estado verificado — 25/10/2026
+## Estado atual — 26/10/2026
+
+R-C1 implementado e validado localmente, sem commit, push ou deploy. Avaliação de qpdf,
+corpus, decisões e limites em [R-C1 — validação](R-C1-VALIDACAO.md). O motor conserva pdf-lib,
+remove a reconstrução regex, executa em worker cancelável e verifica a saída antes de oferecer
+prévia e download. qpdf não foi integrado. DOC-C2 continua fora do escopo.
+
+Os registros de 25/10 abaixo descrevem a baseline histórica, anterior ao R-C1.
+
+## Estado histórico — 25/10/2026
 
 O motor web está implementado e ativo no catálogo, integrado em `8ed2033`. Os seis testes
 do motor cobrem vazio, formato inválido, prefixo antes do cabeçalho, EOF/startxref ausentes
@@ -103,19 +112,19 @@ Em estrita consonância com o princípio de honestidade técnica do NexoHub:
 
 ---
 
-## 2. Cenários-alvo de recuperação (cobertura ampliada pendente no R-C1)
+## 2. Cenários originalmente propostos e cobertura atual
 
 1. **Tabela de Referências Cruzadas (`xref`) Danificada ou Dessincronizada:**
    - Sintoma: Erros de parser ("Invalid xref table", "Missing xref table").
-   - Ação: Varredura sequencial dos objetos indiretos (`\d+ \d+ obj`) para reconstruir a tabela xref do zero com os offsets exatos no arquivo.
+   - R-C1: leitura tolerante pelo parser e reserialização; sem reconstrução regex de objetos.
 2. **Trailer e Dicionário de Catálogo (`Root`) Ausentes ou Incompletos:**
    - Sintoma: Final do arquivo truncado (ausência de `startxref` ou `%%EOF`).
-   - Ação: Localização heurística do objeto de Catálogo (`/Type /Catalog`) e da árvore de páginas (`/Pages`), sintetizando um trailer canônico apontando para o Catálogo e re-emitindo a marca de fim de arquivo.
+   - R-C1: só aceita o grafo reconhecido pelo parser; associação ambígua de Info provoca recusa, sem síntese heurística de catálogo/trailer.
 3. **Streams de Objetos com Tamanho Declarado Incorreto (`/Length`):**
    - Sintoma: Erro de leitura de streams antes de atingir `endstream`.
-   - Ação: Identificação do marcador delimitador `endstream` real e correção do atributo `/Length`.
+   - Não há reparo próprio de `/Length` homologado; streams passam pelo parser e pelos limites documentados no relatório.
 4. **Objetos Indiretos Órfãos e Referências Circulares:**
-   - Ação: Purga de nós órfãos que causam laços infinitos em leitores convencionais e reconstrução do grafo acíclico de páginas.
+   - Não há purga/reconstrução própria homologada; divergência de contagem ou erro de leitura recusa a operação inteira.
 
 ---
 
@@ -125,16 +134,16 @@ Em estrita consonância com o princípio de honestidade técnica do NexoHub:
 - Arquivos severamente truncados em que a árvore de páginas (`/Pages`) ou os fluxos de conteúdo das páginas foram totalmente destruídos ou preenchidos por bytes nulos (`0x00`).
 - Arquivos que não são do formato PDF (ausência de cabeçalho `%PDF-` e sem objetos válidos identificáveis).
 
-O motor reconhece `EMPTY_DOCUMENT`, `SENHA_OBRIGATORIA` e `CORRUPTED_DOCUMENT`; o adapter
-apresenta os erros reconhecidos como entrada inválida, com mensagem pt-BR. Casos inesperados
-podem terminar com falha genérica, conforme o limite registrado acima. A precisão da
-classificação e a cobertura de perda física de conteúdo continuam pendentes no R-C1.
+O adapter apresenta erros estruturados com mensagens pt-BR, incluindo documento vazio,
+criptografado, corrompido, assinado, acima dos limites, não suportado, timeout e falha de
+verificação. Texto contendo `objetos` é recusado como documento corrompido; não recebe
+cabeçalho inventado. Não há recuperação de conteúdo fisicamente ausente.
 
 ---
 
 ## 4. Estratégia de Implementação Técnica
 
-- **Ambiente Web:** Mecanismo resiliente local baseado em leitura tolerante a falhas (via parser permissivo do `pdf-lib` em modo de reparo ou worker de reconstrução binária de objetos sem dependência externa adicional).
+- **Ambiente Web:** parser `pdf-lib` em worker cancelável, serialização do grafo carregado e reabertura independente em PDF.js, com limites e recusas conservadoras descritos no relatório R-C1.
 - **Ambiente Desktop (homologação pendente):** eventual reconstrução nativa depende do
   Capability/Document Core Port e de decisão própria. Esta entrega não implementa módulo Rust.
 
@@ -142,24 +151,46 @@ classificação e a cobertura de perda física de conteúdo continuam pendentes 
 
 ### R-C1 — Avaliar qpdf dentro da fase 17 existente
 
-**Estado:** melhoria do motor web existente, ainda não implementada. Aplicar Q-C0 e os
-[gates comuns](ROADMAP.md#regras-comuns-de-execução-e-aceite).
-**Arquivos previstos:** `apps/client/src/platform/pdf-repair-engine.ts`, teste próximo e worker
-cancelável, depois da escolha do runtime; conservar contratos e registro existentes.
+### Execução local autorizada — 26/10/2026
 
-- [ ] Ampliar as fixtures atuais com xref/trailer quebrado, streams com delimitadores aparentes,
+Base `bc3317b`, worktree `fix/auditoria-website` inicialmente limpo. Sem commit, push ou deploy;
+DOC-C2 fora do escopo. Sequência: avaliação isolada de qpdf/licenças/distribuições → corpus e
+baseline → regressões → motor conservador e worker cancelável → verificação independente,
+prévia da saída, gates locais e revisão única. Detalhes de funcionamento ficam na documentação,
+sem acrescentar explicações técnicas ao painel do cliente.
+
+Arquivos de apoio reconciliados: `pdf-repair-client.ts`, `pdf-repair.worker.ts`,
+`pdf-repair-verify.ts`, testes próximos, corpus `__fixtures__/r-c1/`, script isolado de comparação,
+runner/estado do painel e i18n. Conservam Tool Registry e contratos existentes; não criam runtime
+nativo/remoto nem instalação automática de qpdf.
+
+**Estado:** implementada e validada localmente em 26/10/2026, com os limites do relatório.
+Aplicados Q-C0 e os
+[gates comuns](ROADMAP.md#regras-comuns-de-execução-e-aceite).
+**Arquivos realizados:** motor, adapter, worker, verificador, runner, painel, i18n, testes,
+corpus e controladores isolados de avaliação; contratos e registro existentes conservados.
+
+- [x] Ampliar as fixtures atuais com xref/trailer quebrado, streams com delimitadores aparentes,
   arquivo truncado recuperável e perda irrecuperável. Conferir páginas, conteúdo, campos,
   anexos, metadados e original imutável; distinguir recuperação parcial de completa.
-- [ ] Comparar leitura tolerante atual com [qpdf](https://github.com/qpdf/qpdf) Apache-2.0;
+- [x] Comparar leitura tolerante atual com [qpdf](https://github.com/qpdf/qpdf) Apache-2.0;
   avaliar versão, licenças incorporadas, tamanho e manutenção do wrapper WASM separadamente.
   Um wrapper experimental não herda a maturidade do motor C++.
-- [ ] Substituir ou restringir o fallback atual baseado em regex sobre bytes: streams podem conter
+- [x] Substituir ou restringir o fallback atual baseado em regex sobre bytes: streams podem conter
   delimitadores aparentes; exigir parser/motor demonstrado, limites de bytes/páginas/objetos,
   orçamento de expansão e proteção contra loops. Não certificar robustez pela existência do código.
-- [ ] Se qpdf não demonstrar integração web local robusta, preservar o motor atual com limites
+- [x] Se qpdf não demonstrar integração web local robusta, preservar o motor atual com limites
   explícitos. Binário nativo ou execução remota depende de decisão de plataforma/privacidade;
   nenhuma substituição ou fallback oculto está autorizado por este plano.
-- [ ] Homologar a melhoria com saída reaberta por leitor independente, erros claros para perda
+- [x] Homologar a melhoria com saída reaberta por leitor independente, erros claros para perda
   física de conteúdo, worker cancelável e descarte de resultados atrasados. Acrescentar prévia
   verificável do resultado sem confundi-la com a miniatura original. qpdf não resolve edição textual, OCR ou PDF/A
   por si só; essas capacidades permanecem nos seus planos atuais.
+
+**Evidência:** oito entradas, 24 extrações comparativas, prova qpdf no navegador e controle
+nativo isolado. Cinco saídas R-C1 aceitas preservam os dados conferidos pelo leitor independente;
+três entradas são recusadas. Regex removida, limites aplicados, cancelamento e descarte testados.
+O orçamento após o parser não constitui limite rígido de heap. São 798 unitários aprovados,
+300 E2E na raiz (cinco pulados exclusivos de subpasta) e 193 E2E oficiais em `/hub/`;
+após corrigir visualmente a legenda da saída, 19 E2E focados repetidos em cada base.
+Check, builds e licenças aprovados. Relatório e logs em [R-C1](R-C1-VALIDACAO.md).

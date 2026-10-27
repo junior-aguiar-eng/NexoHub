@@ -1,0 +1,88 @@
+[
+  {
+    "case": "integro",
+    "pikepdf": "10.5.1",
+    "qpdf": "12.3.2",
+    "pages": 2,
+    "warnings": [],
+    "outputSha256": "d0a7837b8d6f056d6746a2d999836736e530c2da62a075a8e5763677a45bb58e",
+    "ms": 12.398399994708598
+  },
+  {
+    "case": "perda-fisica",
+    "pikepdf": "10.5.1",
+    "qpdf": "12.3.2",
+    "error": "<local>\\perda-fisica.pdf: unable to find trailer dictionary while recovering damaged file",
+    "ms": 2.348200010601431
+  },
+  {
+    "case": "prefixo",
+    "pikepdf": "10.5.1",
+    "qpdf": "12.3.2",
+    "pages": 2,
+    "warnings": [],
+    "outputSha256": "d0a7837b8d6f056d6746a2d999836736e530c2da62a075a8e5763677a45bb58e",
+    "ms": 15.738199988845736
+  },
+  {
+    "case": "sem-eof",
+    "pikepdf": "10.5.1",
+    "qpdf": "12.3.2",
+    "pages": 2,
+    "warnings": [],
+    "outputSha256": "d0a7837b8d6f056d6746a2d999836736e530c2da62a075a8e5763677a45bb58e",
+    "ms": 8.642799977678806
+  },
+  {
+    "case": "sem-startxref",
+    "pikepdf": "10.5.1",
+    "qpdf": "12.3.2",
+    "pages": 2,
+    "warnings": [
+      "<local>\\sem-startxref.pdf: file is damaged",
+      "<local>\\sem-startxref.pdf: can't find startxref",
+      "<local>\\sem-startxref.pdf: Attempting to reconstruct cross-reference table",
+      "<local>\\sem-startxref.pdf: ignoring object with impossibly large id 999999999"
+    ],
+    "outputSha256": "d0a7837b8d6f056d6746a2d999836736e530c2da62a075a8e5763677a45bb58e",
+    "ms": 30.331899994052947
+  },
+  {
+    "case": "sem-xref-trailer",
+    "pikepdf": "10.5.1",
+    "qpdf": "12.3.2",
+    "pages": 2,
+    "warnings": [
+      "<local>\\sem-xref-trailer.pdf: file is damaged",
+      "<local>\\sem-xref-trailer.pdf: can't find startxref",
+      "<local>\\sem-xref-trailer.pdf: Attempting to reconstruct cross-reference table",
+      "<local>\\sem-xref-trailer.pdf: ignoring object with impossibly large id 999999999",
+      "<local>\\sem-xref-trailer.pdf (trailer, offset 3031): empty object treated as null",
+      "<local>\\sem-xref-trailer.pdf (object 18 0, offset 3592): EOF after endobj",
+      "<local>\\sem-xref-trailer.pdf: unable to find trailer dictionary while recovering damaged file"
+    ],
+    "outputSha256": "aea8d02e6827cd3f8b8199342e3606589f9fb6967a5747153ba58c30d14ae582",
+    "ms": 23.414299997966737
+  },
+  {
+    "case": "texto-objetos",
+    "pikepdf": "10.5.1",
+    "qpdf": "12.3.2",
+    "error": "<local>\\texto-objetos.pdf: unable to find trailer dictionary while recovering damaged file",
+    "ms": 0.7092999876476824
+  },
+  {
+    "case": "xref-incorreto",
+    "pikepdf": "10.5.1",
+    "qpdf": "12.3.2",
+    "pages": 2,
+    "warnings": [
+      "<local>\\xref-incorreto.pdf: file is damaged",
+      "<local>\\xref-incorreto.pdf: can't find startxref",
+      "<local>\\xref-incorreto.pdf: Attempting to reconstruct cross-reference table",
+      "<local>\\xref-incorreto.pdf: ignoring object with impossibly large id 999999999"
+    ],
+    "outputSha256": "d0a7837b8d6f056d6746a2d999836736e530c2da62a075a8e5763677a45bb58e",
+    "ms": 27.197200048249215
+  }
+]

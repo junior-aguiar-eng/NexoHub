@@ -7,6 +7,24 @@ import { launcherTools } from "./data";
 
 describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () => {
   const documentCore = new BrowserDocumentCorePort();
+  it("reparo recusa arquivo grande sem lê-lo para prévia ou execução", async () => {
+    const file = new File(["x"], "grande.pdf", { type: "application/pdf" });
+    Object.defineProperty(file, "size", { value: 16 * 1024 * 1024 + 1 });
+    const read = vi.spyOn(file, "arrayBuffer");
+    const tool = launcherTools.find((tool) => tool.id === "pdf-repair");
+    if (!tool) throw new Error("Ferramenta ausente");
+    render(
+      <DedicatedToolView
+        tool={tool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[file]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Reparar PDF" }));
+    await screen.findByText(/ultrapassa os limites de reparo/);
+    expect(read).not.toHaveBeenCalled();
+  });
 
   const mockPdfOrganizeTool =
     launcherTools.find((t) => t.id === "pdf-organize") || launcherTools[0];

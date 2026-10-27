@@ -439,8 +439,20 @@ export const ptBR = {
   "repair.errorUnrecoverable":
     "Documento sem dados estruturais recuperáveis. O arquivo não possui objetos ou cabeçalho PDF legível.",
   "repair.tryAnother": "Tentar outro arquivo",
-  "repair.running": "Analisando sintaxe e reconstruindo páginas...",
-  "repair.ready": "Documento reconstruído com sucesso",
+  "repair.cancel": "Cancelar reparo",
+  "repair.cancelled": "Reparo cancelado.",
+  "repair.errorLimit": "Este arquivo ultrapassa os limites de reparo. Tente um arquivo menor.",
+  "repair.errorSigned": "Este arquivo tem uma assinatura digital e não será alterado.",
+  "repair.errorTimeout": "O reparo demorou mais que o permitido. Tente outro arquivo.",
+  "repair.errorPreview": "Não foi possível conferir o arquivo reparado. Tente outro arquivo.",
+  "repair.errorUnsupported":
+    "Não foi possível reparar este arquivo sem perder informações. O original foi preservado.",
+  "repair.resultPreviewTitle": "Arquivo reparado",
+  "repair.resultPreview": "Prévia da página 1 do arquivo reparado",
+  "repair.showResult": "Ver reparado",
+  "repair.showOriginal": "Ver original",
+  "repair.running": "Reparando arquivo...",
+  "repair.ready": "Arquivo pronto para baixar",
   "tool.pdfExtractImages.tagline": "As imagens do seu PDF, prontas para novos usos.",
   "tool.pdfExtractImages.title": "Extrair Imagens",
   "tool.pdfExtractImages.description":

@@ -1,0 +1,254 @@
+[
+  {
+    "package": "@neslinesli93/qpdf-wasm",
+    "version": "0.3.0",
+    "published": "2025-06-27T07:44:01.647Z",
+    "license": "ISC",
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/neslinesli93/qpdf-wasm.git"
+    },
+    "dist": {
+      "integrity": "sha512-ObyTmabopTMwN6AGwrEkmDbdmM5wnwlRdn9jnJYQ2KbBUPdPDcfNf1QkcWFOVD+qIgSqILz9nK51e22T+x+gkQ==",
+      "shasum": "fc32b0ef137f178d23e97f7ccca8285170165bd4",
+      "tarball": "https://registry.npmjs.org/@neslinesli93/qpdf-wasm/-/qpdf-wasm-0.3.0.tgz",
+      "fileCount": 5,
+      "unpackedSize": 1381642,
+      "signatures": [
+        {
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+          "sig": "MEQCIDogJd4sgrXPGSmY4I2UGQc1nb4PQNZdEe/zTbEIyfPtAiBpRNa2FSVWwy2cSXOqXRzIQ1q37DzD/vEitv3eWTAlJA=="
+        }
+      ]
+    },
+    "files": [
+      {
+        "name": "package/dist/qpdf.js",
+        "bytes": 43376,
+        "sha256": "c0e8fe62e0c3385dd8cb5d6b613f74d87a4138a3a3343e2add45a067a14d0884"
+      },
+      {
+        "name": "package/package.json",
+        "bytes": 487,
+        "sha256": "e87f0b04db1995cb94163a1c75f92a7a45cfecec07cdf32129c2d1def078ec18"
+      },
+      {
+        "name": "package/README.md",
+        "bytes": 2843,
+        "sha256": "315ec2aae2915200d40296c819e54c1244e939788742263a34bfdb9912710a86"
+      },
+      {
+        "name": "package/dist/qpdf.d.ts",
+        "bytes": 650,
+        "sha256": "4aa526a1f62ae2d8d159a800fd1c7a3b69525d15a94735fd4a974ac2ff8dbb00"
+      },
+      {
+        "name": "package/dist/qpdf.wasm",
+        "bytes": 1334286,
+        "sha256": "abd933f4ccace4f732999381b21aec8b7e3726f18a5b167fafd57f88dd440876"
+      }
+    ]
+  },
+  {
+    "package": "@jspawn/qpdf-wasm",
+    "version": "0.0.2",
+    "published": "2022-07-26T16:53:33.230Z",
+    "license": "Apache-2.0",
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/jsscheller/qpdf-wasm.git"
+    },
+    "dist": {
+      "integrity": "sha512-yPFv/0o5fvVEkJjEoXf393hfpZYUZfrRY8DaLq4AVw+KWZK0GiTVAecpYdxxVACbVKMHvBa+uHxtWlilYRiLzA==",
+      "shasum": "008eba4abe95fa45f8723bec57a679f3b241fef0",
+      "tarball": "https://registry.npmjs.org/@jspawn/qpdf-wasm/-/qpdf-wasm-0.0.2.tgz",
+      "fileCount": 7,
+      "unpackedSize": 1340135,
+      "signatures": [
+        {
+          "keyid": "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA",
+          "sig": "MEUCIQCdCWuyJUrv9TxD30sYIwvBIyooxPB1gBmiReGGspyF2QIgEiCvq9miawjmR3bAIkm47kmlm8RdKg8dZGMW75gdEvs="
+        }
+      ],
+      "npm-signature": "-----BEGIN PGP SIGNATURE-----\r\nVersion: OpenPGP.js v4.10.10\r\nComment: https://openpgpjs.org\r\n\r\nwsFzBAEBCAAGBQJi4BwNACEJED1NWxICdlZqFiEECWMYAoorWMhJKdjhPU1b\r\nEgJ2VmoGpw//VwDLmxrO3l4mV9aEX1G2BY1a3+uLTGmkU5FLzcTNJPeci/qc\r\nyDYaQAC81iaYyO09w8UTheQJjjK8kQHZb3YOuTIeAVfRhGZxDyOtAQWOfXwx\r\nMgLBmt0X6dS3nvm7E85mnfDHiB7L8tzhCzND4NC5tPr6VZI0dU8idu3EFqCj\r\nerjUP02XawoQn1LN42OxDH81kMrCCRMSBrXAocKmN7SES1LM3t5oEa71VDmS\r\nFGz+4PERvaqyOlNusHV1Kszw+5d9kgJBj5erFXV/QK5Jo0iRuyFuuqUh8EGx\r\nRl6qxTfFTJE5qLjouMHMZe6uwIIbVTptWfzh83z/65FPDlBikhXk43SzpH8T\r\nae5ai8OL2W/H0vUJ7XQoGmjgwU7udua0cokiT3tJJZ4LCTAtgTf3VescW1uE\r\nSjeWvhQwe4T9B+ZWv0qWZTIdPgwxO26ITPf/mjshDZqSe0YX8xB0l1GegE8e\r\n1JoFIjXw5TSB52K3g9Yj4uhHBr3u4eIcJyEyaSQyhln6UzFaO16MpAA0xZ7P\r\nj2+q+PZWRpg3VS5Vt4enLYW2/Uc9zokR8CpjYG3ngdnaC1kyVVgMk64OkAY+\r\nNDv/gW+lBwle9/z7SOaEx/k7Ol1oioff+u8wYCxm4OKUGDHi1fcgfrX31nxr\r\njQSecA7R3HSukSNIGYjx2s70YXrsWp2rAhw=\r\n=kbMw\r\n-----END PGP SIGNATURE-----\r\n"
+    },
+    "files": [
+      {
+        "name": "package/LICENSE",
+        "bytes": 11339,
+        "sha256": "7bc8081b7018b0b136347cb0f96b0c697936856f6d3cd6987812cf78828c79d6"
+      },
+      {
+        "name": "package/browser.js",
+        "bytes": 25,
+        "sha256": "546deb1e8cca0bb91dae3bba5f50c535fbe8764e5528399ffaca6070cb4b7ad2"
+      },
+      {
+        "name": "package/qpdf.js",
+        "bytes": 52796,
+        "sha256": "0129e94930f34f9b3b371db00427f9ae81502bc8be4873f9ad114fc353ae306f"
+      },
+      {
+        "name": "package/package.json",
+        "bytes": 416,
+        "sha256": "a6a8718a27a55918949d19dd6ff1ce8727732879325f2a1731726cdf5115d3c4"
+      },
+      {
+        "name": "package/README.md",
+        "bytes": 210,
+        "sha256": "6228e9a95f6c739d1a24c5fa850f93c0a8c1c8c35f1d36a7c648d3c403b68ed2"
+      },
+      {
+        "name": "package/qpdf.mjs",
+        "bytes": 702,
+        "sha256": "134336f7b6b4fcef183c866ff3ea81bb06c452e712aab5f2f4d6b151fbcddb75"
+      },
+      {
+        "name": "package/qpdf.wasm",
+        "bytes": 1274647,
+        "sha256": "cbd81a244d622a39e3cf16f2e589a9a0d7cc51f588d35b3dd6b425a677cc3f99"
+      }
+    ]
+  },
+  {
+    "package": "@lipoe/browser-qpdf",
+    "version": "0.3.1",
+    "published": "2026-10-08T13:20:15.939Z",
+    "license": "Apache-2.0",
+    "repository": null,
+    "dist": {
+      "shasum": "80863b58f06cc2ed47902e4bbca74fcb630c2722",
+      "tarball": "https://registry.npmjs.org/@lipoe/browser-qpdf/-/browser-qpdf-0.3.1.tgz",
+      "fileCount": 23,
+      "integrity": "sha512-GSnzqghUcZrtGY21DBGGh6etQH0aphJ+SlU8MDC0YTLwWDAigOSLX1sZcVfK5L58w2O3ktmE2jd0MbdWPsh+qA==",
+      "signatures": [
+        {
+          "sig": "MEYCIQCne/QcAwtigUJOIGpEaFYBA3TiZMz5PV34DzOIie2svQIhAKCPj5xizTc/nVcagtA2HNC72SZ6XuyYM8F7l28IT2hX",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        },
+        {
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+          "sig": "MEUCIAVNkDYB3DYjwSWJIxLslPWAjIJJCRYlVZ4KntRelLPvAiEA65X2pViVF3dJxoJR+r6za2IOEA/32iAMo1Yeb/qCyYo="
+        }
+      ],
+      "unpackedSize": 1374778
+    },
+    "files": [
+      {
+        "name": "package/LICENSE",
+        "bytes": 10349,
+        "sha256": "6d1d968fb225eca367cb7f0b8831ab012a35d92b547e945e17ef8e7b05c3e5cc"
+      },
+      {
+        "name": "package/THIRD-PARTY-NOTICES",
+        "bytes": 5292,
+        "sha256": "370246a8fd00d31ba5f236fafef1a375cbcc8ae96506fff5f47afff4abd88f82"
+      },
+      {
+        "name": "package/dist/codecs/browser.js",
+        "bytes": 4823,
+        "sha256": "e03dce1ef106f67c157226436f00512ab4d67f4a616806edfe6effb2d74aa234"
+      },
+      {
+        "name": "package/dist/codecs/errors.js",
+        "bytes": 1504,
+        "sha256": "bf7af14682229b5cf2b679e657aba2de0bf330d1a70738528f6027defb59e4eb"
+      },
+      {
+        "name": "package/dist/errors.js",
+        "bytes": 3158,
+        "sha256": "7082e2726b5c720b39b8b836bfa2519da71f9e8ca0740a8ae1c01546bf662c05"
+      },
+      {
+        "name": "package/dist/codecs/index.js",
+        "bytes": 1229,
+        "sha256": "e64eb094541bfbd096b7c2c101ec0d50b37b65ce2edcfd112d7c7b474a6c2140"
+      },
+      {
+        "name": "package/dist/index.js",
+        "bytes": 13602,
+        "sha256": "d565bc84286160ebeae9b17f72a9da0b7cd6a416cd31c9b2ba0121604a7e3a17"
+      },
+      {
+        "name": "package/dist/codecs/mask.js",
+        "bytes": 1466,
+        "sha256": "35c18b058432c0c02d60a552cd3b81fccd177657026af82f7ffa826736c0a3e6"
+      },
+      {
+        "name": "package/dist/qpdf-image-stream.js",
+        "bytes": 29142,
+        "sha256": "5e645e826d3e618fb69c80285521a0be2ed103cdc9d50990b2adbab48ff4c8bd"
+      },
+      {
+        "name": "package/dist/codecs/samples.js",
+        "bytes": 6100,
+        "sha256": "b8b87ee2e4929a405de9733416c215ac2a2a3d9d3f90966637e9358fede46cbc"
+      },
+      {
+        "name": "package/dist/codecs/support.js",
+        "bytes": 2673,
+        "sha256": "f9c340974c92af40a4135310cd2df1555773f8b91faf316ce2b7652419c1a183"
+      },
+      {
+        "name": "package/package.json",
+        "bytes": 1683,
+        "sha256": "abc1987039cc129110112afa8a682ff6da488d59cc221baea7c5bb0b252d9590"
+      },
+      {
+        "name": "package/README.md",
+        "bytes": 24035,
+        "sha256": "b865e23fe84f63e0b46fc82697e09ded2fdb5f2046aa28ac2604c6de6d0e3183"
+      },
+      {
+        "name": "package/dist/codecs/browser.d.ts",
+        "bytes": 2716,
+        "sha256": "d41573ca596f36142e688eba8457ab72f825e498399c0d2913e3016ffb756bb6"
+      },
+      {
+        "name": "package/dist/codecs/errors.d.ts",
+        "bytes": 1429,
+        "sha256": "97f2d754dc07d4d2d4abf98ce478472de02ca2ce400f5582bc27b783da44f44a"
+      },
+      {
+        "name": "package/dist/errors.d.ts",
+        "bytes": 2693,
+        "sha256": "02493ba6d1522724d0185c29a1641ab36ff6a5e6d3d36afdb8f46c0c6adeb130"
+      },
+      {
+        "name": "package/dist/codecs/index.d.ts",
+        "bytes": 1349,
+        "sha256": "7230ca7af5ae6d4baf27f60eacac61139027210657978af4cc7f31f7b16c9201"
+      },
+      {
+        "name": "package/dist/index.d.ts",
+        "bytes": 1675,
+        "sha256": "df8600f959f7c533cde468de96104b9a601108617cc310f78b3aba5114397057"
+      },
+      {
+        "name": "package/dist/codecs/mask.d.ts",
+        "bytes": 599,
+        "sha256": "fea4dd86ab9f3a3cd08dbf8471843936e1d57c73c91e18075bc1755631f34c9c"
+      },
+      {
+        "name": "package/dist/codecs/samples.d.ts",
+        "bytes": 1377,
+        "sha256": "a2d39bec73aab757a00b3bf115fc911a5f9baed12bdf004f07f04d09f2e2f7d1"
+      },
+      {
+        "name": "package/dist/codecs/support.d.ts",
+        "bytes": 1309,
+        "sha256": "da1c049942a9938e29ceb485c351a655bde789e7949431959dbf5e09eca10c1c"
+      },
+      {
+        "name": "package/dist/types.d.ts",
+        "bytes": 12513,
+        "sha256": "066c996ca817f954bec5670d164eb4c2216637b6869d94cbf516e40311c2864b"
+      },
+      {
+        "name": "package/dist/qpdf-image-stream.wasm",
+        "bytes": 1244062,
+        "sha256": "09c4bccfd1fe0453974640c3031db2d9a9afc5e43ec3f75ad79efe7972c08038"
+      }
+    ]
+  }
+]

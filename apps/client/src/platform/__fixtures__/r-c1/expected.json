@@ -1,0 +1,54 @@
+{
+  "license": "MPL-2.0",
+  "source": "Corpus autoral gerado por corpus.ts; dados fictícios",
+  "cases": [
+    {
+      "id": "integro",
+      "bytes": 4051,
+      "sha256": "5ac343de37fc40ca03f482e52bb3729416fc85a88c610eec2da55e7925dd4128",
+      "expected": "preservar_conteudo_campos_anexo_metadados"
+    },
+    {
+      "id": "prefixo",
+      "bytes": 4068,
+      "sha256": "dbcde10d45b632e47ad29420c09b9801c3a0cc1e7b7d2012ccc6412a649c2071",
+      "expected": "preservar_conteudo_campos_anexo_metadados"
+    },
+    {
+      "id": "sem-eof",
+      "bytes": 4046,
+      "sha256": "01ba2314e08fe7762bcc2a0f6c863413aaa4be1c2ec00d9ab1fef3166472b69e",
+      "expected": "preservar_conteudo_campos_anexo_metadados"
+    },
+    {
+      "id": "sem-startxref",
+      "bytes": 4031,
+      "sha256": "3328624e352ddb8015b00ac22fea40fcc65b3e50c5f07410dc18d0dd92aa2216",
+      "expected": "preservar_conteudo_campos_anexo_metadados"
+    },
+    {
+      "id": "xref-incorreto",
+      "bytes": 4051,
+      "sha256": "0c36fab81633c06ff76fd3dc46145887b7264bc3d09a19da2685111441ccfbdc",
+      "expected": "preservar_conteudo_campos_anexo_metadados"
+    },
+    {
+      "id": "sem-xref-trailer",
+      "bytes": 3592,
+      "sha256": "8293fc0ffeea8cba7cacd88d9e78442aed796e8c0f7340e191e2401f684c1f5b",
+      "expected": "PDF_REPAIR_UNSUPPORTED"
+    },
+    {
+      "id": "perda-fisica",
+      "bytes": 70,
+      "sha256": "8b84d2341cce8e534955acc33810ede1c16be85b7472d813a88964914a3d51e8",
+      "expected": "CORRUPTED_DOCUMENT"
+    },
+    {
+      "id": "texto-objetos",
+      "bytes": 23,
+      "sha256": "ac6a3aafea516e6065ddddc9cf9a2d94c6e4fa10c14490826bc95aa347cd6ffd",
+      "expected": "CORRUPTED_DOCUMENT"
+    }
+  ]
+}

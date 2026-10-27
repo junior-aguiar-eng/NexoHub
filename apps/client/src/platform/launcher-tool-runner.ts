@@ -66,7 +66,8 @@ import {
 } from "./pdf-engine";
 import { getPdfFormRevisionBytes, matchesPdfFormRevision, type PdfFormRevision } from "./pdf-form";
 import { redactBrowserPdf } from "./pdf-redaction-client";
-import { type PdfRepairReport, repairPdfDocument } from "./pdf-repair-engine";
+import { repairBrowserPdf } from "./pdf-repair-client";
+import { PDF_REPAIR_LIMITS, type PdfRepairReport } from "./pdf-repair-engine";
 import { compileScannedPagesToPdf, type ScannedPageItem } from "./scan-to-pdf-engine";
 
 export interface LauncherPage {
@@ -81,6 +82,8 @@ export interface LauncherInterval {
 }
 
 export interface LauncherToolInput {
+  readonly repairSignal?: AbortSignal;
+  readonly onRepairProgress?: (percent: number) => void;
   readonly editorSnapshot?: EditorSnapshot;
   readonly editorPage?: number;
   readonly editorPreviewOnly?: boolean;
@@ -414,10 +417,30 @@ async function executeTool(
       let bytes: Uint8Array;
       let report: PdfRepairReport;
       try {
-        const repairOutcome = await repairPdfDocument(new Uint8Array(await first.arrayBuffer()));
+        if (input.repairSignal?.aborted) throw new Error("OPERACAO_CANCELADA");
+        if (first.size > PDF_REPAIR_LIMITS.inputBytes) throw new Error("PDF_REPAIR_LIMIT");
+        const repairOutcome = await repairBrowserPdf(new Uint8Array(await first.arrayBuffer()), {
+          signal: input.repairSignal,
+          onProgress: input.onRepairProgress,
+        });
         bytes = repairOutcome.pdfBytes;
         report = repairOutcome.report;
       } catch (error) {
+        const code = error instanceof Error ? error.message : "";
+        if (code === "OPERACAO_CANCELADA")
+          throw new ToolRunError("CANCELLED", translate("repair.cancelled"));
+        if (code === "PDF_REPAIR_LIMIT" || code === "PDF_REPAIR_EXPANSION_LIMIT")
+          throw new ToolRunError("INVALID_INPUT", translate("repair.errorLimit"));
+        if (code === "PDF_REPAIR_SIGNED")
+          throw new ToolRunError("INVALID_INPUT", translate("repair.errorSigned"));
+        if (code === "PDF_REPAIR_TIMEOUT")
+          throw new ToolRunError("INVALID_INPUT", translate("repair.errorTimeout"));
+        if (code === "PDF_REPAIR_UNSUPPORTED")
+          throw new ToolRunError("INVALID_INPUT", translate("repair.errorUnsupported"));
+        if (code === "PDF_REPAIR_VERIFICATION" || code === "PDF_REPAIR_WORKER")
+          throw new ToolRunError("INVALID_INPUT", translate("repair.errorPreview"));
+        if (code.startsWith("PDF_REPAIR_"))
+          throw new ToolRunError("INVALID_INPUT", translate("repair.errorUnrecoverable"));
         if (error instanceof Error && error.message === "EMPTY_DOCUMENT") {
           throw new ToolRunError("INVALID_INPUT", translate("toolQuality.invalidDocument"));
         }

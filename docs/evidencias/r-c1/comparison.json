@@ -1,0 +1,440 @@
+{
+  "node": "v24.19.0",
+  "cases": [
+    {
+      "id": "integro",
+      "engine": "baseline",
+      "expected": true,
+      "inputSha256": "5ac343de37fc40ca03f482e52bb3729416fc85a88c610eec2da55e7925dd4128",
+      "actual": {
+        "pages": 2,
+        "field": null,
+        "attachments": 0,
+        "creation": "2026-10-27T00:47:33.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "e621a85268d506dfb4fb0254db70ad41d0a4294d68f5de3713dd9e9fdfcaea68",
+      "ms": 33.22679999999991,
+      "inputUnchanged": true,
+      "rssObservedBytes": 135344128
+    },
+    {
+      "id": "integro",
+      "engine": "qpdf-12.2.0-wasm",
+      "expected": true,
+      "inputSha256": "5ac343de37fc40ca03f482e52bb3729416fc85a88c610eec2da55e7925dd4128",
+      "exit": 0,
+      "actual": {
+        "pages": 2,
+        "field": "Maria Silva",
+        "attachments": 1,
+        "title": "Relatório autoral R-C1",
+        "author": "NexoHub — corpus de teste",
+        "creation": "2026-01-01T00:00:00.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "2f686bc568aade788f735c83028375ee83027167502cc72f0bc9dc9adadae05a",
+      "ms": 370.8341999999998,
+      "inputUnchanged": true,
+      "rssObservedBytes": 145797120
+    },
+    {
+      "id": "integro",
+      "engine": "r-c1",
+      "expected": true,
+      "inputSha256": "5ac343de37fc40ca03f482e52bb3729416fc85a88c610eec2da55e7925dd4128",
+      "actual": {
+        "pages": 2,
+        "field": "Maria Silva",
+        "attachments": 1,
+        "title": "Relatório autoral R-C1",
+        "author": "NexoHub — corpus de teste",
+        "creation": "2026-01-01T00:00:00.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "5ac343de37fc40ca03f482e52bb3729416fc85a88c610eec2da55e7925dd4128",
+      "ms": 11.27370000000019,
+      "inputUnchanged": true,
+      "rssObservedBytes": 148172800
+    },
+    {
+      "id": "prefixo",
+      "engine": "baseline",
+      "expected": true,
+      "inputSha256": "dbcde10d45b632e47ad29420c09b9801c3a0cc1e7b7d2012ccc6412a649c2071",
+      "actual": {
+        "pages": 2,
+        "field": null,
+        "attachments": 0,
+        "creation": "2026-10-27T00:47:33.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "e621a85268d506dfb4fb0254db70ad41d0a4294d68f5de3713dd9e9fdfcaea68",
+      "ms": 7.3431000000000495,
+      "inputUnchanged": true,
+      "rssObservedBytes": 148545536
+    },
+    {
+      "id": "prefixo",
+      "engine": "qpdf-12.2.0-wasm",
+      "expected": true,
+      "inputSha256": "dbcde10d45b632e47ad29420c09b9801c3a0cc1e7b7d2012ccc6412a649c2071",
+      "exit": 0,
+      "actual": {
+        "pages": 2,
+        "field": "Maria Silva",
+        "attachments": 1,
+        "title": "Relatório autoral R-C1",
+        "author": "NexoHub — corpus de teste",
+        "creation": "2026-01-01T00:00:00.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "2f686bc568aade788f735c83028375ee83027167502cc72f0bc9dc9adadae05a",
+      "ms": 23.722399999999652,
+      "inputUnchanged": true,
+      "rssObservedBytes": 153038848
+    },
+    {
+      "id": "prefixo",
+      "engine": "r-c1",
+      "expected": true,
+      "inputSha256": "dbcde10d45b632e47ad29420c09b9801c3a0cc1e7b7d2012ccc6412a649c2071",
+      "actual": {
+        "pages": 2,
+        "field": "Maria Silva",
+        "attachments": 1,
+        "title": "Relatório autoral R-C1",
+        "author": "NexoHub — corpus de teste",
+        "creation": "2026-01-01T00:00:00.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "5ac343de37fc40ca03f482e52bb3729416fc85a88c610eec2da55e7925dd4128",
+      "ms": 10.567800000000261,
+      "inputUnchanged": true,
+      "rssObservedBytes": 154288128
+    },
+    {
+      "id": "sem-eof",
+      "engine": "baseline",
+      "expected": true,
+      "inputSha256": "01ba2314e08fe7762bcc2a0f6c863413aaa4be1c2ec00d9ab1fef3166472b69e",
+      "actual": {
+        "pages": 2,
+        "field": null,
+        "attachments": 0,
+        "creation": "2026-10-27T00:47:33.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "e621a85268d506dfb4fb0254db70ad41d0a4294d68f5de3713dd9e9fdfcaea68",
+      "ms": 9.23720000000003,
+      "inputUnchanged": true,
+      "rssObservedBytes": 154857472
+    },
+    {
+      "id": "sem-eof",
+      "engine": "qpdf-12.2.0-wasm",
+      "expected": true,
+      "inputSha256": "01ba2314e08fe7762bcc2a0f6c863413aaa4be1c2ec00d9ab1fef3166472b69e",
+      "exit": 0,
+      "actual": {
+        "pages": 2,
+        "field": "Maria Silva",
+        "attachments": 1,
+        "title": "Relatório autoral R-C1",
+        "author": "NexoHub — corpus de teste",
+        "creation": "2026-01-01T00:00:00.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "2f686bc568aade788f735c83028375ee83027167502cc72f0bc9dc9adadae05a",
+      "ms": 21.609100000000126,
+      "inputUnchanged": true,
+      "rssObservedBytes": 158810112
+    },
+    {
+      "id": "sem-eof",
+      "engine": "r-c1",
+      "expected": true,
+      "inputSha256": "01ba2314e08fe7762bcc2a0f6c863413aaa4be1c2ec00d9ab1fef3166472b69e",
+      "actual": {
+        "pages": 2,
+        "field": "Maria Silva",
+        "attachments": 1,
+        "title": "Relatório autoral R-C1",
+        "author": "NexoHub — corpus de teste",
+        "creation": "2026-01-01T00:00:00.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "5ac343de37fc40ca03f482e52bb3729416fc85a88c610eec2da55e7925dd4128",
+      "ms": 8.64489999999978,
+      "inputUnchanged": true,
+      "rssObservedBytes": 162164736
+    },
+    {
+      "id": "sem-startxref",
+      "engine": "baseline",
+      "expected": true,
+      "inputSha256": "3328624e352ddb8015b00ac22fea40fcc65b3e50c5f07410dc18d0dd92aa2216",
+      "actual": {
+        "pages": 2,
+        "field": null,
+        "attachments": 0,
+        "creation": "2026-10-27T00:47:33.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "e621a85268d506dfb4fb0254db70ad41d0a4294d68f5de3713dd9e9fdfcaea68",
+      "ms": 8.619200000000092,
+      "inputUnchanged": true,
+      "rssObservedBytes": 162836480
+    },
+    {
+      "id": "sem-startxref",
+      "engine": "qpdf-12.2.0-wasm",
+      "expected": true,
+      "inputSha256": "3328624e352ddb8015b00ac22fea40fcc65b3e50c5f07410dc18d0dd92aa2216",
+      "exit": 2,
+      "error": "[object Object]",
+      "ms": 24.52260000000024,
+      "inputUnchanged": true,
+      "rssObservedBytes": 165216256
+    },
+    {
+      "id": "sem-startxref",
+      "engine": "r-c1",
+      "expected": true,
+      "inputSha256": "3328624e352ddb8015b00ac22fea40fcc65b3e50c5f07410dc18d0dd92aa2216",
+      "actual": {
+        "pages": 2,
+        "field": "Maria Silva",
+        "attachments": 1,
+        "title": "Relatório autoral R-C1",
+        "author": "NexoHub — corpus de teste",
+        "creation": "2026-01-01T00:00:00.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "5ac343de37fc40ca03f482e52bb3729416fc85a88c610eec2da55e7925dd4128",
+      "ms": 13.966699999999946,
+      "inputUnchanged": true,
+      "rssObservedBytes": 165154816
+    },
+    {
+      "id": "xref-incorreto",
+      "engine": "baseline",
+      "expected": true,
+      "inputSha256": "0c36fab81633c06ff76fd3dc46145887b7264bc3d09a19da2685111441ccfbdc",
+      "actual": {
+        "pages": 2,
+        "field": null,
+        "attachments": 0,
+        "creation": "2026-10-27T00:47:33.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "e621a85268d506dfb4fb0254db70ad41d0a4294d68f5de3713dd9e9fdfcaea68",
+      "ms": 7.337399999999889,
+      "inputUnchanged": true,
+      "rssObservedBytes": 153202688
+    },
+    {
+      "id": "xref-incorreto",
+      "engine": "qpdf-12.2.0-wasm",
+      "expected": true,
+      "inputSha256": "0c36fab81633c06ff76fd3dc46145887b7264bc3d09a19da2685111441ccfbdc",
+      "exit": 2,
+      "error": "[object Object]",
+      "ms": 38.94579999999996,
+      "inputUnchanged": true,
+      "rssObservedBytes": 155312128
+    },
+    {
+      "id": "xref-incorreto",
+      "engine": "r-c1",
+      "expected": true,
+      "inputSha256": "0c36fab81633c06ff76fd3dc46145887b7264bc3d09a19da2685111441ccfbdc",
+      "actual": {
+        "pages": 2,
+        "field": "Maria Silva",
+        "attachments": 1,
+        "title": "Relatório autoral R-C1",
+        "author": "NexoHub — corpus de teste",
+        "creation": "2026-01-01T00:00:00.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "5ac343de37fc40ca03f482e52bb3729416fc85a88c610eec2da55e7925dd4128",
+      "ms": 6.7775000000001455,
+      "inputUnchanged": true,
+      "rssObservedBytes": 157618176
+    },
+    {
+      "id": "sem-xref-trailer",
+      "engine": "baseline",
+      "expected": true,
+      "inputSha256": "8293fc0ffeea8cba7cacd88d9e78442aed796e8c0f7340e191e2401f684c1f5b",
+      "actual": {
+        "pages": 2,
+        "field": null,
+        "attachments": 0,
+        "creation": "2026-10-27T00:47:33.000Z",
+        "crop": {
+          "x": 5,
+          "y": 10,
+          "width": 280,
+          "height": 375
+        }
+      },
+      "outputSha256": "e621a85268d506dfb4fb0254db70ad41d0a4294d68f5de3713dd9e9fdfcaea68",
+      "ms": 10.979200000000219,
+      "inputUnchanged": true,
+      "rssObservedBytes": 157974528
+    },
+    {
+      "id": "sem-xref-trailer",
+      "engine": "qpdf-12.2.0-wasm",
+      "expected": true,
+      "inputSha256": "8293fc0ffeea8cba7cacd88d9e78442aed796e8c0f7340e191e2401f684c1f5b",
+      "exit": 2,
+      "error": "[object Object]",
+      "ms": 96.79790000000003,
+      "inputUnchanged": true,
+      "rssObservedBytes": 162037760
+    },
+    {
+      "id": "sem-xref-trailer",
+      "engine": "r-c1",
+      "expected": true,
+      "inputSha256": "8293fc0ffeea8cba7cacd88d9e78442aed796e8c0f7340e191e2401f684c1f5b",
+      "error": "PDF_REPAIR_UNSUPPORTED",
+      "ms": 1.594300000000203,
+      "inputUnchanged": true,
+      "rssObservedBytes": 162078720
+    },
+    {
+      "id": "perda-fisica",
+      "engine": "baseline",
+      "expected": false,
+      "inputSha256": "8b84d2341cce8e534955acc33810ede1c16be85b7472d813a88964914a3d51e8",
+      "error": "CORRUPTED_DOCUMENT",
+      "ms": 3.758100000000013,
+      "inputUnchanged": true,
+      "rssObservedBytes": 162467840
+    },
+    {
+      "id": "perda-fisica",
+      "engine": "qpdf-12.2.0-wasm",
+      "expected": false,
+      "inputSha256": "8b84d2341cce8e534955acc33810ede1c16be85b7472d813a88964914a3d51e8",
+      "exit": 2,
+      "error": "[object Object]",
+      "ms": 15.760800000000017,
+      "inputUnchanged": true,
+      "rssObservedBytes": 165965824
+    },
+    {
+      "id": "perda-fisica",
+      "engine": "r-c1",
+      "expected": false,
+      "inputSha256": "8b84d2341cce8e534955acc33810ede1c16be85b7472d813a88964914a3d51e8",
+      "error": "CORRUPTED_DOCUMENT",
+      "ms": 0.8908000000001266,
+      "inputUnchanged": true,
+      "rssObservedBytes": 165974016
+    },
+    {
+      "id": "texto-objetos",
+      "engine": "baseline",
+      "expected": false,
+      "inputSha256": "ac6a3aafea516e6065ddddc9cf9a2d94c6e4fa10c14490826bc95aa347cd6ffd",
+      "error": "Cannot read properties of undefined (reading 'Pages')",
+      "ms": 6.366500000000087,
+      "inputUnchanged": true,
+      "rssObservedBytes": 165974016
+    },
+    {
+      "id": "texto-objetos",
+      "engine": "qpdf-12.2.0-wasm",
+      "expected": false,
+      "inputSha256": "ac6a3aafea516e6065ddddc9cf9a2d94c6e4fa10c14490826bc95aa347cd6ffd",
+      "exit": 2,
+      "error": "[object Object]",
+      "ms": 14.388899999999921,
+      "inputUnchanged": true,
+      "rssObservedBytes": 154013696
+    },
+    {
+      "id": "texto-objetos",
+      "engine": "r-c1",
+      "expected": false,
+      "inputSha256": "ac6a3aafea516e6065ddddc9cf9a2d94c6e4fa10c14490826bc95aa347cd6ffd",
+      "error": "CORRUPTED_DOCUMENT",
+      "ms": 0.3162999999999556,
+      "inputUnchanged": true,
+      "rssObservedBytes": 154030080
+    }
+  ],
+  "scope": "Node/WASM isolado; RSS inclui Vite e verificador, não é memória exclusiva do motor.",
+  "baselineGit": "bc3317b:apps/client/src/platform/pdf-repair-engine.ts",
+  "measurement": "Tempos exploratórios; processo Node compartilhado, RSS observado antes/depois e não pico amostrado. Não é memória exclusiva de cada motor. Primeira chamada qpdf inclui compilação WASM."
+}

@@ -1,0 +1,52 @@
+[
+  {
+    "id": "integro",
+    "reader": "pikepdf 10.5.1 / qpdf 12.3.2",
+    "pages": 2,
+    "field": "Maria Silva",
+    "attachments": 1,
+    "attachmentSha256": "09684b36661272072167790648a66b87fbaa961a55bec22c8835e681a16a9f0e",
+    "title": "Relatório autoral R-C1",
+    "warnings": []
+  },
+  {
+    "id": "prefixo",
+    "reader": "pikepdf 10.5.1 / qpdf 12.3.2",
+    "pages": 2,
+    "field": "Maria Silva",
+    "attachments": 1,
+    "attachmentSha256": "09684b36661272072167790648a66b87fbaa961a55bec22c8835e681a16a9f0e",
+    "title": "Relatório autoral R-C1",
+    "warnings": []
+  },
+  {
+    "id": "sem-eof",
+    "reader": "pikepdf 10.5.1 / qpdf 12.3.2",
+    "pages": 2,
+    "field": "Maria Silva",
+    "attachments": 1,
+    "attachmentSha256": "09684b36661272072167790648a66b87fbaa961a55bec22c8835e681a16a9f0e",
+    "title": "Relatório autoral R-C1",
+    "warnings": []
+  },
+  {
+    "id": "sem-startxref",
+    "reader": "pikepdf 10.5.1 / qpdf 12.3.2",
+    "pages": 2,
+    "field": "Maria Silva",
+    "attachments": 1,
+    "attachmentSha256": "09684b36661272072167790648a66b87fbaa961a55bec22c8835e681a16a9f0e",
+    "title": "Relatório autoral R-C1",
+    "warnings": []
+  },
+  {
+    "id": "xref-incorreto",
+    "reader": "pikepdf 10.5.1 / qpdf 12.3.2",
+    "pages": 2,
+    "field": "Maria Silva",
+    "attachments": 1,
+    "attachmentSha256": "09684b36661272072167790648a66b87fbaa961a55bec22c8835e681a16a9f0e",
+    "title": "Relatório autoral R-C1",
+    "warnings": []
+  }
+]

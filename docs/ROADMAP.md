@@ -49,7 +49,7 @@ para relatórios de auditoria ou planos novos.
 | 9 | OCR-C1: OCR medido e preparação de digitalizações | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#ocr-c1--ocr-medido-e-preparação-compartilhada-com-o-scanner) | Entrega local: corpus, cancelamento e PDF misto; candidato OpenCV reprovado para integração. DOC-C2 não iniciado, fora do escopo desta entrega |
 | 10 | XL-C1/MD-C1: tabelas e ordem de leitura mais controláveis | [XL-C1](XL-C1.md), [MD-C1](MD-C1.md) e Estabilização | XL-C1 entregue localmente; MD-C1 entregue localmente: leitura revisável, tabelas, relatório por página e OCR explícito. Comparação Camelot/Docling concluída isoladamente; integração condicionada a decisão de runtime |
 | 11 | IM-C4: qualidade de exportação e AVIF; DOC-C3: paginação HTML; TR-C1: tradução | Respectivos planos acima | Qualidade de exportação IM-C4 entregue; AVIF/DOC-C3 condicionados; TR-C1 deve anteceder qualquer declaração de licença comercial do tradutor |
-| 12 | R-C1: avaliar qpdf para Reparar PDF | [Reparar PDF](REPARAR-PDF.md#complementação-do-motor--24102026) | Avaliação qpdf pendente; motor web existente preservado na integração |
+| 12 | R-C1: avaliar qpdf para Reparar PDF | [Reparar PDF](REPARAR-PDF.md#complementação-do-motor--24102026) | Entrega local validada: qpdf avaliado sem integração, regex removida, worker cancelável e saída verificada; limites em [R-C1](R-C1-VALIDACAO.md). Homologação Windows separada |
 
 ### Regras comuns de execução e aceite
 

@@ -1,0 +1,53 @@
+{
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+  "cases": [
+    {
+      "id": "integro",
+      "exit": 0,
+      "ms": 61.80000001192093,
+      "outputBytes": 3738
+    },
+    {
+      "id": "prefixo",
+      "exit": 0,
+      "ms": 56.5,
+      "outputBytes": 3738
+    },
+    {
+      "id": "sem-eof",
+      "exit": 0,
+      "ms": 61.69999998807907,
+      "outputBytes": 3738
+    },
+    {
+      "id": "sem-startxref",
+      "exit": 2,
+      "bytes": null,
+      "ms": 37.5
+    },
+    {
+      "id": "xref-incorreto",
+      "exit": 2,
+      "bytes": null,
+      "ms": 42.39999997615814
+    },
+    {
+      "id": "sem-xref-trailer",
+      "exit": 2,
+      "bytes": null,
+      "ms": 44.19999998807907
+    },
+    {
+      "id": "perda-fisica",
+      "exit": 2,
+      "bytes": null,
+      "ms": 39.10000002384186
+    },
+    {
+      "id": "texto-objetos",
+      "exit": 2,
+      "bytes": null,
+      "ms": 37.69999998807907
+    }
+  ]
+}

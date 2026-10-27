@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PdfRepairPanel } from "./PdfRepairPanel";
 
@@ -33,6 +33,43 @@ describe("PdfRepairPanel", () => {
     expect(screen.getByText("1 de 2 páginas recuperadas")).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Baixar PDF Reparado" })).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Reparar PDF" })).not.toBeInTheDocument();
+  });
+  it("identifica nome e tamanho da saída na prévia reparada e restaura os do original ao alternar", () => {
+    render(
+      <PdfRepairPanel
+        {...resultProps}
+        thumbnail="data:image/png;base64,original"
+        resultThumbnail="data:image/png;base64,reparado"
+      />,
+    );
+    const document = within(screen.getByRole("region", { name: "Área do documento" }));
+    expect(document.getByText("reparado.pdf")).toBeVisible();
+    expect(document.getByText("800 B")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Ver original" }));
+    expect(document.getByText("original.pdf")).toBeVisible();
+    expect(document.getByText("1 KB")).toBeVisible();
+  });
+  it("nova saída volta à prévia reparada sem manter a escolha do original anterior", () => {
+    const view = render(
+      <PdfRepairPanel
+        {...resultProps}
+        thumbnail="data:image/png;base64,original"
+        resultThumbnail="data:image/png;base64,primeiro"
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Ver original" }));
+    expect(screen.getByRole("img")).toHaveAttribute("src", "data:image/png;base64,original");
+    view.rerender(
+      <PdfRepairPanel
+        {...resultProps}
+        thumbnail="data:image/png;base64,outro"
+        resultThumbnail="data:image/png;base64,segundo"
+      />,
+    );
+    expect(screen.getByAltText("Prévia da página 1 do arquivo reparado")).toHaveAttribute(
+      "src",
+      "data:image/png;base64,segundo",
+    );
   });
   it("esconde o download anterior ao receber um erro e anuncia a falha", () => {
     const { rerender } = render(<PdfRepairPanel {...resultProps} />);

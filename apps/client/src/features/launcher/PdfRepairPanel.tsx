@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Download, FileText, RefreshCw } from "lucide-react";
-import { useId } from "react";
+import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import type { PdfRepairReport } from "@/platform/pdf-repair-engine";
@@ -17,6 +17,8 @@ interface PdfRepairPanelProps {
   readonly outputFileName: string;
   /** Miniatura do arquivo original, não da saída reparada. */
   readonly thumbnail?: string;
+  readonly resultThumbnail?: string;
+  readonly onCancel?: () => void;
   readonly onBack?: () => void;
   readonly onRunRepair: () => void;
   readonly onReset: () => void;
@@ -39,11 +41,18 @@ export function PdfRepairPanel({
   downloadUrl,
   outputFileName,
   thumbnail,
+  resultThumbnail,
+  onCancel,
   onBack,
   onRunRepair,
   onReset,
 }: PdfRepairPanelProps) {
   const titleId = useId();
+  const [showOriginal, setShowOriginal] = useState(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cada nova saída inicia na prévia reparada.
+  useEffect(() => {
+    setShowOriginal(false);
+  }, [resultThumbnail]);
   const state = errorMessage
     ? "error"
     : isRunning
@@ -52,6 +61,9 @@ export function PdfRepairPanel({
         ? "success"
         : "idle";
   const ready = state === "success";
+  const showingResult = ready && Boolean(resultThumbnail) && !showOriginal;
+  const previewFileName = showingResult ? outputFileName : fileName;
+  const previewFileSize = showingResult && report ? report.repairedSize : fileSizeBytes;
   const progress = Number.isFinite(progressPercent)
     ? Math.min(100, Math.max(0, progressPercent))
     : 0;
@@ -107,6 +119,15 @@ export function PdfRepairPanel({
               </>
             ) : ready && report ? (
               <>
+                {resultThumbnail && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setShowOriginal((value) => !value)}
+                  >
+                    {translate(showOriginal ? "repair.showResult" : "repair.showOriginal")}
+                  </Button>
+                )}
                 <p className="pdf-repair-page-count">
                   {translate("repair.pagesSaved")
                     .replace("{count}", String(report.recoveredPages))
@@ -178,19 +199,32 @@ export function PdfRepairPanel({
               <RefreshCw size={16} aria-hidden="true" />
               <span>{translate("repair.tryAnother")}</span>
             </Button>
+            {isRunning && onCancel && (
+              <Button type="button" variant="secondary" onClick={onCancel}>
+                {translate("repair.cancel")}
+              </Button>
+            )}
           </>
         }
       >
         <figure className="pdf-repair-original">
           <figcaption>
-            <h2>{translate("repair.original")}</h2>
-            <p className="pdf-repair-file-name" title={fileName}>
-              {fileName}
+            <h2>
+              {translate(
+                ready && resultThumbnail && !showOriginal
+                  ? "repair.resultPreviewTitle"
+                  : "repair.original",
+              )}
+            </h2>
+            <p className="pdf-repair-file-name" title={previewFileName}>
+              {previewFileName}
             </p>
-            <p>{formatBytes(fileSizeBytes)}</p>
+            <p>{formatBytes(previewFileSize)}</p>
           </figcaption>
           <div className="pdf-repair-original-sheet">
-            {thumbnail ? (
+            {ready && resultThumbnail && !showOriginal ? (
+              <img src={resultThumbnail} alt={translate("repair.resultPreview")} />
+            ) : thumbnail ? (
               <img
                 src={thumbnail}
                 alt={translate("repair.originalPreview").replace("{file}", fileName)}

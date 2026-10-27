@@ -252,7 +252,12 @@ Promise<Blob>`. Histórico guarda comandos, não cópias completas de imagens.
 
 ### IM-C4 — Formatos e qualidade de exportação, depois da interação
 
-**Estado:** resultados/perfis entregues; AVIF avaliado em prova externa, sem dependência ou anúncio no produto. Faltam dispositivos reais, corpus ampliado, memória e cadeia de licenças do codec.
+**Estado:** resultados/perfis entregues; AVIF com avaliação isolada ampliada em Windows,
+sem dependência ou anúncio no produto. Corpus/alpha, alocações WASM, cancelamento e fontes
+de licença medidos em 26–27/10. Permanecem dispositivos adicionais, cobertura dos limites/lotes
+e avisos/revisão do build a redistribuir; checkbox integral continua pendente.
+Evidências e decisão em [IM-C4 — AVIF](../../IM-C4-AVIF.md), base `fc24a3b` limpa após commit
+DOC-C4 autorizado. Avaliação subsequente sem commit/push/deploy; DOC-C2 fora do escopo.
 
 **Modificar:** `ImageCompressPanel.tsx`, `ImageConvertPanel.tsx`, `ImageResizePanel.tsx`,
 `ImageRotatePanel.tsx`, `ImageWatermarkPanel.tsx`, `platform/image-engine.ts`, `image-job.ts`,

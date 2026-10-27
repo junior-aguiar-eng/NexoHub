@@ -1,0 +1,664 @@
+{
+  "measuredAtUtc": "2026-10-27T03:13:34.171410+00:00",
+  "packages": [
+    {
+      "package": "@jsquash/avif",
+      "version": "2.1.1",
+      "published": "2025-05-20T14:10:44.668Z",
+      "latestObserved": "2.1.1",
+      "license": "Apache-2.0",
+      "gitHead": "b7fa9ac9ec02f224847ad23d19d115f9e296a368",
+      "dist": {
+        "integrity": "sha512-LMRxd0fMgfCLtobDh0/sFYJMMiRJTNYSEEWvRDKXlAeZ08t3gI5V+1thIT0XjXJ+SVG7Zug9B0XPyx0Ti5VRNA==",
+        "shasum": "600c77158363220e2f0dc4f6f72ece7e604231bf",
+        "tarball": "https://registry.npmjs.org/@jsquash/avif/-/avif-2.1.1.tgz",
+        "fileCount": 28,
+        "unpackedSize": 8360482,
+        "signatures": [
+          {
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+            "sig": "MEQCIBZbqoUGOurolFIHi+tb3PI3lI2ANRb5ODsyLdw0Yzn/AiB7dF1QjjhVOAlw/6SxrWx7EQcf6mc9KlmAhoiwSQP7Hw=="
+          }
+        ]
+      },
+      "tarSha256": "b6c6204b63f9cb17aac7d6ee92b8a4aeba2403dccd49ffc9a93b778923049b5b",
+      "files": [
+        {
+          "name": "LICENSE",
+          "bytes": 11343,
+          "sha256": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20"
+        },
+        {
+          "name": "codec/dec/avif_dec.js",
+          "bytes": 35029,
+          "sha256": "65d0fd2b2e415bf2712c329694dc2bc257fc54f02572c29d5c46212ae6dc6c3c"
+        },
+        {
+          "name": "codec/enc/avif_enc_mt.js",
+          "bytes": 54909,
+          "sha256": "b2fbada547e79de2b436a63c5eafcd000f169a6a2e6fc02b80ab8e8926db6ed9"
+        },
+        {
+          "name": "codec/enc/avif_enc.js",
+          "bytes": 39621,
+          "sha256": "c6805e62cae5c1b9870fcc0448437da9e4edfc58c3da264af52361281082c63c"
+        },
+        {
+          "name": "decode.js",
+          "bytes": 1602,
+          "sha256": "a459aad75db44a7e2834b954539de55e90a83e0f953d80129d24e2d2d47db1e5"
+        },
+        {
+          "name": "encode.js",
+          "bytes": 3554,
+          "sha256": "b12efc4bf99688b9a203e78db5ec0411653b195ecb8c84ad1c2cdbe724ac60d5"
+        },
+        {
+          "name": "index.js",
+          "bytes": 98,
+          "sha256": "281f1d048db337aaa2412503423b2ca99eeb8ec104b471618ee3845930a27688"
+        },
+        {
+          "name": "meta.js",
+          "bytes": 410,
+          "sha256": "d062b5f127754c61cebd2a9bf3ad381ad06494502eb931636561132c207a8570"
+        },
+        {
+          "name": "codec/pre.js",
+          "bytes": 847,
+          "sha256": "b4d7da800804a2390eefa7805bb5f4e20cf349681334eb9a1715d2c58a1822b2"
+        },
+        {
+          "name": "utils.js",
+          "bytes": 1272,
+          "sha256": "e71535eeee820d68b68ece7c8af761c39f3ddec93d3d957d2f83b19191339e0d"
+        },
+        {
+          "name": "package.json",
+          "bytes": 1025,
+          "sha256": "fcde112c2ab130ee823226f9a46e85ee8ee26352b90aced3a120aed7044479e1"
+        },
+        {
+          "name": "CHANGELOG.md",
+          "bytes": 2097,
+          "sha256": "eda6b8ef6ba7ad863665ebfd81606fee8f76278327010b0900bf949da2a7acc1"
+        },
+        {
+          "name": "codec/dec/Readme.md",
+          "bytes": 285,
+          "sha256": "12117553727f571c17b5b551cb3c4c9ec60279a27dd92f74471dc24b894d845a"
+        },
+        {
+          "name": "codec/enc/README.md",
+          "bytes": 627,
+          "sha256": "93ff8a122fa59e7e4c14c6d04b435309adc07e94066a3ccab172c5dae8e43cf5"
+        },
+        {
+          "name": "README.md",
+          "bytes": 4314,
+          "sha256": "f6dc4102258da7146c0435cec497bf6e1e65483990b930663f52d73ce020f227"
+        },
+        {
+          "name": "codec/enc/avif_enc_mt.worker.mjs",
+          "bytes": 2057,
+          "sha256": "89a64cae14ec07dec00cdd6df943fad039501e9eef1748fb1504508d4252bafe"
+        },
+        {
+          "name": "codec/dec/avif_dec.d.ts",
+          "bytes": 470,
+          "sha256": "545ea797bf3b337008416f79347b7b214792e43335bb7be4bac161c6850ffb8d"
+        },
+        {
+          "name": "codec/enc/avif_enc_mt.d.ts",
+          "bytes": 38,
+          "sha256": "9cda2654f286944eeaff6025b64fe034e242038ffdc77a7a2c509048d6543f8c"
+        },
+        {
+          "name": "codec/enc/avif_enc.d.ts",
+          "bytes": 644,
+          "sha256": "7d5ca1c7decbecff45fe0b7efdef74f08729514554aff119c5df0755151c6943"
+        },
+        {
+          "name": "decode.d.ts",
+          "bytes": 1110,
+          "sha256": "36423ba96b798804c7d7ec438db2c87eb83c05e8d740079d0bc5eff45e33c9c5"
+        },
+        {
+          "name": "emscripten-types.d.ts",
+          "bytes": 4086,
+          "sha256": "acc5de7ea6c944da8709c50a8ea0d7bb0a2c2a62db61c6f1dc1f248e876b1b40"
+        },
+        {
+          "name": "encode.d.ts",
+          "bytes": 1360,
+          "sha256": "ef011bf658c19bb3d6e4eacf475d6b2dbbf6ec4e2c5abbdee476db65920c106a"
+        },
+        {
+          "name": "index.d.ts",
+          "bytes": 133,
+          "sha256": "3878cfb0f7c5dcfd6e6bce4d37719ed11318a359d362acfd4305d0082250f98b"
+        },
+        {
+          "name": "meta.d.ts",
+          "bytes": 1097,
+          "sha256": "672ddd4e0ba48e1aabf75fc2bd741bc6d9f8cd3546473be9d57be03541b00df1"
+        },
+        {
+          "name": "utils.d.ts",
+          "bytes": 987,
+          "sha256": "8babb431007e8a980ad7719adaf6ae76979cae50ca1014c925f87e7bcb16012e"
+        },
+        {
+          "name": "codec/dec/avif_dec.wasm",
+          "bytes": 1170930,
+          "sha256": "5c35dde23dfd862088a49a6b8a9fe81f9f9a1a46aaa27de7efd7baa7611c4b47"
+        },
+        {
+          "name": "codec/enc/avif_enc_mt.wasm",
+          "bytes": 3534665,
+          "sha256": "202d7ec9fb7d658df7cbf17fd85d83da724ac9551818c2d5161c858353a683a4"
+        },
+        {
+          "name": "codec/enc/avif_enc.wasm",
+          "bytes": 3485872,
+          "sha256": "d9f2a95164362af48558d176e619becfd49dd97b50b86c679b47100860522b3d"
+        }
+      ]
+    },
+    {
+      "package": "@jsquash/jpeg",
+      "version": "1.6.0",
+      "published": "2025-05-12T15:02:43.715Z",
+      "latestObserved": "1.6.0",
+      "license": "Apache-2.0",
+      "gitHead": "1f62015f53e28bd18b2d7c8a3ca3326577efc445",
+      "dist": {
+        "integrity": "sha512-zwN46Awh1VM6gXlIcALwb5WzqK5H2e6+Awcs1QP8AvS8ohsK/sbE4esvmH4jhlhW7+CgiUUww66vg0aTnlSIMA==",
+        "shasum": "45474ce6d5b6165740d135c7bdf36dee9ba8618e",
+        "tarball": "https://registry.npmjs.org/@jsquash/jpeg/-/jpeg-1.6.0.tgz",
+        "fileCount": 23,
+        "unpackedSize": 530668,
+        "signatures": [
+          {
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+            "sig": "MEYCIQCITkTOkIjZu738PpJKe0JpmPOznhjFt3Z9FN4+fIMdfwIhALiTw2uyhsNe1PcbmrPEG3X8MHoOxCqeNUcbn1xTgSUh"
+          }
+        ]
+      },
+      "tarSha256": "b546f01dce888337bf132c5113b78a91a8ad76c1fe54740b2632546dda3b41b8",
+      "files": [
+        {
+          "name": "LICENSE",
+          "bytes": 11343,
+          "sha256": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20"
+        },
+        {
+          "name": "decode.js",
+          "bytes": 1597,
+          "sha256": "399ae5ee673223c43d68727192eac9545796a031710608c950381b33c1df6429"
+        },
+        {
+          "name": "encode.js",
+          "bytes": 1623,
+          "sha256": "14dd2fd61c1ce1f1552d217b3bb353faa1c593ff9ad73f4a8ff3830c03ebc4fa"
+        },
+        {
+          "name": "index.js",
+          "bytes": 98,
+          "sha256": "281f1d048db337aaa2412503423b2ca99eeb8ec104b471618ee3845930a27688"
+        },
+        {
+          "name": "meta.js",
+          "bytes": 683,
+          "sha256": "f1c1f3cd95d3a03de8e87b59e12aaf4f2d9a16a0b20531373d9164c26ca84fce"
+        },
+        {
+          "name": "codec/dec/mozjpeg_dec.js",
+          "bytes": 36057,
+          "sha256": "a6836b2d03d4fdda64b4aef380e6298d7421c070e7e1e4cf13ec129df7aa0b5e"
+        },
+        {
+          "name": "codec/enc/mozjpeg_enc.js",
+          "bytes": 38422,
+          "sha256": "93d3b28a4c9d3278acbbe0e23ff244ec3a6bfb13e51647b87eea311a8d747694"
+        },
+        {
+          "name": "codec/pre.js",
+          "bytes": 847,
+          "sha256": "b4d7da800804a2390eefa7805bb5f4e20cf349681334eb9a1715d2c58a1822b2"
+        },
+        {
+          "name": "utils.js",
+          "bytes": 1272,
+          "sha256": "e71535eeee820d68b68ece7c8af761c39f3ddec93d3d957d2f83b19191339e0d"
+        },
+        {
+          "name": "package.json",
+          "bytes": 916,
+          "sha256": "7b1e0578e6c3361393a8dc3873454e6b93fdc309911bad33bd911a70092ec783"
+        },
+        {
+          "name": "CHANGELOG.md",
+          "bytes": 1489,
+          "sha256": "c88d643718550c60b3cf68eb7a4ad7a6e0178204684470ea780caf7e37dc54b6"
+        },
+        {
+          "name": "codec/LICENSE.codec.md",
+          "bytes": 5208,
+          "sha256": "8213556ea36ce3a0f2883db06238463e2452fdad68e3d2e2e4ace2189477a37e"
+        },
+        {
+          "name": "README.md",
+          "bytes": 3705,
+          "sha256": "fabfec0ca740c2b7535014cad31b6b7801ff17dcdd31ef1a7120903da7733627"
+        },
+        {
+          "name": "decode.d.ts",
+          "bytes": 899,
+          "sha256": "7ab8480725d27454361813ec3cccffb7eac188df92a712fc8e7db826787d48ca"
+        },
+        {
+          "name": "emscripten-types.d.ts",
+          "bytes": 4086,
+          "sha256": "acc5de7ea6c944da8709c50a8ea0d7bb0a2c2a62db61c6f1dc1f248e876b1b40"
+        },
+        {
+          "name": "encode.d.ts",
+          "bytes": 1114,
+          "sha256": "30afa216ca7fc03e4e38a2edf4457e6e01d791ac003c4da48cd93973706959c6"
+        },
+        {
+          "name": "index.d.ts",
+          "bytes": 133,
+          "sha256": "3878cfb0f7c5dcfd6e6bce4d37719ed11318a359d362acfd4305d0082250f98b"
+        },
+        {
+          "name": "meta.d.ts",
+          "bytes": 1127,
+          "sha256": "532fc1c4fa69d08f0453abc2632633ce9f5d9ae19152fe198a91d7fb639ed9c2"
+        },
+        {
+          "name": "codec/dec/mozjpeg_dec.d.ts",
+          "bytes": 247,
+          "sha256": "11c64b138c5974db9ddaa3003e9d7758972277d3f7c35d98be48c796e3c64f57"
+        },
+        {
+          "name": "codec/enc/mozjpeg_enc.d.ts",
+          "bytes": 821,
+          "sha256": "d87b1d5872f90669bf97f8b83a47cb77b3501efdd0ddc1d3bf6c20ab724cebeb"
+        },
+        {
+          "name": "utils.d.ts",
+          "bytes": 987,
+          "sha256": "8babb431007e8a980ad7719adaf6ae76979cae50ca1014c925f87e7bcb16012e"
+        },
+        {
+          "name": "codec/dec/mozjpeg_dec.wasm",
+          "bytes": 166470,
+          "sha256": "a7c4b12169817e779ff4af137981393ae924944e167ad1bd95747c9199162d3e"
+        },
+        {
+          "name": "codec/enc/mozjpeg_enc.wasm",
+          "bytes": 251524,
+          "sha256": "24d4177f1c4963e2058b107189249651c61fdef125570e79b1dfb63c8bb49326"
+        }
+      ]
+    },
+    {
+      "package": "@jsquash/webp",
+      "version": "1.5.0",
+      "published": "2025-05-12T15:06:24.414Z",
+      "latestObserved": "1.5.0",
+      "license": "Apache-2.0",
+      "gitHead": "8bcd212da8c2be7c9c223e8f222eb3d9574a713b",
+      "dist": {
+        "shasum": "1e8ce357cde2decf4f880a8c436f8f1529cd3f48",
+        "tarball": "https://registry.npmjs.org/@jsquash/webp/-/webp-1.5.0.tgz",
+        "fileCount": 30,
+        "integrity": "sha512-KggLoj2MnRSfIqTeKe1EmbljTX2vuV7mh79k89PCL1pyqiDULcPM1L47twxXt0hkb68F70bXiL31MxsuoZtKFw==",
+        "signatures": [
+          {
+            "sig": "MEQCIDzKA1Hkat2hm2PDL7FwAMn4q0TsaT4Fn4M40GvR12SdAiB+Az2B9at4mjXXJMPdRquqsB4Bt0XObcTPcErXm1R5/g==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 914811
+      },
+      "tarSha256": "b543cb1fc17e99c31e992a71d70da570d1bc1871ce3a88440df067e5b2e6ee9e",
+      "files": [
+        {
+          "name": "LICENSE",
+          "bytes": 11343,
+          "sha256": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20"
+        },
+        {
+          "name": "codec/Makefile.animated.backup",
+          "bytes": 2954,
+          "sha256": "b994b4ff1840a2b66087ed2ef3baf03965a3ba8e6642d8c4f6b7771dc92bf0af"
+        },
+        {
+          "name": "decode.js",
+          "bytes": 1432,
+          "sha256": "b15d9abe76ad4b07214739fe81a99a47f25d01a1e0b0a329a3bec706509cd9e2"
+        },
+        {
+          "name": "encode.js",
+          "bytes": 1946,
+          "sha256": "edcd883d10e955655946b8fe733bb139faa8b7036092827b1849a4b34d727d6b"
+        },
+        {
+          "name": "index.js",
+          "bytes": 98,
+          "sha256": "281f1d048db337aaa2412503423b2ca99eeb8ec104b471618ee3845930a27688"
+        },
+        {
+          "name": "meta.js",
+          "bytes": 749,
+          "sha256": "3d70163a00e6264fc5a8fa7c8f3b1fa21a50a00d910f4d2de3ef1bbd2fdc98ab"
+        },
+        {
+          "name": "codec/pre.js",
+          "bytes": 847,
+          "sha256": "b4d7da800804a2390eefa7805bb5f4e20cf349681334eb9a1715d2c58a1822b2"
+        },
+        {
+          "name": "utils.js",
+          "bytes": 1272,
+          "sha256": "e71535eeee820d68b68ece7c8af761c39f3ddec93d3d957d2f83b19191339e0d"
+        },
+        {
+          "name": "codec/dec/webp_dec.js",
+          "bytes": 34823,
+          "sha256": "c57971611f4d9ec04e4636ce7bb4a35c031b24cbdb013518f0a017d9f6014370"
+        },
+        {
+          "name": "codec/enc/webp_enc_simd.js",
+          "bytes": 38646,
+          "sha256": "3038e60ebba6252baba08c691e31d1efe5036a185435daa7b4afaef3cc9273f9"
+        },
+        {
+          "name": "codec/enc/webp_enc.js",
+          "bytes": 38665,
+          "sha256": "5fd62301662e37785aec38e38807926f72933d4c8b919018a43faf1b1ca760f6"
+        },
+        {
+          "name": "package.json",
+          "bytes": 978,
+          "sha256": "bfd9f9b7ec0d51421623e92185b3b994d6430068de323dacaa1a29b8a1c9c83c"
+        },
+        {
+          "name": "CHANGELOG.md",
+          "bytes": 1051,
+          "sha256": "56e1c97329da273049b017db53b6bcdbdbdc2bb8f816cd105b9062dc724503ee"
+        },
+        {
+          "name": "codec/LICENSE.codec.md",
+          "bytes": 1495,
+          "sha256": "e293d1dddc9785200b1f58a4f5293543cf8566d9e0b8a3c02fad955035b19f42"
+        },
+        {
+          "name": "codec/dec/README.md",
+          "bytes": 380,
+          "sha256": "9931517f3e43af8ba96e8c56510516839e359a3caa1d6c9dd596a03e87434fff"
+        },
+        {
+          "name": "codec/enc/README.md",
+          "bytes": 405,
+          "sha256": "941d798965835919d8911c053dec9abca5aca6c142c5bda9c6481cae5cd82ba6"
+        },
+        {
+          "name": "codec/README.md",
+          "bytes": 91,
+          "sha256": "5fd916cc2780b93a45df1492c4d47ced1865957024cc257f2d800f08c4a9a71b"
+        },
+        {
+          "name": "README.md",
+          "bytes": 3447,
+          "sha256": "c6bdd9809b66516d368bfadc72cef305d7537f5171a62036dd36811dff081c94"
+        },
+        {
+          "name": "decode.d.ts",
+          "bytes": 822,
+          "sha256": "b33d320ed293db1b3e0f75ca13656bd4a35a0fd9d60103d319a6de317cc4cc29"
+        },
+        {
+          "name": "emscripten-types.d.ts",
+          "bytes": 4086,
+          "sha256": "acc5de7ea6c944da8709c50a8ea0d7bb0a2c2a62db61c6f1dc1f248e876b1b40"
+        },
+        {
+          "name": "encode.d.ts",
+          "bytes": 1236,
+          "sha256": "ace69a337c24a8ebb276e75d2ee853506cea579eb10486c403e826a98d4efcc9"
+        },
+        {
+          "name": "index.d.ts",
+          "bytes": 133,
+          "sha256": "3878cfb0f7c5dcfd6e6bce4d37719ed11318a359d362acfd4305d0082250f98b"
+        },
+        {
+          "name": "meta.d.ts",
+          "bytes": 906,
+          "sha256": "8c037aedcc35f69c0319b1b19c5cf490a94b154ff7c0b810a97d568b950bf5b6"
+        },
+        {
+          "name": "utils.d.ts",
+          "bytes": 987,
+          "sha256": "8babb431007e8a980ad7719adaf6ae76979cae50ca1014c925f87e7bcb16012e"
+        },
+        {
+          "name": "codec/dec/webp_dec.d.ts",
+          "bytes": 211,
+          "sha256": "43771959601d9a0a45e4f68d5f730c2ad0a09441da0a99cb3b40668368880663"
+        },
+        {
+          "name": "codec/enc/webp_enc_simd.d.ts",
+          "bytes": 41,
+          "sha256": "8fcd1a5abfa1db0de15a39581c23c712d9f904eec2bf22b241d9e98f489e6e23"
+        },
+        {
+          "name": "codec/enc/webp_enc.d.ts",
+          "bytes": 962,
+          "sha256": "ca06b07b4a41f7e53e57f5bea598600cb962e275ca76686a78c3f61d8a5cd458"
+        },
+        {
+          "name": "codec/dec/webp_dec.wasm",
+          "bytes": 137960,
+          "sha256": "30fb52fa2a80166d25ba7debf902218904ba1f05ccce9f959f722beff9e2f344"
+        },
+        {
+          "name": "codec/enc/webp_enc_simd.wasm",
+          "bytes": 345584,
+          "sha256": "39c279269ec1163b987b6d69749458e3d5b03b9585f58b6ca5455b76b504a305"
+        },
+        {
+          "name": "codec/enc/webp_enc.wasm",
+          "bytes": 281261,
+          "sha256": "b6085bb6702f144e9dc6016d58d230b34a84976bf0d080b7390b4b4b137d6ab7"
+        }
+      ]
+    },
+    {
+      "package": "wasm-feature-detect",
+      "version": "1.8.0",
+      "published": "2024-09-18T17:22:09.229Z",
+      "latestObserved": "1.9.0",
+      "license": "Apache-2.0",
+      "gitHead": "8bfe6691b0749b53d605f3220f15e68751c4b5b6",
+      "dist": {
+        "shasum": "4e9f55b0a64d801f372fbb0324ed11ad3abd0c78",
+        "tarball": "https://registry.npmjs.org/wasm-feature-detect/-/wasm-feature-detect-1.8.0.tgz",
+        "fileCount": 9,
+        "integrity": "sha512-zksaLKM2fVlnB5jQQDqKXXwYHLQUVH9es+5TOOHwGOVJOCeRBCiPjwSg+3tN2AdTCzjgli4jijCH290kXb/zWQ==",
+        "signatures": [
+          {
+            "sig": "MEUCIQCXjAxqtNLS8SpRvzGScndv0m+VFKM/J4flZ8qfSE7PSwIgOMqGUqoDgAnhGz7vH4Xvt+RsbjleoxVWFza7lziq03w=",
+            "keyid": "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
+          }
+        ],
+        "unpackedSize": 33433
+      },
+      "tarSha256": "38f4cfa553680956123a8c0e5a586d54087e932d65a9c649953a0b1b83026bbc",
+      "files": [
+        {
+          "name": "LICENSE",
+          "bytes": 11341,
+          "sha256": "bcf29b4fd3ec2cb5f9d40a0866da446f6da62170d2ccedf4aeca9cf9406dd20c"
+        },
+        {
+          "name": "dist/cjs/index.cjs",
+          "bytes": 3226,
+          "sha256": "1393262b2d5327b4ff2ebe1ebc0cc00a82f88bde0521e59b39c626a11c5aae43"
+        },
+        {
+          "name": "dist/index.d.cts",
+          "bytes": 837,
+          "sha256": "543304b73458e2e611d9b71cb7b78cbf3294ff0e54a294460a28ee84f6e78d25"
+        },
+        {
+          "name": "README.md.ejs",
+          "bytes": 2728,
+          "sha256": "5e4263cad319dd5b7a7dee9af0cddd6e888ea96daef3bfa405dff7c5988be3c9"
+        },
+        {
+          "name": "dist/esm/index.js",
+          "bytes": 3199,
+          "sha256": "879dd39c8d9ebd5a3c64d1f18955b047907c677ca3b71865e2497264107e3aef"
+        },
+        {
+          "name": "dist/umd/index.js",
+          "bytes": 3439,
+          "sha256": "74d3b2390e6988ec37e21bd7ba46e46a8a93c7ac38a743d7f23c74ca689ad456"
+        },
+        {
+          "name": "package.json",
+          "bytes": 1859,
+          "sha256": "f511a8499a742e364d5bc9cdb23fb09108b12c7683fe06fb9e2bc324832b3b5b"
+        },
+        {
+          "name": "README.md",
+          "bytes": 5967,
+          "sha256": "1f355d88b95f8c8c6e28d9501ad889b991e6e83e06744bae8c76e7992285c053"
+        },
+        {
+          "name": "dist/index.d.ts",
+          "bytes": 837,
+          "sha256": "543304b73458e2e611d9b71cb7b78cbf3294ff0e54a294460a28ee84f6e78d25"
+        }
+      ]
+    }
+  ],
+  "corpus": [
+    {
+      "id": "chelsea",
+      "url": "https://raw.githubusercontent.com/scikit-image/scikit-image/v0.19.3/skimage/data/chelsea.png",
+      "sha256": "596aa1e7cb875eb79f437e310381d26b338a81c2da23439704a73c4651e8c4bb",
+      "license": "CC0; fonte de créditos registrada no ensaio anterior"
+    },
+    {
+      "id": "coffee",
+      "url": "https://raw.githubusercontent.com/scikit-image/scikit-image/v0.19.3/skimage/data/coffee.png",
+      "sha256": "cc02f8ca188b167c775a7101b5d767d1e71792cf762c33d6fa15a4599b5a8de7",
+      "license": "CC0; fonte de créditos registrada no ensaio anterior"
+    }
+  ],
+  "sources": [
+    {
+      "id": "avif-Makefile",
+      "url": "https://raw.githubusercontent.com/jamsinclair/jSquash/b7fa9ac9ec02f224847ad23d19d115f9e296a368/packages/avif/codec/Makefile",
+      "bytes": 4861,
+      "sha256": "3b51474f9d2d7490a5c299c513e54264f0fcb1680773fb418d8d5f41f876be3d"
+    },
+    {
+      "id": "wrapper-LICENSE",
+      "url": "https://raw.githubusercontent.com/jamsinclair/jSquash/b7fa9ac9ec02f224847ad23d19d115f9e296a368/LICENSE",
+      "bytes": 11343,
+      "sha256": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20"
+    },
+    {
+      "id": "libavif-LICENSE",
+      "url": "https://raw.githubusercontent.com/AOMediaCodec/libavif/v1.0.1/LICENSE",
+      "bytes": 18799,
+      "sha256": "10952217a6d404de8bf8a997fbea9b88f682df1fe98cb9b9f467ade641525639"
+    },
+    {
+      "id": "libavif-PATENTS",
+      "url": "https://raw.githubusercontent.com/AOMediaCodec/libavif/v1.0.1/PATENTS",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "id": "libaom-LICENSE",
+      "url": "https://aomedia.googlesource.com/aom/+/refs/tags/v3.7.0/LICENSE?format=TEXT",
+      "bytes": 1316,
+      "sha256": "4764a286d8b2faeaf42f4418e7d7a28d58fc8fd4d00a3d0a7f44b0a4099de7f2"
+    },
+    {
+      "id": "libaom-PATENTS",
+      "url": "https://aomedia.googlesource.com/aom/+/refs/tags/v3.7.0/PATENTS?format=TEXT",
+      "bytes": 5701,
+      "sha256": "661fb8e504744e95587b556b94a58343448300606a41bea8c7a9b97125696e61"
+    },
+    {
+      "id": "libwebp-COPYING",
+      "url": "https://chromium.googlesource.com/webm/libwebp/+/e2c85878f6a33f29948b43d3492d9cdaf801aa54/COPYING?format=TEXT",
+      "bytes": 1496,
+      "sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf"
+    },
+    {
+      "id": "libwebp-PATENTS",
+      "url": "https://chromium.googlesource.com/webm/libwebp/+/e2c85878f6a33f29948b43d3492d9cdaf801aa54/PATENTS?format=TEXT",
+      "bytes": 1436,
+      "sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c"
+    },
+    {
+      "id": "corpus-credits",
+      "url": "https://raw.githubusercontent.com/scikit-image/scikit-image/v0.19.3/skimage/data/_fetchers.py",
+      "bytes": 38933,
+      "sha256": "e5eed57009b9cf54911e286d194a66a706768d9c46e4c9479854e2d9968d97cd"
+    },
+    {
+      "id": "avif-helper-Makefile",
+      "url": "https://raw.githubusercontent.com/jamsinclair/jSquash/b7fa9ac9ec02f224847ad23d19d115f9e296a368/packages/avif/codec/helper.Makefile",
+      "bytes": 2357,
+      "sha256": "939b17c964940abb5ab5c2a07e522bb58fa0069c96a47ddf2b7ef6848c50fc7c"
+    },
+    {
+      "id": "libaom-changelog-3.9.1",
+      "url": "https://aomedia.googlesource.com/aom/+/refs/tags/v3.9.1/CHANGELOG?format=TEXT",
+      "bytes": 43159,
+      "sha256": "046c658e3fae937ef90c98431d09e647155e6f8b237b48823156a507032aca04"
+    },
+    {
+      "id": "jamsinclair/jSquash",
+      "url": "https://api.github.com/repos/jamsinclair/jSquash",
+      "repository": {
+        "archived": false,
+        "pushed_at": "2026-01-05T10:05:43Z",
+        "default_branch": "main",
+        "license": {
+          "key": "apache-2.0",
+          "name": "Apache License 2.0",
+          "spdx_id": "Apache-2.0",
+          "url": "https://api.github.com/licenses/apache-2.0",
+          "node_id": "MDc6TGljZW5zZTI="
+        }
+      }
+    },
+    {
+      "id": "AOMediaCodec/libavif",
+      "url": "https://api.github.com/repos/AOMediaCodec/libavif",
+      "repository": {
+        "archived": false,
+        "pushed_at": "2026-10-26T15:40:10Z",
+        "default_branch": "main",
+        "license": {
+          "key": "other",
+          "name": "Other",
+          "spdx_id": "NOASSERTION",
+          "url": null,
+          "node_id": "MDc6TGljZW5zZTA="
+        }
+      }
+    }
+  ]
+}

@@ -73,6 +73,11 @@ amplia os formatos nem o limite de importação; não há promessa de pico de me
 
 ### AVIF: prova técnica, ainda condicionado
 
+**Ampliação em 26–27/10/2026:** [avaliação local AVIF](IM-C4-AVIF.md), com oito entradas,
+64 saídas, alpha, decode duplo, cancelamento/retomada, alocações WASM e fontes de licença.
+Não integrado. Dispositivos/limites e redistribuição ainda condicionados. O registro abaixo
+preserva a prova histórica de 24/10, sem transportar sua homologação entre plataformas.
+
 O pacote publicado `@jsquash/avif` 2.1.1 foi avaliado fora do produto, sem instalação de runtime.
 Foram usados dois originais fotográficos CC0 do scikit-image v0.19.3: **chelsea**, Stefan van der
 Walt, e **coffee**, Rachel Michetti, cortesia do Pikolo Espresso Bar. Créditos e ausência de

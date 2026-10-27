@@ -48,6 +48,18 @@ it("recusa reparo grande antes de ler ou copiar o arquivo", async () => {
 });
 
 describe("Tool Runner do Launcher", () => {
+  it("preserva o aviso específico quando não há imagens elegíveis para extrair", async () => {
+    await expect(
+      runLauncherTool(
+        new BrowserDocumentCorePort(),
+        "pdf-extract-images",
+        input([await fixture()]),
+      ),
+    ).rejects.toMatchObject({
+      code: "INVALID_INPUT",
+      message: "Nenhuma imagem incorporada foi encontrada neste PDF.",
+    });
+  });
   it.each([0, 5])("preserva caracteres ao aplicar inserção HTTP na posição %s", async (offset) => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(

@@ -26,7 +26,7 @@
         {
           "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
           "kind": "generator",
-          "sha256": "6988f3f3ec39109b02ca78fef940460a73bad5acfdef2aa1b6df2f4250b20224"
+          "sha256": "8cdd7bdbd88f223312bb68cec60c39a951e8b3d1308cd3824094bbe12869c306"
         }
       ]
     },
@@ -463,7 +463,7 @@
         {
           "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
           "kind": "generator",
-          "sha256": "6988f3f3ec39109b02ca78fef940460a73bad5acfdef2aa1b6df2f4250b20224"
+          "sha256": "8cdd7bdbd88f223312bb68cec60c39a951e8b3d1308cd3824094bbe12869c306"
         },
         {
           "path": "apps/client/src/platform/document-reader.test.ts",
@@ -562,6 +562,38 @@
           "path": "apps/client/e2e/pdf-viewport.spec.ts",
           "kind": "generator",
           "sha256": "4f4a93e830119b4a5849463c1b24dde5b599c89a2e26e78c1137c4ffb2b8d88f"
+        }
+      ]
+    },
+    {
+      "id": "pdf-raster",
+      "origin": "Controles autorais: PNG/JPEG/WebP gerados em Canvas; PDF vetorial RGB nas quatro rotações e CropBox; Flate RGB32×16+SMask, JPEG2×1 e recurso repetido em páginas distintas. Sem fotografias externas.",
+      "license": "Conteúdo, geradores e JPEG de controle autorais MPL-2.0; bibliotecas e codecs existentes mantêm suas licenças próprias. Nenhuma dependência adicionada.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/__fixtures__/q-c0-raster/corpus.ts",
+          "kind": "generator",
+          "sha256": "708adaa78d89c93860f7089cd6a8e121e2c83a025622c6bb88ea815203980295"
+        },
+        {
+          "path": "apps/client/src/platform/pdf-raster-quality.test.ts",
+          "kind": "generator",
+          "sha256": "e80b8c7a3b71e5309c014a23e5c98d3b57ab488610ecf88f0c187a9e23357b8d"
+        },
+        {
+          "path": "apps/client/e2e/pdf-raster-quality.spec.ts",
+          "kind": "generator",
+          "sha256": "7b0d58496dfc6f721c629be3ee809f0e378d01004c7df9894e69c7bc3331c61f"
+        },
+        {
+          "path": "apps/client/src/platform/pdf-image-extraction.test.ts",
+          "kind": "generator",
+          "sha256": "5803382b2d69ad89a8bed964b4b9f70465b32e2e8f6ff57f197029e7310d5790"
+        },
+        {
+          "path": "apps/client/src/platform/fixtures/extraction-red-2x1.jpg",
+          "kind": "file",
+          "sha256": "8f136b4763c02f509e83156f9ad9ba5a730ee18a35573f9805cc94522a552bfc"
         }
       ]
     }
@@ -732,32 +764,47 @@
     },
     {
       "toolId": "images-to-pdf",
-      "level": "regression",
-      "corpora": ["image-basic"],
-      "supported": ["Ordem e proporção de PNG/JPEG/WebP em PDF multipágina."],
-      "refused": ["Entrada incompatível ou opções inválidas."],
+      "level": "restricted-profile",
+      "corpora": ["pdf-raster", "image-basic"],
+      "supported": [
+        "PNG/JPEG/WebP em fit sem margem com reordenação; dimensões, proporção e transparência composta sobre branco verificadas no round-trip; margens none/small/big de JPEG no teste estrutural."
+      ],
+      "refused": [
+        "Entrada vazia, imagem inválida ou lote com item incompatível não retorna PDF de sucesso."
+      ],
       "unmeasured": [
-        "ICC/HDR e equivalência de impressão de qualquer fotografia.",
+        "A4/orientações se apoiam nas regressões anteriores; não há nova matriz completa de configurações neste perfil.",
+        "ICC/HDR/CMYK/16 bits, animação, grandes lotes e pouca RAM não medidos nesta fatia.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
+      "docs": ["docs/quality/PDF-RASTER.md", "docs/TOOL-SPEC.md"],
       "tests": [
-        "apps/client/src/platform/pdf-engine.test.ts",
-        "apps/client/e2e/language-image-quality.spec.ts"
+        "apps/client/src/platform/pdf-raster-quality.test.ts",
+        "apps/client/e2e/pdf-raster-quality.spec.ts",
+        "apps/client/src/platform/pdf-engine.test.ts"
       ]
     },
     {
       "toolId": "pdf-to-jpg",
-      "level": "regression",
-      "corpora": ["pdf-basic"],
-      "supported": ["Quantidade e imagens JPEG válidas de páginas textuais."],
-      "refused": ["PDF inválido e limites do caminho existente."],
+      "level": "restricted-profile",
+      "corpora": ["pdf-raster", "pdf-basic"],
+      "supported": [
+        "JPG a 150 DPI, CropBox/rotação 0/90/180/270, dimensões, amostras RGB e ordem do ZIP no Chromium real; saída única coberta pelo E2E existente."
+      ],
+      "refused": [
+        "PDF inválido permanece sujeito à recusa do carregador; este perfil não acrescenta validação de parâmetros."
+      ],
       "unmeasured": [
-        "Fidelidade visual de todo PDF, ICC/HDR e lotes reais muito grandes.",
+        "Outras resoluções, PDF arbitrário, fidelidade tipográfica e renderização pixel a pixel integral não certificados.",
+        "ICC/HDR/CMYK/16 bits, animação, grandes lotes e pouca RAM não medidos nesta fatia.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/TOOL-SPEC.md"],
-      "tests": ["apps/client/src/platform/pdf-engine.test.ts"]
+      "docs": ["docs/quality/PDF-RASTER.md", "docs/TOOL-SPEC.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-raster-quality.test.ts",
+        "apps/client/e2e/pdf-raster-quality.spec.ts",
+        "apps/client/src/platform/pdf-engine.test.ts"
+      ]
     },
     {
       "toolId": "pdf-watermark",
@@ -833,16 +880,26 @@
     },
     {
       "toolId": "pdf-extract-images",
-      "level": "regression",
-      "corpora": ["pdf-images"],
-      "supported": ["Imagens JPEG/Flate compatíveis e exclusão de miniaturas decorativas."],
-      "refused": ["Filtros e casos fora do perfil do extrator."],
+      "level": "restricted-profile",
+      "corpora": ["pdf-raster", "pdf-images"],
+      "supported": [
+        "JPEG compatível byte a byte; PNG32×16 com SMask/alpha nos 512 pixels visíveis, seleção de página, filtro por tamanho, ZIP e recurso repetido entre páginas."
+      ],
+      "refused": [
+        "Ausência de imagem elegível não oferece download; PDF vazio/inválido e seleção vazia mantêm as recusas/retornos documentados nos testes."
+      ],
       "unmeasured": [
-        "Todas as imagens/máscaras/codificações e documentos de produção.",
+        "Imagens inline, máscaras dependentes da pintura e filtros/codificações fora do corpus não certificados.",
+        "ICC/HDR/CMYK/16 bits, animação, grandes lotes e pouca RAM não medidos nesta fatia.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/AUDITORIA-NOVAS-FERRAMENTAS-WEB-2026-10-23.md"],
-      "tests": ["apps/client/src/platform/pdf-image-extraction.test.ts"]
+      "docs": ["docs/quality/PDF-RASTER.md", "docs/TOOL-SPEC.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-raster-quality.test.ts",
+        "apps/client/e2e/pdf-raster-quality.spec.ts",
+        "apps/client/src/platform/pdf-image-extraction.test.ts",
+        "apps/client/src/platform/launcher-tool-runner.test.ts"
+      ]
     },
     {
       "toolId": "text-compare",

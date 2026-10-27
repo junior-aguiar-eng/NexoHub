@@ -188,6 +188,26 @@ Commit local autorizado posteriormente pelo usuário, sem push, deploy ou integr
 checkout principal. DOC-C2 excluído.
 Resultados finais de validação pertencem ao relatório vinculado.
 
+### Q-C0 — conversão e extração raster (27/10/2026)
+
+Base `d18ae56`, após commit autorizado da geometria. Próxima fatia em
+[PDF-RASTER.md](../../quality/PDF-RASTER.md): imagens→PDF, PDF→JPG e extração de imagens,
+com corpus autoral, provas de pixels/alpha/dimensões/ordem/ZIP e originais preservados.
+Renderização aferida no Chromium real, sem usar o JPEG sintético do caminho de teste Node
+como prova de fidelidade. E2E integra também o executor normal de `/hub/`.
+
+Correção pontual do mapeamento `NO_IMAGES_FOUND` para aviso existente em pt-BR após
+regressões no runner/E2E; motores e geometria da interface preservados. Sem dependências
+ou candidato externo. Índice passa
+a 29 perfis restritos e 6 regressões. Q-C0 global, hardware físico e Windows continuam
+parciais/pendentes; DOC-C2 excluído. Commit local autorizado posteriormente pelo usuário,
+sem push, deploy ou integração na principal.
+Resultados e limites ficam no relatório vinculado.
+
+Validação: check, 790 testes do cliente, 10 do Tool Registry, builds raiz e `/hub/`,
+13 E2E pertinentes em cada base aprovados. Regressão do aviso observada antes da correção;
+revisão única sem achados materiais. Sem E2E integral ou homologação instalada nesta fatia.
+
 ### UX-C1 — Visualização PDF reutilizável nas mesas atuais
 
 **Modificar:** painéis `CropPdfPanel`, `SignPdfPanel`, `RedactPdfPanel`, `WatermarkPdfPanel`,

@@ -1388,6 +1388,7 @@ export async function runLauncherTool(
           throw new ToolRunError("CANCELLED", translate("workspace.translate.cancelled"));
         }
         const messages = {
+          NO_IMAGES_FOUND: "dedicated.noImagesFound",
           LOTE_IMAGEM_MUITO_GRANDE: "imageProcessing.errorBatch",
           IMAGEM_MUITO_GRANDE: "imageProcessing.errorLarge",
           FORMATO_IMAGEM_NAO_SUPORTADO: "imageProcessing.errorFormat",

@@ -13,7 +13,7 @@ campos desconhecidos e caminhos fora do repositório. O teste de integração ta
 caminhos reais para recusar links simbólicos externos. O checker é usado por testes;
 não está exportado pelo pacote nem importado pelo aplicativo.
 
-Há 21 grupos de corpus. Os rótulos `file`, `generator` e `manifest` identificam **quais bytes
+Há 22 grupos de corpus. Os rótulos `file`, `generator` e `manifest` identificam **quais bytes
 foram hasheados**: arquivo fixo, código gerador/teste ou manifesto de uma medição anterior.
 Hash de gerador não identifica o PDF/imagem que ele produzirá; hash de manifesto não verifica
 novamente as fotos externas ou os resultados nele registrados. Os downloads externos não são
@@ -26,7 +26,7 @@ Expectativas textuais são limites documentados, não assertions executadas pelo
 
 ## Cobertura por ferramenta
 
-**26 perfis restritos e 9 registros de regressão.** Perfil restrito
+**29 perfis restritos e 6 registros de regressão.** Perfil restrito
 significa que há uma entrega específica com corpus e limites documentados; não é um selo de
 homologação integral. Regressão identifica cobertura existente, que pode incluir testes com port simulado.
 Esses testes de encaminhamento não demonstram fidelidade da saída. A fatia de
@@ -44,13 +44,13 @@ Expectativas, recusas, casos não medidos e links de testes/documentos estão em
 | `pdf-crop` | Perfil restrito | `pdf-static`, `pdf-overlay` |
 | `pdf-compress` | Regressão | `pdf-basic` |
 | `pdf-repair` | Perfil restrito | `repair` |
-| `images-to-pdf` | Regressão | `image-basic` |
-| `pdf-to-jpg` | Regressão | `pdf-basic` |
+| `images-to-pdf` | Perfil restrito | `pdf-raster`, `image-basic` |
+| `pdf-to-jpg` | Perfil restrito | `pdf-raster`, `pdf-basic` |
 | `pdf-watermark` | Perfil restrito | `pdf-static`, `pdf-overlay` |
 | `pdf-page-numbers` | Perfil restrito | `pdf-static`, `pdf-overlay` |
 | `pdf-ocr` | Perfil restrito | `ocr` |
 | `pdf-protect` | Regressão | `security` |
-| `pdf-extract-images` | Regressão | `pdf-images` |
+| `pdf-extract-images` | Perfil restrito | `pdf-raster`, `pdf-images` |
 | `text-compare` | Regressão | `text-compare` |
 | `text-review` | Regressão | `review` |
 | `text-translate` | Perfil restrito | `translation` |
@@ -114,3 +114,5 @@ esta fatia altera documentação e um gate de testes, sem código do aplicativo 
 A evolução das operações básicas PDF, após a consolidação inicial, está em [PDF-BASICO.md](PDF-BASICO.md).
 
 A fatia seguinte documenta [recorte e sobreposições PDF](PDF-GEOMETRIA.md), com quatro perfis restritos adicionais.
+
+A evolução de [conversão e extração raster](PDF-RASTER.md) acrescenta três perfis restritos com pixels/alpha/ZIP conferidos.

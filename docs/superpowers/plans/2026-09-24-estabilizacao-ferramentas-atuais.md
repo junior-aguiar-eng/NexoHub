@@ -225,6 +225,23 @@ Validação: check, 50 testes pertinentes, 10 do Tool Registry, builds raiz e `/
 quatro E2E em cada base aprovados. Revisão única sem achados materiais. Sem repetição das
 suítes completas do cliente/E2E ou instalação Windows nesta fatia de testes/documentação.
 
+### Q-C0 — comparação e revisão de texto (27/10/2026)
+
+Base `62cd023`, após commit autorizado de acesso PDF. Corpus e limites em
+[TEXTO.md](../../quality/TEXTO.md): linhas, Unicode, identificadores, relatório baixado,
+aplicação explícita e dicionário real no Chromium. O par selecionado 1×3 passa ao executor,
+inclusive com documento 2 vazio; mensagem sem sugestões deixa de afirmar correção linguística.
+Ambas as falhas foram reproduzidas antes das correções. Sem dependência nova.
+
+Índice: 33 perfis restritos, 2 regressões (`pdf-compress` e `scan-to-pdf`), 24 corpora.
+Q-C0 global permanece parcial: fidelidade ampla, medições por dispositivo, nova matriz de
+larguras/teclado/tema para texto e Windows instalado continuam pendentes. DOC-C2 excluído.
+Commit local desta etapa autorizado posteriormente pelo usuário, sem push, deploy ou
+integração na principal.
+
+Validação: 808 testes do cliente, 44 do domínio, check e quality:check aprovados;
+builds raiz e `/hub/` aprovados. E2E e revisão final registrados no relatório vinculado.
+
 ### UX-C1 — Visualização PDF reutilizável nas mesas atuais
 
 **Modificar:** painéis `CropPdfPanel`, `SignPdfPanel`, `RedactPdfPanel`, `WatermarkPdfPanel`,

@@ -554,6 +554,9 @@ export function DedicatedToolView({
   const [doc3Text, setDoc3Text] = useState<string>("");
   const [doc3Name, setDoc3Name] = useState<string>("Documento 3 (Versão B)");
   const [showDoc3, setShowDoc3] = useState<boolean>(false);
+  const [comparePair, setComparePair] = useState<"1-2" | "1-3">("1-2");
+  const compareRightText = showDoc3 && comparePair === "1-3" ? doc3Text : doc2Text;
+  const hasCompareTexts = Boolean(doc1Text.trim() && compareRightText.trim());
 
   // Resultado de Execução
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
@@ -1305,6 +1308,7 @@ export function DedicatedToolView({
   // Execução da ferramenta selecionada
   // =========================================================================
   async function handleExecute() {
+    if (tool.id === "text-compare" && !hasCompareTexts) return;
     if (
       tool.id === "pdf-to-excel" &&
       (!excelPreviewReady || isAnalyzingExcel || excelPreviewError || excelSelection.error)
@@ -1479,7 +1483,7 @@ export function DedicatedToolView({
         imageWatermarkRotation,
         imageWatermarkPosition,
         firstText: inputTab === "text" ? directText : doc1Text,
-        secondText: doc2Text,
+        secondText: tool.id === "text-compare" ? compareRightText : doc2Text,
         imageOrientation,
         imageMargin,
         imagePageSize,
@@ -2357,6 +2361,8 @@ export function DedicatedToolView({
           onDoc3NameChange={setDoc3Name}
           showDoc3={showDoc3}
           onToggleDoc3={setShowDoc3}
+          diffPair={comparePair}
+          onDiffPairChange={setComparePair}
           onExportDiff={() => void handleExecute()}
         />
       );
@@ -3000,6 +3006,7 @@ export function DedicatedToolView({
           className="ilovepdf-action-red-btn"
           disabled={
             status === "running" ||
+            (tool.id === "text-compare" && !hasCompareTexts) ||
             !pageRangeValid ||
             (tool.manifest.category === "image" &&
               (imageBatch.pending || imageBatch.invalid || cropConflicts.length > 0)) ||

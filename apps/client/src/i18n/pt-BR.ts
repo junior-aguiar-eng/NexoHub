@@ -1179,7 +1179,7 @@ export const ptBR = {
   "workspace.review.offlineBadge": "Correção no Navegador • Total Privacidade",
   "workspace.review.downloadNotice":
     "Carregando regras de português — processamento seguro no seu dispositivo.",
-  "workspace.review.noIssues": "Nenhum problema ortográfico ou gramatical encontrado!",
+  "workspace.review.noIssues": "Não há sugestões para exibir.",
   "workspace.review.copy": "Copiar Texto Corrigido",
   "workspace.review.downloadTxt": "Baixar Arquivo .txt",
   "workspace.review.reviewedText": "Texto Revisado",

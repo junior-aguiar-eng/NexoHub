@@ -35,6 +35,8 @@ type DocumentComparePanelProps = {
   onToggleDoc3?: (show: boolean) => void;
   onDropFiles?: (files: File[]) => void;
   onExportDiff?: () => void;
+  diffPair?: "1-2" | "1-3";
+  onDiffPairChange?: (pair: "1-2" | "1-3") => void;
 };
 
 type AlignedDiffRow = {
@@ -102,12 +104,19 @@ export function DocumentComparePanel({
   showDoc3 = false,
   onToggleDoc3,
   onExportDiff,
+  diffPair,
+  onDiffPairChange,
 }: DocumentComparePanelProps) {
   const [viewMode, setViewMode] = useState<"side-by-side" | "unified">("side-by-side");
   const [displayStyle, setDisplayStyle] = useState<"diff" | "edit">(() =>
     doc1Text.trim() && doc2Text.trim() ? "diff" : "edit",
   );
-  const [activeDiffPair, setActiveDiffPair] = useState<"1-2" | "1-3">("1-2");
+  const [localDiffPair, setLocalDiffPair] = useState<"1-2" | "1-3">("1-2");
+  const activeDiffPair = diffPair ?? localDiffPair;
+  function setActiveDiffPair(pair: "1-2" | "1-3") {
+    setLocalDiffPair(pair);
+    onDiffPairChange?.(pair);
+  }
   const [readError, setReadError] = useState<string | null>(null);
 
   const [isExtractingDoc1, setIsExtractingDoc1] = useState(false);
@@ -377,7 +386,10 @@ export function DocumentComparePanel({
             size="compact"
             onClick={onExportDiff}
             disabled={
-              Boolean(activeDiff.error) || !onExportDiff || !doc1Text.trim() || !doc2Text.trim()
+              Boolean(activeDiff.error) ||
+              !onExportDiff ||
+              !doc1Text.trim() ||
+              !(showDoc3 && activeDiffPair === "1-3" ? doc3Text : doc2Text).trim()
             }
             title={translate("workspace.compare.titleExportDiff")}
           >

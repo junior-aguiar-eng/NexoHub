@@ -1,0 +1,132 @@
+{
+  "tagalog": {
+    "binaryUnchangedInInstalledSnapshot": true,
+    "missingCount": 951,
+    "artifacts": [
+      {
+        "file": "tl_PH.aff",
+        "revision": "fe4d80b2b76d864081576a9799e7cae30b6c7143",
+        "bytes": 822,
+        "sha256": "c6a8719a2be9d12394f9e884b2ebd1c5aea246e4775882727a4be042c41fb4bd",
+        "url": "https://raw.githubusercontent.com/languagetool-org/languagetool/fe4d80b2b76d864081576a9799e7cae30b6c7143/languagetool-language-modules/tl/src/main/resources/org/languagetool/resource/tl/hunspell/tl_PH.aff"
+      },
+      {
+        "file": "tl_PH.dic",
+        "revision": "fe4d80b2b76d864081576a9799e7cae30b6c7143",
+        "bytes": 138158,
+        "sha256": "e4db50a3288e1f7766c5ab7e90e6b0e862226ad0fd9e622b6a2083a626311732",
+        "url": "https://raw.githubusercontent.com/languagetool-org/languagetool/fe4d80b2b76d864081576a9799e7cae30b6c7143/languagetool-language-modules/tl/src/main/resources/org/languagetool/resource/tl/hunspell/tl_PH.dic"
+      },
+      {
+        "file": "tl_PH.dict",
+        "revision": "fe8a600cfeaf4be745186758a3beb60f94ad4130",
+        "bytes": 51457,
+        "sha256": "209f819adf1e1d5605108197310aadd4bdde08c156c2b820d14debd4ae38ce4e",
+        "url": "https://raw.githubusercontent.com/languagetool-org/languagetool/fe8a600cfeaf4be745186758a3beb60f94ad4130/languagetool-language-modules/tl/src/main/resources/org/languagetool/resource/tl/hunspell/tl_PH.dict"
+      }
+    ],
+    "sourceParent": "fe4d80b2b76d864081576a9799e7cae30b6c7143",
+    "addedCount": 10,
+    "limitation": "Recupera entradas históricas, mas não prova receita completa, dados de frequência ou fontes correspondentes integrais. Exportar o binário não substitui sua forma preferida para modificação.",
+    "sourceWords": 14298,
+    "binaryWords": 13357,
+    "conversionCommit": "fe8a600cfeaf4be745186758a3beb60f94ad4130"
+  },
+  "italian": {
+    "readmeIdenticalToInstalledSnapshot": true,
+    "version": "3.3.1, 24-Mar-2011",
+    "repository": "https://github.com/LibreOffice/dictionaries",
+    "legacy": [
+      {
+        "file": "it_IT_AUTHORS",
+        "url": "https://raw.githubusercontent.com/LibreOffice/dictionaries/a4473e06b56bfe35187e302754f6baaa8d75e54f/it_IT/legacy/it_IT_AUTHORS",
+        "gitBlob": "5cfb145eb38a34da466a124caa0e108c0abb1586",
+        "bytes": 5302,
+        "sha256": "67cc91ed0bff69cb9b387e5a28e37503a2a4afadc282b6a29cf08be7440b38ef"
+      },
+      {
+        "file": "it_IT_COPYING",
+        "url": "https://raw.githubusercontent.com/LibreOffice/dictionaries/a4473e06b56bfe35187e302754f6baaa8d75e54f/it_IT/legacy/it_IT_COPYING",
+        "gitBlob": "e5dedf3f1f44e3cd48193bed0f5ec06dd1386a8c",
+        "bytes": 34695,
+        "sha256": "3e41d215a0d9ce21c1fa982d48d2958d539a51011f469f741b51f97e2595ec7e"
+      },
+      {
+        "file": "it_IT_ChangeLog",
+        "url": "https://raw.githubusercontent.com/LibreOffice/dictionaries/a4473e06b56bfe35187e302754f6baaa8d75e54f/it_IT/legacy/it_IT_ChangeLog",
+        "gitBlob": "32cb570454efe70723fd46135bd0a73b3d39534a",
+        "bytes": 9391,
+        "sha256": "3348a080d1896ac622247679e890bf8e08e395d887c6b67dc81518ca8631b827"
+      },
+      {
+        "file": "it_IT_README.1st",
+        "url": "https://raw.githubusercontent.com/LibreOffice/dictionaries/a4473e06b56bfe35187e302754f6baaa8d75e54f/it_IT/legacy/it_IT_README.1st",
+        "gitBlob": "9994450a5ac6d7825003e4e75f71a470c2b0ac6d",
+        "bytes": 3099,
+        "sha256": "0328874f246fa9511fb19be6fc38db57f1351b00356e7c7187de59529fb04e6f"
+      },
+      {
+        "file": "it_IT_README.txt",
+        "url": "https://raw.githubusercontent.com/LibreOffice/dictionaries/a4473e06b56bfe35187e302754f6baaa8d75e54f/it_IT/legacy/it_IT_README.txt",
+        "gitBlob": "d8d4ab98338977e7fa8c7537bcb192180e65ade0",
+        "bytes": 18501,
+        "sha256": "ec6332fd60cca5d4cd1b69c78aebae33bb49ccea856ed1d69722e3a23f0dfc82"
+      },
+      {
+        "file": "it_IT_license.txt",
+        "url": "https://raw.githubusercontent.com/LibreOffice/dictionaries/a4473e06b56bfe35187e302754f6baaa8d75e54f/it_IT/legacy/it_IT_license.txt",
+        "gitBlob": "fa95246c18bb3661e38ddde5a8bdd5d5793ad82e",
+        "bytes": 1099,
+        "sha256": "4de624abc748506298e7be68f2213e422673b43e1674da4b376804096b87dcec"
+      },
+      {
+        "file": "it_IT_notes.txt",
+        "url": "https://raw.githubusercontent.com/LibreOffice/dictionaries/a4473e06b56bfe35187e302754f6baaa8d75e54f/it_IT/legacy/it_IT_notes.txt",
+        "gitBlob": "b224d59586e84dea5213ab2aec6130799c895ed0",
+        "bytes": 16027,
+        "sha256": "3fac20f1771ddf58f09e0deb3b38b8696d3e0eda12c3f7d1ba3b29cd4850f6f4"
+      },
+      {
+        "file": "it_IT_statistiche.ods",
+        "url": "https://raw.githubusercontent.com/LibreOffice/dictionaries/a4473e06b56bfe35187e302754f6baaa8d75e54f/it_IT/legacy/it_IT_statistiche.ods",
+        "gitBlob": "e360a73bfba6fc7b25d5c8e0d1ac55ce74fe9140",
+        "bytes": 27514,
+        "sha256": "1b12a1908f5fb50b3e54e010cc618baacd463d75f53bea25622da550bed3dc62"
+      },
+      {
+        "file": "it_IT_todo.txt",
+        "url": "https://raw.githubusercontent.com/LibreOffice/dictionaries/a4473e06b56bfe35187e302754f6baaa8d75e54f/it_IT/legacy/it_IT_todo.txt",
+        "gitBlob": "302758ca76e132cc2f47f82be0459f17d3354b2a",
+        "bytes": 2283,
+        "sha256": "f523c1bbf7742cbdef0230df81d341ac722f12b0717aa10c9df62d363a0c6d54"
+      }
+    ],
+    "artifacts": [
+      {
+        "file": "README_it_IT.txt",
+        "url": "https://raw.githubusercontent.com/LibreOffice/dictionaries/a4473e06b56bfe35187e302754f6baaa8d75e54f/it_IT/README_it_IT.txt",
+        "bytes": 38653,
+        "sha256": "3c69e5815f81c7bf97cf7e3dce868205b0b0306282a271bde8cb1398dcb9e074",
+        "gitBlob": "5c71506957021697441286cbfa58cd6d1d4d72e4"
+      },
+      {
+        "file": "it_IT.aff",
+        "url": "https://raw.githubusercontent.com/LibreOffice/dictionaries/a4473e06b56bfe35187e302754f6baaa8d75e54f/it_IT/it_IT.aff",
+        "bytes": 80216,
+        "sha256": "64116f6dedcd70c934914d442ad1b86fbccbc19721f5c90490d0513b9c270426",
+        "gitBlob": "235583940b50a790a7ac5b8433ce359ed03e9ddc"
+      },
+      {
+        "file": "it_IT.dic",
+        "url": "https://raw.githubusercontent.com/LibreOffice/dictionaries/a4473e06b56bfe35187e302754f6baaa8d75e54f/it_IT/it_IT.dic",
+        "bytes": 1290681,
+        "sha256": "6989488bf411dc2c91fd08a8d54ba00658f29ce442873286b8e05251ef1df1c4",
+        "gitBlob": "d46f60a5049312b0eafccab5994791df3e93adab"
+      }
+    ],
+    "limitation": "Fonte histórica recuperada e README idêntico não provam que estes dados e parâmetros geraram o it_IT.dict distribuído.",
+    "revision": "a4473e06b56bfe35187e302754f6baaa8d75e54f",
+    "gitBlobsVerified": 12
+  },
+  "date": "2026-10-27"
+}

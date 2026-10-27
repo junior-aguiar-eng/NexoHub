@@ -1,6 +1,6 @@
 # Fontes de recursos GPL — snapshot LanguageTool 20261027
 
-Revisão técnica em 27/10/2026. Nenhum código externo foi executado, nenhum arquivo do produto ou runtime foi modificado. Downloads foram usados somente como evidência. A adoção local já autorizada não equivale à aprovação de redistribuição. Este relatório não declara compliance jurídico.
+Revisão técnica em 27/10/2026, com continuação na mesma data. Na inspeção inicial nenhum código externo foi executado. A continuação executou somente o exportador Morfologik do runtime local já verificado, para comparação lexical; os scripts upstream baixados não foram executados. Nenhum arquivo do produto ou runtime foi modificado. A adoção local já autorizada não equivale à aprovação de redistribuição. Este relatório não declara compliance jurídico.
 
 ## Critérios e evidência
 
@@ -48,13 +48,15 @@ Os caminhos `resource/...` abaixo abreviam `org/languagetool/resource/...`; no r
 
 ## Italiano — Hunspell e tagset separados
 
-**Hunspell:** `it_IT.dict` é binário presente no commit e snapshot. `README_it_IT.txt` informa Italian Writing Aids 3.3.1 (24/03/2011), GPLv3, forks anteriores e pasta `legacy`. `.aff`/`.dic` italianos e pasta `legacy` não foram encontrados na árvore examinada dos recursos nem no diretório distribuído. Links OpenOffice/linguistico são origem candidata, não prova da entrada exata e patches do `.dict`. Fonte preferida/receita específica não demonstradas.
+**Hunspell:** `it_IT.dict` é binário presente no commit e snapshot. `README_it_IT.txt` informa Italian Writing Aids 3.3.1 (24/03/2011), GPLv3, forks anteriores e pasta `legacy`. `.aff`/`.dic` italianos e pasta `legacy` não estavam no diretório distribuído. A continuação recuperou ambos e nove arquivos `legacy/it_IT_*` na revisão fixa [a4473e06b56bfe35187e302754f6baaa8d75e54f do LibreOffice](https://github.com/LibreOffice/dictionaries/tree/a4473e06b56bfe35187e302754f6baaa8d75e54f/it_IT). O README 3.3.1 é idêntico ao instalado: 38.653 bytes, SHA-256 `3c69e5815f81c7bf97cf7e3dce868205b0b0306282a271bde8cb1398dcb9e074`. A origem histórica editável foi recuperada; receita, parâmetros e correspondência integral com o `.dict` continuam não demonstrados. Não substituir esses insumos pelo HEAD 5.1.1.
 
 **Tagset:** `it/tagset.txt` é texto editável incluído, idêntico ao commit, identifica Morph-it 0.4.8 e contém concessão GPL. Sua própria forma textual está disponível. Não estender esse achado a `italian.dict`/`italian_synth.dict`; README POS fala em CC-BY-SA/LGPL e requer resolver escopo por artefato.
 
 ## Tagalo
 
-**Hunspell:** `tl_PH.dict` binário e README myspell-tl 0.02 (GPLv2-or-later), idênticos ao commit. Não há `.aff/.dic` tagalos no diretório distribuído ou árvore de recursos examinada. README identifica wordlist gerada por An Crubadan e revisada por Sagum; origem sem revisão exata. `README_frequencies.txt` atribui frequências SpellOnIt CC-BY4.0 e URL de downloads, mas sem versão/hash. Fonte e receita exatas do spelling, incluindo frequência, não demonstradas.
+**Hunspell:** `tl_PH.dict` binário e README myspell-tl 0.02 (GPLv2-or-later), idênticos ao commit. Não há `.aff/.dic` tagalos no diretório distribuído. A continuação identificou a [conversão de 2014](https://github.com/languagetool-org/languagetool/commit/fe8a600cfeaf4be745186758a3beb60f94ad4130), cujo pai `fe4d80b2b76d864081576a9799e7cae30b6c7143` ainda contém ambos. Os três arquivos foram baixados e fixados por tamanho/hash. O `.dict` dessa conversão coincide com o instalado: 51.457 bytes, SHA-256 `209f819adf1e1d5605108197310aadd4bdde08c156c2b820d14debd4ae38ce4e`. O `.dic` histórico declara e contém 14.298 palavras. A exportação FSA do binário contém 13.357 entradas distintas; comparação ISO-8859-1 → UTF-8, sem mudar caixa nem remover hífen, encontrou 951 palavras ausentes e dez adicionadas. Isso recupera uma entrada histórica concreta, mas não prova toda a transformação. `README_frequencies.txt` atribui frequências SpellOnIt CC-BY4.0, sem versão/hash. Receita e frequências correspondentes continuam pendentes.
+
+Coleta reproduzível: `node scripts/conferir-fontes-tagalo.mjs <diretório-novo>`. O script exige os hashes dos três downloads, compara o binário instalado e executa o exportador Morfologik do runtime local, sem alterar seus arquivos. Ele não transforma o conteúdo exportado em fonte preferida. As primeiras asserções do coletor foram corrigidas para preservar o separador final de `rin+`, cuja sequência exportada não contém byte após `+`; as diferenças lexicais acima permaneceram iguais às da coleta independente PowerShell. Metadados, URLs e hashes italianos/tagalos estão em [languagetool-20261027-fontes-recuperadas.json](languagetool-20261027-fontes-recuperadas.json).
 
 **POS:** README atribui dicionário/tagset a Nathaniel Oco/Allan Borra e declara LGPL; não classificar automaticamente POS tagalo como GPL por causa do Hunspell.
 
@@ -74,8 +76,16 @@ Os caminhos `resource/...` abaixo abreviam `org/languagetool/resource/...`; no r
 
 ## Bloqueios concretos que permanecem
 
+Validação da continuação: coleta Node executada com os três hashes fixados e comparação
+lexical confirmada por coleta PowerShell independente; 12 blobs italianos conferidos
+contra a revisão Git fixada. Controle negativo recusou diretório de saída existente.
+`pnpm check`, `pnpm quality:check` (sete testes) e inventário dos 155 JARs aprovados.
+Não houve build ou instalação novos, pois a continuação altera somente evidência e coletor.
+Uma [minuta de pedido técnico aos mantenedores](LANGUAGETOOL-PEDIDO-FONTES.md) foi preparada,
+sem envio ou publicação. Não contém fotos, documentos privados ou caminhos locais.
+
 1. **Forma preferida não demonstrada para POS binário:** asturiano, irlandês, árabe, bretão e galego. Repos podem entregar os mesmos binários sem incluir entradas/receitas completas. Exportar automaticamente esses binários não prova que o resultado é a forma preferida usada pelo mantenedor.
-2. **Hunspell italiano/tagalo:** faltam fontes editáveis e transformação/frequências precisas na evidência examinada. Outros Hunspell já incluem `.dic/.aff`, mas geração exata dos `.dict` pode depender de insumos ausentes.
+2. **Hunspell italiano/tagalo:** entradas editáveis históricas foram recuperadas na continuação, com hashes e revisões. Faltam provar transformação/frequências e correspondência integral aos binários. Outros Hunspell já incluem `.dic/.aff`, mas geração exata dos `.dict` pode depender de insumos ausentes.
 3. **Inputs/revisões faltantes em receitas:** arquivos pessoais/additional wordlists, frequências, FST e scripts externos. Não preencher a lacuna com a versão mais nova disponível e chamá-la correspondente.
 4. **Suficiência jurídica e mecanismo de redistribuição:** exigem decisão específica sobre pacote completo/reduzido, opções de licença e disponibilização das fontes; esta análise não substitui esse julgamento. Quando mantenedores não publicam as entradas usadas, é necessária evidência adicional deles ou uma decisão que preserve explicitamente a pendência. Não criar declaração própria de conformidade ou oferta de fontes que ainda não possuímos.
 

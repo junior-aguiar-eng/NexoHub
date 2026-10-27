@@ -47,3 +47,11 @@
   completo como qualificado antes dessas verificações.
 - **Alternativa:** preparar distribuição restrita a português e provar funcionamento,
   integridade e licenças. Remover idiomas/JARs sem essa prova não é uma alternativa aprovada.
+
+## Decisão posterior de composição
+
+O [ADR-019](ADR-019-distribuicao-runtime-languagetool.md), autorizado explicitamente
+em 27/10/2026, retira os binários LanguageTool/Java do instalador NexoHub e oferece
+instalação opcional do mesmo runtime por download oficial com hashes. Esta decisão
+preserva a adoção local acima e as pendências de fontes do pacote completo; não é
+aprovação para redistribuí-lo nem autorização para push, release ou deploy.

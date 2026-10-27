@@ -88,7 +88,7 @@ resultado, auditorias e medições locais, incluindo Windows Sandbox limpo de 4 
 O alcance continua sendo os **35 perfis restritos**: documentos arbitrários, todos os
 dispositivos e certificação do NexoHub 1.0 não estão demonstrados. A foto privada de livro
 falhou no OCR e não foi incorporada ao perfil aprovado. Nenhum percentual heurístico vira
-probabilidade de correção. A redistribuição LanguageTool permanece condicionada ao ADR-018.
+probabilidade de correção. O ADR-019 exclui LanguageTool/Java do instalador e oferece instalação opcional por download oficial; as fontes do pacote completo continuam na issue #12247.
 
 A auditoria `pnpm licenses:check` avalia o inventário e as famílias de licença configuradas.
 Ela não substitui revisão de wrappers, WASM/binários, fontes/modelos, avisos de distribuição,

@@ -257,3 +257,18 @@ de cobertura, sem reabrir DOC-C2. O índice web não vira certificação de todo
 A redistribuição do pacote LanguageTool continua condicionada às fontes e obrigações
 registradas no ADR-018 e em [LANGUAGETOOL-FONTES-20261027.md](LANGUAGETOOL-FONTES-20261027.md).
 Foi autorizada e validada a instalação local. Sem push, deploy, release ou alteração do checkout principal.
+
+## Composição posterior do instalador — ADR-019
+
+O usuário autorizou retirar LanguageTool/Java do payload e oferecer instalação
+opcional do mesmo runtime por download oficial. Esse caminho foi implementado e
+validado: pacote de 20,2 MB, instalação básica sem os binários, preparo opcional
+real com hashes, revisão autoral com download exato, repetição sem download e
+recusa de JVM corrompida com código 20. Evidências, hashes e limites em
+[INSTALACAO-OPCIONAL-REVISOR.md](INSTALACAO-OPCIONAL-REVISOR.md).
+
+O pacote de 292 MB descrito acima é a evidência histórica anterior; não é o
+artefato atual proposto para distribuição. A investigação de fontes do runtime
+completo permanece na issue upstream #12247, sem impedir o caminho separado
+autorizado no ADR-019 nem ser declarada concluída. Os cinco critérios Q-C0 e seus
+35 perfis restritos continuam fechados. DOC-C2 permanece excluído.

@@ -772,6 +772,14 @@ async function executeTool(
             reviewFindings,
           };
         } catch (error) {
+          if (
+            typeof error === "object" &&
+            error !== null &&
+            "code" in error &&
+            error.code === "REVIEW_UNAVAILABLE"
+          ) {
+            throw new ToolRunError("TOOL_UNAVAILABLE", translate("workspace.review.setupRequired"));
+          }
           const isUnavailable =
             (error instanceof Error &&
               (error.message === "CAPABILITY_NOT_FOUND" ||

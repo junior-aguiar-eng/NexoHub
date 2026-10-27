@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { assertInstallerPolicy } from "./installer-policy.mjs";
 
 const root = resolve(import.meta.dirname, "..");
+assertInstallerPolicy(readFileSync(resolve(root, "installer/nexohub.iss"), "utf8"));
 const readJson = (path) => JSON.parse(readFileSync(resolve(root, path), "utf8"));
 const expected = process.env.NEXOHUB_RELEASE_VERSION ?? "0.1.0";
 const pythonVersion = expected

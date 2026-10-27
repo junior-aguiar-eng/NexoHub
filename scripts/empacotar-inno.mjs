@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { assertInstallerPolicy } from "./installer-policy.mjs";
+import { prepareInstaller } from "./preparar-instalador.mjs";
 
 if (process.platform !== "win32") {
   throw new Error("O instalador Inno Setup só pode ser gerado no Windows.");
@@ -8,6 +10,8 @@ if (process.platform !== "win32") {
 
 const root = resolve(import.meta.dirname, "..");
 const version = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).version;
+assertInstallerPolicy(readFileSync(resolve(root, "installer/nexohub.iss"), "utf8"));
+await prepareInstaller(root);
 const compilerCandidates = [
   process.env.INNO_SETUP_COMPILER,
   process.env.LOCALAPPDATA

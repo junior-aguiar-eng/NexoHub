@@ -468,6 +468,12 @@ Esta lista torna verificável a cobertura dos avisos, sem reproduzir textos inte
 
 ## Pendências antes da redistribuição
 
+Estas condições tratam da redistribuição do **runtime completo**, e permanecem na
+[issue upstream #12247](https://github.com/languagetool-org/languagetool/issues/12247).
+O ADR-019 autoriza outro caminho para o instalador NexoHub: excluir LanguageTool/Java
+do payload e oferecer preparo opcional por download oficial com hashes. Não se declara
+que as fontes do pacote completo estejam fechadas por adotar esse caminho.
+
 1. Registrar nova decisão ADR012/008 para bytes identificados e pacote completo ou reduzido, sem converter prova operacional em aprovação jurídica.
 2. Obter/arquivar fontes LT no commit identificado e fontes/receitas exatas dos dicionários GPL e bibliotecas necessárias. URL genérica de projeto, COPYing e checksum não comprovam cumprimento de disponibilização de fontes.
 3. Resolver alternativas por arquivo, termos sem versão e modificações LT; preservar créditos, patches e avisos. Estabelecer mecanismo concreto de entrega/acesso a fontes conforme licença escolhida e forma de distribuição, com revisão jurídica quando necessária.

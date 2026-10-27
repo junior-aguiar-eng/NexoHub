@@ -1,4 +1,16 @@
 export const ptBR = {
+  "installer.desktopIcon": "Criar atalho na Área de Trabalho",
+  "installer.launchApp": "Abrir NexoHub",
+  "installer.webviewFailed":
+    "Não foi possível instalar o Microsoft Edge WebView2 Runtime, necessário para abrir o NexoHub.",
+  "installer.reviewTask":
+    "Instalar revisor local (cerca de {downloadSize} MB dos sites oficiais; requer internet)",
+  "installer.reviewPreparing":
+    "Baixando e conferindo o revisor local. Este preparo pode levar alguns minutos.",
+  "installer.reviewFailed":
+    "O NexoHub foi instalado, mas o revisor local não pôde ser preparado. Execute o instalador novamente e selecione Instalar revisor local. Consulte runtime\\setup\\languagetool-install.log para identificar o erro.",
+  "workspace.review.setupRequired":
+    "O revisor nativo está indisponível. Execute o instalador do NexoHub e selecione Instalar revisor local. Esse preparo requer internet; depois, a revisão funciona no seu computador.",
   "excel.pagesSelection": "Páginas para exportar",
   "excel.pagesSelectionHint": "Todas; ou 1, 3-5",
   "excel.logicalCoordinates":

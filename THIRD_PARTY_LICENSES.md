@@ -1,6 +1,6 @@
 # Licenças de terceiros
 
-Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambiente Python sincronizado. Inclui dependências de runtime, build e teste, além dos sidecars empacotáveis.
+Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambiente Python sincronizado. Inclui dependências de runtime, build e teste, além dos runtimes opcionais identificados abaixo.
 
 | Ecossistema | Componente | Versão | Licença declarada |
 | --- | --- | --- | --- |
@@ -803,7 +803,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 
 ## Sidecars
 
-A licença da linha do sidecar identifica o componente principal; não resume todos os recursos e JARs internos. A atualização LanguageTool 20261027 tem adoção local autorizada no ADR-018 e distribuição pendente de fontes/licenças. Consulte `docs/quality/LANGUAGETOOL-LICENCAS-20261027.md` no repositório ou `runtime/LANGUAGETOOL-LICENCAS-20261027.md` no pacote.
+LanguageTool e Java não integram o instalador NexoHub (ADR-019). A tarefa opcional baixa os arquivos oficiais abaixo, verifica os hashes e prepara a revisão local. A licença da linha identifica o componente principal; não resume todos os recursos e JARs internos. A adoção local foi autorizada no ADR-018; a investigação de fontes para redistribuir o pacote completo continua na issue upstream #12247. Consulte `docs/quality/LANGUAGETOOL-LICENCAS-20261027.md` no repositório.
 
 - **LanguageTool Community 6.9-SNAPSHOT-20261027** — LGPL-2.1-or-later
   Fonte: https://languagetool.org/download/snapshots/LanguageTool-20261027-snapshot.zip
@@ -812,4 +812,4 @@ A licença da linha do sidecar identifica o componente principal; não resume to
   Fonte: https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_x64_windows_hotspot_21.0.12.1_1.zip
   Integridade: `sha256:d35f31e712f0fcf6ac5a093edc90204fbff22f720ba3950bd09d331d5e621636`
 
-Os textos completos e avisos exigidos dos sidecars são preservados dentro do bundle. O manifesto versionado é `runtime/languagetool-community.json`.
+O preparo opcional preserva os textos de licença e avisos dos arquivos oficiais dentro do runtime instalado. O instalador inclui somente o script de preparo, manifesto e inventário de JARs em `runtime/setup`. O manifesto versionado é `runtime/languagetool-community.json`.

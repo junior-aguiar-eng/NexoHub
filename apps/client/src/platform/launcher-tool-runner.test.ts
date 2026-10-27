@@ -48,6 +48,26 @@ it("recusa reparo grande antes de ler ou copiar o arquivo", async () => {
 });
 
 describe("Tool Runner do Launcher", () => {
+  it("orienta instalar o revisor nativo sem trocar silenciosamente de motor", async () => {
+    const port = new BrowserDocumentCorePort();
+    const invoke = vi.spyOn(port, "invoke").mockRejectedValueOnce({ code: "REVIEW_UNAVAILABLE" });
+    const browser = vi.spyOn(browserReviewer, "performBrowserReview").mockResolvedValueOnce([]);
+    try {
+      await expect(
+        runLauncherTool(port, "text-review", {
+          ...input([new File(["Texto de teste."], "teste.txt", { type: "text/plain" })]),
+          firstText: "Texto de teste.",
+        }),
+      ).rejects.toMatchObject({
+        code: "TOOL_UNAVAILABLE",
+        message: expect.stringContaining("Instalar revisor local"),
+      });
+      expect(browser).not.toHaveBeenCalled();
+    } finally {
+      invoke.mockRestore();
+      browser.mockRestore();
+    }
+  });
   it("preserva o aviso específico quando não há imagens elegíveis para extrair", async () => {
     await expect(
       runLauncherTool(

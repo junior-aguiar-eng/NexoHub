@@ -2,6 +2,8 @@
   #error AppVersion deve ser informada pelo script de build.
 #endif
 
+#include "../target/release/installer/messages.iss"
+
 [Setup]
 AppId={{C7B2C938-B30A-4514-B491-92CC0358DB1A}
 AppName=NexoHub
@@ -27,12 +29,17 @@ RestartApplications=no
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "Criar atalho na Área de Trabalho"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:desktopIcon}"; Flags: unchecked
+Name: "languagetool"; Description: "{cm:reviewTask}"; Flags: unchecked
 
 [Files]
 Source: "..\target\release\nexohub-desktop.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\target\release\THIRD_PARTY_LICENSES.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\target\release\runtime\*"; DestDir: "{app}\runtime"; Excludes: "MicrosoftEdgeWebview2Setup.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\target\release\runtime\README.md"; DestDir: "{app}\runtime"; Flags: ignoreversion
+Source: "..\target\release\runtime\setup\install-languagetool.ps1"; DestDir: "{app}\runtime\setup"; Flags: ignoreversion
+Source: "..\target\release\runtime\setup\languagetool-community.json"; DestDir: "{app}\runtime\setup"; Flags: ignoreversion
+Source: "..\target\release\runtime\setup\languagetool-jars.json"; DestDir: "{app}\runtime\setup"; Flags: ignoreversion
+Source: "..\target\release\runtime\setup\languagetool-java-files.json"; DestDir: "{app}\runtime\setup"; Flags: ignoreversion
 Source: "..\target\release\runtime\MicrosoftEdgeWebview2Setup.exe"; Flags: dontcopy
 
 [Icons]
@@ -40,9 +47,44 @@ Name: "{autoprograms}\NexoHub"; Filename: "{app}\nexohub-desktop.exe"
 Name: "{autodesktop}\NexoHub"; Filename: "{app}\nexohub-desktop.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\nexohub-desktop.exe"; Description: "Abrir NexoHub"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\nexohub-desktop.exe"; Description: "{cm:launchApp}"; Flags: nowait postinstall skipifsilent; Check: CanLaunch
 
 [Code]
+var
+  LanguageToolSetupFailed: Boolean;
+
+function CanLaunch: Boolean;
+begin
+  Result := not LanguageToolSetupFailed;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ExitCode: Integer;
+  Parameters: String;
+begin
+  if (CurStep <> ssPostInstall) or not WizardIsTaskSelected('languagetool') then Exit;
+  WizardForm.StatusLabel.Caption := CustomMessage('reviewPreparing');
+  Parameters := ExpandConstant('-NoProfile -ExecutionPolicy Bypass -File "{app}\runtime\setup\install-languagetool.ps1" -InstallRoot "{app}\runtime\languagetool" -ManifestPath "{app}\runtime\setup\languagetool-community.json" -InventoryPath "{app}\runtime\setup\languagetool-jars.json" -JavaInventoryPath "{app}\runtime\setup\languagetool-java-files.json" -LogPath "{app}\runtime\setup\languagetool-install.log"');
+  if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Parameters,
+    '', SW_HIDE, ewWaitUntilTerminated, ExitCode) or (ExitCode <> 0) then
+  begin
+    LanguageToolSetupFailed := True;
+    SuppressibleMsgBox(CustomMessage('reviewFailed'), mbError, MB_OK, IDOK);
+  end;
+end;
+
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if (CurPageID = wpFinished) and LanguageToolSetupFailed then
+    WizardForm.FinishedLabel.Caption := CustomMessage('reviewFailed');
+end;
+
+function GetCustomSetupExitCode: Integer;
+begin
+  if LanguageToolSetupFailed then Result := 20 else Result := 0;
+end;
+
 function WebView2Installed: Boolean;
 var
   Version: string;
@@ -63,5 +105,5 @@ begin
   ExtractTemporaryFile('MicrosoftEdgeWebview2Setup.exe');
   if not Exec(ExpandConstant('{tmp}\MicrosoftEdgeWebview2Setup.exe'), '/silent /install', '', SW_HIDE,
     ewWaitUntilTerminated, ExitCode) or (ExitCode <> 0) or not WebView2Installed then
-    Result := 'Não foi possível instalar o Microsoft Edge WebView2 Runtime, necessário para abrir o NexoHub.';
+    Result := CustomMessage('webviewFailed');
 end;

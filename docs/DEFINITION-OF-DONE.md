@@ -52,5 +52,5 @@ restritos. `pnpm quality:check` confere cobertura, referências e
 hashes, distinguindo arquivo fixo, gerador e manifesto. Esse gate não executa as ferramentas
 nem demonstra fidelidade das saídas. O [fechamento técnico Q-C0](quality/Q-C0-FECHAMENTO.md)
 reúne as evidências adicionais dos cinco critérios do plano, mantendo os perfis restritos,
-a reprovação da foto privada para OCR e a condição de redistribuição do ADR-018.
+a reprovação da foto privada para OCR e a instalação opcional separada do ADR-019.
 Esse fechamento não encerra os demais itens do NexoHub 1.0 nesta tabela.

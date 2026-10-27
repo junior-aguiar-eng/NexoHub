@@ -26,7 +26,7 @@
         {
           "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
           "kind": "generator",
-          "sha256": "8cdd7bdbd88f223312bb68cec60c39a951e8b3d1308cd3824094bbe12869c306"
+          "sha256": "555462ca2b1208efd53f99b907382441d8526c175a66a7002f4618800bfe1500"
         }
       ]
     },
@@ -483,7 +483,7 @@
         {
           "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
           "kind": "generator",
-          "sha256": "8cdd7bdbd88f223312bb68cec60c39a951e8b3d1308cd3824094bbe12869c306"
+          "sha256": "555462ca2b1208efd53f99b907382441d8526c175a66a7002f4618800bfe1500"
         },
         {
           "path": "apps/client/src/platform/document-reader.test.ts",

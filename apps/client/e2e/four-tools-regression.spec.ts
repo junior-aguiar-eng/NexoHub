@@ -1,7 +1,142 @@
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
 import { PDFDocument } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import {
+  explicitHtmlBreaks,
+  longHtmlTable,
+  oversizedHtmlHeader,
+  wideUnicodeHtmlTable,
+} from "../src/platform/__fixtures__/doc-c3/corpus";
+
+async function inspectHtmlOutput(bytes: Uint8Array) {
+  const task = pdfjs.getDocument({ data: bytes.slice(), useSystemFonts: true });
+  try {
+    const doc = await task.promise;
+    const pages: string[] = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      const width = page.view[2] - page.view[0],
+        height = page.view[3] - page.view[1];
+      for (const item of content.items)
+        if ("str" in item && item.str.trim()) {
+          expect(item.transform[4]).toBeGreaterThanOrEqual(0);
+          expect(item.transform[4] + item.width).toBeLessThanOrEqual(width + 0.5);
+          expect(item.transform[5]).toBeGreaterThan(0);
+          expect(item.transform[5] + item.height).toBeLessThanOrEqual(height);
+        }
+      pages.push(
+        content.items
+          .map((item) => ("str" in item ? item.str : ""))
+          .join(" ")
+          .replace(/\s+/g, " "),
+      );
+    }
+    return pages;
+  } finally {
+    await task.destroy();
+  }
+}
+
+for (const [name, html] of [
+  ["tabela longa", longHtmlTable],
+  ["tabela larga Unicode", wideUnicodeHtmlTable],
+  ["quebras explícitas", explicitHtmlBreaks],
+  [
+    "quebras de lista",
+    '<ul><li>PRIMEIRO</li><li style="break-before:page">SEGUNDO</li><li style="break-after:page">TERCEIRO</li><li>QUARTO</li></ul>',
+  ],
+  [
+    "quebras de tabela",
+    '<table><thead><tr><th>Cabecalho</th></tr></thead><tr><td>PRIMEIRO</td></tr><tr style="page-break-before:always"><td>SEGUNDO</td></tr><tr style="break-after:page"><td>TERCEIRO</td></tr><tr><td>QUARTO</td></tr></table>',
+  ],
+] as const) {
+  test(`DOC-C3 preserva ${name} no PDF exportado`, async ({ page }, testInfo) => {
+    await open(page, "HTML para PDF");
+    await page.getByRole("button", { name: "Digitar / Colar Código HTML", exact: true }).click();
+    await page.getByTestId("html-code-input").fill(html);
+    const runs = [];
+    for (let run = 0; run < 2; run++) {
+      const started = performance.now();
+      const bytes = await exportFile(page);
+      const elapsedMs = performance.now() - started;
+      const pages = await inspectHtmlOutput(bytes);
+      if (name === "tabela longa") {
+        expect(pages.length).toBeGreaterThan(2);
+        for (const text of pages) expect(text).toContain("Identificador");
+        expect(pages.at(-1)).toContain("FIM-TABELA");
+        for (let row = 0; row < 110; row++) expect(pages.join(" ")).toContain(`Registro ${row}`);
+      } else if (name === "tabela larga Unicode") {
+        expect(pages.at(-1)).toContain("ULTIMO-UNICODE");
+        const all = pages.join(" ").replace(/\s/g, "");
+        for (let row = 0; row < 12; row++)
+          for (let col = 0; col < 8; col++)
+            expect(all).toContain(`R${row}C${col}—中文✅${"L".repeat(35)}`);
+      } else {
+        expect(pages).toHaveLength(3);
+        expect(pages[0]).toContain("PRIMEIRO");
+        expect(pages[1]).toContain("SEGUNDO");
+        expect(pages[1]).toContain("TERCEIRO");
+        expect(pages[2]).toContain("QUARTO");
+        if (name === "quebras de tabela")
+          for (const text of pages) expect(text).toContain("Cabecalho");
+      }
+      runs.push({ run, elapsedMs, bytes: bytes.length, pages: pages.length });
+      const pdfPath = testInfo.outputPath(`doc-c3-${run}.pdf`);
+      await writeFile(pdfPath, bytes);
+      await testInfo.attach(`doc-c3-${run}.pdf`, { path: pdfPath, contentType: "application/pdf" });
+      await page.getByRole("button", { name: "Processar outro arquivo", exact: true }).click();
+      await page.getByRole("button", { name: "Digitar / Colar Código HTML", exact: true }).click();
+      await page.getByTestId("html-code-input").fill(html);
+    }
+    const metricsPath = testInfo.outputPath("doc-c3-metrics.json");
+    await writeFile(metricsPath, JSON.stringify({ name, runs }, null, 2));
+    await testInfo.attach("doc-c3-metrics.json", {
+      path: metricsPath,
+      contentType: "application/json",
+    });
+  });
+}
+
+test("DOC-C3 recusa cabeçalho excessivo com orientação simples", async ({ page }) => {
+  await open(page, "HTML para PDF");
+  await page.getByRole("button", { name: "Digitar / Colar Código HTML", exact: true }).click();
+  await page.getByTestId("html-code-input").fill(oversizedHtmlHeader);
+  await page.locator(".ilovepdf-action-red-btn").click();
+  await expect(
+    page.getByText(
+      "O cabeçalho da tabela não cabe na página. Reduza o texto ou escolha uma página maior.",
+    ),
+  ).toBeVisible();
+  await expect(page.locator("a[download]")).toHaveCount(0);
+});
+
+for (const width of [390, 768, 1024, 1440])
+  for (const dark of [false, true]) {
+    test(`DOC-C3 mesa ${width} tema ${dark ? "escuro" : "claro"}`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await open(page, "HTML para PDF");
+      await page.evaluate(
+        (value) => document.documentElement.setAttribute("data-theme", value),
+        dark ? "dark" : "light",
+      );
+      await expect(page.locator("html")).toHaveAttribute("data-theme", dark ? "dark" : "light");
+      await page.getByRole("button", { name: "Digitar / Colar Código HTML", exact: true }).click();
+      await page.getByTestId("html-code-input").fill(longHtmlTable);
+      await page.getByTestId("html-code-input").evaluate((input) => {
+        input.scrollTop = 0;
+        input.blur();
+      });
+      await expect(page.frameLocator("iframe").getByText("FIM-TABELA")).toHaveCount(1);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        width,
+      );
+      await expect(page.locator(".ilovepdf-action-red-btn")).toBeVisible();
+      await page.screenshot({ path: testInfo.outputPath("doc-c3-mesa.png") });
+    });
+  }
 
 async function open(page: Page, title: string) {
   await page.goto("/");

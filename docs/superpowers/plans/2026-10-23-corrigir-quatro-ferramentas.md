@@ -88,16 +88,34 @@ exigem avaliação própria, sem alterar o histórico da entrega sem dependênci
 
 ### DOC-C3 — HTML: fidelidade dentro do escopo local
 
+**Execução local — 26/10/2026:** concluída após commit R-C1 `eba09c8`, árvore inicialmente limpa,
+no worktree `fix/auditoria-website`. Sem novo commit, push, deploy ou integração desktop.
+DOC-C2 continua fora do escopo. Sem novos motores, dependências, serviços ou rasterização
+integral. Sequência: regressões de paginação → implementação incremental → conferência do
+PDF exportado, Unicode e limites → gates raiz/subpasta e revisão única.
+Detalhes, métricas, corpus e limites em [DOC-C3](../../DOC-C3.md).
+
 **Modificar:** `platform/html-local-document.ts`, `html-to-pdf-converter.ts`, teste próximo,
 `features/launcher/HtmlToPdfPanel.tsx`, teste próximo e `e2e/four-tools-regression.spec.ts`.
 
-- [ ] Acrescentar casos de tabelas longas, cabeçalhos repetidos, colunas largas, Unicode e
+- [x] Acrescentar casos de tabelas longas, cabeçalhos repetidos, colunas largas, Unicode e
   quebras explícitas; conferir presença do último texto e ausência de conteúdo fora da página.
-- [ ] Implementar paginação/cabeçalhos mantendo leitura inerte, CSP sem rede e sandbox.
+- [x] Implementar paginação/cabeçalhos mantendo leitura inerte, CSP sem rede e sandbox.
   Preservar texto selecionável quando suportado e avisar quais estilos não são reproduzidos.
-- [ ] Não instalar html2canvas/html2pdf.js como solução automática de impressão fiel: rasterizar
+- [x] Não instalar html2canvas/html2pdf.js como solução automática de impressão fiel: rasterizar
   a página muda seleção/acessibilidade e não resolve todo CSS. Conversão de sites arbitrários
   via Chromium/servidor permanece condicionada à decisão arquitetural e de privacidade.
+
+**Registro de aceite:** cabeçalhos repetidos inclusive na divisão de linha, recusa de cabeçalho
+excessivo, quebras inline de blocos/listas/linhas do corpo, erros simples e aviso sobre diferenças
+visuais. Mantido o fallback Unicode existente, com conferência real no Chromium. Parser inerte
+e painel reutilizados sem alteração estrutural; seus testes e o catálogo pt-BR receberam os
+controles necessários. Fixture autoral e mensagens no runner são os arquivos de apoio adicionados
+ao escopo previsto, sem novas dependências. Revisão única: P2 li/tr corrigido com dois testes
+RED→GREEN e provas do download. 806 unitários aprovados, 312 E2E na raiz/5 pulados, 223 em
+`/hub/`, mais 30 E2E focados finais em cada base após a correção. Check, licenças e builds
+aprovados. Sem novo commit/push/deploy; DOC-C2 não iniciado. Layout CSS arbitrário, tabelas
+mescladas/aninhadas e Windows instalado permanecem sem homologação.
 
 ### DOC-C4 — Remover e extrair páginas: preservação e uso em documentos grandes
 

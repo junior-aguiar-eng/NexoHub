@@ -574,6 +574,18 @@ describe("Tool Runner do Launcher", () => {
     expect(doc.getPageCount()).toBe(1);
   });
 
+  it("explica a recusa de cabeçalho HTML que não cabe na página", async () => {
+    await expect(
+      runLauncherTool(new BrowserDocumentCorePort(), "html-to-pdf", {
+        ...input([]),
+        htmlContent: `<table><thead><tr><th>${"CABECALHO ".repeat(2000)}</th></tr></thead><tr><td>Fim</td></tr></table>`,
+      }),
+    ).rejects.toMatchObject({
+      message:
+        "O cabeçalho da tabela não cabe na página. Reduza o texto ou escolha uma página maior.",
+    });
+  });
+
   it("executa digitalização para PDF com scan-to-pdf", async () => {
     const port = new BrowserDocumentCorePort();
     const minimalPng = new Uint8Array([

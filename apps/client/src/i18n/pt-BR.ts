@@ -1422,7 +1422,11 @@ export const ptBR = {
   // HTML PARA PDF
   "htmlToPdf.title": "HTML para PDF",
   "htmlToPdf.layoutNotice":
-    "O PDF usa um layout próprio para textos, listas e tabelas. Estilos CSS, imagens e recursos externos não são incluídos. A prévia mostra o HTML de origem com acesso à rede bloqueado.",
+    "O PDF reorganiza textos, listas e tabelas para caber nas páginas. Imagens não são incluídas; fontes, cores e disposição podem mudar. A prévia mostra o original. Confira o PDF baixado.",
+  "htmlToPdf.headerTooTall":
+    "O cabeçalho da tabela não cabe na página. Reduza o texto ou escolha uma página maior.",
+  "htmlToPdf.tableTooWide":
+    "A tabela tem colunas demais para esta página. Reduza as colunas ou escolha uma página maior.",
   "htmlToPdf.sampleDescription":
     "Este documento foi gerado a partir de HTML local em um layout documental paginado.",
   "htmlToPdf.tabUpload": "Carregar Arquivo .html",

@@ -34,6 +34,7 @@ try {
         "pdf-compare.spec.ts",
         "pdf-repair-integration.spec.ts",
         "r-c1-repair-quality.spec.ts",
+        "four-tools-regression.spec.ts",
         "security-excel-quality.spec.ts",
         "tool-workspace-regressions.spec.ts",
         "tool-workspace-layout.spec.ts",

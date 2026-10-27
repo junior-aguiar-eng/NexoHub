@@ -1191,6 +1191,12 @@ async function executeTool(
         orientation: input.htmlOrientation ?? "portrait",
         margin: input.htmlMargin ?? "normal",
         baseTitle: first ? baseName : undefined,
+      }).catch((error: unknown) => {
+        if (error instanceof Error && error.message === "HTML_TABLE_HEADER_TOO_TALL")
+          throw new ToolRunError("INVALID_INPUT", translate("htmlToPdf.headerTooTall"));
+        if (error instanceof Error && error.message === "HTML_TABLE_TOO_WIDE")
+          throw new ToolRunError("INVALID_INPUT", translate("htmlToPdf.tableTooWide"));
+        throw error;
       });
       const resolvedName = first
         ? baseName

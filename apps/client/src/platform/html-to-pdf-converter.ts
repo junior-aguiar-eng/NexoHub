@@ -39,11 +39,28 @@ interface TextSegment {
 }
 
 interface BlockElement {
-  readonly type: "heading" | "paragraph" | "list-item" | "code-block" | "quote" | "hr" | "table";
+  readonly type:
+    | "heading"
+    | "paragraph"
+    | "list-item"
+    | "code-block"
+    | "quote"
+    | "hr"
+    | "table"
+    | "page-break";
   readonly level?: number; // para heading
   readonly listPrefix?: string; // para list-item
   readonly segments: TextSegment[];
   readonly tableRows?: Array<Array<{ text: string; isHeader: boolean }>>;
+  readonly tableHeaderRows?: number;
+  readonly tableBreaks?: Array<{ before: boolean; after: boolean }>;
+}
+
+function hasPageBreak(element: HTMLElement, side: "before" | "after"): boolean {
+  return [
+    element.style.getPropertyValue(`break-${side}`),
+    element.style.getPropertyValue(`page-break-${side}`),
+  ].some((value) => value === "page" || value === "always");
 }
 
 function parseHexColor(hex: string): RGB | undefined {
@@ -132,6 +149,17 @@ function parseHtmlBlocks(htmlString: string): { title: string; blocks: BlockElem
       }
 
       function processNode(node: Node) {
+        const el = node.nodeType === Node.ELEMENT_NODE ? (node as HTMLElement) : undefined;
+        const addBreak = () => {
+          if (blocks.at(-1)?.type !== "page-break")
+            blocks.push({ type: "page-break", segments: [] });
+        };
+        if (el && hasPageBreak(el, "before")) addBreak();
+        processContent(node);
+        if (el && hasPageBreak(el, "after")) addBreak();
+      }
+
+      function processContent(node: Node) {
         if (node.nodeType === Node.TEXT_NODE) {
           const text = (node.textContent || "").replace(/\s+/g, " ").trim();
           if (text) blocks.push({ type: "paragraph", segments: [{ text }] });
@@ -186,6 +214,8 @@ function parseHtmlBlocks(htmlString: string): { title: string; blocks: BlockElem
           let idx = 1;
           for (const li of Array.from(el.children)) {
             if (li.tagName.toLowerCase() === "li") {
+              if (hasPageBreak(li as HTMLElement, "before"))
+                blocks.push({ type: "page-break", segments: [] });
               const prefix = isOrdered ? `${idx++}. ` : "• ";
               const segs = extractSegments(li);
               if (segs.length > 0) {
@@ -195,6 +225,8 @@ function parseHtmlBlocks(htmlString: string): { title: string; blocks: BlockElem
                   segments: segs,
                 });
               }
+              if (hasPageBreak(li as HTMLElement, "after"))
+                blocks.push({ type: "page-break", segments: [] });
             }
           }
           return;
@@ -202,7 +234,11 @@ function parseHtmlBlocks(htmlString: string): { title: string; blocks: BlockElem
 
         if (tag === "table") {
           const rows: Array<Array<{ text: string; isHeader: boolean }>> = [];
-          const trElements = Array.from(el.querySelectorAll("tr"));
+          let headerRows = 0;
+          const rowBreaks: Array<{ before: boolean; after: boolean }> = [];
+          const trElements = Array.from(el.querySelectorAll("tr")).filter(
+            (tr) => tr.closest("table") === el,
+          );
           for (const tr of trElements) {
             const rowData: Array<{ text: string; isHeader: boolean }> = [];
             for (const cell of Array.from(tr.children)) {
@@ -214,13 +250,26 @@ function parseHtmlBlocks(htmlString: string): { title: string; blocks: BlockElem
                 });
               }
             }
-            if (rowData.length > 0) rows.push(rowData);
+            if (rowData.length > 0) {
+              if (
+                headerRows === rows.length &&
+                (tr.parentElement?.tagName === "THEAD" || rowData.every((cell) => cell.isHeader))
+              )
+                headerRows++;
+              rows.push(rowData);
+              rowBreaks.push({
+                before: hasPageBreak(tr, "before"),
+                after: hasPageBreak(tr, "after"),
+              });
+            }
           }
           if (rows.length > 0) {
             blocks.push({
               type: "table",
               segments: [],
               tableRows: rows,
+              tableHeaderRows: headerRows,
+              tableBreaks: rowBreaks,
             });
           }
           return;
@@ -361,11 +410,18 @@ export async function convertHtmlToPdfDocument(
 
   let currentPage: PDFPage = pdfDoc.addPage([pageWidth, pageHeight]);
   let currentY = pageHeight - margin;
+  let pageHasContent = false;
+  let pendingBreak = false;
+
+  function newPage() {
+    currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
+    currentY = pageHeight - margin;
+    pageHasContent = false;
+  }
 
   function ensurePageSpace(neededHeight: number): PDFPage {
     if (currentY - neededHeight < bottomThreshold) {
-      currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
-      currentY = pageHeight - margin;
+      newPage();
     }
     return currentPage;
   }
@@ -469,6 +525,12 @@ export async function convertHtmlToPdfDocument(
   }
 
   for (const block of blocks) {
+    if (block.type === "page-break") {
+      pendingBreak = true;
+      continue;
+    }
+    if (pendingBreak && pageHasContent) newPage();
+    pendingBreak = false;
     if (block.type === "hr") {
       ensurePageSpace(18);
       currentY -= 6;
@@ -479,51 +541,84 @@ export async function convertHtmlToPdfDocument(
         color: rgb(0.85, 0.88, 0.92),
       });
       currentY -= 12;
+      pageHasContent = true;
       continue;
     }
     if (block.type === "table" && block.tableRows) {
       const columns = Math.max(...block.tableRows.map((row) => row.length));
       const colWidth = printableWidth / Math.max(1, columns);
       if (colWidth < 16) throw new Error("HTML_TABLE_TOO_WIDE");
-      for (const row of block.tableRows) {
-        const cells = row.map((cell) => ({
+      const prepared = block.tableRows.map((row) =>
+        row.map((cell) => ({
           ...cell,
           lines: wrapText(cell.text, cell.isHeader ? fontBold : fontRegular, 10, colWidth - 12),
-        }));
-        const count = Math.max(1, ...cells.map((cell) => cell.lines.length));
+        })),
+      );
+      const lineCount = (cells: (typeof prepared)[number]) =>
+        Math.max(1, ...cells.map((cell) => cell.lines.length));
+      const headers = prepared.slice(0, block.tableHeaderRows ?? 0);
+      const bodyRows = prepared.slice(headers.length);
+      const headerHeight = headers.reduce((total, row) => total + lineCount(row) * 14 + 12, 0);
+      const pageCapacity = pageHeight - margin - bottomThreshold;
+      if (headerHeight > pageCapacity - (bodyRows.length ? 26 : 0))
+        throw new Error("HTML_TABLE_HEADER_TOO_TALL");
+
+      async function drawCells(cells: (typeof prepared)[number], offset: number, rowsHere: number) {
+        const top = currentY,
+          height = rowsHere * 14 + 12;
+        for (let col = 0; col < columns; col++) {
+          const cell = cells[col];
+          currentPage.drawRectangle({
+            x: margin + col * colWidth,
+            y: top - height,
+            width: colWidth,
+            height,
+            color: cell?.isHeader ? rgb(0.93, 0.95, 0.98) : rgb(1, 1, 1),
+            borderColor: rgb(0.8, 0.85, 0.9),
+            borderWidth: 0.5,
+          });
+          for (let line = 0; line < rowsHere; line++) {
+            currentY = top - 15 - line * 14;
+            await drawLine(
+              cell?.lines[offset + line] || "",
+              margin + col * colWidth + 6,
+              cell?.isHeader ? fontBold : fontRegular,
+              10,
+              rgb(0.15, 0.18, 0.22),
+            );
+          }
+        }
+        currentY = top - height;
+        pageHasContent = true;
+      }
+      async function drawHeaders() {
+        for (const row of headers) await drawCells(row, 0, lineCount(row));
+      }
+      if (block.tableBreaks?.[headers.length]?.before && pageHasContent) newPage();
+      ensurePageSpace(headerHeight + (bodyRows.length ? 26 : 0));
+      await drawHeaders();
+      let rowBreak = false;
+      for (const [rowIndex, cells] of bodyRows.entries()) {
+        const breaks = block.tableBreaks?.[headers.length + rowIndex];
+        if ((rowBreak || (rowIndex > 0 && breaks?.before)) && pageHasContent) {
+          newPage();
+          await drawHeaders();
+        }
+        const count = lineCount(cells);
         let offset = 0;
         while (offset < count) {
-          ensurePageSpace(26);
+          if (currentY - 26 < bottomThreshold) {
+            newPage();
+            await drawHeaders();
+          }
           const fitting = Math.max(1, Math.floor((currentY - bottomThreshold - 12) / 14));
           const rowsHere = Math.min(count - offset, fitting);
-          const top = currentY,
-            height = rowsHere * 14 + 12;
-          for (let col = 0; col < columns; col++) {
-            const cell = cells[col];
-            currentPage.drawRectangle({
-              x: margin + col * colWidth,
-              y: top - height,
-              width: colWidth,
-              height,
-              color: cell?.isHeader ? rgb(0.93, 0.95, 0.98) : rgb(1, 1, 1),
-              borderColor: rgb(0.8, 0.85, 0.9),
-              borderWidth: 0.5,
-            });
-            for (let line = 0; line < rowsHere; line++) {
-              currentY = top - 15 - line * 14;
-              await drawLine(
-                cell?.lines[offset + line] || "",
-                margin + col * colWidth + 6,
-                cell?.isHeader ? fontBold : fontRegular,
-                10,
-                rgb(0.15, 0.18, 0.22),
-              );
-            }
-          }
-          currentY = top - height;
+          await drawCells(cells, offset, rowsHere);
           offset += rowsHere;
         }
+        rowBreak = breaks?.after ?? false;
       }
+      if (rowBreak) pendingBreak = true;
       currentY -= 10;
       continue;
     }
@@ -568,6 +663,7 @@ export async function convertHtmlToPdfDocument(
       if (list && i === 0)
         await drawLine(block.listPrefix || "• ", margin, fontBold, size, rgb(0.2, 0.25, 0.35));
       await drawLine(lines[i], margin + indent, font, size, rgb(0.15, 0.18, 0.22));
+      pageHasContent = true;
     }
     currentY -= heading ? 12 : 8;
   }

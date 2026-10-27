@@ -1,0 +1,143 @@
+{
+  "base": "eba09c8",
+  "profile": "DOC-C3 local final /hub/",
+  "device": "Windows; Ryzen 5 3550H; 32 GB RAM; Node 24.19; Chromium 151",
+  "measurement": "Tempo do fluxo incluindo interação e download, duas execuções por cenário; não isola CPU ou pico de memória; host compartilhado com testes",
+  "scenarios": [
+    {
+      "name": "quebras de lista",
+      "runs": [
+        {
+          "run": 0,
+          "elapsedMs": 582.6350999999995,
+          "bytes": 1730,
+          "pages": 3
+        },
+        {
+          "run": 1,
+          "elapsedMs": 482.3860000000004,
+          "bytes": 1730,
+          "pages": 3
+        }
+      ]
+    },
+    {
+      "name": "tabela larga Unicode",
+      "runs": [
+        {
+          "run": 0,
+          "elapsedMs": 1485.9450999999995,
+          "bytes": 408976,
+          "pages": 2
+        },
+        {
+          "run": 1,
+          "elapsedMs": 1074.1688000000013,
+          "bytes": 408976,
+          "pages": 2
+        }
+      ]
+    },
+    {
+      "name": "quebras explícitas",
+      "runs": [
+        {
+          "run": 0,
+          "elapsedMs": 555.3582000000006,
+          "bytes": 1594,
+          "pages": 3
+        },
+        {
+          "run": 1,
+          "elapsedMs": 478.47450000000026,
+          "bytes": 1594,
+          "pages": 3
+        }
+      ]
+    },
+    {
+      "name": "tabela longa",
+      "runs": [
+        {
+          "run": 0,
+          "elapsedMs": 919.7455,
+          "bytes": 8540,
+          "pages": 5
+        },
+        {
+          "run": 1,
+          "elapsedMs": 522.8719999999994,
+          "bytes": 8542,
+          "pages": 5
+        }
+      ]
+    },
+    {
+      "name": "quebras de tabela",
+      "runs": [
+        {
+          "run": 0,
+          "elapsedMs": 560.3444999999992,
+          "bytes": 1913,
+          "pages": 3
+        },
+        {
+          "run": 1,
+          "elapsedMs": 452.98839999999836,
+          "bytes": 1913,
+          "pages": 3
+        }
+      ]
+    }
+  ],
+  "outputPdfHashes": [
+    {
+      "file": "a87e2add-doc-c3-0.pdf",
+      "sha256": "0e1fbb66844d61c5484dbe627f15cb2b379a4b1d741570c5dbab13e0f4cc469b"
+    },
+    {
+      "file": "a87e2add-doc-c3-1.pdf",
+      "sha256": "ca5d19a805fdf3d4b1dbe89b61389847e679424543d3e2d3d3211098a2557746"
+    },
+    {
+      "file": "c8532349-doc-c3-0.pdf",
+      "sha256": "0b852e969de9f57c0ac5354fa22ca6ff2fc0dd53b19f425ac8eef187ad209a73"
+    },
+    {
+      "file": "c8532349-doc-c3-1.pdf",
+      "sha256": "4371235f03f446e546669e262c350bae34c35aad777c8fad0dc7a4d9c4c21c42"
+    },
+    {
+      "file": "b2eb5867-doc-c3-0.pdf",
+      "sha256": "db7a3ec2d6e7805c0827fb7f9332a13db98893cdce57b6591874a4371a22e22c"
+    },
+    {
+      "file": "b2eb5867-doc-c3-1.pdf",
+      "sha256": "db7a3ec2d6e7805c0827fb7f9332a13db98893cdce57b6591874a4371a22e22c"
+    },
+    {
+      "file": "9c0cf451-doc-c3-0.pdf",
+      "sha256": "8e1f2e2b979ba759eb545530ff1f4032901d4b6e1e127c48629ca4b0c4c20f75"
+    },
+    {
+      "file": "9c0cf451-doc-c3-1.pdf",
+      "sha256": "3dd26b1f3e0c4ff292d277d29eb4269abcc9f54f54b541bbc90f1bfb3e46a38c"
+    },
+    {
+      "file": "6446743b-doc-c3-0.pdf",
+      "sha256": "3a927dd997f1daaecc357bc9333e4a6c4672df9c5605b00ccd56c56fba83de2b"
+    },
+    {
+      "file": "6446743b-doc-c3-1.pdf",
+      "sha256": "6ceb760fc80e2e49282ccb9d54df63f3acb1251872b00cf6faeba82a90844702"
+    }
+  ],
+  "mainBundle": [
+    {
+      "file": "index-DhCffQwA.js",
+      "bytes": 1114725,
+      "gzipLevel9Bytes": 303564,
+      "sha256": "521d5754961df09146ed6b6343bc5e1331fa1fce1e84ca60c531826e34ac1f2b"
+    }
+  ]
+}

@@ -208,6 +208,23 @@ Validação: check, 790 testes do cliente, 10 do Tool Registry, builds raiz e `/
 13 E2E pertinentes em cada base aprovados. Regressão do aviso observada antes da correção;
 revisão única sem achados materiais. Sem E2E integral ou homologação instalada nesta fatia.
 
+### Q-C0 — proteger e desbloquear PDF (27/10/2026)
+
+Base `75782aa`, após commit autorizado de raster. Corpus rico e variantes fixas em
+[PDF-ACESSO.md](../../quality/PDF-ACESSO.md): AES-256/RC4, credenciais exatas, flags de
+permissão, texto, geometria, valores/widgets, Info e anexos. Comparação PDF.js antes/depois,
+com controles explícitos e verificação estrutural/editável em pdf-lib; limites de independência
+do leitor registrados. E2E nas duas bases, incluindo senha incorreta e recusa de ByteRange.
+
+Sem mudança dos executores, UI, dependências ou arquitetura. Índice: 31 perfis restritos,
+4 regressões. Q-C0 global e homologação instalada continuam parciais; DOC-C2 excluído.
+Commit local autorizado posteriormente pelo usuário, sem push, deploy ou integração na
+principal. Evidências no relatório vinculado.
+
+Validação: check, 50 testes pertinentes, 10 do Tool Registry, builds raiz e `/hub/`,
+quatro E2E em cada base aprovados. Revisão única sem achados materiais. Sem repetição das
+suítes completas do cliente/E2E ou instalação Windows nesta fatia de testes/documentação.
+
 ### UX-C1 — Visualização PDF reutilizável nas mesas atuais
 
 **Modificar:** painéis `CropPdfPanel`, `SignPdfPanel`, `RedactPdfPanel`, `WatermarkPdfPanel`,

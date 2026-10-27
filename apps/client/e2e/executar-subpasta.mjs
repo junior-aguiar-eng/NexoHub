@@ -38,6 +38,7 @@ try {
         "doc-c4-pages.spec.ts",
         "pdf-basic-quality.spec.ts",
         "pdf-raster-quality.spec.ts",
+        "pdf-access-quality.spec.ts",
         "tool-quality.spec.ts",
         "security-excel-quality.spec.ts",
         "tool-workspace-regressions.spec.ts",

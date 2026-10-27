@@ -596,6 +596,48 @@
           "sha256": "8f136b4763c02f509e83156f9ad9ba5a730ee18a35573f9805cc94522a552bfc"
         }
       ]
+    },
+    {
+      "id": "pdf-access",
+      "origin": "Corpus autoral de quatro páginas reutiliza DOC-C4: campos compartilhados, rádio, checkbox, CropBox e rotações; Info e anexo próprios. Credenciais fictícias. Fixtures legadas de desbloqueio permanecem no grupo unlock, conforme seu README.",
+      "license": "Conteúdo e geradores autorais MPL-2.0; fontes/bibliotecas mantêm licenças próprias. Nenhum modelo, dependência ou ferramenta Python foi instalado/regenerado nesta fatia.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/__fixtures__/q-c0-access/corpus.ts",
+          "kind": "generator",
+          "sha256": "99a0aac3dc2fffb16e37a759a9189e056ed5f7c9793e4859f332a53055b37a33"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/q-c0-access/inspect.ts",
+          "kind": "generator",
+          "sha256": "faf3aa648e6f0d46358b220b5b2532260084c7bbc048c81c459d8359edabfc82"
+        },
+        {
+          "path": "apps/client/src/platform/pdf-access-quality.test.ts",
+          "kind": "generator",
+          "sha256": "af254148865b58225c227d526a1f85d638cd50760b0206c6111717696f1a60be"
+        },
+        {
+          "path": "apps/client/e2e/pdf-access-quality.spec.ts",
+          "kind": "generator",
+          "sha256": "733be484a2d415b762b1cd640e903c2d2c06cc6ee62caf83ed2203bd5761a2da"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/doc-c4/corpus.ts",
+          "kind": "generator",
+          "sha256": "c29da7000044fbe9088e798e2abcd652851e479df72e07e5bf701fb8a72dbf8e"
+        },
+        {
+          "path": "apps/client/src/platform/pdf-security.test.ts",
+          "kind": "generator",
+          "sha256": "a7a12106e5d2c268b4ca166b55b594c2c2633d01649b3863c198913297395359"
+        },
+        {
+          "path": "apps/client/src/platform/pdf-unlock.test.ts",
+          "kind": "generator",
+          "sha256": "5f8621b4cb3410770f07d480ef7a245394700d3a6b37f579d88205a99152c6fd"
+        }
+      ]
     }
   ],
   "tools": [
@@ -867,16 +909,25 @@
     },
     {
       "toolId": "pdf-protect",
-      "level": "regression",
-      "corpora": ["security"],
-      "supported": ["Senha/permissões e verificações RC4/AES do corpus sintético."],
-      "refused": ["Senha inválida ou parâmetro incompatível."],
+      "level": "restricted-profile",
+      "corpora": ["pdf-access", "security"],
+      "supported": [
+        "AES-256 e RC4 do protetor existente, senhas fictícias com espaços/acentos, flags de permissão e leitura por usuário/titular; texto, caixas/rotação, campos/widgets, Info e bytes anexados conferidos no corpus rico."
+      ],
+      "refused": [
+        "Senha ausente, RC4 com caracteres fora do perfil e documento já cifrado mantêm recusas existentes; senhas incorretas não abrem o controle cifrado."
+      ],
       "unmeasured": [
-        "Certificação criptográfica independente e todos os leitores externos.",
+        "Auditoria criptográfica independente e imposição de permissões por todo leitor externo não demonstradas; flags de permissão não constituem bloqueio inviolável.",
+        "Todo PDF/handler de segurança, pintura pixel a pixel, fontes arbitrárias, grandes lotes e pouca RAM não certificados por este corpus.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/AUDITORIA-NOVAS-FERRAMENTAS-WEB-2026-10-23.md"],
-      "tests": ["apps/client/src/platform/pdf-security.test.ts"]
+      "docs": ["docs/quality/PDF-ACESSO.md", "docs/TOOL-SPEC.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-access-quality.test.ts",
+        "apps/client/e2e/pdf-access-quality.spec.ts",
+        "apps/client/src/platform/pdf-security.test.ts"
+      ]
     },
     {
       "toolId": "pdf-extract-images",
@@ -991,16 +1042,25 @@
     },
     {
       "toolId": "pdf-unlock",
-      "level": "regression",
-      "corpora": ["unlock"],
-      "supported": ["RC4/AES do corpus com conteúdo, campos/anexo e senha exata."],
-      "refused": ["ByteRange, filtro Crypt e senha inválida."],
+      "level": "restricted-profile",
+      "corpora": ["pdf-access", "unlock"],
+      "supported": [
+        "Nove variantes fixas RC4/AES, restrições sem senha de abertura e saídas protegidas pelo aplicativo; snapshot de texto/geometria/campos/Info/anexos, remoção de Encrypt e campo editável conferidos."
+      ],
+      "refused": [
+        "Senha ausente/incorreta, ByteRange e filtro Crypt explícito preservam guardas existentes; E2E de ByteRange não oferece download."
+      ],
       "unmeasured": [
-        "Todos os filtros PDF e validação criptográfica de assinaturas.",
+        "Auditoria criptográfica independente e imposição de permissões por todo leitor externo não demonstradas; flags de permissão não constituem bloqueio inviolável.",
+        "Todo PDF/handler de segurança, pintura pixel a pixel, fontes arbitrárias, grandes lotes e pouca RAM não certificados por este corpus.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/AUDITORIA-NOVAS-FERRAMENTAS-WEB-2026-10-23.md"],
-      "tests": ["apps/client/src/platform/pdf-unlock.test.ts"]
+      "docs": ["docs/quality/PDF-ACESSO.md", "docs/TOOL-SPEC.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-access-quality.test.ts",
+        "apps/client/e2e/pdf-access-quality.spec.ts",
+        "apps/client/src/platform/pdf-unlock.test.ts"
+      ]
     },
     {
       "toolId": "pdf-redact",

@@ -1,0 +1,183 @@
+{
+  "base": "aa2d874",
+  "profile": "DOC-C4 local final /hub/",
+  "device": "Windows; Ryzen 5 3550H; 32GB RAM; Node24.19; Chromium151",
+  "measurement": "Amostras de heap sem GC forcado; nao representam pico ou RAM total; ready inclui navegacao; inputPaint usa duas RAFs; execucao concorrente no host",
+  "scenarios": [
+    {
+      "title": "Remover Páginas",
+      "inputBytes": 109978,
+      "pages": 500,
+      "readyMs": 1440.7248,
+      "before": {
+        "renders": 35,
+        "inputPaintMs": [67.59999996423721],
+        "domNodes": 6676
+      },
+      "after": {
+        "renders": 61,
+        "inputPaintMs": [67.59999996423721]
+      },
+      "outputPages": 497,
+      "outputBytes": 109003,
+      "heapBefore": {
+        "usedSize": 10546596,
+        "totalSize": 14229504,
+        "embedderHeapUsedSize": 5764712,
+        "backingStorageSize": 4559400
+      },
+      "heapSelection": {
+        "usedSize": 39367648,
+        "totalSize": 59224064,
+        "embedderHeapUsedSize": 74340792,
+        "backingStorageSize": 7228882
+      },
+      "heapAfterLeave": {
+        "usedSize": 35385780,
+        "totalSize": 102363136,
+        "embedderHeapUsedSize": 51026560,
+        "backingStorageSize": 6179439
+      }
+    },
+    {
+      "title": "Extrair Páginas",
+      "inputBytes": 109978,
+      "pages": 500,
+      "readyMs": 1790.9579999999987,
+      "before": {
+        "renders": 36,
+        "inputPaintMs": [74.5],
+        "domNodes": 4686
+      },
+      "after": {
+        "renders": 61,
+        "inputPaintMs": [74.5]
+      },
+      "outputPages": 3,
+      "outputBytes": 1282,
+      "heapBefore": {
+        "usedSize": 10593744,
+        "totalSize": 14491648,
+        "embedderHeapUsedSize": 6265296,
+        "backingStorageSize": 4559399
+      },
+      "heapSelection": {
+        "usedSize": 34203092,
+        "totalSize": 54243328,
+        "embedderHeapUsedSize": 66223232,
+        "backingStorageSize": 6836677
+      },
+      "heapAfterLeave": {
+        "usedSize": 27727884,
+        "totalSize": 88207360,
+        "embedderHeapUsedSize": 43981976,
+        "backingStorageSize": 5627083
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "fefbed72-doc-c4.pdf",
+      "bytes": 4548,
+      "sha256": "b46c7cce06e64ff42dce40e4f7f3bee7217b31e4dc3fac3969ec1fc48566edd9"
+    },
+    {
+      "file": "783e8eed-doc-c4.pdf",
+      "bytes": 4548,
+      "sha256": "79783a5666012072a86ba78b127aba7177843f3672018acef42354e9f8afc011"
+    },
+    {
+      "file": "e7f1169c-doc-c4.zip",
+      "bytes": 5684,
+      "sha256": "744e71286148fec14a44580df07e6f62345a7655d803e92288d54b2cc920b640"
+    },
+    {
+      "file": "e4c98c56-doc-c4-mesa.png",
+      "bytes": 95299,
+      "sha256": "cfad09bda40920208f2f4560f2aabc8cbac203d5d4df078a71578b6c1cb555ce"
+    },
+    {
+      "file": "dd79ba9e-doc-c4-mesa.png",
+      "bytes": 94934,
+      "sha256": "dc2a5332aa5d9becd9346b5d3b97d57087ab5278990550e1b15c94820c6223d1"
+    },
+    {
+      "file": "444badb3-doc-c4-mesa.png",
+      "bytes": 96086,
+      "sha256": "05a460051c1967e6c4b572e0e5cbd783044784c3eacef9adfe9e2a725946f202"
+    },
+    {
+      "file": "eaa8c180-doc-c4-mesa.png",
+      "bytes": 95750,
+      "sha256": "8e2e4c67abf1002e0cbb3b87cd952ba7258eb84517b507e45a74f62e9a869a2d"
+    },
+    {
+      "file": "4308b964-doc-c4-mesa.png",
+      "bytes": 65389,
+      "sha256": "d186239c8e1789a9bab2f15bbc53d3baee43974f129c962014690e9217d05b2e"
+    },
+    {
+      "file": "0eac8a6c-doc-c4-mesa.png",
+      "bytes": 65993,
+      "sha256": "90306ee96b2a4660e3f5e6d05e0419422df92582c52c12c7cb012577a8fb1865"
+    },
+    {
+      "file": "11bbae34-doc-c4-mesa.png",
+      "bytes": 83745,
+      "sha256": "b4a4909f54a27a8f26cb2421bd325f1d8f07bbd60b331ecdf514fa9011b2644c"
+    },
+    {
+      "file": "c0fee828-doc-c4-mesa.png",
+      "bytes": 83359,
+      "sha256": "065a9d4e49a0f4aa8c752d4936c38e3f46f67dcdc4cab6181562ed7db5ef9c0d"
+    },
+    {
+      "file": "81fc050c-doc-c4-mesa.png",
+      "bytes": 85345,
+      "sha256": "2ab7bb4c8c72398abd8f8adac56524391d4f2dce87bcc982c13848b4b26971ff"
+    },
+    {
+      "file": "5724f230-doc-c4-mesa.png",
+      "bytes": 85329,
+      "sha256": "9a0981eeb948b0322ede63262832f6f0ee3964c6386c7f69214ae95df089854b"
+    },
+    {
+      "file": "fbc54569-doc-c4-mesa.png",
+      "bytes": 90325,
+      "sha256": "d2ddba773c805a64c001bf488923534f0f9aa72c03ccf993e2021e7f31041bc5"
+    },
+    {
+      "file": "e522e02f-doc-c4-mesa.png",
+      "bytes": 90179,
+      "sha256": "b4f754c59a8af145db7f8531ba4e76c0492029e2f79d1cf6e344ed51681b8b80"
+    },
+    {
+      "file": "ab937fea-doc-c4-mesa.png",
+      "bytes": 61170,
+      "sha256": "78aa7547f09ef183cf639a906887d1dbde1150cae134d577c0991210a72af9f1"
+    },
+    {
+      "file": "59380d9a-doc-c4-mesa.png",
+      "bytes": 61523,
+      "sha256": "7ac456387cd829a8f25d9620661fbdeda3327c532aeb14b408ab2df1dd7e0433"
+    },
+    {
+      "file": "bbcd8043-doc-c4-mesa.png",
+      "bytes": 71988,
+      "sha256": "09f744933ba99dc34c82eb92b3521af35c85d89289318434ba753d7018811799"
+    },
+    {
+      "file": "921eec94-doc-c4-mesa.png",
+      "bytes": 71864,
+      "sha256": "7441a60a712e83a42afc5526c6c5920ba3e65da2d3e21df505ca1d96699fa7a8"
+    }
+  ],
+  "mainBundle": [
+    {
+      "file": "index-Dpp7LzPb.js",
+      "bytes": 1115762,
+      "gzipLevel9Bytes": 303760,
+      "sha256": "b09fc113450539b1fd836cb0168f6b9a7f967e2f4a7af5cf1329f28cf65669c1"
+    }
+  ]
+}

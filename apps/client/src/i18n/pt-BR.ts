@@ -659,6 +659,8 @@ export const ptBR = {
     "Este PDF usa formulário XFA. O preenchimento requer campos AcroForm.",
   "toolQuality.signedDocument":
     "Este PDF possui assinatura digital. Regravá-lo invalidaria a assinatura; use uma cópia sem assinatura.",
+  "pages.unsupportedForm":
+    "Este formulário não pode ser preservado nesta operação. Use uma cópia sem campos interativos.",
   "toolQuality.invalidCrop": "Informe margens válidas que preservem uma área visível da página.",
   "toolQuality.invalidSignature": "Confira o conteúdo, a página e a posição da assinatura.",
   "toolQuality.unsupportedSignatureText":

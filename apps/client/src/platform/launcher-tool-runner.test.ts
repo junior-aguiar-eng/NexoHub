@@ -1,5 +1,5 @@
 import { applyReviewFindings, reviewText } from "@nexohub/domain";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, PDFName } from "pdf-lib";
 import { describe, expect, it, vi } from "vitest";
 import { BrowserDocumentCorePort } from "./browser-document-core";
 import * as browserReviewer from "./browser-reviewer";
@@ -573,6 +573,30 @@ describe("Tool Runner do Launcher", () => {
     const doc = await PDFDocument.load(new Uint8Array(await result.blob.arrayBuffer()));
     expect(doc.getPageCount()).toBe(1);
   });
+
+  it.each(["pdf-remove-pages", "pdf-extract-pages"])(
+    "%s explica recusa de formulário incompatível sem detalhes técnicos",
+    async (toolId) => {
+      const doc = await PDFDocument.create();
+      doc.addPage();
+      doc.addPage();
+      doc.getForm().acroForm.dict.set(PDFName.of("XFA"), doc.context.obj("controle"));
+      const bytes = await doc.save({ updateFieldAppearances: false });
+      const file = new File([bytes as unknown as BlobPart], "formulario.pdf", {
+        type: "application/pdf",
+      });
+      await expect(
+        runLauncherTool(new BrowserDocumentCorePort(), toolId, {
+          ...input([file]),
+          pagesToRemove: [2],
+          pagesToExtract: [1],
+        }),
+      ).rejects.toMatchObject({
+        message:
+          "Este formulário não pode ser preservado nesta operação. Use uma cópia sem campos interativos.",
+      });
+    },
+  );
 
   it("explica a recusa de cabeçalho HTML que não cabe na página", async () => {
     await expect(

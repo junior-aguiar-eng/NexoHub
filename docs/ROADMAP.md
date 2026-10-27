@@ -50,6 +50,7 @@ para relatórios de auditoria ou planos novos.
 | 10 | XL-C1/MD-C1: tabelas e ordem de leitura mais controláveis | [XL-C1](XL-C1.md), [MD-C1](MD-C1.md) e Estabilização | XL-C1 entregue localmente; MD-C1 entregue localmente: leitura revisável, tabelas, relatório por página e OCR explícito. Comparação Camelot/Docling concluída isoladamente; integração condicionada a decisão de runtime |
 | 11 | IM-C4: qualidade de exportação e AVIF; DOC-C3: paginação HTML; TR-C1: tradução | Respectivos planos acima | Qualidade de exportação IM-C4 entregue; AVIF condicionado; [DOC-C3](DOC-C3.md) entregue localmente com paginação e cabeçalhos; TR-C1 deve anteceder qualquer declaração de licença comercial do tradutor |
 | 12 | R-C1: avaliar qpdf para Reparar PDF | [Reparar PDF](REPARAR-PDF.md#complementação-do-motor--24102026) | Entrega local validada: qpdf avaliado sem integração, regex removida, worker cancelável e saída verificada; limites em [R-C1](R-C1-VALIDACAO.md). Homologação Windows separada |
+| 13 | DOC-C4: preservar campos ao remover/extrair páginas e medir grade grande | [Quatro ferramentas](superpowers/plans/2026-10-23-corrigir-quatro-ferramentas.md#doc-c4--remover-e-extrair-páginas-preservação-e-uso-em-documentos-grandes) | [Entrega local validada](DOC-C4.md): campos e geometria em PDF/ZIP, fila cancelável e ensaio de 500 páginas; grade mantida sem virtualização. DOC-C2 fora do escopo |
 
 ### Regras comuns de execução e aceite
 

@@ -31,6 +31,34 @@ export interface FillPdfFormOptions {
   flatten?: boolean;
 }
 
+/** Conserva somente widgets das páginas escolhidas, com seus valores de exportação. */
+export function retainPdfFormWidgets(doc: PDFDocument, kept: ReadonlySet<PDFDict>): void {
+  const acroForm = doc.catalog.lookupMaybe(PDFName.of("AcroForm"), PDFDict);
+  if (!acroForm) return;
+  const form = doc.getForm();
+  for (const field of form.getFields()) {
+    const widgets = field.acroField.getWidgets();
+    for (let index = widgets.length - 1; index >= 0; index--) {
+      if (kept.has(widgets[index].dict)) continue;
+      if (field instanceof PDFRadioGroup || field instanceof PDFCheckBox)
+        field.acroField.removeExportValue(index);
+      field.acroField.removeWidget(index);
+    }
+    const remaining = field.acroField.getWidgets();
+    if (remaining.length === 0) form.acroForm.removeField(field.acroField);
+    else if (field instanceof PDFRadioGroup || field instanceof PDFCheckBox) {
+      const selected = field.acroField.getValue();
+      if (
+        selected !== PDFName.of("Off") &&
+        !remaining.some((widget) => widget.getOnValue() === selected)
+      )
+        field.acroField.setValue(PDFName.of("Off"));
+    }
+  }
+  // A ordem de cálculo pode referenciar campos de páginas descartadas.
+  acroForm.delete(PDFName.of("CO"));
+}
+
 async function loadFormDocument(bytes: Uint8Array) {
   if (!bytes.byteLength) throw new Error("EMPTY_DOCUMENT");
   // Never bypass encryption: doing so may produce an unreadable or unprotected artifact.

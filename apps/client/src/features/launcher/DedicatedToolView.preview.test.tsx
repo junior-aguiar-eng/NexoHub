@@ -26,12 +26,13 @@ vi.mock("./PdfPageGridPanel", () => ({
 
 it("descarta miniaturas enfileiradas quando a ferramenta é desmontada", async () => {
   let finish: (value: string) => void = () => {};
-  vi.mocked(renderPdfPageToDataUrl).mockImplementationOnce(
-    () =>
-      new Promise<string>((resolve) => {
-        finish = resolve;
-      }),
-  );
+  let renderSignal: AbortSignal | undefined;
+  vi.mocked(renderPdfPageToDataUrl).mockImplementationOnce((_bytes, _page, _scale, signal) => {
+    renderSignal = signal;
+    return new Promise<string>((resolve) => {
+      finish = resolve;
+    });
+  });
   const file = new File(["PDF sintético"], "documento.pdf", { type: "application/pdf" });
   const readSource = vi.fn(async () => new ArrayBuffer(0));
   Object.defineProperty(file, "arrayBuffer", { value: readSource });
@@ -48,8 +49,10 @@ it("descarta miniaturas enfileiradas quando a ferramenta é desmontada", async (
   fireEvent.click(await screen.findByRole("button", { name: "Página 49" }));
   fireEvent.click(screen.getByRole("button", { name: "Página 50" }));
   await waitFor(() => expect(renderPdfPageToDataUrl).toHaveBeenCalledTimes(1));
+  expect(renderSignal).toBeInstanceOf(AbortSignal);
   const readsBeforeUnmount = readSource.mock.calls.length;
   view.unmount();
+  expect(renderSignal?.aborted).toBe(true);
   await act(async () => {
     finish("data:image/png;base64,BBBB");
   });

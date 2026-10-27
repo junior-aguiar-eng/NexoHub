@@ -704,15 +704,22 @@ export function DedicatedToolView({
       }),
   );
   const gridPreviewQueue = useRef<Promise<void>>(Promise.resolve());
+  const gridPreviewAbort = useRef(new AbortController());
   const previewFiles = useRef(new WeakMap<File, Map<number, Promise<string>>>());
   const activePreviewFile = useRef<File | undefined>(files[0]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: trocar ferramenta encerra a sessão mesmo quando o File é o mesmo
   useEffect(() => {
+    const controller = new AbortController();
+    gridPreviewAbort.current = controller;
+    gridPreviewQueue.current = Promise.resolve();
+    previewFiles.current = new WeakMap();
     activePreviewFile.current = files[0];
     return () => {
+      controller.abort();
       activePreviewFile.current = undefined;
       pdfPreviewQueue.cancel();
     };
-  }, [files, pdfPreviewQueue]);
+  }, [files, pdfPreviewQueue, tool.id]);
   const handlePreviewPageChange = useCallback(
     (pageNumber: number) => {
       const file = files[0];
@@ -723,14 +730,15 @@ export function DedicatedToolView({
         previewFiles.current.set(file, cache);
       }
       const isGrid = ["pdf-organize", "pdf-remove-pages", "pdf-extract-pages"].includes(tool.id);
+      const gridSignal = gridPreviewAbort.current.signal;
       let pending = isGrid ? cache.get(pageNumber) : undefined;
       if (!pending) {
         pending = isGrid
           ? gridPreviewQueue.current.then(async () => {
-              if (activePreviewFile.current !== file) return "";
+              if (gridSignal.aborted || activePreviewFile.current !== file) return "";
               const bytes = new Uint8Array(await file.arrayBuffer());
-              if (activePreviewFile.current !== file) return "";
-              return renderPdfPageToDataUrl(bytes, pageNumber, 0.6);
+              if (gridSignal.aborted || activePreviewFile.current !== file) return "";
+              return renderPdfPageToDataUrl(bytes, pageNumber, 0.6, gridSignal);
             })
           : pdfPreviewQueue.request(file, pageNumber);
         if (isGrid) {
@@ -743,7 +751,7 @@ export function DedicatedToolView({
       }
       void pending
         .then((thumbnail) => {
-          if (activePreviewFile.current !== file) return;
+          if (activePreviewFile.current !== file || (isGrid && gridSignal.aborted)) return;
           if (!thumbnail) {
             cache?.delete(pageNumber);
             return;

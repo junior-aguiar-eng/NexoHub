@@ -119,16 +119,35 @@ mescladas/aninhadas e Windows instalado permanecem sem homologação.
 
 ### DOC-C4 — Remover e extrair páginas: preservação e uso em documentos grandes
 
+**Execução local — 26/10/2026:** concluída na base `aa2d874`, worktree
+`fix/auditoria-website`, após commit autorizado DOC-C3 e árvore limpa. Sem novo commit,
+push, deploy ou distribuição desktop. DOC-C2 permanece fora do escopo. Corpus autoral
+com campos compartilhados, rádio entre páginas, geometria e seleção descontínua;
+medição de 500 páginas antes de decidir sobre virtualização. Sem novas dependências.
+O executor existente em `platform/pdf-engine.ts` recebeu o uso do helper de preservação e
+as recusas necessárias. Os painéis, `PdfPageGridPanel` e `LazyPageThumbnail` foram conservados:
+não se justificou alterar sua estrutura pela medição. A sessão de cancelamento ficou no
+`DedicatedToolView`, que já gerenciava a fila. Corpus e E2E próprios são os arquivos de apoio.
+
 **Modificar:** `PdfPageGridPanel.tsx`, `RemovePagesPanel.tsx`, `ExtractPagesPanel.tsx`,
 `LazyPageThumbnail.tsx`, `DedicatedToolView.tsx`, `platform/pdf-form.ts` e testes relacionados.
 
-- [ ] Ampliar corpus com campos em páginas mantidas/descartadas, CropBox e rotações; conferir
+- [x] Ampliar corpus com campos em páginas mantidas/descartadas, CropBox e rotações; conferir
   ordem, valores e quantidade de páginas no PDF e ZIP, inclusive seleção descontínua.
-- [ ] Medir grade e seleção em documento grande; virtualizar elementos somente se necessário,
+- [x] Medir grade e seleção em documento grande; virtualizar elementos somente se necessário,
   preservando seleção global, foco e navegação por teclado. As miniaturas além de 48 páginas
   já foram corrigidas em `43f9c1a`; não reimplementar esse carregamento.
-- [ ] Preservar cancelamento da fila ao sair e não exigir renderizar o PDF inteiro para
+- [x] Preservar cancelamento da fila ao sair e não exigir renderizar o PDF inteiro para
   selecionar/extrair um intervalo. Rodar os gates comuns antes de ampliar limites atuais.
+
+**Registro de aceite:** [DOC-C4](../../DOC-C4.md) e corpus autoral. Poda de opções/seleção
+de rádio sincronizada com widgets, referências/valores/geometria preservados no perfil
+testado, PDF/ZIP reabertos. Recusas ByteRange/XFA; sinal ativo e descarte da fila cobertos.
+Grade existente mantida após medição de 500 páginas; sem virtualização nem aumento de limites.
+814 unitários, 335 E2E na raiz/5 pulados e 244 em `/hub/` aprovados. Check, licenças, builds
+e 16 capturas finais nos dois temas aprovados. Revisão única sem achado material. Limites:
+formulários arbitrários/malformados, pouca RAM, validade criptográfica, ZIP de centenas de
+arquivos e Windows instalado não certificados. Sem commit novo/push/deploy; DOC-C2 excluído.
 
 ### Registro complementar — DOC-C1 (24/10/2026)
 

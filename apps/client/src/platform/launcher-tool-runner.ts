@@ -1453,7 +1453,10 @@ export async function runLauncherTool(
           PDF_FORM_VALOR_INVALIDO: "toolQuality.invalidForm",
           PDF_FORM_CARACTERE_NAO_SUPORTADO: "formFill.unsupportedCharacters",
           PDF_FORM_REVISAO_INVALIDA: "formFill.invalidRevision",
-          PDF_XFA_NAO_SUPORTADO: "toolQuality.unsupportedForm",
+          PDF_XFA_NAO_SUPORTADO:
+            toolId === "pdf-remove-pages" || toolId === "pdf-extract-pages"
+              ? "pages.unsupportedForm"
+              : "toolQuality.unsupportedForm",
           PDF_ASSINADO_NAO_SUPORTADO: "toolQuality.signedDocument",
           MARGEM_INVALIDA: "toolQuality.invalidCrop",
           RECORTE_MUITO_GRANDE: "toolQuality.invalidCrop",

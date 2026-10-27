@@ -22,6 +22,7 @@ import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 import { withAppBase } from "./app-paths";
 import { createZipArchive } from "./browser-pdf-utils";
+import { retainPdfFormWidgets } from "./pdf-form";
 import { addOcrTextLayer } from "./pdf-ocr-text-layer";
 import { getVisiblePageGeometry } from "./pdf-page-geometry";
 
@@ -228,6 +229,13 @@ async function copyPageSubsetWithForms(
   srcDoc: PDFDocument,
   indices: number[],
 ): Promise<Uint8Array> {
+  for (const [, object] of srcDoc.context.enumerateIndirectObjects()) {
+    const dict = object instanceof PDFRawStream ? object.dict : object;
+    if (dict instanceof PDFDict && dict.has(PDFName.of("ByteRange")))
+      throw new Error("PDF_ASSINADO_NAO_SUPORTADO");
+  }
+  const formDictionary = srcDoc.catalog.lookupMaybe(PDFName.of("AcroForm"), PDFDict);
+  if (formDictionary?.has(PDFName.of("XFA"))) throw new Error("PDF_XFA_NAO_SUPORTADO");
   const pages = srcDoc.getPages();
   const keptAnnotations = new Set<PDFDict>();
   for (const index of indices) {
@@ -239,18 +247,7 @@ async function copyPageSubsetWithForms(
       }
   }
   const acroForm = srcDoc.catalog.lookupMaybe(PDFName.of("AcroForm"), PDFDict);
-  if (acroForm) {
-    const form = srcDoc.getForm();
-    for (const field of form.getFields()) {
-      const widgets = field.acroField.getWidgets();
-      for (let i = widgets.length - 1; i >= 0; i--) {
-        if (!keptAnnotations.has(widgets[i].dict)) field.acroField.removeWidget(i);
-      }
-      if (field.acroField.getWidgets().length === 0) form.acroForm.removeField(field.acroField);
-    }
-    // A ordem de cálculo pode referenciar campos de páginas descartadas.
-    acroForm.delete(PDFName.of("CO"));
-  }
+  retainPdfFormWidgets(srcDoc, keptAnnotations);
   await srcDoc.flush();
   const out = await PDFDocument.create();
   const copier = PDFObjectCopier.for(srcDoc.context, out.context);
@@ -261,7 +258,7 @@ async function copyPageSubsetWithForms(
     out.addPage(PDFPage.of(node, ref, out));
   }
   if (acroForm) out.catalog.set(PDFName.of("AcroForm"), copier.copy(acroForm));
-  return out.save({ useObjectStreams: true });
+  return out.save({ useObjectStreams: true, updateFieldAppearances: false });
 }
 
 export async function removePdfPages(

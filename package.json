@@ -18,6 +18,7 @@
     "check:write": "biome check --write .",
     "licenses:generate": "node scripts/audit-licenses.mjs",
     "licenses:check": "node scripts/audit-licenses.mjs --check",
+    "quality:check": "pnpm --filter @nexohub/tool-registry exec vitest run src/quality.test.ts quality-index.test.mjs --maxWorkers=2",
     "release:verify": "node scripts/verificar-release.mjs",
     "version:bump": "node scripts/bump-version.mjs",
     "typecheck": "pnpm --recursive --if-present typecheck",

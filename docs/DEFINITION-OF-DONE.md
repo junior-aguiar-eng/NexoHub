@@ -9,15 +9,15 @@ isolado não substitui validação do produto instalado.
 | Projects, original imutável e Artifact Graph | Implementado no core; validação instalada pendente |
 | Nexo Layers e NexoFlow | Implementados; validação instalada pendente |
 | Visualização, manipulação e overlay PDF | Parcial; não há certificação completa do produto instalado |
-| OCR e PDF → Markdown | Parcial; engine Python/Tesseract operacional, integração produtiva completa em validação |
+| OCR e PDF → Markdown | Entregas web locais OCR-C1/MD-C1 com corpus e limites documentados; integração nativa instalada e cobertura ampla pendentes |
 | Rich Text, Markdown e DOCX básico | Parcial |
-| Extração de imagens | Parcial; engine Python, core Rust e Tauri IPC presentes, mas a tela dedicada não usa esse fluxo nativo e a ferramenta não é anunciada como executável |
-| Tradução e revisão integradas | Parcial; sidecars e integração instalada pendentes |
+| Extração de imagens | Executor web presente no catálogo ativo; filtros suportados restritos, integração instalada separada |
+| Tradução e revisão integradas | Entrega web local TR-C1 e revisor com limites documentados; sidecars e integração instalada pendentes |
 | Operações canceláveis e crash recovery | Cobertura no core; validação de produto pendente |
 | Testes automatizados | Gates locais e CI devem ser avaliados por branch/commit; testes unitários e web não certificam o app instalado |
 | Instalador funcional | Inno Setup gerado, instalado e atualizado na máquina de desenvolvimento sem duplicar registro ou atalho; validação em máquina limpa pendente |
 | Documentação e privacidade técnica | Atualizadas e ativas no repositório |
-| Auditoria de licenças | Automatizada e 100% aprovada no workflow remoto de Segurança e Licenças |
+| Auditoria de licenças | Inventário automatizado; não substitui avaliação de componentes, modelos, avisos de distribuição e build instalado |
 | Nenhuma função local depende de servidor NexoHub | Atendido pela arquitetura atual |
 
 Conclusão atual: o repositório avança na esteira de integração contínua e build automático, com foco na certificação e estabilização dos fluxos nativos instalados.
@@ -46,3 +46,8 @@ sem declaração de homologação comercial integral do catálogo.
 Em OCR-C1, corpus versionado, CER/WER, política de páginas mistas, limites de confiança e
 avaliação negativa de OpenCV pertencem a [OCR-C1.md](OCR-C1.md). A medição sintética não
 homologa fotografias de campo nem o runtime Windows; DOC-C2 permanece fora dessa entrega.
+
+A [consolidação Q-C0](quality/README.md) indexa as 35 ferramentas ativas, com 18 perfis
+restritos e 17 registros de regressão. `pnpm quality:check` confere cobertura, referências e
+hashes, distinguindo arquivo fixo, gerador e manifesto. Esse gate não executa as ferramentas
+nem demonstra fidelidade das saídas. Os critérios globais de Q-C0 continuam parciais.

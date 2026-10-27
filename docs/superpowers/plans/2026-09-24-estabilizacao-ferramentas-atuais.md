@@ -129,6 +129,25 @@ e geradores de testes existentes; usar material sintético ou com licença demon
   para PDF; células/estrutura para Excel; taxa de erro de caracteres/palavras para OCR. Métrica
   heurística do motor não deve aparecer como probabilidade de correção do documento.
 
+### Consolidação incremental Q-C0 — 27/10/2026
+
+Base `a9f3385`, após commit autorizado da avaliação isolada AVIF. O
+[índice JSON](../../quality/q-c0.json) cobre as 35 ferramentas ativas, com origem/licença,
+referências com SHA-256, expectativas, recusas, limites e testes. O
+[relatório](../../quality/README.md) distingue arquivo, gerador e manifesto; cobertura
+do índice não demonstra execução dos motores nem fidelidade dos downloads.
+
+`pnpm quality:check` verifica cobertura exata do catálogo ativo, referências locais e hashes;
+não inclui ferramentas planejadas e não exporta o checker para o aplicativo. Os critérios
+globais acima continuam parciais: corpus amplo, medições por dispositivo, avaliações de
+candidatos e homologação instalada permanecem nas entregas responsáveis. Sem dependências
+novas, integração de Camelot/Docling ou alteração de runtime. DOC-C2 fora do escopo.
+
+Validação local: gate Q-C0 com 7 testes, suíte Tool Registry com 10 testes, `pnpm check` e
+`pnpm licenses:check` aprovados. Sem repetição de benchmarks, build, E2E ou instalação Windows
+nesta fatia de metadados/testes. Commit local autorizado posteriormente pelo usuário;
+sem push, deploy ou integração no checkout principal.
+
 ### UX-C1 — Visualização PDF reutilizável nas mesas atuais
 
 **Modificar:** painéis `CropPdfPanel`, `SignPdfPanel`, `RedactPdfPanel`, `WatermarkPdfPanel`,

@@ -50,3 +50,22 @@ O binário `@techstark/opencv-js@4.12.0-release.1` (Apache-2.0 declarado) foi me
 prova isolada e reprovado para integração; não integra o bundle nem o lockfile. Tamanho,
 SHA-256, origem, custo dos recursos existentes e limites da avaliação estão em
 [OCR-C1.md](OCR-C1.md) e seu JSON de medições. Não há aprovação de redistribuição desse candidato.
+
+## Alcance do inventário e do Q-C0
+
+O arquivo `THIRD_PARTY_LICENSES.md` na raiz é o inventário gerado por
+`pnpm licenses:generate`; este documento registra decisões e avisos específicos da interface.
+`pnpm licenses:check` avalia o inventário e as famílias de licença configuradas, sem conferir
+automaticamente se o texto gerado da raiz está atualizado. Nenhum desses comandos equivale
+à aprovação de todos os binários, WASM, fontes ou pesos de modelos distribuídos.
+
+O [índice Q-C0](quality/README.md) preserva origem/licença declaradas e hashes dos materiais
+referenciados. Não relicencia material de terceiros nem substitui verificação de manutenção,
+advisories ou obrigações de distribuição. A licença dos geradores autorais não se estende
+automaticamente a bibliotecas, fontes ou modelos usados na geração.
+
+Para tradução, consultar [TRADUCAO-WEB.md](TRADUCAO-WEB.md) e o
+[NOTICE M2M100](evidencias/tr-c1/M2M100-NOTICE.md). qpdf, OpenCV, Camelot/Docling e AVIF
+continuam avaliações isoladas, sem adoção pelo índice; seus limites permanecem nos relatórios
+[R-C1](R-C1-VALIDACAO.md), [OCR-C1](OCR-C1.md), [XL-C1](XL-C1.md) e
+[IM-C4](IM-C4-AVIF.md). DOC-C2 permanece fora do escopo.

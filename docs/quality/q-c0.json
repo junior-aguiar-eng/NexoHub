@@ -1,0 +1,979 @@
+{
+  "schemaVersion": 1,
+  "scope": "web-local-evidence",
+  "limitations": [
+    "Índice verifica cobertura/referências/hashes, não executa engines nem prova fidelidade do download.",
+    "Hash de gerador não é hash do arquivo gerado; fontes externas podem variar e são identificadas nos manifestos de origem.",
+    "Perfil restrito ou regressão não certificam todo o catálogo, uso comercial amplo ou aplicativo Windows instalado.",
+    "DOC-C2 excluído; candidatos não integrados continuam condicionados nos planos responsáveis."
+  ],
+  "corpora": [
+    {
+      "id": "pdf-basic",
+      "origin": "PDFs sintéticos criados nos testes do motor; páginas textuais, imagens e entradas inválidas.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/pdf-engine.test.ts",
+          "kind": "generator",
+          "sha256": "d9ed9e29e424a9875637b00f152adeefeded85ecf75cbfd1571478f7a9b45740"
+        },
+        {
+          "path": "apps/client/src/platform/page-operations-regression.test.ts",
+          "kind": "generator",
+          "sha256": "c0776e92a40c04358509a5a947483fbffbf07de87b2b2e2a2ae644853e72d07a"
+        },
+        {
+          "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
+          "kind": "generator",
+          "sha256": "6988f3f3ec39109b02ca78fef940460a73bad5acfdef2aa1b6df2f4250b20224"
+        }
+      ]
+    },
+    {
+      "id": "image-basic",
+      "origin": "Imagens sintéticas dos testes: pixels, EXIF, alpha, recorte, lote e composição.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/image-engine.test.ts",
+          "kind": "generator",
+          "sha256": "909004a929e3ed0fa0d9e9190dedc6fea303ab7fd76214025f5d90cca188b4e1"
+        },
+        {
+          "path": "apps/client/e2e/image-mode-quality.spec.ts",
+          "kind": "generator",
+          "sha256": "04686eee649267fbf4ee620b23a332544fcd1c96fc67bcc748a5ba6fb62d6f8e"
+        },
+        {
+          "path": "apps/client/e2e/image-composition.spec.ts",
+          "kind": "generator",
+          "sha256": "2e8c6ebc0fef05283ad6a4f92d026e37c737ac1a7250a7325d36f8ded88a26ff"
+        }
+      ]
+    },
+    {
+      "id": "image-photo",
+      "origin": "Fotografias CC0 e controles sintéticos do ensaio isolado AVIF; fotos externas com SHA-256, não distribuídas no repositório.",
+      "license": "chelsea: Stefan van der Walt; coffee: Rachel Michetti/Pikolo Espresso Bar, CC0 segundo fonte scikit-image. Geradores autorais MPL-2.0. Não é aprovação do codec candidato.",
+      "artifacts": [
+        {
+          "path": "scripts/avif/corpus.mjs",
+          "kind": "generator",
+          "sha256": "9a1092f507863ee9aab5aa22c872a0df3644e188a3c1779898fbaeff36ec85f2"
+        },
+        {
+          "path": "scripts/avaliar-avif-fontes.py",
+          "kind": "generator",
+          "sha256": "61dc1899c7a7107ab4bb83e415a71351b41c7ab97e169403adc3b9eb572f485a"
+        },
+        {
+          "path": "docs/benchmarks/2026-10-27-imc4-avif.json",
+          "kind": "manifest",
+          "sha256": "6282596ef63aa1e1cec120be4d8433168db11f8854d48f2bb49e4159c2484296"
+        }
+      ]
+    },
+    {
+      "id": "editor",
+      "origin": "PDFs sintéticos com fontes incorporadas completas/subconjuntos; fonte Liberation identificada no manifesto.",
+      "license": "Conteúdo/geradores autorais MPL-2.0; fonte Liberation com licença própria, preservada em LICENSE_LIBERATION.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-editor/corpus.json",
+          "kind": "manifest",
+          "sha256": "0c726256fdbc86e1c2abc7aa20fced5a07f99af645d7f12e6b0b6673e3b02ac7"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-editor/embedded-full.pdf",
+          "kind": "file",
+          "sha256": "9dfc436af4e97f78d8af2f6b2dfe39b85d6a225e2c0790c1b34aad3b9cfcfc58"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-editor/embedded-subset.pdf",
+          "kind": "file",
+          "sha256": "1b443b9baa8f02149f82a81a7c300438ee6bee18e8d9422659d4a6c7fb61396a"
+        },
+        {
+          "path": "apps/client/public/standard_fonts/LICENSE_LIBERATION",
+          "kind": "file",
+          "sha256": "d2c4d5b3e115a519cb58eb691aa64538397e2611f9ebe801392cf9667997e7dc"
+        }
+      ]
+    },
+    {
+      "id": "comparison",
+      "origin": "PDFs autorais criados nos testes de comparação e relatório; não são autos reais.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/pdf-comparison.test.ts",
+          "kind": "generator",
+          "sha256": "8707073b1303fa0b82834937a8964e8303f2f0fcaf32bc26c09c91c3f18c3db6"
+        },
+        {
+          "path": "apps/client/src/platform/pdf-comparison-report.test.ts",
+          "kind": "generator",
+          "sha256": "edd170b1c9daf0463d5df30ae9418355e4494b94a6a3bfe3144aa3b98c60b6b3"
+        },
+        {
+          "path": "apps/client/e2e/pdf-compare.spec.ts",
+          "kind": "generator",
+          "sha256": "cc39ca11167395d23c663638c7234f84602dcfd6c1eb9c31128337c2ecdf566a"
+        }
+      ]
+    },
+    {
+      "id": "repair",
+      "origin": "Oito PDFs fixos autorais R-C1 e gerador; campos/anexo/metadados e danos estruturais controlados.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/__fixtures__/r-c1/corpus.ts",
+          "kind": "generator",
+          "sha256": "685f3fd16bd8b610d6832e625471e81b1cf2b124383659ce466441d5b1fba8f7"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/r-c1/expected.json",
+          "kind": "manifest",
+          "sha256": "98cf47a009a4dcb69b17fdab793a0844b63a88c1326abdabf591e04c4a7e3f17"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/r-c1/integro.pdf",
+          "kind": "file",
+          "sha256": "5ac343de37fc40ca03f482e52bb3729416fc85a88c610eec2da55e7925dd4128"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/r-c1/prefixo.pdf",
+          "kind": "file",
+          "sha256": "dbcde10d45b632e47ad29420c09b9801c3a0cc1e7b7d2012ccc6412a649c2071"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/r-c1/sem-eof.pdf",
+          "kind": "file",
+          "sha256": "01ba2314e08fe7762bcc2a0f6c863413aaa4be1c2ec00d9ab1fef3166472b69e"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/r-c1/sem-startxref.pdf",
+          "kind": "file",
+          "sha256": "3328624e352ddb8015b00ac22fea40fcc65b3e50c5f07410dc18d0dd92aa2216"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/r-c1/xref-incorreto.pdf",
+          "kind": "file",
+          "sha256": "0c36fab81633c06ff76fd3dc46145887b7264bc3d09a19da2685111441ccfbdc"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/r-c1/sem-xref-trailer.pdf",
+          "kind": "file",
+          "sha256": "8293fc0ffeea8cba7cacd88d9e78442aed796e8c0f7340e191e2401f684c1f5b"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/r-c1/perda-fisica.pdf",
+          "kind": "file",
+          "sha256": "8b84d2341cce8e534955acc33810ede1c16be85b7472d813a88964914a3d51e8"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/r-c1/texto-objetos.pdf",
+          "kind": "file",
+          "sha256": "ac6a3aafea516e6065ddddc9cf9a2d94c6e4fa10c14490826bc95aa347cd6ffd"
+        }
+      ]
+    },
+    {
+      "id": "ocr",
+      "origin": "Quatro imagens sintéticas pt-BR com referência textual, inclinação, perspectiva e baixo contraste.",
+      "license": "Conteúdo sintético MPL-2.0; rasterização com Liberation Sans, cuja licença própria está distribuída em apps/client/public/standard_fonts/LICENSE_LIBERATION.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/__fixtures__/ocr-c1/manifest.json",
+          "kind": "manifest",
+          "sha256": "4764516bb285883a131c2902616ac357c2b8c679f47c373e5baa4e4a5f5377a4"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/ocr-c1/acentos-numeros.png",
+          "kind": "file",
+          "sha256": "77b159895600c39dd31a22ec576894c76045bdc672a0c950de9f5f79cb5e51a8"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/ocr-c1/baixo-contraste.png",
+          "kind": "file",
+          "sha256": "17457af466e8ce982bd4475b83598dc217358cb5d3489b72f0f0103939343955"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/ocr-c1/foto-inclinada.png",
+          "kind": "file",
+          "sha256": "77403f04f870892d90a8958595f5c6ce3d953be53950be2b254e410215acab51"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/ocr-c1/foto-perspectiva.png",
+          "kind": "file",
+          "sha256": "d64f2dcd0c8aa9f7afdd9d72f2c6d9c213ba4ffb5563e6278f4a8f6c909b30c0"
+        }
+      ]
+    },
+    {
+      "id": "excel",
+      "origin": "PDFs autorais de duas páginas com/sem bordas; células esperadas no manifesto.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/__fixtures__/xl-c1/corpus.ts",
+          "kind": "generator",
+          "sha256": "474653ca884e7b7b2f0aff8efbd3eded8f9683394c0712e51a21dba718e8ba91"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/xl-c1/manifest.json",
+          "kind": "manifest",
+          "sha256": "95abc8a34f89e9f3f919294311cea23964a5a7eb8e82ffbefd8382a37262c371"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/xl-c1/tabela-com-bordas.pdf",
+          "kind": "file",
+          "sha256": "7fb564485212afb02fa4f70e315a02cad3b354a149b895e5499e3cf465865ee2"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/xl-c1/tabela-sem-bordas.pdf",
+          "kind": "file",
+          "sha256": "7ce31d7e3fdb7484fa95a585fa74abfb03779dc663b529e4f8fd24efc0105f50"
+        }
+      ]
+    },
+    {
+      "id": "markdown",
+      "origin": "PDF autoral com duas colunas, tabela, página sem camada textual e texto nativo.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/__fixtures__/md-c1/corpus.ts",
+          "kind": "generator",
+          "sha256": "e982c2d12f5d25a8255fb3a73cf6fa137723f921266ef1415e1200600ea467d8"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/md-c1/manifest.json",
+          "kind": "manifest",
+          "sha256": "1391fe0cc029e80d623450e17422ac08fa1db418a630043e4a14d536e8fcbdc5"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/md-c1/corpus.pdf",
+          "kind": "file",
+          "sha256": "a3bdb6f5f72c3d3afed07904c758f7a83210fb8c3c7063e1972637d70a8ef983"
+        }
+      ]
+    },
+    {
+      "id": "form",
+      "origin": "Formulário autoral com texto, checkbox, rádio, dropdown/lista, readonly e páginas compartilhadas.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/pdf-form.test.ts",
+          "kind": "generator",
+          "sha256": "d4d7f42e325c399df031573929681cd5ee59906bb7c5cd9dbbe7c9c3f12e7b90"
+        },
+        {
+          "path": "apps/client/e2e/form-preview.spec.ts",
+          "kind": "generator",
+          "sha256": "ea9964e9bf24dec7168d397573493e30de78e9ac9b7786f57331aea5eec36c94"
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "origin": "PDFs e controles sintéticos de criptografia, permissões, tarjas e recusas.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/pdf-security.test.ts",
+          "kind": "generator",
+          "sha256": "a7a12106e5d2c268b4ca166b55b594c2c2633d01649b3863c198913297395359"
+        },
+        {
+          "path": "apps/client/src/platform/pdf-redaction-engine.test.ts",
+          "kind": "generator",
+          "sha256": "e30c53b0ddea7d1c7c7cae3de5db66393ee69a78f75774b6022786cd17e761d9"
+        },
+        {
+          "path": "apps/client/src/platform/pdf-crop-sign.test.ts",
+          "kind": "generator",
+          "sha256": "502fad376d1dafee9ba2b38d58a6c64ef3e2a0c7bbdefd0310a6fc20fb428a90"
+        }
+      ]
+    },
+    {
+      "id": "unlock",
+      "origin": "PDFs fixos sintéticos com senhas fictícias; RC4/AES, anexo, metadados e ByteRange de controle.",
+      "license": "Conteúdo autoral do NexoHub sob MPL-2.0; ferramentas de regeneração e suas licenças não se confundem com o runtime web. Leia README.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-unlock/README.md",
+          "kind": "file",
+          "sha256": "f7bf4bf4c72e1aceb474902624509cce2e8f46e3c910b703be79b481908164aa"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-unlock/generate-fixtures.py",
+          "kind": "generator",
+          "sha256": "7ddcdafc94e52601f996b406ac44ac5872ab220e5d3dcb06e70e82ab7918b22a"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-unlock/AES-128-plain-metadata.pdf",
+          "kind": "file",
+          "sha256": "7883267c7f2b90885d3da56cb473a53f249da5f2a1bcbd2d392764aed3822516"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-unlock/AES-128.pdf",
+          "kind": "file",
+          "sha256": "47f13088e879bc1667488d0a4a648862eeafe9b7023810b8b25b8b92fbbb65ef"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-unlock/AES-256-incremental.pdf",
+          "kind": "file",
+          "sha256": "8fc60a689aa05f9e0abf07d2df24616cb33a16fa7a24bd1defba974fb60b5b3a"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-unlock/AES-256-object-streams.pdf",
+          "kind": "file",
+          "sha256": "19690990b3b124fd61cfa921e1d95a11f217678443ac5c5d977deaef325bd83b"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-unlock/AES-256-pdf2.pdf",
+          "kind": "file",
+          "sha256": "7d77d978cbad4829a5b717e4cf32ed343c232097ad31790396998a0c05b5ddab"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-unlock/AES-256-R5.pdf",
+          "kind": "file",
+          "sha256": "22a77975c2cd4cae2512a66c079f50f696ef83b663e517a6dfabd787ad219ad8"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-unlock/AES-256.pdf",
+          "kind": "file",
+          "sha256": "4e39d48c42bda94e3b1b19e52768488d187c8ef9235ef638974182b2e64e4087"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-unlock/permissions-only.pdf",
+          "kind": "file",
+          "sha256": "c152edaa1d490dedc0ff4179d685098f7cf150d054c342dfdf63762ad783d5a1"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-unlock/RC4-128.pdf",
+          "kind": "file",
+          "sha256": "27524d1879c4247acc4540cbc17eda0cb6e503ab95b4f3f17707e8fd91b189e4"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-unlock/RC4-40.pdf",
+          "kind": "file",
+          "sha256": "e5fc4be8e30dffe212f0f0c8357e1cc1af3903b419c3029c38b269fac8ae7d3e"
+        },
+        {
+          "path": "apps/client/src/platform/__fixtures__/pdf-unlock/signed-placeholder.pdf",
+          "kind": "file",
+          "sha256": "0e56467ac9d517625c18c8f0005ba56df83cd534e7da5dea6a22b07decd7a2bd"
+        }
+      ]
+    },
+    {
+      "id": "html",
+      "origin": "HTML autoral: tabela longa/larga, Unicode, quebras inline e cabeçalho excessivo.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/__fixtures__/doc-c3/corpus.ts",
+          "kind": "generator",
+          "sha256": "6c68e9a231ffd57eba96aa0a72b820efbd6e6a48d460006fcc53905e7b970c4e"
+        },
+        {
+          "path": "apps/client/src/platform/html-local-document.test.ts",
+          "kind": "generator",
+          "sha256": "8bb042964e1e38f40362b2beb1a47b61f17acda7a725affbfc635f07c51c7ed9"
+        },
+        {
+          "path": "apps/client/e2e/four-tools-regression.spec.ts",
+          "kind": "generator",
+          "sha256": "a889eb71fd565ce2a7fd4db53ee99d58a2854a9eb28b47d60a8b7de0a3b8101b"
+        }
+      ]
+    },
+    {
+      "id": "subset",
+      "origin": "PDF autoral com campo hierárquico compartilhado, rádio entre páginas, checkbox, CropBox/rotação e gerador de 500 páginas.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/__fixtures__/doc-c4/corpus.ts",
+          "kind": "generator",
+          "sha256": "c29da7000044fbe9088e798e2abcd652851e479df72e07e5bf701fb8a72dbf8e"
+        },
+        {
+          "path": "apps/client/src/platform/pdf-page-subset-quality.test.ts",
+          "kind": "generator",
+          "sha256": "c9de06a3c5051bf921814a5423cf27c9d97807b447b4bcfc19e3e9432c0bd410"
+        },
+        {
+          "path": "apps/client/e2e/doc-c4-pages.spec.ts",
+          "kind": "generator",
+          "sha256": "1294becd6cb914c68a13fc788d95a6b39eaced57f9131f41ac81edeaf808255f"
+        }
+      ]
+    },
+    {
+      "id": "translation",
+      "origin": "Pares curtos/segmentados pt/en/es e placeholders autorais; pesos do modelo não distribuídos neste corpus.",
+      "license": "Corpus autoral MPL-2.0; pesos/tokenizer e licença própria identificados no NOTICE do modelo, sem relicenciamento pelo índice.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/__fixtures__/tr-c1/corpus.ts",
+          "kind": "generator",
+          "sha256": "b6b2f46c6ff39c591286deacd8c935a287c6d3a27bfa62549d4d2e67fc7c17c3"
+        },
+        {
+          "path": "docs/evidencias/tr-c1/M2M100-NOTICE.md",
+          "kind": "file",
+          "sha256": "43d93ada9d8db2c4a14ad8afcc8a8443bd5ec1ee22efc3dde42891bb4b8c7c7d"
+        },
+        {
+          "path": "docs/evidencias/tr-c1/qualidade.csv",
+          "kind": "file",
+          "sha256": "54cdfc169d52e6f4d5d8d635bf59b92939ba155f82dc424dd69b9662065daa5a"
+        }
+      ]
+    },
+    {
+      "id": "review",
+      "origin": "Frases curtas, identificadores, vocabulário e falha morfológica nos testes do revisor.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/browser-reviewer.test.ts",
+          "kind": "generator",
+          "sha256": "f45a003c670a2d87cb7b7279211b5b6956d457cfed076296fab9c7192a3bc5cf"
+        },
+        {
+          "path": "apps/client/e2e/language-image-quality.spec.ts",
+          "kind": "generator",
+          "sha256": "ca41aa5d57690e8b9debcdaf69f211c3f0465b62049dc4921f23e71356a44ffa"
+        }
+      ]
+    },
+    {
+      "id": "text-compare",
+      "origin": "Textos sintéticos curtos e DOCX inválido nos testes do runner e da leitura documental.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
+          "kind": "generator",
+          "sha256": "6988f3f3ec39109b02ca78fef940460a73bad5acfdef2aa1b6df2f4250b20224"
+        },
+        {
+          "path": "apps/client/src/platform/document-reader.test.ts",
+          "kind": "generator",
+          "sha256": "a115da2ba2121ae8a3057f58b1bc77ac6d2361c9043b6bf4f99955f4374e33f9"
+        }
+      ]
+    },
+    {
+      "id": "scan",
+      "origin": "Imagens sintéticas e MediaStream simulado nos testes; não representa captura física de câmera.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/scan-to-pdf-engine.test.ts",
+          "kind": "generator",
+          "sha256": "305d075af8a40f0ee1b4755d21a587deead0e8c672020acbcb9bb4dad1300826"
+        },
+        {
+          "path": "apps/client/e2e/four-tools-regression.spec.ts",
+          "kind": "generator",
+          "sha256": "a889eb71fd565ce2a7fd4db53ee99d58a2854a9eb28b47d60a8b7de0a3b8101b"
+        }
+      ]
+    },
+    {
+      "id": "pdf-images",
+      "origin": "PDFs sintéticos com imagens embutidas e casos de recusa; imagem 2×1 autoral.",
+      "license": "Conteúdo e geradores autorais do NexoHub sob MPL-2.0; bibliotecas e fontes mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/pdf-image-extraction.test.ts",
+          "kind": "generator",
+          "sha256": "5803382b2d69ad89a8bed964b4b9f70465b32e2e8f6ff57f197029e7310d5790"
+        },
+        {
+          "path": "apps/client/src/platform/fixtures/extraction-red-2x1.jpg",
+          "kind": "file",
+          "sha256": "8f136b4763c02f509e83156f9ad9ba5a730ee18a35573f9805cc94522a552bfc"
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "toolId": "pdf-edit",
+      "level": "restricted-profile",
+      "corpora": ["editor"],
+      "supported": ["Objetos textuais compatíveis, substituição e revisão no perfil ED-C1/ED-C2."],
+      "refused": ["Objetos/fontes fora do perfil e documentos acima dos limites."],
+      "unmeasured": [
+        "Edição universal, reflow e preservação de todo recurso PDF.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/EDITAR-PDF-WEB.md"],
+      "tests": ["apps/client/src/platform/pdf-editor-engine.test.ts"]
+    },
+    {
+      "toolId": "pdf-compare",
+      "level": "restricted-profile",
+      "corpora": ["comparison"],
+      "supported": ["Alinhamento heurístico, páginas repetidas/reordenadas e relatório Unicode."],
+      "refused": ["PDF inválido e limites do comparador."],
+      "unmeasured": [
+        "Equivalência semântica/jurídica e alinhamento perfeito de qualquer documento.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/COMPARAR-PDF-WEB.md"],
+      "tests": ["apps/client/src/platform/pdf-comparison.test.ts"]
+    },
+    {
+      "toolId": "pdf-organize",
+      "level": "regression",
+      "corpora": ["pdf-basic"],
+      "supported": ["Encaminhamento de ordem, exclusão e rotações pelo runner com port simulado."],
+      "refused": ["PDF inválido ou seleção inválida não deve gerar sucesso."],
+      "unmeasured": [
+        "Fidelidade da saída da operação isolada não demonstrada por este corpus de encaminhamento.",
+        "Formulários, anexos e metadados arbitrários não foram certificados por este registro.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/TOOL-SPEC.md"],
+      "tests": ["apps/client/src/platform/launcher-tool-runner.test.ts"]
+    },
+    {
+      "toolId": "pdf-merge",
+      "level": "regression",
+      "corpora": ["pdf-basic"],
+      "supported": ["Junção de PDFs válidos com sequência de páginas."],
+      "refused": ["PDF inválido ou seleção inválida não deve gerar sucesso."],
+      "unmeasured": [
+        "Formulários, anexos e metadados arbitrários não foram certificados por este registro.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/TOOL-SPEC.md"],
+      "tests": ["apps/client/src/platform/pdf-engine.test.ts"]
+    },
+    {
+      "toolId": "pdf-split",
+      "level": "regression",
+      "corpora": ["pdf-basic"],
+      "supported": ["Intervalos e seleção de páginas dentro da faixa."],
+      "refused": ["PDF inválido ou seleção inválida não deve gerar sucesso."],
+      "unmeasured": [
+        "Formulários, anexos e metadados arbitrários não foram certificados por este registro.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/TOOL-SPEC.md"],
+      "tests": ["apps/client/src/platform/pdf-engine.test.ts"]
+    },
+    {
+      "toolId": "pdf-rotate",
+      "level": "regression",
+      "corpora": ["pdf-basic"],
+      "supported": ["Encaminhamento de ordem, exclusão e rotações pelo runner com port simulado."],
+      "refused": ["PDF inválido ou seleção inválida não deve gerar sucesso."],
+      "unmeasured": [
+        "Fidelidade da saída da operação isolada não demonstrada por este corpus de encaminhamento.",
+        "Formulários, anexos e metadados arbitrários não foram certificados por este registro.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/TOOL-SPEC.md"],
+      "tests": ["apps/client/src/platform/launcher-tool-runner.test.ts"]
+    },
+    {
+      "toolId": "pdf-crop",
+      "level": "regression",
+      "corpora": ["security"],
+      "supported": ["CropBox/MediaBox e coordenadas de páginas selecionadas."],
+      "refused": ["Margens negativas/excessivas e seleção inválida."],
+      "unmeasured": [
+        "Recorte não é remoção definitiva do conteúdo fora da caixa.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/AUDITORIA-NOVAS-FERRAMENTAS-WEB-2026-10-23.md"],
+      "tests": ["apps/client/src/platform/pdf-crop-sign.test.ts"]
+    },
+    {
+      "toolId": "pdf-compress",
+      "level": "regression",
+      "corpora": ["pdf-basic"],
+      "supported": ["Variação real de bytes, perfil e descarte de metadados redundantes."],
+      "refused": ["Regravação de documento com ByteRange."],
+      "unmeasured": [
+        "Ganho de tamanho universal ou fidelidade de qualquer recurso PDF.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/TOOL-SPEC.md"],
+      "tests": ["apps/client/src/platform/pdf-engine.test.ts"]
+    },
+    {
+      "toolId": "pdf-repair",
+      "level": "restricted-profile",
+      "corpora": ["repair"],
+      "supported": ["Cinco saídas aceitas com campos/anexo/metadados no corpus R-C1."],
+      "refused": ["Perda física, associação Info ambígua, assinatura e limites."],
+      "unmeasured": [
+        "Todo PDF danificado, heap rígido e equivalência universal ao qpdf.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/R-C1-VALIDACAO.md"],
+      "tests": ["apps/client/src/platform/pdf-repair-quality.test.ts"]
+    },
+    {
+      "toolId": "images-to-pdf",
+      "level": "regression",
+      "corpora": ["image-basic"],
+      "supported": ["Ordem e proporção de PNG/JPEG/WebP em PDF multipágina."],
+      "refused": ["Entrada incompatível ou opções inválidas."],
+      "unmeasured": [
+        "ICC/HDR e equivalência de impressão de qualquer fotografia.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-engine.test.ts",
+        "apps/client/e2e/language-image-quality.spec.ts"
+      ]
+    },
+    {
+      "toolId": "pdf-to-jpg",
+      "level": "regression",
+      "corpora": ["pdf-basic"],
+      "supported": ["Quantidade e imagens JPEG válidas de páginas textuais."],
+      "refused": ["PDF inválido e limites do caminho existente."],
+      "unmeasured": [
+        "Fidelidade visual de todo PDF, ICC/HDR e lotes reais muito grandes.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/TOOL-SPEC.md"],
+      "tests": ["apps/client/src/platform/pdf-engine.test.ts"]
+    },
+    {
+      "toolId": "pdf-watermark",
+      "level": "regression",
+      "corpora": ["pdf-basic"],
+      "supported": ["Carimbo textual e geometria após zoom de visualização."],
+      "refused": ["Parâmetros/entrada inválidos e caracteres não representáveis pelo perfil."],
+      "unmeasured": [
+        "Tipografia universal e documentos complexos com recursos não medidos.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/TOOL-SPEC.md"],
+      "tests": ["apps/client/src/platform/pdf-engine.test.ts"]
+    },
+    {
+      "toolId": "pdf-page-numbers",
+      "level": "regression",
+      "corpora": ["pdf-basic"],
+      "supported": ["Numeração alinhada e início de página respeitado."],
+      "refused": ["Entrada ou seleção inválida."],
+      "unmeasured": [
+        "Documentos arbitrários e preservação de recursos sem corpus específico.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/TOOL-SPEC.md"],
+      "tests": ["apps/client/src/platform/pdf-engine.test.ts"]
+    },
+    {
+      "toolId": "pdf-ocr",
+      "level": "restricted-profile",
+      "corpora": ["ocr"],
+      "supported": ["CER/WER sintéticos, páginas mistas e camada sem texto nativo duplicado."],
+      "refused": ["Cancelamento e limites do perfil."],
+      "unmeasured": [
+        "Fotografias de campo e precisão universal; pré-processador OpenCV não adotado.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/OCR-C1.md"],
+      "tests": ["apps/client/src/platform/browser-ocr.test.ts"]
+    },
+    {
+      "toolId": "pdf-protect",
+      "level": "regression",
+      "corpora": ["security"],
+      "supported": ["Senha/permissões e verificações RC4/AES do corpus sintético."],
+      "refused": ["Senha inválida ou parâmetro incompatível."],
+      "unmeasured": [
+        "Certificação criptográfica independente e todos os leitores externos.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/AUDITORIA-NOVAS-FERRAMENTAS-WEB-2026-10-23.md"],
+      "tests": ["apps/client/src/platform/pdf-security.test.ts"]
+    },
+    {
+      "toolId": "pdf-extract-images",
+      "level": "regression",
+      "corpora": ["pdf-images"],
+      "supported": ["Imagens JPEG/Flate compatíveis e exclusão de miniaturas decorativas."],
+      "refused": ["Filtros e casos fora do perfil do extrator."],
+      "unmeasured": [
+        "Todas as imagens/máscaras/codificações e documentos de produção.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/AUDITORIA-NOVAS-FERRAMENTAS-WEB-2026-10-23.md"],
+      "tests": ["apps/client/src/platform/pdf-image-extraction.test.ts"]
+    },
+    {
+      "toolId": "text-compare",
+      "level": "regression",
+      "corpora": ["text-compare"],
+      "supported": ["Diferenças e leitura de textos curtos pelo runner."],
+      "refused": ["DOCX inválido sem sucesso fictício."],
+      "unmeasured": [
+        "Qualidade semântica/jurídica e corpus amplo com edição complexa.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/TOOL-SPEC.md"],
+      "tests": ["apps/client/src/platform/launcher-tool-runner.test.ts"]
+    },
+    {
+      "toolId": "text-review",
+      "level": "regression",
+      "corpora": ["review"],
+      "supported": ["Ortografia, regras contextuais e identificadores nos testes curtos."],
+      "refused": ["Motor indisponível não retorna revisão concluída vazia."],
+      "unmeasured": [
+        "Gramática ou correção jurídica universal; equivalência ao sidecar nativo.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/TOOL-SPEC.md"],
+      "tests": ["apps/client/src/platform/browser-reviewer.test.ts"]
+    },
+    {
+      "toolId": "text-translate",
+      "level": "restricted-profile",
+      "corpora": ["translation"],
+      "supported": ["Pares pt/en/es avaliados, placeholders e segmentação no TR-C1."],
+      "refused": ["Saída vazia, idiomas incompatíveis e cancelamento."],
+      "unmeasured": [
+        "Tradução certificada, precisão jurídica e outros pares não avaliados.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/TRADUCAO-WEB.md"],
+      "tests": ["apps/client/src/platform/translation-client.test.ts"]
+    },
+    {
+      "toolId": "pdf-to-markdown",
+      "level": "restricted-profile",
+      "corpora": ["markdown"],
+      "supported": ["Leitura revisável, tabelas e relato por página no MD-C1."],
+      "refused": ["Publicação de resultado cancelado ou de revisão obsoleta."],
+      "unmeasured": [
+        "Páginas sem texto dependem de OCR explícito; não há OCR automático implícito.",
+        "Reconstrução universal de layout, figuras e ordem perfeita automática.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/MD-C1.md"],
+      "tests": ["apps/client/src/platform/markdown-reading.test.ts"]
+    },
+    {
+      "toolId": "pdf-sign",
+      "level": "regression",
+      "corpora": ["security"],
+      "supported": ["Imagem/assinatura visual nas coordenadas escolhidas."],
+      "refused": ["Assinatura vazia ou posição inválida."],
+      "unmeasured": [
+        "Não constitui assinatura digital criptográfica nem validação de autoria.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/AUDITORIA-NOVAS-FERRAMENTAS-WEB-2026-10-23.md"],
+      "tests": ["apps/client/src/platform/pdf-crop-sign.test.ts"]
+    },
+    {
+      "toolId": "pdf-form-fill",
+      "level": "restricted-profile",
+      "corpora": ["form"],
+      "supported": ["Valores, widgets compartilhados, readonly, prévia e achatamento AcroForm."],
+      "refused": ["XFA, assinatura, caracteres incompatíveis e revisão obsoleta."],
+      "unmeasured": [
+        "Fontes arbitrárias, Unicode completo e todos os formulários.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/TOOL-SPEC.md"],
+      "tests": ["apps/client/src/platform/pdf-form.test.ts"]
+    },
+    {
+      "toolId": "pdf-unlock",
+      "level": "regression",
+      "corpora": ["unlock"],
+      "supported": ["RC4/AES do corpus com conteúdo, campos/anexo e senha exata."],
+      "refused": ["ByteRange, filtro Crypt e senha inválida."],
+      "unmeasured": [
+        "Todos os filtros PDF e validação criptográfica de assinaturas.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/AUDITORIA-NOVAS-FERRAMENTAS-WEB-2026-10-23.md"],
+      "tests": ["apps/client/src/platform/pdf-unlock.test.ts"]
+    },
+    {
+      "toolId": "pdf-redact",
+      "level": "restricted-profile",
+      "corpora": ["security"],
+      "supported": ["Modo imagem e perfil restrito PDFium com remoção verificada."],
+      "refused": ["Recursos fora do perfil de preservação e áreas inválidas."],
+      "unmeasured": [
+        "Limpeza global de toda ocorrência e sanitização universal de metadados.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/AUDITORIA-PROTECAO-TARJA-EXCEL-WEB-2026-10-23.md"],
+      "tests": ["apps/client/src/platform/pdf-redaction-engine.test.ts"]
+    },
+    {
+      "toolId": "pdf-to-excel",
+      "level": "restricted-profile",
+      "corpora": ["excel"],
+      "supported": ["Células/zeros/vazios, seleção de região e separadores ajustáveis."],
+      "refused": ["Seleção inválida ou saída obsoleta."],
+      "unmeasured": [
+        "Tabelas arbitrárias, mergeCells universal e integração Camelot/Docling.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/XL-C1.md"],
+      "tests": ["apps/client/src/platform/excel-selection.test.ts"]
+    },
+    {
+      "toolId": "pdf-remove-pages",
+      "level": "restricted-profile",
+      "corpora": ["subset"],
+      "supported": [
+        "Campos/radio/checkbox, seleção descontínua e geometria em PDF/ZIP; ensaio de 500 páginas."
+      ],
+      "refused": ["ByteRange, XFA, seleção inválida ou remoção de todas as páginas."],
+      "unmeasured": [
+        "Formulários arbitrários, pouca RAM e ZIP de centenas de arquivos.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/DOC-C4.md"],
+      "tests": ["apps/client/src/platform/pdf-page-subset-quality.test.ts"]
+    },
+    {
+      "toolId": "pdf-extract-pages",
+      "level": "restricted-profile",
+      "corpora": ["subset"],
+      "supported": [
+        "Campos/radio/checkbox, seleção descontínua e geometria em PDF/ZIP; ensaio de 500 páginas."
+      ],
+      "refused": ["ByteRange, XFA ou seleção inválida."],
+      "unmeasured": [
+        "Formulários arbitrários, pouca RAM e ZIP de centenas de arquivos.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/DOC-C4.md"],
+      "tests": ["apps/client/src/platform/pdf-page-subset-quality.test.ts"]
+    },
+    {
+      "toolId": "html-to-pdf",
+      "level": "restricted-profile",
+      "corpora": ["html"],
+      "supported": ["Tabelas paginadas, cabeçalhos, Unicode e quebras inline no perfil DOC-C3."],
+      "refused": ["Cabeçalho excessivo, tabela larga demais e conteúdo vazio."],
+      "unmeasured": [
+        "Impressão fiel de qualquer site, imagens/CSS arbitrário ou tabelas mescladas.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/DOC-C3.md"],
+      "tests": ["apps/client/src/platform/html-to-pdf-converter.test.ts"]
+    },
+    {
+      "toolId": "scan-to-pdf",
+      "level": "regression",
+      "corpora": ["scan"],
+      "supported": [
+        "Composição ordenada de imagens, normalização WebP e encerramento de tracks simulados."
+      ],
+      "refused": ["Composição vazia e câmera recusada no caminho de erro."],
+      "unmeasured": [
+        "Câmera física, correção de perspectiva e DOC-C2, que permanece excluído.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/superpowers/plans/2026-10-23-corrigir-quatro-ferramentas.md"],
+      "tests": ["apps/client/src/platform/scan-to-pdf-engine.test.ts"]
+    },
+    {
+      "toolId": "image-compress",
+      "level": "restricted-profile",
+      "corpora": ["image-basic", "image-photo"],
+      "supported": ["JPEG/WebP com perdas e PNG sem perdas; bytes reais antes/depois."],
+      "refused": ["Limites de arquivo/pixels/lote e opções inválidas."],
+      "unmeasured": [
+        "AVIF não integrado; ICC/HDR/animação e pouca RAM não homologados.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
+      "tests": ["apps/client/src/platform/image-results.test.ts"]
+    },
+    {
+      "toolId": "image-resize",
+      "level": "restricted-profile",
+      "corpora": ["image-basic", "image-photo"],
+      "supported": ["Dimensões/proporção, não ampliar e lote."],
+      "refused": ["Limites de arquivo/pixels/lote e opções inválidas."],
+      "unmeasured": [
+        "AVIF não integrado; ICC/HDR/animação e pouca RAM não homologados.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
+      "tests": ["apps/client/src/platform/image-engine.test.ts"]
+    },
+    {
+      "toolId": "image-crop",
+      "level": "restricted-profile",
+      "corpora": ["image-basic", "image-photo"],
+      "supported": ["Recorte por pixels/gesto, EXIF, proporção e prévia."],
+      "refused": ["Limites de arquivo/pixels/lote e opções inválidas."],
+      "unmeasured": [
+        "AVIF não integrado; ICC/HDR/animação e pouca RAM não homologados.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
+      "tests": ["apps/client/src/platform/image-engine.test.ts"]
+    },
+    {
+      "toolId": "image-convert",
+      "level": "restricted-profile",
+      "corpora": ["image-basic", "image-photo"],
+      "supported": ["Saída JPG/PNG/WebP e transparência sobre branco no JPEG."],
+      "refused": ["Limites de arquivo/pixels/lote e opções inválidas."],
+      "unmeasured": [
+        "AVIF não integrado; ICC/HDR/animação e pouca RAM não homologados.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
+      "tests": ["apps/client/src/platform/image-engine.test.ts"]
+    },
+    {
+      "toolId": "image-rotate",
+      "level": "restricted-profile",
+      "corpora": ["image-basic", "image-photo"],
+      "supported": ["Rotação 90/180/270 e espelhamento."],
+      "refused": ["Limites de arquivo/pixels/lote e opções inválidas."],
+      "unmeasured": [
+        "AVIF não integrado; ICC/HDR/animação e pouca RAM não homologados.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
+      "tests": ["apps/client/src/platform/image-engine.test.ts"]
+    },
+    {
+      "toolId": "image-watermark",
+      "level": "restricted-profile",
+      "corpora": ["image-basic", "image-photo"],
+      "supported": ["Modo rápido e composição avançada com revisão única."],
+      "refused": ["Limites de arquivo/pixels/lote e opções inválidas."],
+      "unmeasured": [
+        "AVIF não integrado; ICC/HDR/animação e pouca RAM não homologados.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/IMAGE-WEB-QUALITY.md"],
+      "tests": ["apps/client/src/platform/image-composition-state.test.ts"]
+    }
+  ]
+}

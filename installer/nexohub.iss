@@ -17,7 +17,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\target\release\installer
 OutputBaseFilename=NexoHub_{#AppVersion}_x64-setup
 SetupIconFile=..\apps\desktop\src-tauri\icons\icon.ico
-UninstallDisplayIcon={app}\nexohub-desktop.exe
+UninstallDisplayIcon={app}\nexohub-camaleao.ico
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -34,6 +34,7 @@ Name: "languagetool"; Description: "{cm:reviewTask}"; Flags: unchecked
 
 [Files]
 Source: "..\target\release\nexohub-desktop.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\apps\desktop\src-tauri\icons\icon.ico"; DestDir: "{app}"; DestName: "nexohub-camaleao.ico"; Flags: ignoreversion
 Source: "..\target\release\THIRD_PARTY_LICENSES.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\target\release\runtime\README.md"; DestDir: "{app}\runtime"; Flags: ignoreversion
 Source: "..\target\release\runtime\setup\install-languagetool.ps1"; DestDir: "{app}\runtime\setup"; Flags: ignoreversion
@@ -43,8 +44,8 @@ Source: "..\target\release\runtime\setup\languagetool-java-files.json"; DestDir:
 Source: "..\target\release\runtime\MicrosoftEdgeWebview2Setup.exe"; Flags: dontcopy
 
 [Icons]
-Name: "{autoprograms}\NexoHub"; Filename: "{app}\nexohub-desktop.exe"
-Name: "{autodesktop}\NexoHub"; Filename: "{app}\nexohub-desktop.exe"; Tasks: desktopicon
+Name: "{autoprograms}\NexoHub"; Filename: "{app}\nexohub-desktop.exe"; IconFilename: "{app}\nexohub-camaleao.ico"
+Name: "{autodesktop}\NexoHub"; Filename: "{app}\nexohub-desktop.exe"; IconFilename: "{app}\nexohub-camaleao.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\nexohub-desktop.exe"; Description: "{cm:launchApp}"; Flags: nowait postinstall skipifsilent; Check: CanLaunch

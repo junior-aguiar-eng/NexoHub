@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 export const installerSources = [
   "../target/release/nexohub-desktop.exe",
+  "../apps/desktop/src-tauri/icons/icon.ico",
   "../target/release/THIRD_PARTY_LICENSES.md",
   "../target/release/runtime/README.md",
   "../target/release/runtime/setup/install-languagetool.ps1",

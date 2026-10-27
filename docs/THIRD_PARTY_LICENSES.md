@@ -69,3 +69,21 @@ Para tradução, consultar [TRADUCAO-WEB.md](TRADUCAO-WEB.md) e o
 continuam avaliações isoladas, sem adoção pelo índice; seus limites permanecem nos relatórios
 [R-C1](R-C1-VALIDACAO.md), [OCR-C1](OCR-C1.md), [XL-C1](XL-C1.md) e
 [IM-C4](IM-C4-AVIF.md). DOC-C2 permanece fora do escopo.
+
+## Revisão Q-C0 — 27/10/2026
+
+Vitest foi atualizado de 4.1.11 para 4.1.12 nos quatro pacotes que o declaram. O piso de
+undici passou a 8.12.2, resolvido como 8.12.3, e setuptools foi atualizado de 84.0.0 para
+84.1.0 no lock Python. A auditoria npm passou de cinco advisories (um alto) para zero;
+`uv audit --locked --project engines/python` passou de um advisory para zero em 34 pacotes.
+Os componentes atualizados declaram MIT; não há novo motor ou serviço de runtime.
+
+O inventário JavaScript agora inclui dependências de desenvolvimento: o gerador removia
+essas entradas com `--prod` apesar do cabeçalho declarar cobertura de build e teste.
+O arquivo da raiz foi regenerado com 796 componentes neste Windows, incluindo as versões
+de Vitest/mocker/undici. Dependências opcionais refletem a plataforma instalada.
+
+Validação: 887 testes JavaScript do monorepo e 35 testes Python aprovados após a atualização,
+`pnpm check`, `pnpm quality:check` (7 testes) e `pnpm licenses:check` aprovados. Permanecem
+dois avisos de lint preexistentes no corpus de texto e avisos de depreciação Swig no Python.
+Essas auditorias não representam uma auditoria criptográfica ou de todos os binários nativos.

@@ -31,7 +31,7 @@ const run = (command, args) => {
 };
 
 const rows = [];
-const pnpm = run("pnpm", ["licenses", "list", "--json", "--prod"]);
+const pnpm = run("pnpm", ["licenses", "list", "--json"]);
 for (const [license, packages] of Object.entries(pnpm)) {
   for (const item of packages) {
     for (const version of item.versions) rows.push(["JavaScript", item.name, version, license]);

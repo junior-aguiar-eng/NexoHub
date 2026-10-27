@@ -1184,8 +1184,8 @@ export const ptBR = {
   "workspace.review.rule.PLEONASM_REDUNDANCY": "Pleonasmo",
   "workspace.translate.title": "Tradutor Inteligente",
   "workspace.translate.preparing": "Preparando tradução...",
-  "workspace.translate.downloading": "Baixando os recursos do modelo...",
-  "workspace.translate.initializing": "Inicializando o modelo no dispositivo...",
+  "workspace.translate.downloading": "Baixando arquivos para tradução...",
+  "workspace.translate.initializing": "Preparando tradução...",
   "workspace.translate.blockProgress": "Traduzindo bloco {current} de {total}...",
   "workspace.translate.ready": "Tradução concluída.",
   "workspace.translate.cancel": "Cancelar tradução",
@@ -1195,14 +1195,14 @@ export const ptBR = {
   "workspace.translate.download": "Baixar .txt",
   "workspace.translate.outputLabel": "Texto traduzido",
   "workspace.translate.downloadTimeout":
-    "O download do modelo ficou sem receber dados. Confira a conexão e tente novamente.",
+    "O download foi interrompido. Confira a conexão e tente novamente.",
   "workspace.translate.networkError":
     "Não foi possível baixar os recursos da tradução. Confira a conexão e tente novamente.",
   "workspace.translate.workerError":
     "Não foi possível iniciar o tradutor neste navegador. Atualize a página e tente novamente.",
   "workspace.translate.initializationError":
-    "O modelo não conseguiu iniciar neste dispositivo. Feche outras abas pesadas e tente novamente.",
-  "workspace.translate.emptyResult": "O modelo não retornou uma tradução válida. Tente novamente.",
+    "Não foi possível iniciar a tradução. Tente novamente.",
+  "workspace.translate.emptyResult": "Não foi possível concluir a tradução. Tente novamente.",
   "workspace.translate.swap": "Inverter Idiomas",
   "workspace.translate.swapTitle": "Inverter idiomas de origem e destino",
   "workspace.translate.translating": "Traduzindo texto...",
@@ -1211,11 +1211,11 @@ export const ptBR = {
   "workspace.translate.sourceLang": "Idioma de Origem",
   "workspace.translate.targetLang": "Idioma de Destino",
   "workspace.translate.lang.en": "Inglês",
-  "workspace.translate.lang.pt": "Português (Brasil)",
+  "workspace.translate.lang.pt": "Português",
   "workspace.translate.lang.es": "Espanhol",
-  "workspace.translate.offlineBadge": "Tradução no Navegador • Total Privacidade",
-  "workspace.translate.downloadNotice":
-    "O primeiro uso pode exigir um download grande. Recursos disponíveis no cache são reutilizados. Você pode cancelar a qualquer momento.",
+  "workspace.translate.downloadRequired":
+    "Para traduzir, é necessário fazer um download no primeiro uso.",
+  "workspace.translate.downloadNotice": "Aguarde a conclusão do download para traduzir.",
   "workspace.compress.title": "Resultado da Compressão",
   "workspace.compress.savings": "de economia alcançada",
   "compress.methodTitle": "Otimização da estrutura",

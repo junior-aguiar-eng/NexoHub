@@ -1,0 +1,172 @@
+{
+  "profile": {
+    "id": "Xenova/m2m100_418M",
+    "revision": "9c374f0b7aca709787cea97b047bfbbd1559d177",
+    "family": "m2m100"
+  },
+  "probe": false,
+  "passes": [
+    {
+      "warm": false,
+      "initializationMs": 9122.299999952316,
+      "files": {
+        "config.json": {
+          "loaded": 908,
+          "total": 908
+        },
+        "onnx/encoder_model_quantized.onnx": {
+          "loaded": 287856370,
+          "total": 287856370
+        },
+        "onnx/decoder_model_merged_quantized.onnx": {
+          "loaded": 344128178,
+          "total": 344128178
+        },
+        "generation_config.json": {
+          "loaded": 233,
+          "total": 233
+        }
+      },
+      "doneFiles": [
+        "config.json",
+        "generation_config.json",
+        "onnx/encoder_model_quantized.onnx",
+        "onnx/decoder_model_merged_quantized.onnx"
+      ],
+      "samples": [
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "pt",
+          "target": "en",
+          "input": "Relatório de acompanhamento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve guardar os registros por 5 anos. A senha não pode ser compartilhada. A reunião ocorrerá em 20 de maio de 2026. O prazo para resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, e não apenas do primeiro registro.\n\nRelatório de acompanhamento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve guardar os registros por 5 anos. A senha não pode ser compartilhada. A reunião ocorrerá em 20 de maio de 2026. O prazo para resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, e não apenas do primeiro registro.",
+          "output": "The monitoring report. Maria Silva confirmed that the 12 documents were received. The payment of €125 is not yet authorized. The supplier must keep the records for 5 years. The password cannot be shared. The meeting will take place on May 20, 2026. The deadline for reply is 30 days. This conclusion depends on the review of all documents, and not just the first record.\n\nThe monitoring report. Maria Silva confirmed that the 12 documents were received. The payment of €125 is not yet authorized. The supplier must keep the records for 5 years. The password cannot be shared. The meeting will take place on May 20, 2026. The deadline for reply is 30 days. This conclusion depends on the review of all documents, and not just the first record.",
+          "ms": 38751.89999997616,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 31
+        },
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "pt",
+          "target": "es",
+          "input": "Relatório de acompanhamento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve guardar os registros por 5 anos. A senha não pode ser compartilhada. A reunião ocorrerá em 20 de maio de 2026. O prazo para resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, e não apenas do primeiro registro.\n\nRelatório de acompanhamento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve guardar os registros por 5 anos. A senha não pode ser compartilhada. A reunião ocorrerá em 20 de maio de 2026. O prazo para resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, e não apenas do primeiro registro.",
+          "output": "informe de seguimiento. María Silva confirmó que los 12 documentos fueron recibidos. El pago de 125 euros aún no ha sido autorizado. El proveedor debe guardar los registros durante 5 años. La contraseña no se puede compartir. La reunión tendrá lugar el 20 de mayo de 2026. El plazo para la respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, y no sólo del primer registro.\n\ninforme de seguimiento. María Silva confirmó que los 12 documentos fueron recibidos. El pago de 125 euros aún no ha sido autorizado. El proveedor debe guardar los registros durante 5 años. La contraseña no se puede compartir. La reunión tendrá lugar el 20 de mayo de 2026. El plazo para la respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, y no sólo del primer registro.",
+          "ms": 49662.69999998808,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 31
+        },
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "en",
+          "target": "pt",
+          "input": "Monitoring report. Maria Silva confirmed that the 12 documents were received. The payment of 125 euros has not yet been authorized. The supplier must keep the records for 5 years. The password must not be shared. The meeting will take place on 20 May 2026. The response deadline is 30 days. This conclusion depends on reviewing all documents, not just the first record.\n\nMonitoring report. Maria Silva confirmed that the 12 documents were received. The payment of 125 euros has not yet been authorized. The supplier must keep the records for 5 years. The password must not be shared. The meeting will take place on 20 May 2026. The response deadline is 30 days. This conclusion depends on reviewing all documents, not just the first record.",
+          "output": "Relatório de Monitoramento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve manter os registros por 5 anos. A senha não deve ser compartilhada. A reunião será realizada em 20 de maio de 2026. O prazo de resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, não apenas o primeiro registro.\n\nRelatório de Monitoramento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve manter os registros por 5 anos. A senha não deve ser compartilhada. A reunião será realizada em 20 de maio de 2026. O prazo de resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, não apenas o primeiro registro.",
+          "ms": 67877.80000001192,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 31
+        },
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "en",
+          "target": "es",
+          "input": "Monitoring report. Maria Silva confirmed that the 12 documents were received. The payment of 125 euros has not yet been authorized. The supplier must keep the records for 5 years. The password must not be shared. The meeting will take place on 20 May 2026. The response deadline is 30 days. This conclusion depends on reviewing all documents, not just the first record.\n\nMonitoring report. Maria Silva confirmed that the 12 documents were received. The payment of 125 euros has not yet been authorized. The supplier must keep the records for 5 years. The password must not be shared. The meeting will take place on 20 May 2026. The response deadline is 30 days. This conclusion depends on reviewing all documents, not just the first record.",
+          "output": "El informe de seguimiento. María Silva confirmó que los 12 documentos fueron recibidos. El pago de 125 euros aún no ha sido autorizado. El proveedor debe mantener los registros durante 5 años. La contraseña no debe ser compartida. La reunión se celebrará el 20 de mayo de 2026. El plazo de respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, no sólo el primer registro.\n\nEl informe de seguimiento. María Silva confirmó que los 12 documentos fueron recibidos. El pago de 125 euros aún no ha sido autorizado. El proveedor debe mantener los registros durante 5 años. La contraseña no debe ser compartida. La reunión se celebrará el 20 de mayo de 2026. El plazo de respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, no sólo el primer registro.",
+          "ms": 65899,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 31
+        },
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "es",
+          "target": "pt",
+          "input": "Informe de seguimiento. Maria Silva confirmó que se recibieron los 12 documentos. El pago de 125 euros aún no fue autorizado. El proveedor debe conservar los registros durante 5 años. No se puede compartir la contraseña. La reunión tendrá lugar el 20 de mayo de 2026. El plazo de respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, y no solo del primer registro.\n\nInforme de seguimiento. Maria Silva confirmó que se recibieron los 12 documentos. El pago de 125 euros aún no fue autorizado. El proveedor debe conservar los registros durante 5 años. No se puede compartir la contraseña. La reunión tendrá lugar el 20 de mayo de 2026. El plazo de respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, y no solo del primer registro.",
+          "output": "Relatório de acompanhamento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve manter os registos por 5 anos. Não é possível compartilhar a senha. A reunião terá lugar em 20 de maio de 2026. O prazo de resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, e não apenas do primeiro registro.\n\nRelatório de acompanhamento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve manter os registos por 5 anos. Não é possível compartilhar a senha. A reunião terá lugar em 20 de maio de 2026. O prazo de resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, e não apenas do primeiro registro.",
+          "ms": 46074.5,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 31
+        },
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "es",
+          "target": "en",
+          "input": "Informe de seguimiento. Maria Silva confirmó que se recibieron los 12 documentos. El pago de 125 euros aún no fue autorizado. El proveedor debe conservar los registros durante 5 años. No se puede compartir la contraseña. La reunión tendrá lugar el 20 de mayo de 2026. El plazo de respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, y no solo del primer registro.\n\nInforme de seguimiento. Maria Silva confirmó que se recibieron los 12 documentos. El pago de 125 euros aún no fue autorizado. El proveedor debe conservar los registros durante 5 años. No se puede compartir la contraseña. La reunión tendrá lugar el 20 de mayo de 2026. El plazo de respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, y no solo del primer registro.",
+          "output": "Report of monitoring. Maria Silva confirmed that the 12 documents were received. The payment of €125 was not yet authorized. The provider must keep the records for 5 years. You cannot share the password. The meeting will take place on May 20, 2026. The response period is 30 days. This conclusion depends on the review of all documents, and not only on the first record.\n\nReport of monitoring. Maria Silva confirmed that the 12 documents were received. The payment of €125 was not yet authorized. The provider must keep the records for 5 years. You cannot share the password. The meeting will take place on May 20, 2026. The response period is 30 days. This conclusion depends on the review of all documents, and not only on the first record.",
+          "ms": 46694.40000003576,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 31
+        }
+      ]
+    }
+  ],
+  "requests": [],
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+  "errors": [],
+  "context": "persistent",
+  "cacheProbeBefore": {
+    "available": true
+  },
+  "cacheEntries": [
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/config.json",
+      "bytes": 908,
+      "sha256": "1dbdf77ddc7809acd4c54ccf0eab46f840b40174afb1b6f6de8787244e832938"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/config.json",
+      "bytes": 908,
+      "sha256": "1dbdf77ddc7809acd4c54ccf0eab46f840b40174afb1b6f6de8787244e832938"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer.json",
+      "bytes": 7988527,
+      "sha256": "03d9e111731c2d71f39a2c2a88499743e4c251385d07f0384b4349a23ba54363"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/generation_config.json",
+      "bytes": 233,
+      "sha256": "722210dd0bee7bef4e8e7f9a8574d8c56a2dfff723d73f390ce67892740b9009"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer_config.json",
+      "bytes": 1813,
+      "sha256": "bacfd4b9da25a61e01f17abe660465f616c9a1a3f5e23ab9ad3326c3788f2d9f"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/onnx/encoder_model_quantized.onnx",
+      "bytes": 287856370,
+      "sha256": "13a94e354a9140764eb81102d77d3ec6952d796e6f113c651eeb3c3443da0386"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/onnx/decoder_model_merged_quantized.onnx",
+      "bytes": 344128178,
+      "sha256": "007654bcabb6cea6fd3bde34ce933137b431330b3755781145d7b6906270b45a"
+    }
+  ],
+  "completed": true,
+  "resources": {
+    "profile": "m2m100-segmented",
+    "exitCode": 0,
+    "wallMs": 334230.6950999773,
+    "sampledTreePeakRssBytes": 3310080000,
+    "sampleIntervalMs": 50,
+    "scope": "Soma RSS de Node/Vite, Chromium, renderer e worker. Pode contar páginas compartilhadas mais de uma vez; não é heap exclusivo do modelo."
+  },
+  "methodology": "Seis pares longos reais, segmentação por sentença. Cache já preenchido. Comparação exploratória: formatter/typecheck breves concorrentes. Não é medida exclusiva de CPU/RAM do modelo."
+}

@@ -26,7 +26,7 @@ describe("tradução local no website", () => {
       translatedText: "Olá",
       sourceLang: "en",
       targetLang: "pt",
-      engine: "transformers.js-nllb-200",
+      engine: "transformers.js-m2m100",
     });
     const result = await runLauncherTool(port, "text-translate", input);
     expect(local).toHaveBeenCalledOnce();

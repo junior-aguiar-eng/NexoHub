@@ -6,9 +6,9 @@ import {
 } from "./translation-runtime";
 
 const neuralBlock = vi.hoisted(() => vi.fn(async (text: string) => [{ translation_text: text }]));
-vi.mock("@huggingface/transformers", () => ({
-  env: {},
-  pipeline: vi.fn(async () => neuralBlock),
+vi.mock("@huggingface/transformers", () => ({ env: {} }));
+vi.mock("./translation-model", () => ({
+  createTranslationPipeline: vi.fn(async () => neuralBlock),
 }));
 afterEach(() => {
   resetTranslatorCache();
@@ -83,7 +83,7 @@ describe("browser-translator", () => {
       });
 
       expect(result.translatedText).toBe("Contrato de prestação de serviços");
-      expect(result.engine).toBe("transformers.js-nllb-200");
+      expect(result.engine).toBe("transformers.js-m2m100");
       expect(progressList.length).toBeGreaterThan(0);
       expect(progressList.at(-1)?.status).toBe("ready");
       expect(progressList.at(-1)?.progress).toBe(100);

@@ -309,7 +309,7 @@ describe("Tool Runner do Launcher", () => {
           translatedText: "Este é um contrato de prestação de serviços.",
           sourceLang: "en",
           targetLang: "pt",
-          engine: "transformers.js-nllb-200",
+          engine: "transformers.js-m2m100",
         };
       });
 

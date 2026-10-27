@@ -1,0 +1,106 @@
+{
+  "profile": {
+    "id": "Xenova/m2m100_418M",
+    "revision": "9c374f0b7aca709787cea97b047bfbbd1559d177",
+    "family": "m2m100"
+  },
+  "probe": false,
+  "passes": [
+    {
+      "warm": false,
+      "initializationMs": null,
+      "files": {},
+      "doneFiles": [],
+      "samples": [
+        {
+          "id": "runtime-worker",
+          "source": "pt",
+          "target": "en",
+          "input": "Maria Silva não autorizou o pagamento de 125 euros em 14/03/2026.",
+          "output": "Maria Silva did not authorize the payment of 125 euros on 14/03/2026.",
+          "engine": "transformers.js-m2m100",
+          "ms": 21737.69999998808
+        }
+      ],
+      "runtimeProgress": {
+        "status": "ready",
+        "progress": 100
+      }
+    },
+    {
+      "warm": true,
+      "initializationMs": null,
+      "files": {},
+      "doneFiles": [],
+      "samples": [
+        {
+          "id": "runtime-worker",
+          "source": "pt",
+          "target": "en",
+          "input": "Maria Silva não autorizou o pagamento de 125 euros em 14/03/2026.",
+          "output": "Maria Silva did not authorize the payment of 125 euros on 14/03/2026.",
+          "engine": "transformers.js-m2m100",
+          "ms": 14170.199999988079
+        }
+      ],
+      "runtimeProgress": {
+        "status": "ready",
+        "progress": 100
+      }
+    }
+  ],
+  "requests": [],
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+  "errors": [],
+  "context": "persistent",
+  "cacheProbeBefore": {
+    "available": true
+  },
+  "cacheEntries": [
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/config.json",
+      "bytes": 908,
+      "sha256": "1dbdf77ddc7809acd4c54ccf0eab46f840b40174afb1b6f6de8787244e832938"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/config.json",
+      "bytes": 908,
+      "sha256": "1dbdf77ddc7809acd4c54ccf0eab46f840b40174afb1b6f6de8787244e832938"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer.json",
+      "bytes": 7988527,
+      "sha256": "03d9e111731c2d71f39a2c2a88499743e4c251385d07f0384b4349a23ba54363"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/generation_config.json",
+      "bytes": 233,
+      "sha256": "722210dd0bee7bef4e8e7f9a8574d8c56a2dfff723d73f390ce67892740b9009"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer_config.json",
+      "bytes": 1813,
+      "sha256": "bacfd4b9da25a61e01f17abe660465f616c9a1a3f5e23ab9ad3326c3788f2d9f"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/onnx/encoder_model_quantized.onnx",
+      "bytes": 287856370,
+      "sha256": "13a94e354a9140764eb81102d77d3ec6952d796e6f113c651eeb3c3443da0386"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/onnx/decoder_model_merged_quantized.onnx",
+      "bytes": 344128178,
+      "sha256": "007654bcabb6cea6fd3bde34ce933137b431330b3755781145d7b6906270b45a"
+    }
+  ],
+  "completed": true,
+  "resources": {
+    "profile": "m2m100-runtime-probe",
+    "exitCode": 0,
+    "wallMs": 47752.42520001484,
+    "sampledTreePeakRssBytes": 3295133696,
+    "sampleIntervalMs": 50,
+    "scope": "Soma RSS de Node/Vite, Chromium, renderer e worker. Pode contar páginas compartilhadas mais de uma vez; não é heap exclusivo do modelo."
+  },
+  "methodology": "Worker efetivo translation.worker.ts; dois workers novos; HF bloqueado no segundo passe; recursos já presentes no cache. Sem mocks, inclui timeout e caminho runtime de produção. Sem tarefas pesadas concorrentes."
+}

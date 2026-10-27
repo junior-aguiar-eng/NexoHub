@@ -21,7 +21,7 @@ class FakeWorker {
           translatedText: text,
           sourceLang: "pt",
           targetLang: "en",
-          engine: "transformers.js-nllb-200",
+          engine: "transformers.js-m2m100",
         },
       },
     } as MessageEvent);

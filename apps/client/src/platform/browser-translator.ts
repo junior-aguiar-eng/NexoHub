@@ -12,7 +12,7 @@ export type {
   TranslationLanguage,
   TranslationProgressInfo,
 } from "./translation-protocol";
-export { NLLB_MODEL_ID } from "./translation-protocol";
+export { TRANSLATION_MODEL } from "./translation-protocol";
 export { segmentTextForTranslation } from "./translation-segmentation";
 
 interface PendingJob {
@@ -99,7 +99,7 @@ export async function performBrowserTranslation(
       translatedText: text,
       sourceLang: options.sourceLang,
       targetLang: options.targetLang,
-      engine: "transformers.js-nllb-200",
+      engine: "identity",
     };
   }
   return new Promise((resolve, reject) => {

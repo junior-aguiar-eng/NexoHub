@@ -44,3 +44,17 @@ describe("carregamento e resultado do tradutor", () => {
     expect(screen.getByRole("textbox")).toBeDisabled();
   });
 });
+
+it("informa somente o download necessário sem expor detalhes técnicos", () => {
+  const view = render(<TranslateDocumentPanel {...props} />);
+  expect(
+    screen.getByText("Para traduzir, é necessário fazer um download no primeiro uso."),
+  ).toBeVisible();
+  expect(view.container.textContent).not.toMatch(
+    /M2M100|tokenizer|runtime|cache|MIT|GiB|mecanismo nativo|processado neste navegador/,
+  );
+  view.rerender(<TranslateDocumentPanel {...props} browserModel={false} />);
+  expect(
+    screen.queryByText("Para traduzir, é necessário fazer um download no primeiro uso."),
+  ).not.toBeInTheDocument();
+});

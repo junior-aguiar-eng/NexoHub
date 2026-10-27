@@ -1,0 +1,150 @@
+{
+  "profile": {
+    "id": "Xenova/m2m100_418M",
+    "revision": "9c374f0b7aca709787cea97b047bfbbd1559d177",
+    "family": "m2m100"
+  },
+  "probe": true,
+  "passes": [
+    {
+      "warm": false,
+      "initializationMs": 9699.900000035763,
+      "files": {
+        "config.json": {
+          "loaded": 908,
+          "total": 908
+        },
+        "onnx/encoder_model_quantized.onnx": {
+          "loaded": 287856370,
+          "total": 287856370
+        },
+        "onnx/decoder_model_merged_quantized.onnx": {
+          "loaded": 344128178,
+          "total": 344128178
+        },
+        "generation_config.json": {
+          "loaded": 233,
+          "total": 233
+        }
+      },
+      "doneFiles": [
+        "config.json",
+        "generation_config.json",
+        "onnx/decoder_model_merged_quantized.onnx",
+        "onnx/encoder_model_quantized.onnx"
+      ],
+      "samples": [
+        {
+          "id": "negacao-nome-data",
+          "kind": "short",
+          "source": "pt",
+          "target": "en",
+          "input": "Maria Silva não autorizou o pagamento de 125 euros em 14/03/2026.",
+          "output": "Maria Silva did not authorize the payment of 125 euros on 14/03/2026.",
+          "ms": 5192.800000011921,
+          "names": ["Maria Silva"],
+          "numbers": ["125", "14", "03", "2026"],
+          "negation": true,
+          "chunks": 1
+        }
+      ]
+    },
+    {
+      "warm": true,
+      "initializationMs": 9759.699999988079,
+      "files": {
+        "config.json": {
+          "loaded": 908,
+          "total": 908
+        },
+        "onnx/encoder_model_quantized.onnx": {
+          "loaded": 287856370,
+          "total": 287856370
+        },
+        "onnx/decoder_model_merged_quantized.onnx": {
+          "loaded": 344128178,
+          "total": 344128178
+        },
+        "generation_config.json": {
+          "loaded": 233,
+          "total": 233
+        }
+      },
+      "doneFiles": [
+        "config.json",
+        "generation_config.json",
+        "onnx/encoder_model_quantized.onnx",
+        "onnx/decoder_model_merged_quantized.onnx"
+      ],
+      "samples": [
+        {
+          "id": "negacao-nome-data",
+          "kind": "short",
+          "source": "pt",
+          "target": "en",
+          "input": "Maria Silva não autorizou o pagamento de 125 euros em 14/03/2026.",
+          "output": "Maria Silva did not authorize the payment of 125 euros on 14/03/2026.",
+          "ms": 4290.699999988079,
+          "names": ["Maria Silva"],
+          "numbers": ["125", "14", "03", "2026"],
+          "negation": true,
+          "chunks": 1
+        }
+      ]
+    }
+  ],
+  "requests": [],
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+  "errors": [],
+  "context": "persistent",
+  "cacheProbeBefore": {
+    "available": true
+  },
+  "cacheEntries": [
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/config.json",
+      "bytes": 908,
+      "sha256": "1dbdf77ddc7809acd4c54ccf0eab46f840b40174afb1b6f6de8787244e832938"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/config.json",
+      "bytes": 908,
+      "sha256": "1dbdf77ddc7809acd4c54ccf0eab46f840b40174afb1b6f6de8787244e832938"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer.json",
+      "bytes": 7988527,
+      "sha256": "03d9e111731c2d71f39a2c2a88499743e4c251385d07f0384b4349a23ba54363"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/generation_config.json",
+      "bytes": 233,
+      "sha256": "722210dd0bee7bef4e8e7f9a8574d8c56a2dfff723d73f390ce67892740b9009"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer_config.json",
+      "bytes": 1813,
+      "sha256": "bacfd4b9da25a61e01f17abe660465f616c9a1a3f5e23ab9ad3326c3788f2d9f"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/onnx/encoder_model_quantized.onnx",
+      "bytes": 287856370,
+      "sha256": "13a94e354a9140764eb81102d77d3ec6952d796e6f113c651eeb3c3443da0386"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/onnx/decoder_model_merged_quantized.onnx",
+      "bytes": 344128178,
+      "sha256": "007654bcabb6cea6fd3bde34ce933137b431330b3755781145d7b6906270b45a"
+    }
+  ],
+  "completed": true,
+  "resources": {
+    "profile": "m2m100-cache-probe",
+    "exitCode": 0,
+    "wallMs": 39381.32320001023,
+    "sampledTreePeakRssBytes": 3410415616,
+    "sampleIntervalMs": 50,
+    "scope": "Soma RSS de Node/Vite, Chromium, renderer e worker. Pode contar páginas compartilhadas mais de uma vez; não é heap exclusivo do modelo."
+  },
+  "methodology": "Reabertura em worker novo com cache persistente já preenchido; HF bloqueado no segundo passe; cache auditado por SHA-256. Primeira carga deste ensaio também usa cache. Não representa primeiro download."
+}

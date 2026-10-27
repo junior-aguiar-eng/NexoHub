@@ -7,7 +7,11 @@ import {
 } from "./translation-runtime";
 
 const mocks = vi.hoisted(() => ({ pipeline: vi.fn(), env: {} }));
-vi.mock("@huggingface/transformers", () => mocks);
+vi.mock("@huggingface/transformers", () => ({ env: mocks.env }));
+vi.mock("./translation-model", () => ({
+  createTranslationPipeline: (id: string, options: unknown) =>
+    mocks.pipeline("translation", id, options),
+}));
 afterEach(() => {
   resetRuntimeCache();
   vi.unstubAllGlobals();
@@ -79,14 +83,13 @@ it("não anuncia conclusão dos pesos ao terminar apenas o tokenizer", () => {
   progress({ status: "progress", file: "tokenizer.json", loaded: 100, total: 100 });
   expect(events[0].progress).toBe(0);
 });
-it("retoma em WASM somente quando o pipeline rejeita capacidade WebGPU", async () => {
-  vi.stubGlobal("navigator", { gpu: { requestAdapter: async () => ({}) } });
-  mocks.pipeline.mockRejectedValueOnce(new Error("WebGPU shader compilation unsupported"));
-  mocks.pipeline.mockResolvedValueOnce(async () => [{ translation_text: "Hello" }]);
-  expect(
-    (await performRuntimeTranslation("Olá", { sourceLang: "pt", targetLang: "en" })).translatedText,
-  ).toBe("Hello");
-  expect(mocks.pipeline.mock.calls.map((call) => call[2].device)).toEqual(["webgpu", "wasm"]);
+it("mantém o dispositivo WASM medido mesmo quando há adaptador GPU", async () => {
+  const requestAdapter = vi.fn(async () => ({}));
+  vi.stubGlobal("navigator", { gpu: { requestAdapter } });
+  mocks.pipeline.mockResolvedValue(async () => [{ translation_text: "Hello" }]);
+  await performRuntimeTranslation("Olá", { sourceLang: "pt", targetLang: "en" });
+  expect(mocks.pipeline.mock.calls.map((call) => call[2].device)).toEqual(["wasm"]);
+  expect(requestAdapter).not.toHaveBeenCalled();
 });
 it("não repete o download em WASM se a rede falha com GPU disponível", async () => {
   vi.stubGlobal("navigator", { gpu: { requestAdapter: async () => ({}) } });
@@ -104,4 +107,32 @@ it("distingue compilação depois de receber encoder e decoder", () => {
   progress({ status: "progress", file: "decoder.onnx", loaded: 100, total: 100 });
   progress({ status: "done", file: "decoder.onnx" });
   expect(events.at(-1)?.status).toBe("initializing");
+});
+
+it("não carrega NLLB restrito e fixa a revisão do perfil auditado", async () => {
+  mocks.pipeline.mockResolvedValue(async () => [{ translation_text: "Hello" }]);
+  await performRuntimeTranslation("Olá", { sourceLang: "pt", targetLang: "en" });
+  expect(mocks.pipeline.mock.calls[0][1]).not.toBe("Xenova/nllb-200-distilled-600M");
+  expect(mocks.pipeline.mock.calls[0][2].revision).toMatch(/^[a-f0-9]{40}$/);
+});
+
+it("não aceita conclusão tardia após cancelamento da última inferência", async () => {
+  const controller = new AbortController();
+  mocks.pipeline.mockResolvedValue(async () => {
+    controller.abort();
+    return [{ translation_text: "Hello" }];
+  });
+  await expect(
+    performRuntimeTranslation("Olá", {
+      sourceLang: "pt",
+      targetLang: "en",
+      signal: controller.signal,
+    }),
+  ).rejects.toThrow("OPERACAO_CANCELADA");
+});
+
+it("identifica operação sem inferência sem atribuir tradução ao modelo", async () => {
+  const result = await performRuntimeTranslation("Olá", { sourceLang: "pt", targetLang: "pt" });
+  expect(result.engine).toBe("identity");
+  expect(mocks.pipeline).not.toHaveBeenCalled();
 });

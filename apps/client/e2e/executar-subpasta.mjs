@@ -27,6 +27,7 @@ try {
         "language-image-quality.spec.ts",
         "excel-selection.spec.ts",
         "markdown-reading.spec.ts",
+        "translation-loading.spec.ts",
         "pdf-viewport.spec.ts",
         "form-preview.spec.ts",
         "pdf-editor.spec.ts",

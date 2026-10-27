@@ -1,0 +1,123 @@
+{
+  "consultadoEm": "2026-10-26",
+  "fontes": [
+    {
+      "model": "Xenova/nllb-200-distilled-600M",
+      "revision": "261c31d1a5732c67cdd16d80e8d6088507c7ccea",
+      "license": "cc-by-nc-4.0",
+      "baseModel": "facebook/nllb-200-distilled-600M",
+      "source": "https://huggingface.co/Xenova/nllb-200-distilled-600M/blob/261c31d1a5732c67cdd16d80e8d6088507c7ccea/README.md",
+      "error": null
+    },
+    {
+      "model": "facebook/nllb-200-distilled-600M",
+      "revision": "f8d333a098d19b4fd9a8b18f94170487ad3f821d",
+      "license": "cc-by-nc-4.0",
+      "baseModel": null,
+      "source": "https://huggingface.co/facebook/nllb-200-distilled-600M/blob/f8d333a098d19b4fd9a8b18f94170487ad3f821d/README.md",
+      "error": null
+    },
+    {
+      "model": "Xenova/m2m100_418M",
+      "revision": "9c374f0b7aca709787cea97b047bfbbd1559d177",
+      "license": null,
+      "baseModel": "facebook/m2m100_418M",
+      "source": "https://huggingface.co/Xenova/m2m100_418M/blob/9c374f0b7aca709787cea97b047bfbbd1559d177/README.md",
+      "error": null
+    },
+    {
+      "model": "facebook/m2m100_418M",
+      "revision": "55c2e61bbf05dfb8d7abccdc3fae6fc8512fd636",
+      "license": "mit",
+      "baseModel": null,
+      "source": "https://huggingface.co/facebook/m2m100_418M/blob/55c2e61bbf05dfb8d7abccdc3fae6fc8512fd636/README.md",
+      "error": null
+    },
+    {
+      "model": "Xenova/opus-mt-en-ROMANCE",
+      "revision": "9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd",
+      "license": null,
+      "baseModel": "Helsinki-NLP/opus-mt-en-ROMANCE",
+      "source": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/blob/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/README.md",
+      "error": null
+    },
+    {
+      "model": "Xenova/opus-mt-ROMANCE-en",
+      "revision": "f60feaabe8bb435a5871e7702b25f53a01e770f8",
+      "license": null,
+      "baseModel": "Helsinki-NLP/opus-mt-ROMANCE-en",
+      "source": "https://huggingface.co/Xenova/opus-mt-ROMANCE-en/blob/f60feaabe8bb435a5871e7702b25f53a01e770f8/README.md",
+      "error": null
+    },
+    {
+      "model": "Helsinki-NLP/opus-mt-en-ROMANCE",
+      "revision": "f8f3a28e8b6272d0ccc0290b832f699e154ae431",
+      "license": "apache-2.0",
+      "baseModel": null,
+      "source": "https://huggingface.co/Helsinki-NLP/opus-mt-en-ROMANCE/blob/f8f3a28e8b6272d0ccc0290b832f699e154ae431/README.md",
+      "error": null
+    },
+    {
+      "model": "Helsinki-NLP/opus-mt-ROMANCE-en",
+      "revision": "e9ca9975e3972afd80732f08ce01d3a1339f47f8",
+      "license": "apache-2.0",
+      "baseModel": null,
+      "source": "https://huggingface.co/Helsinki-NLP/opus-mt-ROMANCE-en/blob/e9ca9975e3972afd80732f08ce01d3a1339f47f8/README.md",
+      "error": null
+    },
+    {
+      "model": "Xenova/opus-mt-es-en",
+      "revision": "eadfd7c658a9d8929ac3b8e996b68a68e2c7d480",
+      "license": null,
+      "baseModel": "Helsinki-NLP/opus-mt-es-en",
+      "source": "https://huggingface.co/Xenova/opus-mt-es-en/blob/eadfd7c658a9d8929ac3b8e996b68a68e2c7d480/README.md",
+      "error": null
+    },
+    {
+      "model": "Xenova/opus-mt-en-es",
+      "revision": "4b002a4c7edd54a7ced58877258b87f7efd3f892",
+      "license": null,
+      "baseModel": "Helsinki-NLP/opus-mt-en-es",
+      "source": "https://huggingface.co/Xenova/opus-mt-en-es/blob/4b002a4c7edd54a7ced58877258b87f7efd3f892/README.md",
+      "error": null
+    },
+    {
+      "model": "onnx-community/opus-mt-tc-big-en-pt",
+      "revision": null,
+      "license": null,
+      "baseModel": null,
+      "source": null,
+      "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+      "model": "Xenova/madlad400-3b-mt",
+      "revision": null,
+      "license": null,
+      "baseModel": null,
+      "source": null,
+      "error": "HTTP Error 401: Unauthorized"
+    }
+  ],
+  "fichasConsultadasHash": [
+    {
+      "file": "facebook--m2m100_418M-README.md",
+      "sha256": "1fd660f130aedc5ecf1796b47ab47d43d3c4b36541f5387b7adb3df75cb5dfdb"
+    },
+    {
+      "file": "facebook--nllb-200-distilled-600M-README.md",
+      "sha256": "0964c46d35be00825c73b3a9ca212043b4b4e4f38e18e88c22e4490d31f9f1a3"
+    },
+    {
+      "file": "Helsinki-NLP--opus-mt-en-ROMANCE-README.md",
+      "sha256": "329ee7a6989c814c82c82c0b4901a247f452674eb31ded4a4f2297b2e321f64a"
+    },
+    {
+      "file": "Xenova--m2m100_418M-README.md",
+      "sha256": "fc4c4aeac92d17f16d5e94e6a36779e5b9e7bec98f470d38ea7b4a3fb3d9de8e"
+    },
+    {
+      "file": "Xenova--nllb-200-distilled-600M-README.md",
+      "sha256": "8e987040f4d567c686ad41159052ae7c599ec404b644a553cdd11eb4e944d8c2"
+    }
+  ]
+}

@@ -28,7 +28,14 @@ export function segmentTextForTranslation(text: string, maxChunkLength: number =
         remaining = remaining.slice(leading.length);
         continue;
       }
-      let end = Math.min(maxChunkLength, remaining.length);
+      // Cada sentença completa tem sua própria inferência: evita que o modelo
+      // descarte títulos ou o final de um parágrafo ao condensar várias sentenças.
+      // Intl.Segmenter reconhece abreviações e pontuação sem regras por corpus.
+      const sentence = new Intl.Segmenter(undefined, { granularity: "sentence" })
+        .segment(remaining)
+        [Symbol.iterator]()
+        .next().value?.segment;
+      let end = Math.min(maxChunkLength, sentence?.length ?? remaining.length);
       if (end < remaining.length) {
         // Prefere palavra completa, mas também limita tokens sem espaços.
         const candidate = remaining.slice(0, end + 1);

@@ -1,0 +1,711 @@
+{
+  "profile": {
+    "id": "Xenova/m2m100_418M",
+    "revision": "9c374f0b7aca709787cea97b047bfbbd1559d177",
+    "family": "m2m100"
+  },
+  "passes": [
+    {
+      "warm": false,
+      "initializationMs": 33352.09999996424,
+      "files": {
+        "config.json": {
+          "loaded": 908,
+          "total": 908
+        },
+        "tokenizer_config.json": {
+          "loaded": 1813,
+          "total": 1813
+        },
+        "tokenizer.json": {
+          "loaded": 7988527,
+          "total": 7988527
+        },
+        "onnx/decoder_model_merged_quantized.onnx": {
+          "loaded": 344128178,
+          "total": 344128178
+        },
+        "generation_config.json": {
+          "loaded": 233,
+          "total": 233
+        },
+        "onnx/encoder_model_quantized.onnx": {
+          "loaded": 287856370,
+          "total": 287856370
+        }
+      },
+      "doneFiles": [
+        "config.json",
+        "tokenizer_config.json",
+        "tokenizer.json",
+        "generation_config.json",
+        "onnx/encoder_model_quantized.onnx",
+        "onnx/decoder_model_merged_quantized.onnx"
+      ],
+      "samples": [
+        {
+          "id": "negacao-nome-data",
+          "kind": "short",
+          "source": "pt",
+          "target": "en",
+          "input": "Maria Silva não autorizou o pagamento de 125 euros em 14/03/2026.",
+          "output": "Maria Silva did not authorize the payment of 125 euros on 14/03/2026.",
+          "ms": 6072,
+          "names": ["Maria Silva"],
+          "numbers": ["125", "14", "03", "2026"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "condicao-prazo",
+          "kind": "short",
+          "source": "pt",
+          "target": "en",
+          "input": "O fornecedor não poderá encerrar o contrato sem aviso prévio de 30 dias.",
+          "output": "The supplier cannot terminate the contract without a 30-day notice.",
+          "ms": 4426.100000023842,
+          "names": [],
+          "numbers": ["30"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "nome-quantidade",
+          "kind": "short",
+          "source": "pt",
+          "target": "en",
+          "input": "João Costa entregou os 12 documentos em 20 de maio de 2026.",
+          "output": "João Costa delivered the 12 documents on 20 May 2026.",
+          "ms": 4008.7999999523163,
+          "names": ["João Costa"],
+          "numbers": ["12", "20", "2026"],
+          "negation": false,
+          "chunks": 1
+        },
+        {
+          "id": "obrigacao-negativa",
+          "kind": "short",
+          "source": "pt",
+          "target": "en",
+          "input": "A empresa deve guardar os registros por 5 anos e não pode divulgar a senha.",
+          "output": "The company must keep the records for 5 years and cannot disclose the password.",
+          "ms": 5311,
+          "names": [],
+          "numbers": ["5"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "pt",
+          "target": "en",
+          "input": "Relatório de acompanhamento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve guardar os registros por 5 anos. A senha não pode ser compartilhada. A reunião ocorrerá em 20 de maio de 2026. O prazo para resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, e não apenas do primeiro registro.\n\nRelatório de acompanhamento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve guardar os registros por 5 anos. A senha não pode ser compartilhada. A reunião ocorrerá em 20 de maio de 2026. O prazo para resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, e não apenas do primeiro registro.",
+          "output": "Maria Silva confirmed that the 12 documents were received. the payment of 125 euros has not yet been authorized. the supplier must keep the records for 5 years. the password cannot be shared. the meeting will take place on 20 May 2026. The deadline for reply is 30 days. This conclusion depends on the review of all the documents, and not only on the first registration.\n\nMaria Silva confirmed that the 12 documents were received. the payment of 125 euros has not yet been authorized. the supplier must keep the records for 5 years. the password cannot be shared. the meeting will take place on 20 May 2026. The deadline for reply is 30 days. This conclusion depends on the review of all the documents, and not only on the first registration.",
+          "ms": 28002.899999976158,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 3
+        },
+        {
+          "id": "negacao-nome-data",
+          "kind": "short",
+          "source": "pt",
+          "target": "es",
+          "input": "Maria Silva não autorizou o pagamento de 125 euros em 14/03/2026.",
+          "output": "María Silva no autorizó el pago de 125 euros el 14/03/2026.",
+          "ms": 2818,
+          "names": ["Maria Silva"],
+          "numbers": ["125", "14", "03", "2026"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "condicao-prazo",
+          "kind": "short",
+          "source": "pt",
+          "target": "es",
+          "input": "O fornecedor não poderá encerrar o contrato sem aviso prévio de 30 dias.",
+          "output": "El proveedor no podrá terminar el contrato sin previo aviso de 30 días.",
+          "ms": 2932.7999999523163,
+          "names": [],
+          "numbers": ["30"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "nome-quantidade",
+          "kind": "short",
+          "source": "pt",
+          "target": "es",
+          "input": "João Costa entregou os 12 documentos em 20 de maio de 2026.",
+          "output": "Juan Costa entregó los 12 documentos el 20 de mayo de 2026.",
+          "ms": 2560.699999988079,
+          "names": ["João Costa"],
+          "numbers": ["12", "20", "2026"],
+          "negation": false,
+          "chunks": 1
+        },
+        {
+          "id": "obrigacao-negativa",
+          "kind": "short",
+          "source": "pt",
+          "target": "es",
+          "input": "A empresa deve guardar os registros por 5 anos e não pode divulgar a senha.",
+          "output": "La empresa debe guardar los registros durante 5 años y no puede revelar la contraseña.",
+          "ms": 3483.399999976158,
+          "names": [],
+          "numbers": ["5"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "pt",
+          "target": "es",
+          "input": "Relatório de acompanhamento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve guardar os registros por 5 anos. A senha não pode ser compartilhada. A reunião ocorrerá em 20 de maio de 2026. O prazo para resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, e não apenas do primeiro registro.\n\nRelatório de acompanhamento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve guardar os registros por 5 anos. A senha não pode ser compartilhada. A reunião ocorrerá em 20 de maio de 2026. O prazo para resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, e não apenas do primeiro registro.",
+          "output": "El informe de seguimiento. María Silva confirmó que los 12 documentos fueron recibidos. El pago de 125 euros aún no se ha autorizado. El proveedor debe guardar los registros por 5 años. La contraseña no puede ser compartida. La reunión tendrá lugar el 20 de mayo de 2026. El plazo para la respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, y no sólo del primer registro.\n\nEl informe de seguimiento. María Silva confirmó que los 12 documentos fueron recibidos. El pago de 125 euros aún no se ha autorizado. El proveedor debe guardar los registros por 5 años. La contraseña no puede ser compartida. La reunión tendrá lugar el 20 de mayo de 2026. El plazo para la respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, y no sólo del primer registro.",
+          "ms": 51359.5,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 3
+        },
+        {
+          "id": "negacao-nome-data",
+          "kind": "short",
+          "source": "en",
+          "target": "pt",
+          "input": "Maria Silva did not authorize the payment of 125 euros on 14/03/2026.",
+          "output": "Maria Silva não autorizou o pagamento de 125 euros em 14/03/2026.",
+          "ms": 5379.200000047684,
+          "names": ["Maria Silva"],
+          "numbers": ["125", "14", "03", "2026"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "condicao-prazo",
+          "kind": "short",
+          "source": "en",
+          "target": "pt",
+          "input": "The supplier may not terminate the contract without 30 days of prior notice.",
+          "output": "O fornecedor não pode terminar o contrato sem 30 dias de aviso prévio.",
+          "ms": 7178.199999988079,
+          "names": [],
+          "numbers": ["30"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "nome-quantidade",
+          "kind": "short",
+          "source": "en",
+          "target": "pt",
+          "input": "João Costa delivered the 12 documents on 20 May 2026.",
+          "output": "João Costa entregou os 12 documentos em 20 de maio de 2026.",
+          "ms": 5942.800000011921,
+          "names": ["João Costa"],
+          "numbers": ["12", "20", "2026"],
+          "negation": false,
+          "chunks": 1
+        },
+        {
+          "id": "obrigacao-negativa",
+          "kind": "short",
+          "source": "en",
+          "target": "pt",
+          "input": "The company must keep the records for 5 years and must not disclose the password.",
+          "output": "A empresa deve manter os registros por 5 anos e não deve divulgar a senha.",
+          "ms": 6866,
+          "names": [],
+          "numbers": ["5"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "en",
+          "target": "pt",
+          "input": "Monitoring report. Maria Silva confirmed that the 12 documents were received. The payment of 125 euros has not yet been authorized. The supplier must keep the records for 5 years. The password must not be shared. The meeting will take place on 20 May 2026. The response deadline is 30 days. This conclusion depends on reviewing all documents, not just the first record.\n\nMonitoring report. Maria Silva confirmed that the 12 documents were received. The payment of 125 euros has not yet been authorized. The supplier must keep the records for 5 years. The password must not be shared. The meeting will take place on 20 May 2026. The response deadline is 30 days. This conclusion depends on reviewing all documents, not just the first record.",
+          "output": "Relatório de monitoramento. Maria Silva confirmou que os 12 documentos foram recebidos. o pagamento de 125 euros ainda não foi autorizado. o fornecedor deve manter os registros por 5 anos. a senha não deve ser compartilhada. a reunião ocorrerá em 20 de maio de 2026. o prazo de resposta é 30 dias. Esta conclusão depende da revisão de todos os documentos, não apenas o primeiro registro.\n\nRelatório de monitoramento. Maria Silva confirmou que os 12 documentos foram recebidos. o pagamento de 125 euros ainda não foi autorizado. o fornecedor deve manter os registros por 5 anos. a senha não deve ser compartilhada. a reunião ocorrerá em 20 de maio de 2026. o prazo de resposta é 30 dias. Esta conclusão depende da revisão de todos os documentos, não apenas o primeiro registro.",
+          "ms": 57207.60000002384,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 3
+        },
+        {
+          "id": "negacao-nome-data",
+          "kind": "short",
+          "source": "en",
+          "target": "es",
+          "input": "Maria Silva did not authorize the payment of 125 euros on 14/03/2026.",
+          "output": "María Silva no autorizó el pago de 125 euros el 14/03/2026.",
+          "ms": 9887.399999976158,
+          "names": ["Maria Silva"],
+          "numbers": ["125", "14", "03", "2026"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "condicao-prazo",
+          "kind": "short",
+          "source": "en",
+          "target": "es",
+          "input": "The supplier may not terminate the contract without 30 days of prior notice.",
+          "output": "El proveedor no podrá terminar el contrato sin 30 días de previo aviso.",
+          "ms": 3884.5,
+          "names": [],
+          "numbers": ["30"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "nome-quantidade",
+          "kind": "short",
+          "source": "en",
+          "target": "es",
+          "input": "João Costa delivered the 12 documents on 20 May 2026.",
+          "output": "João Costa entregó los 12 documentos el 20 de mayo de 2026.",
+          "ms": 3455,
+          "names": ["João Costa"],
+          "numbers": ["12", "20", "2026"],
+          "negation": false,
+          "chunks": 1
+        },
+        {
+          "id": "obrigacao-negativa",
+          "kind": "short",
+          "source": "en",
+          "target": "es",
+          "input": "The company must keep the records for 5 years and must not disclose the password.",
+          "output": "La empresa debe mantener los registros durante 5 años y no debe revelar la contraseña.",
+          "ms": 4041.800000011921,
+          "names": [],
+          "numbers": ["5"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "en",
+          "target": "es",
+          "input": "Monitoring report. Maria Silva confirmed that the 12 documents were received. The payment of 125 euros has not yet been authorized. The supplier must keep the records for 5 years. The password must not be shared. The meeting will take place on 20 May 2026. The response deadline is 30 days. This conclusion depends on reviewing all documents, not just the first record.\n\nMonitoring report. Maria Silva confirmed that the 12 documents were received. The payment of 125 euros has not yet been authorized. The supplier must keep the records for 5 years. The password must not be shared. The meeting will take place on 20 May 2026. The response deadline is 30 days. This conclusion depends on reviewing all documents, not just the first record.",
+          "output": "El informe de seguimiento. María Silva confirmó que se recibieron los 12 documentos. El pago de 125 euros aún no ha sido autorizado. El proveedor debe mantener los registros durante 5 años. La contraseña no debe ser compartida. La reunión tendrá lugar el 20 de mayo de 2026.\n\nEl informe de seguimiento. María Silva confirmó que se recibieron los 12 documentos. El pago de 125 euros aún no ha sido autorizado. El proveedor debe mantener los registros durante 5 años. La contraseña no debe ser compartida. La reunión tendrá lugar el 20 de mayo de 2026.",
+          "ms": 30900.30000001192,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 3
+        },
+        {
+          "id": "negacao-nome-data",
+          "kind": "short",
+          "source": "es",
+          "target": "pt",
+          "input": "Maria Silva no autorizó el pago de 125 euros el 14/03/2026.",
+          "output": "Maria Silva não autorizou o pagamento de 125 euros em 14/03/2026.",
+          "ms": 3705.199999988079,
+          "names": ["Maria Silva"],
+          "numbers": ["125", "14", "03", "2026"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "condicao-prazo",
+          "kind": "short",
+          "source": "es",
+          "target": "pt",
+          "input": "El proveedor no podrá terminar el contrato sin un aviso previo de 30 días.",
+          "output": "O fornecedor não poderá terminar o contrato sem um aviso prévio de 30 dias.",
+          "ms": 5178.399999976158,
+          "names": [],
+          "numbers": ["30"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "nome-quantidade",
+          "kind": "short",
+          "source": "es",
+          "target": "pt",
+          "input": "João Costa entregó los 12 documentos el 20 de mayo de 2026.",
+          "output": "João Costa entregou os 12 documentos em 20 de maio de 2026.",
+          "ms": 3661.400000035763,
+          "names": ["João Costa"],
+          "numbers": ["12", "20", "2026"],
+          "negation": false,
+          "chunks": 1
+        },
+        {
+          "id": "obrigacao-negativa",
+          "kind": "short",
+          "source": "es",
+          "target": "pt",
+          "input": "La empresa debe conservar los registros durante 5 años y no puede divulgar la contraseña.",
+          "output": "A empresa deve manter os registros por 5 anos e não pode divulgar a senha.",
+          "ms": 4590,
+          "names": [],
+          "numbers": ["5"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "es",
+          "target": "pt",
+          "input": "Informe de seguimiento. Maria Silva confirmó que se recibieron los 12 documentos. El pago de 125 euros aún no fue autorizado. El proveedor debe conservar los registros durante 5 años. No se puede compartir la contraseña. La reunión tendrá lugar el 20 de mayo de 2026. El plazo de respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, y no solo del primer registro.\n\nInforme de seguimiento. Maria Silva confirmó que se recibieron los 12 documentos. El pago de 125 euros aún no fue autorizado. El proveedor debe conservar los registros durante 5 años. No se puede compartir la contraseña. La reunión tendrá lugar el 20 de mayo de 2026. El plazo de respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, y no solo del primer registro.",
+          "output": "Relatório de acompanhamento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve conservar os registros durante 5 anos. Não pode compartilhar a senha. A reunião terá lugar em 20 de maio de 2026. O prazo de resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, e não apenas do primeiro registro.\n\nRelatório de acompanhamento. Maria Silva confirmou que os 12 documentos foram recebidos. O pagamento de 125 euros ainda não foi autorizado. O fornecedor deve conservar os registros durante 5 anos. Não pode compartilhar a senha. A reunião terá lugar em 20 de maio de 2026. O prazo de resposta é de 30 dias. Esta conclusão depende da revisão de todos os documentos, e não apenas do primeiro registro.",
+          "ms": 41904.69999998808,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 3
+        },
+        {
+          "id": "negacao-nome-data",
+          "kind": "short",
+          "source": "es",
+          "target": "en",
+          "input": "Maria Silva no autorizó el pago de 125 euros el 14/03/2026.",
+          "output": "Maria Silva did not authorize the payment of 125 euros on 14/03/2026.",
+          "ms": 3403.5,
+          "names": ["Maria Silva"],
+          "numbers": ["125", "14", "03", "2026"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "condicao-prazo",
+          "kind": "short",
+          "source": "es",
+          "target": "en",
+          "input": "El proveedor no podrá terminar el contrato sin un aviso previo de 30 días.",
+          "output": "The provider will not be able to terminate the contract without a 30-day prior notice.",
+          "ms": 3564.199999988079,
+          "names": [],
+          "numbers": ["30"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "nome-quantidade",
+          "kind": "short",
+          "source": "es",
+          "target": "en",
+          "input": "João Costa entregó los 12 documentos el 20 de mayo de 2026.",
+          "output": "João Costa delivered the 12 documents on 20 May 2026.",
+          "ms": 2896.2000000476837,
+          "names": ["João Costa"],
+          "numbers": ["12", "20", "2026"],
+          "negation": false,
+          "chunks": 1
+        },
+        {
+          "id": "obrigacao-negativa",
+          "kind": "short",
+          "source": "es",
+          "target": "en",
+          "input": "La empresa debe conservar los registros durante 5 años y no puede divulgar la contraseña.",
+          "output": "The company must keep the records for 5 years and cannot disclose the password.",
+          "ms": 5355.199999988079,
+          "names": [],
+          "numbers": ["5"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "es",
+          "target": "en",
+          "input": "Informe de seguimiento. Maria Silva confirmó que se recibieron los 12 documentos. El pago de 125 euros aún no fue autorizado. El proveedor debe conservar los registros durante 5 años. No se puede compartir la contraseña. La reunión tendrá lugar el 20 de mayo de 2026. El plazo de respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, y no solo del primer registro.\n\nInforme de seguimiento. Maria Silva confirmó que se recibieron los 12 documentos. El pago de 125 euros aún no fue autorizado. El proveedor debe conservar los registros durante 5 años. No se puede compartir la contraseña. La reunión tendrá lugar el 20 de mayo de 2026. El plazo de respuesta es de 30 días. Esta conclusión depende de la revisión de todos los documentos, y no solo del primer registro.",
+          "output": "Maria Silva confirmed that the 12 documents were received. the payment of 125 euros was not yet authorized. the provider must keep the records for 5 years. the password cannot be shared. the meeting will take place on May 20, 2026. the response period is 30 days. This conclusion depends on the review of all the documents, and not only on the first registration.\n\nMaria Silva confirmed that the 12 documents were received. the payment of 125 euros was not yet authorized. the provider must keep the records for 5 years. the password cannot be shared. the meeting will take place on May 20, 2026. the response period is 30 days. This conclusion depends on the review of all the documents, and not only on the first registration.",
+          "ms": 42441.30000001192,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 3
+        }
+      ]
+    },
+    {
+      "warm": true,
+      "initializationMs": 38299.60000002384,
+      "files": {
+        "config.json": {
+          "loaded": 908,
+          "total": 908
+        },
+        "tokenizer.json": {
+          "loaded": 7988527,
+          "total": 7988527
+        },
+        "tokenizer_config.json": {
+          "loaded": 1813,
+          "total": 1813
+        },
+        "generation_config.json": {
+          "loaded": 233,
+          "total": 233
+        },
+        "onnx/encoder_model_quantized.onnx": {
+          "loaded": 287856370,
+          "total": 287856370
+        },
+        "onnx/decoder_model_merged_quantized.onnx": {
+          "loaded": 344128178,
+          "total": 344128178
+        }
+      },
+      "doneFiles": [
+        "config.json",
+        "tokenizer_config.json",
+        "tokenizer.json",
+        "generation_config.json",
+        "onnx/encoder_model_quantized.onnx",
+        "onnx/decoder_model_merged_quantized.onnx"
+      ],
+      "samples": [
+        {
+          "id": "negacao-nome-data",
+          "kind": "short",
+          "source": "pt",
+          "target": "en",
+          "input": "Maria Silva não autorizou o pagamento de 125 euros em 14/03/2026.",
+          "output": "Maria Silva did not authorize the payment of 125 euros on 14/03/2026.",
+          "ms": 6485,
+          "names": ["Maria Silva"],
+          "numbers": ["125", "14", "03", "2026"],
+          "negation": true,
+          "chunks": 1
+        }
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/m2m100_418M/9c374f0b7aca709787cea97b047bfbbd1559d177/config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/m2m100_418M/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/onnx/encoder_model_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/onnx/decoder_model_merged_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/generation_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d7ee6795cf13a381c7c124/b5b85d8da9e77f21cf9504ab55780bc9e876fee97b178c661a84a242f34d35a8",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d7ee6795cf13a381c7c124/6aaf524da8ccc2829326a7653d0398ebda5209ae33276d4bafe450c80451817f",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/m2m100_418M/9c374f0b7aca709787cea97b047bfbbd1559d177/generation_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/m2m100_418M/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/m2m100_418M/9c374f0b7aca709787cea97b047bfbbd1559d177/config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/m2m100_418M/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/m2m100_418M/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/onnx/encoder_model_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/onnx/decoder_model_merged_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/generation_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/m2m100_418M/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/m2m100_418M/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d7ee6795cf13a381c7c124/6aaf524da8ccc2829326a7653d0398ebda5209ae33276d4bafe450c80451817f",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/m2m100_418M/9c374f0b7aca709787cea97b047bfbbd1559d177/generation_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d7ee6795cf13a381c7c124/b5b85d8da9e77f21cf9504ab55780bc9e876fee97b178c661a84a242f34d35a8",
+      "method": "GET"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.0-dev.20260914-8d85527a0/dist/ort-wasm-simd-threaded.asyncify.wasm",
+      "method": "GET"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.0-dev.20260914-8d85527a0/dist/ort-wasm-simd-threaded.asyncify.mjs",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/m2m100_418M/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/onnx/encoder_model_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/onnx/decoder_model_merged_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/generation_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d7ee6795cf13a381c7c124/6aaf524da8ccc2829326a7653d0398ebda5209ae33276d4bafe450c80451817f",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/m2m100_418M/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/m2m100_418M/9c374f0b7aca709787cea97b047bfbbd1559d177/generation_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d7ee6795cf13a381c7c124/b5b85d8da9e77f21cf9504ab55780bc9e876fee97b178c661a84a242f34d35a8",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/onnx/encoder_model_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/onnx/decoder_model_merged_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d7ee6795cf13a381c7c124/b5b85d8da9e77f21cf9504ab55780bc9e876fee97b178c661a84a242f34d35a8",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d7ee6795cf13a381c7c124/6aaf524da8ccc2829326a7653d0398ebda5209ae33276d4bafe450c80451817f",
+      "method": "GET"
+    }
+  ],
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+  "errors": [],
+  "cacheEntries": [
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/main/config.json",
+      "bytes": 908,
+      "sha256": "1dbdf77ddc7809acd4c54ccf0eab46f840b40174afb1b6f6de8787244e832938"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/config.json",
+      "bytes": 908,
+      "sha256": "1dbdf77ddc7809acd4c54ccf0eab46f840b40174afb1b6f6de8787244e832938"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer_config.json",
+      "bytes": 1813,
+      "sha256": "bacfd4b9da25a61e01f17abe660465f616c9a1a3f5e23ab9ad3326c3788f2d9f"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/tokenizer.json",
+      "bytes": 7988527,
+      "sha256": "03d9e111731c2d71f39a2c2a88499743e4c251385d07f0384b4349a23ba54363"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/m2m100_418M/resolve/9c374f0b7aca709787cea97b047bfbbd1559d177/generation_config.json",
+      "bytes": 233,
+      "sha256": "722210dd0bee7bef4e8e7f9a8574d8c56a2dfff723d73f390ce67892740b9009"
+    }
+  ],
+  "completed": true,
+  "resources": {
+    "profile": "m2m100",
+    "exitCode": 0,
+    "wallMs": 499341.000800021,
+    "sampledTreePeakRssBytes": 3980730368,
+    "sampleIntervalMs": 50,
+    "scope": "Soma RSS de Node/Vite, Chromium, renderer e worker. Pode contar páginas compartilhadas mais de uma vez; não é heap exclusivo do modelo."
+  },
+  "methodology": "Corpus autoral; inferência real Chromium/WASM q8. RSS soma árvore de processos; não é heap exclusivo. Primeira comparação teve testes unitários breves concorrentes; tempos exploratórios.",
+  "context": "incognito",
+  "segmentation": "baseline400"
+}

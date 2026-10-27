@@ -1,7 +1,7 @@
 import {
   type BrowserTranslationOptions,
   type BrowserTranslationResult,
-  NLLB_MODEL_ID,
+  TRANSLATION_MODEL,
 } from "./translation-protocol";
 import { isPreservedChunk, segmentTextForTranslation } from "./translation-segmentation";
 
@@ -15,7 +15,7 @@ interface ModelProgress {
   loaded?: number;
   total?: number;
 }
-const languageCodes = { en: "eng_Latn", pt: "por_Latn", es: "spa_Latn" };
+const languageCodes = { en: "en", pt: "pt", es: "es" };
 let pipelinePromise: Promise<PipelineFunction> | null = null;
 export function resetRuntimeCache(): void {
   pipelinePromise = null;
@@ -142,7 +142,7 @@ export function createDownloadProgress(
     });
     const loadedBytes = [...files.values()].reduce((sum, file) => sum + file.loaded, 0);
     const totalBytes = [...files.values()].reduce((sum, file) => sum + file.total, 0);
-    // O NLLB q8 carrega encoder e decoder: arquivos JSON não representam os pesos.
+    // O perfil M2M100 q8 carrega encoder e decoder: arquivos JSON não representam os pesos.
     // Enquanto um peso ainda não informou seu tamanho, reserva-se espaço equivalente
     // ao maior peso conhecido. Os bytes exibidos continuam sendo os totais reais observados.
     const weights = [...files]
@@ -165,46 +165,19 @@ async function getPipeline(
   if (!pipelinePromise) {
     pipelinePromise = (async () => {
       onProgress?.({ status: "initializing", progress: 0 });
-      const { pipeline, env } = await import("@huggingface/transformers");
+      const { env } = await import("@huggingface/transformers");
+      const { createTranslationPipeline } = await import("./translation-model");
       env.allowLocalModels = false;
       env.useBrowserCache = true;
       env.fetch = createInactivityFetch(globalThis.fetch.bind(globalThis));
-      const gpu = (
-        globalThis.navigator as
-          | (Navigator & { gpu?: { requestAdapter: () => Promise<unknown> } })
-          | undefined
-      )?.gpu;
-      // A detecção antecede qualquer peso; falhas de rede nunca disparam novo download WASM.
-      let useGpu = false;
-      if (gpu) {
-        try {
-          useGpu = Boolean(await gpu.requestAdapter());
-        } catch {
-          /* CPU disponível. */
-        }
-      }
-      const progress = createDownloadProgress(onProgress);
-      const build = (device: "webgpu" | "wasm") =>
-        pipeline("translation", NLLB_MODEL_ID, {
-          dtype: "q8",
-          device,
-          progress_callback: progress,
-        });
-      let pipe: unknown;
-      try {
-        pipe = await build(useGpu ? "webgpu" : "wasm");
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        const capabilityFailure =
-          /webgpu|shader|GPU adapter|GPU device|unsupported.+(?:operator|kernel)/i.test(message);
-        if (
-          !useGpu ||
-          translationErrorCode(error) !== "TRADUCAO_INICIALIZACAO_FALHOU" ||
-          !capabilityFailure
-        )
-          throw error;
-        pipe = await build("wasm");
-      }
+      // WASM é o dispositivo medido neste perfil. Não selecionar WebGPU por
+      // mera presença de adaptador: compilação e qualidade precisam de ensaio próprio.
+      const pipe = await createTranslationPipeline(TRANSLATION_MODEL.id, {
+        revision: TRANSLATION_MODEL.revision,
+        dtype: "q8",
+        device: "wasm",
+        progress_callback: createDownloadProgress(onProgress),
+      });
       onProgress?.({ status: "initializing", progress: 75 });
       return pipe as unknown as PipelineFunction;
     })().catch((error: unknown) => {
@@ -222,11 +195,14 @@ export async function performRuntimeTranslation(
   if (signal?.aborted) throw new Error("OPERACAO_CANCELADA");
   if (!languageCodes[sourceLang] || !languageCodes[targetLang])
     throw new Error("PAR_DE_IDIOMAS_NAO_SUPORTADO");
-  const result = (translatedText: string): BrowserTranslationResult => ({
+  const result = (
+    translatedText: string,
+    engine: BrowserTranslationResult["engine"] = "identity",
+  ): BrowserTranslationResult => ({
     translatedText,
     sourceLang,
     targetLang,
-    engine: "transformers.js-nllb-200",
+    engine,
   });
   if (sourceLang === targetLang || !text.trim()) return result(text);
   const chunks = segmentTextForTranslation(text);
@@ -247,6 +223,7 @@ export async function performRuntimeTranslation(
       tgt_lang: languageCodes[targetLang],
       max_new_tokens: 512,
     });
+    if (signal?.aborted) throw new Error("OPERACAO_CANCELADA");
     const value = translated[0]?.translation_text;
     if (typeof value !== "string" || !value.trim()) throw new Error("TRADUCAO_SEM_RESULTADO");
     output.push(value);
@@ -258,6 +235,7 @@ export async function performRuntimeTranslation(
       totalChunks,
     });
   }
+  if (signal?.aborted) throw new Error("OPERACAO_CANCELADA");
   onProgress?.({ status: "ready", progress: 100 });
-  return result(output.join(""));
+  return result(output.join(""), "transformers.js-m2m100");
 }

@@ -1,10 +1,11 @@
-import { ArrowRightLeft, Check, Copy, Download, Languages, Sparkles } from "lucide-react";
+import { ArrowRightLeft, Check, Copy, Download, Languages } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import type { TranslationLanguage, TranslationProgressInfo } from "@/platform/browser-translator";
 
 type TranslateDocumentPanelProps = {
+  browserModel?: boolean;
   sourceLang: TranslationLanguage;
   targetLang: TranslationLanguage;
   onSourceLangChange: (lang: TranslationLanguage) => void;
@@ -25,6 +26,7 @@ type TranslateDocumentPanelProps = {
 };
 
 export function TranslateDocumentPanel({
+  browserModel = true,
   sourceLang,
   targetLang,
   onSourceLangChange,
@@ -169,22 +171,13 @@ export function TranslateDocumentPanel({
             </select>
           </div>
         </div>
-
-        {/* Badge informativo de privacidade e offline */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.4rem",
-            fontSize: "0.75rem",
-            color: "#0891b2",
-            fontWeight: 500,
-          }}
-        >
-          <Sparkles size={14} />
-          <span>{translate("workspace.translate.offlineBadge")}</span>
-        </div>
       </div>
+
+      {browserModel && (
+        <p className="text-sm text-muted-foreground">
+          {translate("workspace.translate.downloadRequired")}
+        </p>
+      )}
 
       {/* Caixa de Progresso de Download / Tradução em Tempo Real */}
       {isRunning && (

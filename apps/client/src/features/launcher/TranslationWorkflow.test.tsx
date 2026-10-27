@@ -45,7 +45,7 @@ const result: BrowserTranslationResult = {
   translatedText: "Olá",
   sourceLang: "en",
   targetLang: "pt",
-  engine: "transformers.js-nllb-200",
+  engine: "transformers.js-m2m100",
 };
 
 describe("cancelamento da tradução na interface", () => {

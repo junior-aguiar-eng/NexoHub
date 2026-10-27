@@ -342,17 +342,56 @@ usados além dos arquivos já propostos, sem modificar módulos de Excel ou scan
 e testes, `translation-segmentation.ts`, `features/launcher/TranslateDocumentPanel.tsx` e
 `e2e/translation-loading.spec.ts`; ADR-011 se houver alteração da seleção de modelos.
 
-- [ ] Confirmar em fonte primária a licença dos pesos `Xenova/nllb-200-distilled-600M` e do
-  modelo original. A licença reportada do NLLB inclui restrição não comercial; a consulta direta
-  da ficha foi bloqueada na pesquisa. Até confirmação e resolução, não declarar o tradutor
+**Arquivos de apoio reconciliados:** `platform/translation-model.ts` e testes (tokenizer sem
+consulta a `main`), fixtures autorais/baseline em `platform/__fixtures__/tr-c1/`, controladores
+`scripts/medir-tr-c1.*`, `docs/TR-C1-VALIDACAO.md` e `docs/evidencias/tr-c1/`. Sem dependência nova.
+`DedicatedToolView.tsx`, catálogo PT-BR e runner `/hub/` recebem somente o aviso de download
+pertinente ao caminho browser e cobertura correspondente. O executor nativo mantém seus perfis.
+
+- [x] Confirmar em fonte primária a licença dos pesos `Xenova/nllb-200-distilled-600M` e do
+  modelo original. A licença reportada do NLLB inclui restrição não comercial; a consulta inicial
+  da ficha havia sido bloqueada; foi resolvida na execução local registrada abaixo. Até confirmação e resolução, não declarar o tradutor
   homologado para exploração comercial. A licença do Transformers.js não libera os pesos.
-- [ ] Comparar modelos compatíveis e licenciados para o uso pretendido em pares pt/en/es,
+- [x] Comparar modelos compatíveis e licenciados para o uso pretendido em pares pt/en/es,
   com textos longos, números, nomes e negações. Não escolher apenas por tamanho nem transpor
   automaticamente os modelos nativos do ADR-011 para o navegador.
-- [ ] Preservar worker, cache, progresso real, timeout por inatividade e cancelamento; medir
+- [x] Preservar worker, cache, progresso real, timeout por inatividade e cancelamento; medir
   primeiro download/inicialização/inferência em dispositivo modesto antes de trocar o perfil.
-- [ ] Documentar modelo, revisão/hash, licença, limites e qualidade observada. Publicar somente
+- [x] Documentar modelo, revisão/hash, licença, limites e qualidade observada. Publicar somente
   após resolver o gate de licença e validar tradução real; mocks de download não medem qualidade.
+
+### Execução autorizada — TR-C1 (26/10/2026)
+
+Base `3854b68`, worktree `fix/auditoria-website` inicialmente limpo. DOC-C2 fora do escopo;
+sem commit, push ou deploy. Licenças antes de qualquer seleção de perfil.
+
+1. Arquivar fichas/revisões/fontes primárias do NLLB original e ONNX e dos candidatos.
+   NLLB original/conversão confirmados CC-BY-NC-4.0: não selecionar para uso comercial.
+2. Comparar M2M100 (base MIT) e OPUS-MT (bases Apache-2.0) em corpus autoral pt/en/es,
+   com inferência ONNX real local, nomes/números/negações e texto longo; não usar mocks como
+   prova de qualidade. Conversões sem licença própria exigem origem e atribuição explícitas.
+3. Somente após evidência, selecionar perfil browser compatível, fixar revisão e hashes,
+   preservar worker/cache/progresso/timeout/cancelamento. Conforme correção de apresentação
+   solicitada pelo usuário, a mesa informa somente o download necessário; licença/custo/limites
+   ficam na documentação técnica.
+   Atualizar ADR-011 se a seleção mudar. Sem transpor modelos nativos para o browser por suposição.
+4. Testes RED→GREEN proporcionais, revisão única, gates web raiz e `/hub/`, documentação de
+   qualidade e limites. Downloads/modelos apenas no diretório ignorado do ensaio/cache local.
+
+Resultado local: 783 unitários aprovados; 297 E2E distintos na raiz (cinco ignorados existentes,
+com repetição focada após corrigir preparo dos testes TR); 190 E2E oficiais em `/hub/`.
+Builds e três E2E TR em ambas as bases repetidos após o catálogo final. Formatter, lint,
+typecheck e licenças aprovados. Comparação real, hashes e limites em `docs/TR-C1-VALIDACAO.md`.
+Medições na máquina disponível: Ryzen 5 3550H/32 GB; baixa RAM, WebGPU, Tauri instalado e
+fidelidade fora do corpus não homologados. Nenhuma publicação ou aprovação comercial genérica.
+DOC-C2 continua fora do escopo; HEAD permanece `3854b68`, índice sem alterações staged.
+
+Premissa: confirmar licença não homologa qualidade semântica. Não corrigir valores ou negações
+por gabarito; registrar falhas e revisão necessária. Modelos NC não serão baixados para este
+ensaio de seleção de perfil do produto; a comparação executável usa candidatos permissivos.
+
+Fechamento: commit de TR-C1, incluindo a simplificação do aviso, autorizado posteriormente pelo
+usuário no mesmo worktree. Sem push/deploy e sem início de DOC-C2.
 
 **Entrega de cada complemento:** teste de regressão ou corpus antes, código mínimo, verificação
 da saída, gates do roadmap e evidências aqui. Não reclassificar recursos novos como correções já

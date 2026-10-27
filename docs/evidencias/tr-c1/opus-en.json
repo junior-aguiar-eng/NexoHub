@@ -1,0 +1,445 @@
+{
+  "profile": {
+    "id": "Xenova/opus-mt-en-ROMANCE",
+    "revision": "9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd",
+    "family": "opus-en"
+  },
+  "passes": [
+    {
+      "warm": false,
+      "initializationMs": 15012.5,
+      "files": {
+        "tokenizer_config.json": {
+          "loaded": 503,
+          "total": 503
+        },
+        "config.json": {
+          "loaded": 1508,
+          "total": 1508
+        },
+        "tokenizer.json": {
+          "loaded": 6117691,
+          "total": 6117691
+        },
+        "generation_config.json": {
+          "loaded": 293,
+          "total": 293
+        },
+        "onnx/decoder_model_merged_quantized.onnx": {
+          "loaded": 60212804,
+          "total": 60212804
+        },
+        "onnx/encoder_model_quantized.onnx": {
+          "loaded": 52899742,
+          "total": 52899742
+        }
+      },
+      "doneFiles": [
+        "tokenizer_config.json",
+        "config.json",
+        "tokenizer.json",
+        "generation_config.json",
+        "onnx/encoder_model_quantized.onnx",
+        "onnx/decoder_model_merged_quantized.onnx"
+      ],
+      "samples": [
+        {
+          "id": "negacao-nome-data",
+          "kind": "short",
+          "source": "en",
+          "target": "pt",
+          "input": "Maria Silva did not authorize the payment of 125 euros on 14/03/2026.",
+          "output": ">>pt<< Maria Silva n'autorizó el pagamento de 125 euros el 14/03/2026.",
+          "ms": 2107.5,
+          "names": ["Maria Silva"],
+          "numbers": ["125", "14", "03", "2026"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "condicao-prazo",
+          "kind": "short",
+          "source": "en",
+          "target": "pt",
+          "input": "The supplier may not terminate the contract without 30 days of prior notice.",
+          "output": ">>pt<< Le proveedor no puede rescindir el contrato sin 30 días de aviso previo.",
+          "ms": 1574,
+          "names": [],
+          "numbers": ["30"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "nome-quantidade",
+          "kind": "short",
+          "source": "en",
+          "target": "pt",
+          "input": "João Costa delivered the 12 documents on 20 May 2026.",
+          "output": "João Costa entregó los 12 documentos el 20 de mai de 2026.",
+          "ms": 1121.7999999523163,
+          "names": ["João Costa"],
+          "numbers": ["12", "20", "2026"],
+          "negation": false,
+          "chunks": 1
+        },
+        {
+          "id": "obrigacao-negativa",
+          "kind": "short",
+          "source": "en",
+          "target": "pt",
+          "input": "The company must keep the records for 5 years and must not disclose the password.",
+          "output": ">>pt<< La compagnie doit tenir el registro durante 5 años y no debe divulgar el mot de passe.",
+          "ms": 1269.7000000476837,
+          "names": [],
+          "numbers": ["5"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "en",
+          "target": "pt",
+          "input": "Monitoring report. Maria Silva confirmed that the 12 documents were received. The payment of 125 euros has not yet been authorized. The supplier must keep the records for 5 years. The password must not be shared. The meeting will take place on 20 May 2026. The response deadline is 30 days. This conclusion depends on reviewing all documents, not just the first record.\n\nMonitoring report. Maria Silva confirmed that the 12 documents were received. The payment of 125 euros has not yet been authorized. The supplier must keep the records for 5 years. The password must not be shared. The meeting will take place on 20 May 2026. The response deadline is 30 days. This conclusion depends on reviewing all documents, not just the first record.",
+          "output": "Maria Silva confirmou que les 12 documents ont été reçus. Le paiement de 125 euros n'a pas encore été autorisé. Le fournisseur doit tenir les registres durante 5 años. Le mot de passe ne doit pas être partagé. La réunion se tiendra el 20 mai 2026. La date limite de respuesta es 30 días. Cette conclusion depende de la revisión de todos los documents, no sólo el primer registro.\n\nMaria Silva confirmou que les 12 documents ont été reçus. Le paiement de 125 euros n'a pas encore été autorisé. Le fournisseur doit tenir les registres durante 5 años. Le mot de passe ne doit pas être partagé. La réunion se tiendra el 20 mai 2026. La date limite de respuesta es 30 días. Cette conclusion depende de la revisión de todos los documents, no sólo el primer registro.",
+          "ms": 10261.900000035763,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 3
+        },
+        {
+          "id": "negacao-nome-data",
+          "kind": "short",
+          "source": "en",
+          "target": "es",
+          "input": "Maria Silva did not authorize the payment of 125 euros on 14/03/2026.",
+          "output": ">>es<< Maria Silva n'autorizó el pagamento de 125 euros el 14/03/2026.",
+          "ms": 1448.5,
+          "names": ["Maria Silva"],
+          "numbers": ["125", "14", "03", "2026"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "condicao-prazo",
+          "kind": "short",
+          "source": "en",
+          "target": "es",
+          "input": "The supplier may not terminate the contract without 30 days of prior notice.",
+          "output": ">>es<< El proveedor no puede rescindir el contrato sin 30 días de aviso previo.",
+          "ms": 1859.5999999642372,
+          "names": [],
+          "numbers": ["30"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "nome-quantidade",
+          "kind": "short",
+          "source": "en",
+          "target": "es",
+          "input": "João Costa delivered the 12 documents on 20 May 2026.",
+          "output": "João Costa entregou los 12 documentos el 20 mai 2026.",
+          "ms": 936.3000000119209,
+          "names": ["João Costa"],
+          "numbers": ["12", "20", "2026"],
+          "negation": false,
+          "chunks": 1
+        },
+        {
+          "id": "obrigacao-negativa",
+          "kind": "short",
+          "source": "en",
+          "target": "es",
+          "input": "The company must keep the records for 5 years and must not disclose the password.",
+          "output": ">>es<< La compagnie doit tenir el registro durante 5 años y no debe divulgar el mot de passe.",
+          "ms": 1433.1000000238419,
+          "names": [],
+          "numbers": ["5"],
+          "negation": true,
+          "chunks": 1
+        },
+        {
+          "id": "longo",
+          "kind": "long",
+          "source": "en",
+          "target": "es",
+          "input": "Monitoring report. Maria Silva confirmed that the 12 documents were received. The payment of 125 euros has not yet been authorized. The supplier must keep the records for 5 years. The password must not be shared. The meeting will take place on 20 May 2026. The response deadline is 30 days. This conclusion depends on reviewing all documents, not just the first record.\n\nMonitoring report. Maria Silva confirmed that the 12 documents were received. The payment of 125 euros has not yet been authorized. The supplier must keep the records for 5 years. The password must not be shared. The meeting will take place on 20 May 2026. The response deadline is 30 days. This conclusion depends on reviewing all documents, not just the first record.",
+          "output": "Maria Silva confirmou que les 12 documents ont été reçus. Le paiement de 125 euros n'a pas encore été autorisé. Le fournisseur doit tenir les registres durante 5 años. No se deve compartir el mot de passe. La réunion se tiendra el 20 mai 2026. La fecha limite de respuesta es 30 días. Esta conclusión depende de la revisión de todos los documentos, no sólo el primer registro.\n\nMaria Silva confirmou que les 12 documents ont été reçus. Le paiement de 125 euros n'a pas encore été autorisé. Le fournisseur doit tenir les registres durante 5 años. No se deve compartir el mot de passe. La réunion se tiendra el 20 mai 2026. La fecha limite de respuesta es 30 días. Esta conclusión depende de la revisión de todos los documentos, no sólo el primer registro.",
+          "ms": 11187.699999988079,
+          "names": ["Maria Silva"],
+          "numbers": ["12", "125", "5", "20", "2026", "30"],
+          "negation": true,
+          "chunks": 3
+        }
+      ]
+    },
+    {
+      "warm": true,
+      "initializationMs": 6683.599999964237,
+      "files": {
+        "config.json": {
+          "loaded": 1508,
+          "total": 1508
+        },
+        "tokenizer.json": {
+          "loaded": 6117691,
+          "total": 6117691
+        },
+        "tokenizer_config.json": {
+          "loaded": 503,
+          "total": 503
+        },
+        "onnx/encoder_model_quantized.onnx": {
+          "loaded": 52899742,
+          "total": 52899742
+        },
+        "onnx/decoder_model_merged_quantized.onnx": {
+          "loaded": 60212804,
+          "total": 60212804
+        },
+        "generation_config.json": {
+          "loaded": 293,
+          "total": 293
+        }
+      },
+      "doneFiles": [
+        "config.json",
+        "tokenizer_config.json",
+        "tokenizer.json",
+        "onnx/decoder_model_merged_quantized.onnx",
+        "generation_config.json",
+        "onnx/encoder_model_quantized.onnx"
+      ],
+      "samples": [
+        {
+          "id": "negacao-nome-data",
+          "kind": "short",
+          "source": "en",
+          "target": "pt",
+          "input": "Maria Silva did not authorize the payment of 125 euros on 14/03/2026.",
+          "output": ">>pt<< Maria Silva n'autorizó el pagamento de 125 euros el 14/03/2026.",
+          "ms": 3129.899999976158,
+          "names": ["Maria Silva"],
+          "numbers": ["125", "14", "03", "2026"],
+          "negation": true,
+          "chunks": 1
+        }
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/main/config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/opus-mt-en-ROMANCE/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/main/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/opus-mt-en-ROMANCE/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/main/onnx/encoder_model_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/main/onnx/decoder_model_merged_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/main/generation_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/main/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d25466693f8cafb180ff5d/a364f459abc8d35fe841c100091a085bf40059695f285572f99c9877d34cdf43",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d25466693f8cafb180ff5d/d9ab6835fef3bb5b1d394d2be94e55372bc9e945be83e930821f416830641939",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/opus-mt-en-ROMANCE/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/generation_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/opus-mt-en-ROMANCE/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/opus-mt-en-ROMANCE/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/opus-mt-en-ROMANCE/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/opus-mt-en-ROMANCE/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/opus-mt-en-ROMANCE/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/opus-mt-en-ROMANCE/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/onnx/encoder_model_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/onnx/decoder_model_merged_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/generation_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d25466693f8cafb180ff5d/d9ab6835fef3bb5b1d394d2be94e55372bc9e945be83e930821f416830641939",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d25466693f8cafb180ff5d/a364f459abc8d35fe841c100091a085bf40059695f285572f99c9877d34cdf43",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/opus-mt-en-ROMANCE/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/generation_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.0-dev.20260914-8d85527a0/dist/ort-wasm-simd-threaded.asyncify.wasm",
+      "method": "GET"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.0-dev.20260914-8d85527a0/dist/ort-wasm-simd-threaded.asyncify.mjs",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/main/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/opus-mt-en-ROMANCE/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/tokenizer_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/main/onnx/encoder_model_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/main/onnx/decoder_model_merged_quantized.onnx",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/main/generation_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/main/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d25466693f8cafb180ff5d/a364f459abc8d35fe841c100091a085bf40059695f285572f99c9877d34cdf43",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/opus-mt-en-ROMANCE/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/generation_config.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://huggingface.co/api/resolve-cache/models/Xenova/opus-mt-en-ROMANCE/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/tokenizer.json",
+      "method": "GET"
+    },
+    {
+      "url": "https://us.aws.cdn.hf.co/xet-bridge-us/64d25466693f8cafb180ff5d/d9ab6835fef3bb5b1d394d2be94e55372bc9e945be83e930821f416830641939",
+      "method": "GET"
+    }
+  ],
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+  "errors": [],
+  "context": "persistent",
+  "cacheEntries": [
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/main/config.json",
+      "bytes": 1508,
+      "sha256": "dc4f6f9ffbbf1196ff9e8329e5666fe190aef1b1c6806649d86b962b9bde292c"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/tokenizer_config.json",
+      "bytes": 503,
+      "sha256": "666d091bdf094d476aac60b645efd7d18cac468510f5c71b327b7ae937126e05"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/config.json",
+      "bytes": 1508,
+      "sha256": "dc4f6f9ffbbf1196ff9e8329e5666fe190aef1b1c6806649d86b962b9bde292c"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/tokenizer.json",
+      "bytes": 6117691,
+      "sha256": "31cabbd7e3857f21bcde266b0e84585ef3282133acce42d3765e8f31cb5f4040"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/generation_config.json",
+      "bytes": 293,
+      "sha256": "b743baabb7da4c1a2f19fe558bd6b4c0c7c3b0762fcb5ca7a48fe5a2c2219803"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/onnx/encoder_model_quantized.onnx",
+      "bytes": 52899742,
+      "sha256": "b4ddfd9338ba3d7c6b9c2d1410ed94fb7e06741226918cef6148031101bbd019"
+    },
+    {
+      "url": "https://huggingface.co/Xenova/opus-mt-en-ROMANCE/resolve/9d2ba69ac80c8e8453c3d9a1e2323a0e7b8ca3cd/onnx/decoder_model_merged_quantized.onnx",
+      "bytes": 60212804,
+      "sha256": "b5f6d442da7fa69f9d500df90373d2fdca4f799c43696b41888353b5c3c8eb13"
+    }
+  ],
+  "completed": true,
+  "resources": {
+    "profile": "opus-en",
+    "exitCode": 0,
+    "wallMs": 77276.51239995612,
+    "sampledTreePeakRssBytes": 1865781248,
+    "sampleIntervalMs": 50,
+    "scope": "Soma RSS de Node/Vite, Chromium, renderer e worker. Pode contar páginas compartilhadas mais de uma vez; não é heap exclusivo do modelo."
+  },
+  "methodology": "Corpus autoral; inferência real Chromium/WASM q8. RSS soma árvore de processos; não é heap exclusivo. Primeira comparação teve testes unitários breves concorrentes; tempos exploratórios.",
+  "segmentation": "baseline400"
+}

@@ -1,0 +1,57 @@
+perfil,caso,par,tempo_ms,nomes_ausentes_literais,numeros_ausentes,negacao,conteudo,observacao
+m2m100,negacao-nome-data,pt-en,6072,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,condicao-prazo,pt-en,4426.1,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,nome-quantidade,pt-en,4008.8,,,ausente na fonte,preservado no corpus,
+m2m100,obrigacao-negativa,pt-en,5311,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,longo,pt-en,28002.9,,,preservada em revisão do corpus,omissão de título inicial,
+m2m100,negacao-nome-data,pt-es,2818,Maria Silva,,preservada em revisão do corpus,preservado no corpus,Nome próprio alterado pelo modelo; sem reparo por gabarito.
+m2m100,condicao-prazo,pt-es,2932.8,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,nome-quantidade,pt-es,2560.7,João Costa,,ausente na fonte,preservado no corpus,Nome próprio alterado pelo modelo; sem reparo por gabarito.
+m2m100,obrigacao-negativa,pt-es,3483.4,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,longo,pt-es,51359.5,Maria Silva,,preservada em revisão do corpus,preservado no corpus,Nome próprio alterado pelo modelo; sem reparo por gabarito.
+m2m100,negacao-nome-data,en-pt,5379.2,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,condicao-prazo,en-pt,7178.2,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,nome-quantidade,en-pt,5942.8,,,ausente na fonte,preservado no corpus,
+m2m100,obrigacao-negativa,en-pt,6866,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,longo,en-pt,57207.6,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,negacao-nome-data,en-es,9887.4,Maria Silva,,preservada em revisão do corpus,preservado no corpus,Nome próprio alterado pelo modelo; sem reparo por gabarito.
+m2m100,condicao-prazo,en-es,3884.5,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,nome-quantidade,en-es,3455,,,ausente na fonte,preservado no corpus,
+m2m100,obrigacao-negativa,en-es,4041.8,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,longo,en-es,30900.3,Maria Silva,30,preservada em revisão do corpus,omissão das duas sentenças finais por parágrafo,Nome próprio alterado pelo modelo; sem reparo por gabarito.
+m2m100,negacao-nome-data,es-pt,3705.2,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,condicao-prazo,es-pt,5178.4,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,nome-quantidade,es-pt,3661.4,,,ausente na fonte,preservado no corpus,
+m2m100,obrigacao-negativa,es-pt,4590,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,longo,es-pt,41904.7,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,negacao-nome-data,es-en,3403.5,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,condicao-prazo,es-en,3564.2,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,nome-quantidade,es-en,2896.2,,,ausente na fonte,preservado no corpus,
+m2m100,obrigacao-negativa,es-en,5355.2,,,preservada em revisão do corpus,preservado no corpus,
+m2m100,longo,es-en,42441.3,,,preservada em revisão do corpus,omissão de título inicial,
+opus-en,negacao-nome-data,en-pt,2107.5,,,não homologada: idioma incorreto,reprovado: prefixo/idioma incorretos,Incompatibilidade observada do perfil Marian/Transformers.js; não atribuir exclusivamente aos pesos.
+opus-en,condicao-prazo,en-pt,1574,,,não homologada: idioma incorreto,reprovado: prefixo/idioma incorretos,Incompatibilidade observada do perfil Marian/Transformers.js; não atribuir exclusivamente aos pesos.
+opus-en,nome-quantidade,en-pt,1121.8,,,ausente na fonte,reprovado: prefixo/idioma incorretos,Incompatibilidade observada do perfil Marian/Transformers.js; não atribuir exclusivamente aos pesos.
+opus-en,obrigacao-negativa,en-pt,1269.7,,,não homologada: idioma incorreto,reprovado: prefixo/idioma incorretos,Incompatibilidade observada do perfil Marian/Transformers.js; não atribuir exclusivamente aos pesos.
+opus-en,longo,en-pt,10261.9,,,não homologada: idioma incorreto,reprovado: prefixo/idioma incorretos,Incompatibilidade observada do perfil Marian/Transformers.js; não atribuir exclusivamente aos pesos.
+opus-en,negacao-nome-data,en-es,1448.5,,,não homologada: idioma incorreto,reprovado: prefixo/idioma incorretos,Incompatibilidade observada do perfil Marian/Transformers.js; não atribuir exclusivamente aos pesos.
+opus-en,condicao-prazo,en-es,1859.6,,,não homologada: idioma incorreto,reprovado: prefixo/idioma incorretos,Incompatibilidade observada do perfil Marian/Transformers.js; não atribuir exclusivamente aos pesos.
+opus-en,nome-quantidade,en-es,936.3,,,ausente na fonte,reprovado: prefixo/idioma incorretos,Incompatibilidade observada do perfil Marian/Transformers.js; não atribuir exclusivamente aos pesos.
+opus-en,obrigacao-negativa,en-es,1433.1,,,não homologada: idioma incorreto,reprovado: prefixo/idioma incorretos,Incompatibilidade observada do perfil Marian/Transformers.js; não atribuir exclusivamente aos pesos.
+opus-en,longo,en-es,11187.7,,,não homologada: idioma incorreto,reprovado: prefixo/idioma incorretos,Incompatibilidade observada do perfil Marian/Transformers.js; não atribuir exclusivamente aos pesos.
+opus-romance,negacao-nome-data,pt-en,1580.9,,,preservada em revisão do corpus,preservado no corpus,
+opus-romance,condicao-prazo,pt-en,1067.6,,,preservada em revisão do corpus,preservado no corpus,
+opus-romance,nome-quantidade,pt-en,1064.9,João Costa,,ausente na fonte,preservado no corpus,Nome próprio alterado pelo modelo; sem reparo por gabarito.
+opus-romance,obrigacao-negativa,pt-en,1235.1,,,preservada em revisão do corpus,preservado no corpus,
+opus-romance,longo,pt-en,9559,,,preservada em revisão do corpus,preservado no corpus,
+opus-romance,negacao-nome-data,es-en,724.9,,,preservada em revisão do corpus,preservado no corpus,
+opus-romance,condicao-prazo,es-en,602.2,,,preservada em revisão do corpus,preservado no corpus,
+opus-romance,nome-quantidade,es-en,501.3,,,ausente na fonte,preservado no corpus,
+opus-romance,obrigacao-negativa,es-en,688.6,,,preservada em revisão do corpus,preservado no corpus,
+opus-romance,longo,es-en,7511.6,,,preservada em revisão do corpus,preservado no corpus,
+m2m100-segmented,longo,pt-en,38751.9,,,preservada em revisão do corpus,preservado no corpus,
+m2m100-segmented,longo,pt-es,49662.7,Maria Silva,,preservada em revisão do corpus,preservado no corpus,Nome próprio alterado pelo modelo; sem reparo por gabarito.
+m2m100-segmented,longo,en-pt,67877.8,,,preservada em revisão do corpus,preservado no corpus,
+m2m100-segmented,longo,en-es,65899,Maria Silva,,preservada em revisão do corpus,preservado no corpus,Nome próprio alterado pelo modelo; sem reparo por gabarito.
+m2m100-segmented,longo,es-pt,46074.5,,,preservada em revisão do corpus,preservado no corpus,
+m2m100-segmented,longo,es-en,46694.4,,,preservada em revisão do corpus,preservado no corpus,

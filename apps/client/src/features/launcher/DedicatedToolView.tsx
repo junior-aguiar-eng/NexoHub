@@ -2332,6 +2332,7 @@ export function DedicatedToolView({
       const baseOutName = files[0]?.name?.replace(/\.[^/.]+$/, "") || "documento";
       return (
         <TranslateDocumentPanel
+          browserModel={documentCore.translationEngine === "browser" || !documentCore.invoke}
           sourceLang={translationSourceLang as "en" | "pt" | "es"}
           targetLang={translationTargetLang as "en" | "pt" | "es"}
           onSourceLangChange={(l) => {

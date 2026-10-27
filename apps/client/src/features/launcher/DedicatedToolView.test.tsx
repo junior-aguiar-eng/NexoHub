@@ -244,7 +244,7 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     expect(screen.getByRole("button", { name: /Iniciar Reconhecimento OCR/i })).toBeInTheDocument();
   });
 
-  it("renderiza o painel de tradução com seletores de idioma e badge offline", async () => {
+  it("renderiza o painel de tradução com seletores de idioma e aviso de download", async () => {
     const mockTranslateTool =
       launcherTools.find((t) => t.id === "text-translate") ?? mockPdfCompressTool;
     const file = new File(["Hello world contract"], "contrato.txt", { type: "text/plain" });
@@ -257,7 +257,7 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
       />,
     );
     expect(screen.getByText(/Tradutor Inteligente/i)).toBeInTheDocument();
-    expect(screen.getByText(/Tradução no Navegador/i)).toBeInTheDocument();
+    expect(screen.getByText(/é necessário fazer um download no primeiro uso/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Inverter idiomas/i })).toBeInTheDocument();
   });
 

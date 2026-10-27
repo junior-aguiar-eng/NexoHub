@@ -1,5 +1,11 @@
 # Dependências de terceiros da interface
 
+O runtime nativo LanguageTool instalado localmente tem inventário de 155 JARs, análise
+de avisos e fontes em [LANGUAGETOOL-LICENCAS-20261027.md](quality/LANGUAGETOOL-LICENCAS-20261027.md)
+e [LANGUAGETOOL-FONTES-20261027.md](quality/LANGUAGETOOL-FONTES-20261027.md).
+A adoção local foi autorizada no ADR-018; a redistribuição permanece condicionada às
+fontes e obrigações ali registradas. Este inventário da interface não cobre esses binários.
+
 Dependências introduzidas na Fase 1 e licenças declaradas pelos respectivos pacotes instalados:
 
 | Pacote | Licença | Finalidade |

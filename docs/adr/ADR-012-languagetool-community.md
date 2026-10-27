@@ -1,6 +1,8 @@
 # ADR-012: LanguageTool Community para revisão pt-BR
 
 - **Status:** aceito
+- **Atualização:** o snapshot foi substituído conforme [ADR-018](ADR-018-atualizacao-languagetool-20261027.md),
+  com instalação local autorizada e distribuição ainda condicionada à qualificação de licenças/fontes.
 - **Contexto:** regras determinísticas próprias não cobrem revisão ortográfica, gramatical e de
   estilo em português brasileiro. O serviço público externo é mutável e implicaria envio de texto.
 - **Decisão:** usar obrigatoriamente o LanguageTool Community em `pt-BR`, executado como sidecar pelo

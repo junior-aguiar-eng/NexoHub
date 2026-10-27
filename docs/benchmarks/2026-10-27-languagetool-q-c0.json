@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-27T20:21:55.2216586Z",
+  "snapshot": "6.9-SNAPSHOT-20261027",
+  "os": "Microsoft Windows 11 Enterprise",
+  "osVersion": "10.0.26100",
+  "visibleMemoryKiB": 4193220,
+  "cpu": "AMD Ryzen 5 3550H with Radeon Vega Mobile Gfx  ",
+  "logicalProcessors": 8,
+  "corpusSha256": "21a5d4741bfed1cc88e4499b1abb5dd5fa9d4b120594a5621abeb9f6d5eaaf7f",
+  "runtimeBytes": 571817453,
+  "archiveBytes": 312224836,
+  "definition": "Fria: primeira chamada da sessão de ensaio. Quente: repetições sem reiniciar a sessão. Cada chamada inicia JVM nova; cache do SO não foi esvaziado. Pico observado por processo Java, não memória global simultânea.",
+  "baseline": "Snapshot anterior indisponível no endereço fixado e sem cópia local. Não há comparação de qualidade linguística entre versões; adoção local autorizada para restaurar disponibilidade conforme ADR-018.",
+  "runs": [
+    {
+      "run": 1,
+      "state": "primeira chamada da sessão",
+      "elapsedMs": 15182,
+      "peakObservedWorkingSetBytes": 482930688,
+      "exitCode": 0,
+      "matches": 3,
+      "rules": ["GENERAL_VERB_AGREEMENT_ERRORS", "MORFOLOGIK_RULE_PT_BR", "MORFOLOGIK_RULE_PT_BR"]
+    },
+    {
+      "run": 2,
+      "state": "repetição na mesma sessão",
+      "elapsedMs": 15612,
+      "peakObservedWorkingSetBytes": 503959552,
+      "exitCode": 0,
+      "matches": 3,
+      "rules": ["GENERAL_VERB_AGREEMENT_ERRORS", "MORFOLOGIK_RULE_PT_BR", "MORFOLOGIK_RULE_PT_BR"]
+    },
+    {
+      "run": 3,
+      "state": "repetição na mesma sessão",
+      "elapsedMs": 14524,
+      "peakObservedWorkingSetBytes": 502386688,
+      "exitCode": 0,
+      "matches": 3,
+      "rules": ["GENERAL_VERB_AGREEMENT_ERRORS", "MORFOLOGIK_RULE_PT_BR", "MORFOLOGIK_RULE_PT_BR"]
+    }
+  ],
+  "scope": "CLI real do runtime instalado pelo Inno Setup em Windows Sandbox novo de 4 GB; primeira chamada e duas repetições, sem builds/E2E concorrentes. Não é benchmark linguístico entre snapshots.",
+  "operationalBaseline": {
+    "os": "Windows 11 Enterprise 10.0.26100",
+    "visibleMemoryKiB": 4193220,
+    "logicalProcessors": 8,
+    "corpusSha256": "21a5d4741bfed1cc88e4499b1abb5dd5fa9d4b120594a5621abeb9f6d5eaaf7f",
+    "runtimePresent": false,
+    "observedUiResult": "Falha ao executar a ferramenta.",
+    "installerBytes": 20153828,
+    "installerSha256": "eb7f98974e3d6aff5bbb671e2a1859e98b67adf433b968f80b885c01aae84850",
+    "limitation": "Pacote anterior sem sidecar, não execução do snapshot antigo. Não há comparação da qualidade linguística desse motor indisponível."
+  },
+  "currentInstaller": {
+    "bytes": 292165660,
+    "sha256": "b14cab58cbd01de61c49fcdbf3c7d6d5e21af74422d97a32eb56805f2b43ffde",
+    "distribution": "Ensaio local autorizado; redistribuição pendente conforme ADR-018."
+  },
+  "clientIncrement": "Nenhuma biblioteca ou WASM de cliente adicionada para LanguageTool. Os bytes de arquivo/ZIP não incluem overhead TLS nem tráfego geral instrumentado.",
+  "collectorSha256": "f942d8800f125761a7d009bddaf3855934064a093a87b70442af16ba2c4ead38",
+  "finalUpgrade": {
+    "installerBytes": 292166743,
+    "installerSha256": "6dbb0adc3dad2417b5ad2fc99bd6436710bff074aaa34f8fcc19b22aec2b803a",
+    "executableSha256": "a9ef899ac53a24c4b049697ad2c58e4600feec868910a15064dcded9ef4e50a0",
+    "jarsVerified": 155,
+    "registrationCount": 1,
+    "shortcutCount": 1,
+    "restartRequired": false,
+    "scope": "Upgrade posterior inclui descrição local e invalidação de revisão obsoleta na interface. Mesmo snapshot/JRE e mesmos hashes dos 155 JARs do ensaio medido. Instalação e upgrade exercitados em nova sessão Sandbox de 4 GB."
+  },
+  "uiVerification": {
+    "bytes": 61,
+    "characters": 59,
+    "sha256": "e843332970a9a373556a712900232a9c9b43c5652684789b94b8b16218aeb60c",
+    "exactReference": true
+  }
+}

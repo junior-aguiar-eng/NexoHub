@@ -76,7 +76,13 @@ try {
     Move-Item -LiteralPath $stage -Destination $target
     Write-Output "LanguageTool Community pt-BR instalado em $target"
 } finally {
-    if (Test-Path -LiteralPath $temporaryRoot) {
-        Remove-Item -LiteralPath $temporaryRoot -Recurse -Force
+    $resolvedTemporaryRoot = [System.IO.Path]::GetFullPath($temporaryRoot)
+    $expectedTemporaryParent = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd('\', '/')
+    if ((Split-Path -Parent $resolvedTemporaryRoot).TrimEnd('\', '/') -ne $expectedTemporaryParent -or
+        (Split-Path -Leaf $resolvedTemporaryRoot) -notmatch '^NexoHub-LanguageTool-[a-f0-9]{32}$') {
+        throw 'Limpeza recusada: diretório temporário fora do limite esperado.'
+    }
+    if (Test-Path -LiteralPath $resolvedTemporaryRoot) {
+        Remove-Item -LiteralPath $resolvedTemporaryRoot -Recurse -Force
     }
 }

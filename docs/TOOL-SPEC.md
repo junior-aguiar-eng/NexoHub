@@ -161,7 +161,7 @@ resposta inválida retorna `REVIEW_PROCESSING`.
 
 Aplicar achados modifica somente o rascunho e invalida o relatório anterior. `create_text_revision`
 persiste o resultado como artifact derivado; revisões posteriores usam o artifact recém-criado como
-entrada. O snapshot `6.9-SNAPSHOT-20260901` e o Temurin JRE `21.0.12.1+1-LTS` são externos ao Git e
+entrada. O snapshot `6.9-SNAPSHOT-20261027` e o Temurin JRE `21.0.12.1+1-LTS` são externos ao Git e
 fixados em `runtime/languagetool-community.json` por URL, tamanho, SHA-256 e licença.
 
 ## Fase 14 — receitas NexoFlow

@@ -98,6 +98,8 @@ const lines = [
   "",
   "## Sidecars",
   "",
+  "A licença da linha do sidecar identifica o componente principal; não resume todos os recursos e JARs internos. A atualização LanguageTool 20261027 tem adoção local autorizada no ADR-018 e distribuição pendente de fontes/licenças. Consulte `docs/quality/LANGUAGETOOL-LICENCAS-20261027.md` no repositório ou `runtime/LANGUAGETOOL-LICENCAS-20261027.md` no pacote.",
+  "",
   ...[sidecars.snapshot, sidecars.java].flatMap((item) => [
     `- **${item.tool} ${item.version}** — ${item.license}`,
     `  Fonte: ${item.source}`,

@@ -799,13 +799,15 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | zune-core | 0.5.3 | MIT OR Apache-2.0 OR Zlib |
 | Rust | zune-jpeg | 0.5.15 | MIT OR Apache-2.0 OR Zlib |
 | Sidecar | Eclipse Temurin JRE | 21.0.12.1+1-LTS | GPL-2.0-only WITH Classpath-exception-2.0 |
-| Sidecar | LanguageTool Community | 6.9-SNAPSHOT-20260901 | LGPL-2.1-or-later |
+| Sidecar | LanguageTool Community | 6.9-SNAPSHOT-20261027 | LGPL-2.1-or-later |
 
 ## Sidecars
 
-- **LanguageTool Community 6.9-SNAPSHOT-20260901** — LGPL-2.1-or-later
-  Fonte: https://languagetool.org/download/snapshots/LanguageTool-20260901-snapshot.zip
-  Integridade: `sha256:518c60581bd1cb5c7f654db6843d4af4a15f91262d6683f419658135d9e69c81`
+A licença da linha do sidecar identifica o componente principal; não resume todos os recursos e JARs internos. A atualização LanguageTool 20261027 tem adoção local autorizada no ADR-018 e distribuição pendente de fontes/licenças. Consulte `docs/quality/LANGUAGETOOL-LICENCAS-20261027.md` no repositório ou `runtime/LANGUAGETOOL-LICENCAS-20261027.md` no pacote.
+
+- **LanguageTool Community 6.9-SNAPSHOT-20261027** — LGPL-2.1-or-later
+  Fonte: https://languagetool.org/download/snapshots/LanguageTool-20261027-snapshot.zip
+  Integridade: `sha256:d5aa893ca8a86506af6ab0eac81473e86f1b563bfb1fab6fc1d9622552bb9814`
 - **Eclipse Temurin JRE 21.0.12.1+1-LTS** — GPL-2.0-only WITH Classpath-exception-2.0
   Fonte: https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_x64_windows_hotspot_21.0.12.1_1.zip
   Integridade: `sha256:d35f31e712f0fcf6ac5a093edc90204fbff22f720ba3950bd09d331d5e621636`

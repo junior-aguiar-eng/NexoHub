@@ -37,6 +37,7 @@ try {
         "four-tools-regression.spec.ts",
         "doc-c4-pages.spec.ts",
         "pdf-basic-quality.spec.ts",
+        "tool-quality.spec.ts",
         "security-excel-quality.spec.ts",
         "tool-workspace-regressions.spec.ts",
         "tool-workspace-layout.spec.ts",

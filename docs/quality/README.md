@@ -13,7 +13,7 @@ campos desconhecidos e caminhos fora do repositório. O teste de integração ta
 caminhos reais para recusar links simbólicos externos. O checker é usado por testes;
 não está exportado pelo pacote nem importado pelo aplicativo.
 
-Há 20 grupos de corpus. Os rótulos `file`, `generator` e `manifest` identificam **quais bytes
+Há 21 grupos de corpus. Os rótulos `file`, `generator` e `manifest` identificam **quais bytes
 foram hasheados**: arquivo fixo, código gerador/teste ou manifesto de uma medição anterior.
 Hash de gerador não identifica o PDF/imagem que ele produzirá; hash de manifesto não verifica
 novamente as fotos externas ou os resultados nele registrados. Os downloads externos não são
@@ -26,7 +26,7 @@ Expectativas textuais são limites documentados, não assertions executadas pelo
 
 ## Cobertura por ferramenta
 
-**22 perfis restritos e 13 registros de regressão.** Perfil restrito
+**26 perfis restritos e 9 registros de regressão.** Perfil restrito
 significa que há uma entrega específica com corpus e limites documentados; não é um selo de
 homologação integral. Regressão identifica cobertura existente, que pode incluir testes com port simulado.
 Esses testes de encaminhamento não demonstram fidelidade da saída. A fatia de
@@ -41,13 +41,13 @@ Expectativas, recusas, casos não medidos e links de testes/documentos estão em
 | `pdf-merge` | Perfil restrito | `pdf-static` |
 | `pdf-split` | Perfil restrito | `pdf-static` |
 | `pdf-rotate` | Perfil restrito | `pdf-static` |
-| `pdf-crop` | Regressão | `security` |
+| `pdf-crop` | Perfil restrito | `pdf-static`, `pdf-overlay` |
 | `pdf-compress` | Regressão | `pdf-basic` |
 | `pdf-repair` | Perfil restrito | `repair` |
 | `images-to-pdf` | Regressão | `image-basic` |
 | `pdf-to-jpg` | Regressão | `pdf-basic` |
-| `pdf-watermark` | Regressão | `pdf-basic` |
-| `pdf-page-numbers` | Regressão | `pdf-basic` |
+| `pdf-watermark` | Perfil restrito | `pdf-static`, `pdf-overlay` |
+| `pdf-page-numbers` | Perfil restrito | `pdf-static`, `pdf-overlay` |
 | `pdf-ocr` | Perfil restrito | `ocr` |
 | `pdf-protect` | Regressão | `security` |
 | `pdf-extract-images` | Regressão | `pdf-images` |
@@ -55,7 +55,7 @@ Expectativas, recusas, casos não medidos e links de testes/documentos estão em
 | `text-review` | Regressão | `review` |
 | `text-translate` | Perfil restrito | `translation` |
 | `pdf-to-markdown` | Perfil restrito | `markdown` |
-| `pdf-sign` | Regressão | `security` |
+| `pdf-sign` | Perfil restrito | `pdf-static`, `pdf-overlay` |
 | `pdf-form-fill` | Perfil restrito | `form` |
 | `pdf-unlock` | Regressão | `unlock` |
 | `pdf-redact` | Perfil restrito | `security` |
@@ -112,3 +112,5 @@ Não foram repetidos os benchmarks anteriores nem executados E2E, build ou insta
 esta fatia altera documentação e um gate de testes, sem código do aplicativo ou dependências.
 
 A evolução das operações básicas PDF, após a consolidação inicial, está em [PDF-BASICO.md](PDF-BASICO.md).
+
+A fatia seguinte documenta [recorte e sobreposições PDF](PDF-GEOMETRIA.md), com quatro perfis restritos adicionais.

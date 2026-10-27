@@ -37,7 +37,7 @@ para relatórios de auditoria ou planos novos.
 
 | Ordem | Complemento | Plano responsável | Estado / dependência |
 | --- | --- | --- | --- |
-| 0 | Q-C0: corpus, licenças e critérios de qualidade comercial | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#fase-de-complementação--24102026) | Parcial: [índice das 35 ferramentas](quality/README.md), 22 perfis restritos e 13 regressões; [PDF básico](quality/PDF-BASICO.md) com conteúdo conferido. Fidelidade ampla, recursos por dispositivo e Windows instalado continuam pendentes |
+| 0 | Q-C0: corpus, licenças e critérios de qualidade comercial | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#fase-de-complementação--24102026) | Parcial: [índice das 35 ferramentas](quality/README.md), 26 perfis restritos e 9 regressões; [PDF básico](quality/PDF-BASICO.md) e [geometria/sobreposições](quality/PDF-GEOMETRIA.md) com conteúdo conferido. Fidelidade ampla, recursos por dispositivo e Windows instalado continuam pendentes |
 | 1 | IM-C1: gestão e inspeção dos lotes nas seis ferramentas de imagem | [PDF e Imagem](superpowers/plans/2026-10-23-unificar-pdf-imagem.md#fase-de-complementação--24102026) | Concluído no website; motores e limites preservados |
 | 2 | IM-C2: recorte com alças, zoom e teclado | Mesmo plano de PDF e Imagem | Concluído no website; Cropper.js 2.3.1, exportação e preflight preservados |
 | 3 | UX-C1: controles de visualização PDF reutilizáveis | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#fase-de-complementação--24102026) | Concluído no website; oito mesas, zoom e navegação independentes da exportação |

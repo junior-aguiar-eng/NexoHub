@@ -532,6 +532,38 @@
           "sha256": "8f136b4763c02f509e83156f9ad9ba5a730ee18a35573f9805cc94522a552bfc"
         }
       ]
+    },
+    {
+      "id": "pdf-overlay",
+      "origin": "Controles sintéticos autorais de recorte, carimbo, numeração e assinatura visual fictícia sobre o corpus pdf-static. Referência de caixas explícita; testes de viewport/download existentes reutilizados.",
+      "license": "Conteúdo, controles e geradores autorais MPL-2.0; fontes padrão PDF referenciadas sem incorporar arquivo de fonte neste corpus. Bibliotecas mantêm suas licenças próprias.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/__fixtures__/q-c0-pdf/overlay.ts",
+          "kind": "generator",
+          "sha256": "b99f11838a3084cc49d235805f70a2f8a5852db6355f650b654965b7b8c27057"
+        },
+        {
+          "path": "apps/client/src/platform/pdf-overlay-quality.test.ts",
+          "kind": "generator",
+          "sha256": "7600c24016d361e2b1ecce2c9e43bfaba4f5122c8c021ace679d4ad528b9c040"
+        },
+        {
+          "path": "apps/client/src/platform/pdf-crop-sign.test.ts",
+          "kind": "generator",
+          "sha256": "502fad376d1dafee9ba2b38d58a6c64ef3e2a0c7bbdefd0310a6fc20fb428a90"
+        },
+        {
+          "path": "apps/client/e2e/tool-quality.spec.ts",
+          "kind": "generator",
+          "sha256": "91f1d5faeabc11d758c80e95a87cce5289369095815129cf72779f2765b84999"
+        },
+        {
+          "path": "apps/client/e2e/pdf-viewport.spec.ts",
+          "kind": "generator",
+          "sha256": "4f4a93e830119b4a5849463c1b24dde5b599c89a2e26e78c1137c4ffb2b8d88f"
+        }
+      ]
     }
   ],
   "tools": [
@@ -651,16 +683,26 @@
     },
     {
       "toolId": "pdf-crop",
-      "level": "regression",
-      "corpora": ["security"],
-      "supported": ["CropBox/MediaBox e coordenadas de páginas selecionadas."],
-      "refused": ["Margens negativas/excessivas e seleção inválida."],
+      "level": "restricted-profile",
+      "corpora": ["pdf-static", "pdf-overlay"],
+      "supported": [
+        "Margens visuais assimétricas nas quatro rotações, todas as páginas ou seleção; caixas, streams e JPEG original preservados no perfil estático."
+      ],
+      "refused": [
+        "Recusas existentes de margens/seleção/posição vazia ou inválida, conforme os testes específicos; nenhuma recusa nova foi implementada nesta fatia."
+      ],
       "unmeasured": [
-        "Recorte não é remoção definitiva do conteúdo fora da caixa.",
+        "Recorte é visual e preserva streams; conteúdo fora da caixa não é removido definitivamente.",
+        "PDFs complexos, formulários, assinaturas criptográficas, anexos, fontes arbitrárias e metadados globais não certificados pelo corpus estático.",
+        "Pintura pixel a pixel, legibilidade de toda tipografia, grandes lotes e pouca RAM não medidos nesta fatia.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/AUDITORIA-NOVAS-FERRAMENTAS-WEB-2026-10-23.md"],
-      "tests": ["apps/client/src/platform/pdf-crop-sign.test.ts"]
+      "docs": ["docs/quality/PDF-GEOMETRIA.md", "docs/TOOL-SPEC.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-overlay-quality.test.ts",
+        "apps/client/src/platform/pdf-crop-sign.test.ts",
+        "apps/client/e2e/pdf-viewport.spec.ts"
+      ]
     },
     {
       "toolId": "pdf-compress",
@@ -719,29 +761,49 @@
     },
     {
       "toolId": "pdf-watermark",
-      "level": "regression",
-      "corpora": ["pdf-basic"],
-      "supported": ["Carimbo textual e geometria após zoom de visualização."],
-      "refused": ["Parâmetros/entrada inválidos e caracteres não representáveis pelo perfil."],
+      "level": "restricted-profile",
+      "corpora": ["pdf-static", "pdf-overlay"],
+      "supported": [
+        "Carimbo horizontal longo limitado à área visível nas quatro rotações; texto e JPEG originais preservados. Carimbo inclinado coberto apenas pelos controles existentes indicados."
+      ],
+      "refused": [
+        "Limites de codificação das fontes e parâmetros permanecem os existentes; esta fatia não acrescenta validação de entrada ao executor."
+      ],
       "unmeasured": [
-        "Tipografia universal e documentos complexos com recursos não medidos.",
+        "PDFs complexos, formulários, assinaturas criptográficas, anexos, fontes arbitrárias e metadados globais não certificados pelo corpus estático.",
+        "Pintura pixel a pixel, legibilidade de toda tipografia, grandes lotes e pouca RAM não medidos nesta fatia.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/TOOL-SPEC.md"],
-      "tests": ["apps/client/src/platform/pdf-engine.test.ts"]
+      "docs": ["docs/quality/PDF-GEOMETRIA.md", "docs/TOOL-SPEC.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-overlay-quality.test.ts",
+        "apps/client/src/platform/pdf-crop-sign.test.ts",
+        "apps/client/e2e/pdf-viewport.spec.ts",
+        "apps/client/e2e/tool-quality.spec.ts"
+      ]
     },
     {
       "toolId": "pdf-page-numbers",
-      "level": "regression",
-      "corpora": ["pdf-basic"],
-      "supported": ["Numeração alinhada e início de página respeitado."],
-      "refused": ["Entrada ou seleção inválida."],
+      "level": "restricted-profile",
+      "corpora": ["pdf-static", "pdf-overlay"],
+      "supported": [
+        "Seis posições de numeração, início na página 2 e CropBox/rotação no perfil estático; texto e JPEG originais preservados."
+      ],
+      "refused": [
+        "Limites de codificação das fontes e parâmetros permanecem os existentes; esta fatia não acrescenta validação de entrada ao executor."
+      ],
       "unmeasured": [
-        "Documentos arbitrários e preservação de recursos sem corpus específico.",
+        "PDFs complexos, formulários, assinaturas criptográficas, anexos, fontes arbitrárias e metadados globais não certificados pelo corpus estático.",
+        "Pintura pixel a pixel, legibilidade de toda tipografia, grandes lotes e pouca RAM não medidos nesta fatia.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/TOOL-SPEC.md"],
-      "tests": ["apps/client/src/platform/pdf-engine.test.ts"]
+      "docs": ["docs/quality/PDF-GEOMETRIA.md", "docs/TOOL-SPEC.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-overlay-quality.test.ts",
+        "apps/client/src/platform/pdf-crop-sign.test.ts",
+        "apps/client/e2e/pdf-viewport.spec.ts",
+        "apps/client/e2e/tool-quality.spec.ts"
+      ]
     },
     {
       "toolId": "pdf-ocr",
@@ -837,16 +899,25 @@
     },
     {
       "toolId": "pdf-sign",
-      "level": "regression",
-      "corpora": ["security"],
-      "supported": ["Imagem/assinatura visual nas coordenadas escolhidas."],
-      "refused": ["Assinatura vazia ou posição inválida."],
+      "level": "restricted-profile",
+      "corpora": ["pdf-static", "pdf-overlay"],
+      "supported": [
+        "Selo visual fictício com imagem, nome e data; primeira/última/todas/página 2; texto original e caixa visível nas quatro rotações. Não cria assinatura digital criptográfica."
+      ],
+      "refused": [
+        "Recusas existentes de margens/seleção/posição vazia ou inválida, conforme os testes específicos; nenhuma recusa nova foi implementada nesta fatia."
+      ],
       "unmeasured": [
-        "Não constitui assinatura digital criptográfica nem validação de autoria.",
+        "PDFs complexos, formulários, assinaturas criptográficas, anexos, fontes arbitrárias e metadados globais não certificados pelo corpus estático.",
+        "Pintura pixel a pixel, legibilidade de toda tipografia, grandes lotes e pouca RAM não medidos nesta fatia.",
         "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
       ],
-      "docs": ["docs/AUDITORIA-NOVAS-FERRAMENTAS-WEB-2026-10-23.md"],
-      "tests": ["apps/client/src/platform/pdf-crop-sign.test.ts"]
+      "docs": ["docs/quality/PDF-GEOMETRIA.md", "docs/TOOL-SPEC.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-overlay-quality.test.ts",
+        "apps/client/src/platform/pdf-crop-sign.test.ts",
+        "apps/client/e2e/pdf-viewport.spec.ts"
+      ]
     },
     {
       "toolId": "pdf-form-fill",

@@ -47,7 +47,7 @@ Em OCR-C1, corpus versionado, CER/WER, política de páginas mistas, limites de 
 avaliação negativa de OpenCV pertencem a [OCR-C1.md](OCR-C1.md). A medição sintética não
 homologa fotografias de campo nem o runtime Windows; DOC-C2 permanece fora dessa entrega.
 
-A [consolidação Q-C0](quality/README.md) indexa as 35 ferramentas ativas, com 22 perfis
-restritos e 13 registros de regressão. `pnpm quality:check` confere cobertura, referências e
+A [consolidação Q-C0](quality/README.md) indexa as 35 ferramentas ativas, com 26 perfis
+restritos e 9 registros de regressão. `pnpm quality:check` confere cobertura, referências e
 hashes, distinguindo arquivo fixo, gerador e manifesto. Esse gate não executa as ferramentas
 nem demonstra fidelidade das saídas. Os critérios globais de Q-C0 continuam parciais.

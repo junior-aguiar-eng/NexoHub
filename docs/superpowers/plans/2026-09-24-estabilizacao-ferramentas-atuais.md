@@ -170,6 +170,24 @@ Validação: check, 766 testes do cliente, 10 do Tool Registry, builds raiz e `/
 revisão única sem achados materiais. Suíte E2E inteira da raiz e instalação Windows
 não repetidas nesta fatia. Evidências e limites no documento vinculado acima.
 
+### Q-C0 — recorte e sobreposições PDF (27/10/2026)
+
+Base `82db4d1`, após commit autorizado do PDF básico. Corpus e resultados em
+[PDF-GEOMETRIA.md](../../quality/PDF-GEOMETRIA.md): recorte, marca d’água, numeração e
+assinatura visual, nas quatro rotações e com CropBox. Novos testes conferem caixas,
+streams/JPEG/texto original, textos acrescentados e posições; controles negativos recusam
+saída sem carimbo, caixa alterada ou numeração correta na posição errada.
+
+Reutilizados os executores atuais, sem alteração de código do aplicativo ou dependências.
+`tool-quality.spec.ts` passou a aceitar `/hub/` e integrar o executor da subpasta. Índice:
+26 perfis restritos e 9 regressões; Q-C0 global continua parcial. Não certifica PDF complexo,
+tipografia universal, hardware físico ou Windows instalado. Tolerância horizontal de 0,5 pt
+documentada, distinguindo largura com kerning e avanço de texto extraído.
+
+Commit local autorizado posteriormente pelo usuário, sem push, deploy ou integração no
+checkout principal. DOC-C2 excluído.
+Resultados finais de validação pertencem ao relatório vinculado.
+
 ### UX-C1 — Visualização PDF reutilizável nas mesas atuais
 
 **Modificar:** painéis `CropPdfPanel`, `SignPdfPanel`, `RedactPdfPanel`, `WatermarkPdfPanel`,

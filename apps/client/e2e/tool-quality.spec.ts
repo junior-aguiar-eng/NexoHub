@@ -4,8 +4,10 @@ import { expect, type Page, test } from "@playwright/test";
 import { degrees, PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 
+const route = (path: string) => `${process.env.NEXOHUB_BASE_PATH ?? "/"}${path.replace(/^\//, "")}`;
+
 async function output(page: Page, path: string, bytes: Uint8Array) {
-  await page.goto(path);
+  await page.goto(route(path));
   await page.locator('input[type="file"]').setInputFiles({
     name: "ação.pdf",
     mimeType: "application/pdf",
@@ -140,7 +142,7 @@ test("repara PDF corrompido com lixo inicial e exibe diagnóstico", async ({ pag
   const prefix = Buffer.from("LIXO_DE_DOWNLOAD_HTTP_12345");
   const corruptedBuffer = Buffer.concat([prefix, Buffer.from(validBytes)]);
 
-  await page.goto("/reparar-pdf");
+  await page.goto(route("/reparar-pdf"));
   await page.locator('input[type="file"]').setInputFiles({
     name: "danificado.pdf",
     mimeType: "application/pdf",

@@ -1,0 +1,33 @@
+{
+  "sources": [
+    {
+      "file": "apertium-br-fr.br.dix",
+      "url": "https://raw.githubusercontent.com/apertium/apertium-br-fr/99007c6bfff287d6a4b1b104f06a151c1cc9d4f4/apertium-br-fr.br.dix",
+      "sha256": "8949b3db060e1d26a1815d139911bfcc8bb2399d849bc1a2e7f11c36a6932b61",
+      "bytes": 1878613
+    },
+    {
+      "file": "create-lexicon-original.pl",
+      "url": "https://raw.githubusercontent.com/languagetool-org/languagetool/5a0fa50578f4010fc037a25750ff7ae0d8b76a63/languagetool-language-modules/br/src/main/resources/org/languagetool/resource/br/create-lexicon.pl",
+      "sha256": "309223cd731caabbf969426bd3db97950c80cea57df0fd1be0095daaa6418c7f",
+      "bytes": 62867
+    },
+    {
+      "file": "lttoolbox-2015.tar.gz",
+      "url": "https://api.github.com/repos/apertium/lttoolbox/tarball/2bda5a443206b614c540d4005ea32562e51a388e",
+      "sha256": "da45206316343da2098beacb17ffe3113c0d13e0123102432326fb5b7faaccf4",
+      "bytes": 320478
+    }
+  ],
+  "binarySha256": "eb5ef06be9f3967b3ca068f8347cd0880548082c78776fe5d526705291bbd952",
+  "generatedRows": 398922,
+  "generatedDistinct": 278023,
+  "binaryDistinct": 278023,
+  "missing": 0,
+  "added": 0,
+  "generatedSha256": "e0594fbbc711c68458cf0238dfccff828c9217b40ccf20f8c9c3a651d737433a",
+  "toolchainSha256": "cf16f2d28021ddbf20e5db37a2fd8d68c9309ce8761c70b49b23720774de6a23",
+  "locale": "C.UTF-8",
+  "scope": "Correspondência exata dos conjuntos de triplas lema, forma e POS. Somente CRLF é tratado como terminador de linha; sem normalização de caixa, acentos ou pontuação. Duplicatas do gerador são deduplicadas, como no FSA.",
+  "limitation": "Não recompila o FSA com Morfologik 1.4 nem certifica reprodução bit a bit ou suficiência jurídica. Só duas chamadas finais de compilação foram desativadas na cópia do gerador; fontes e runtime originais preservados."
+}

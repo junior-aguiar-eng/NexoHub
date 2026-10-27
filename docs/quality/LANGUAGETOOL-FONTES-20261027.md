@@ -68,7 +68,9 @@ Coleta reproduzível: `node scripts/conferir-fontes-tagalo.mjs <diretório-novo>
 
 ## Bretão POS
 
-`breton.dict` binário e README idênticos ao commit; atribuição Apertium Breton GPL e autores 2008–2010. Não encontrei léxico POS completo editável nem receita específica correspondente na árvore dos recursos. O script `br/hunspell/create-fsa-spell-dictionary.sh` trata spelling **LGPL**, busca OXT 0.15 e usa LT 4.2-SNAPSHOT; não resolve fonte do POS GPL. README menciona spelling 0.13, outra divergência a não apagar. Falta fonte/revisão/receita do POS.
+`breton.dict` binário e README idênticos ao commit; atribuição Apertium Breton GPL e autores 2008–2010. Na continuação, o léxico Apertium `99007c6bfff287d6a4b1b104f06a151c1cc9d4f4`, o conversor LT `5a0fa50578f4010fc037a25750ff7ae0d8b76a63` e lttoolbox 3.3.2 (`2bda5a443206b614c540d4005ea32562e51a388e`) reproduziram as 278.023 triplas distintas do binário instalado: zero ausentes, zero adicionadas. O gerador produziu 398.922 linhas antes da deduplicação. Locale `C.UTF-8` é necessário para preservar os acentos.
+
+Reprodução: `node scripts/reproduzir-pos-bretao.mjs <diretório-novo>`, com Docker local e o runtime autorizado já instalado. Fontes são baixadas com hashes fixados; o contêiner de análise roda sem rede. Somente as duas chamadas finais de compilação Morfologik 1.4 são desativadas na cópia do gerador. A comparação considera conjuntos de lema/forma/POS, sem normalizar caixa, acentos ou pontuação. Metadados e hashes: [languagetool-20261027-pos-bretao.json](languagetool-20261027-pos-bretao.json). Isso demonstra correspondência lexical, sem recompilar o FSA bit a bit nem certificar suficiência jurídica. O spelling Hunspell LGPL é outro recurso e não foi usado como prova do POS GPL.
 
 ## Espanhol — confusion_set_candidates.txt
 
@@ -132,7 +134,7 @@ com autorização explícita, como [issue #12247](https://github.com/languagetoo
 Não contém fotos, documentos privados ou caminhos locais. A publicação não resolve por si
 as lacunas nem implica resposta dos mantenedores.
 
-1. **Forma preferida não demonstrada para POS binário:** asturiano, irlandês, árabe, bretão e galego. Repos podem entregar os mesmos binários sem incluir entradas/receitas completas. Exportar automaticamente esses binários não prova que o resultado é a forma preferida usada pelo mantenedor.
+1. **Forma preferida não demonstrada para POS binário:** asturiano, irlandês, árabe e galego. Repos podem entregar os mesmos binários sem incluir entradas/receitas completas. Exportar automaticamente esses binários não prova que o resultado é a forma preferida usada pelo mantenedor. Para bretão, entradas e geração lexical foram reproduzidas acima; reconstrução binária e avaliação jurídica continuam distintas.
 2. **Hunspell italiano/tagalo:** entradas editáveis históricas foram recuperadas na continuação, com hashes e revisões. Faltam provar transformação/frequências e correspondência integral aos binários. Outros Hunspell já incluem `.dic/.aff`, mas geração exata dos `.dict` pode depender de insumos ausentes.
 3. **Inputs/revisões faltantes em receitas:** arquivos pessoais/additional wordlists, frequências, FST e scripts externos. Não preencher a lacuna com a versão mais nova disponível e chamá-la correspondente.
 4. **Suficiência jurídica e mecanismo de redistribuição:** exigem decisão específica sobre pacote completo/reduzido, opções de licença e disponibilização das fontes; esta análise não substitui esse julgamento. Quando mantenedores não publicam as entradas usadas, é necessária evidência adicional deles ou uma decisão que preserve explicitamente a pendência. Não criar declaração própria de conformidade ou oferta de fontes que ainda não possuímos.

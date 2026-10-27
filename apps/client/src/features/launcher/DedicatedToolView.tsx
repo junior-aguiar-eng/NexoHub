@@ -61,6 +61,7 @@ import {
 } from "@/platform/pdf-engine";
 import { PdfPreviewQueue } from "@/platform/pdf-preview-queue";
 import { PDF_REPAIR_LIMITS, type PdfRepairReport } from "@/platform/pdf-repair-engine";
+import type { PdfToWordReport } from "@/platform/pdf-to-word-converter";
 import type { ScannedPageItem } from "@/platform/scan-to-pdf-engine";
 import { registerToolNavigationGuard } from "@/platform/tool-navigation-guard";
 import { addCustomWord, ignoreWordInSession } from "@/platform/user-vocabulary";
@@ -91,6 +92,7 @@ import { PdfRepairPanel } from "./PdfRepairPanel";
 import { PdfToExcelPanel } from "./PdfToExcelPanel";
 import { PdfToJpgPanel } from "./PdfToJpgPanel";
 import { PdfToMarkdownPanel } from "./PdfToMarkdownPanel";
+import { PdfToWordPanel } from "./PdfToWordPanel";
 import { ProtectPdfPanel } from "./ProtectPdfPanel";
 import { RedactionResultPreview } from "./RedactionResultPreview";
 import { RedactPdfPanel } from "./RedactPdfPanel";
@@ -587,6 +589,7 @@ export function DedicatedToolView({
       repairController.current?.abort();
     };
   }, [files[0], tool.id]);
+  const [pdfToWordReport, setPdfToWordReport] = useState<PdfToWordReport | null>(null);
 
   // Estados de Ferramentas de Imagem (Modo Imagem)
   const [imageCompressionLevel, setImageCompressionLevel] =
@@ -1697,6 +1700,9 @@ export function DedicatedToolView({
       if (tool.id === "pdf-repair" && output.pdfRepairReport) {
         setPdfRepairReport(output.pdfRepairReport);
       }
+      if (tool.id === "pdf-to-word" && output.pdfToWordReport) {
+        setPdfToWordReport(output.pdfToWordReport);
+      }
       setProgress(100);
       setOutputFileName(outName);
 
@@ -1710,7 +1716,8 @@ export function DedicatedToolView({
         tool.id === "text-review" ||
         tool.id === "pdf-to-markdown" ||
         tool.id === "pdf-extract-images" ||
-        tool.id === "pdf-repair";
+        tool.id === "pdf-repair" ||
+        tool.id === "pdf-to-word";
 
       if (shouldStayInWorkspace) {
         setStatus("idle");
@@ -1807,6 +1814,7 @@ export function DedicatedToolView({
     setCompressionResult(null);
     setImageResults([]);
     setPdfRepairReport(null);
+    setPdfToWordReport(null);
   }
 
   async function handleSaveOutput() {
@@ -1824,6 +1832,7 @@ export function DedicatedToolView({
     if (tool.id === "pdf-split") return translate("dedicated.actionSplit");
     if (tool.id === "pdf-compress") return translate("dedicated.actionCompress");
     if (tool.id === "pdf-repair") return translate("dedicated.actionRepair");
+    if (tool.id === "pdf-to-word") return translate("dedicated.actionPdfToWord");
     if (tool.id === "pdf-merge") return translate("dedicated.actionMerge");
     if (tool.id === "pdf-rotate") return translate("dedicated.actionRotate");
     if (tool.id === "pdf-crop") return translate("dedicated.actionCrop");
@@ -1889,6 +1898,28 @@ export function DedicatedToolView({
           compressionLevel={compressionLevel}
           onCompressionLevelChange={setCompressionLevel}
           onAddMoreFiles={() => fileInputRef.current?.click()}
+        />
+      );
+    }
+
+    // PDF PARA WORD
+    if (tool.id === "pdf-to-word") {
+      return (
+        <PdfToWordPanel
+          fileName={files[0]?.name || "documento.pdf"}
+          fileSizeBytes={files[0]?.size || 0}
+          isRunning={status === "running"}
+          progressPercent={progress}
+          report={pdfToWordReport}
+          errorMessage={status === "error" ? errorMessage : null}
+          downloadUrl={downloadUrl}
+          outputFileName={
+            outputFileName || `${files[0]?.name?.replace(/\.[^/.]+$/, "") ?? "documento"}.docx`
+          }
+          thumbnail={firstPageThumb}
+          onRunConversion={() => void handleExecute()}
+          onReset={handleReset}
+          onNavigateToOcr={onOpenTool ? () => onOpenTool("pdf-ocr", files) : undefined}
         />
       );
     }

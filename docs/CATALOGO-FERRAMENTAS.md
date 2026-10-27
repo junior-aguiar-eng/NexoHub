@@ -9,9 +9,8 @@ Data da última auditoria canônica: 23/10/2026.
 ## 1. Visão Geral do Inventário
 
 - **Total mapeado no ecossistema:** 42 ferramentas
-- **Implementadas e operacionais:** 35 ferramentas (29 PDF/Texto + 6 Imagem)
-- **Parciais / Em homologação técnica:** 1 ferramenta (DOCX via sidecar na Fase 11)
-- **Planejadas / Pendentes de ADR ou implementação:** 7 ferramentas
+- **Implementadas e operacionais:** 36 ferramentas (30 PDF/Texto + 6 Imagem)
+- **Planejadas / Pendentes de ADR ou implementação:** 6 ferramentas
 
 ---
 
@@ -43,6 +42,7 @@ Data da última auditoria canônica: 23/10/2026.
 | `scan-to-pdf` | Digitalizar para PDF | Converter em PDF | Implementada | Web, Desktop, HTTP | browser | Captura de câmera ou scanner local compilada em PDF. |
 | `pdf-to-jpg` | PDF para JPG | Converter de PDF | Implementada | Web, Desktop, HTTP | browser | Exporta páginas em 150 DPI empacotadas em arquivo ZIP ou imagem única. |
 | `pdf-to-excel` | PDF para Excel | Converter de PDF | Implementada | Web, Desktop, HTTP | browser | Extração tabular para OpenXML (.xlsx) ou CSV. Heurística posicional. |
+| `pdf-to-word` | PDF para Word | Converter de PDF | Implementada | Web, Desktop, HTTP | browser | Extração semântica de parágrafos, estilos (negrito/itálico) e quebras de página nativas em DOCX. |
 | `pdf-extract-images` | Extrair Imagens | Converter de PDF | Implementada | Web, Desktop, HTTP | browser | Extrai objetos de imagem (XObject) nos formatos JPEG ou PNG nativos. |
 | `pdf-to-markdown` | PDF para Markdown | PDF Intelligence | Implementada | Web, Desktop, HTTP | browser | Extrai texto formatado, listas e tabelas tabulares heurísticas. |
 | `text-translate` | Traduzir Texto/Documento | PDF Intelligence | Implementada | Web, Desktop, HTTP | browser (fallback native) | Tradução neural offline (Transformers.js/Bergamot). Saída estrita em text/plain. |
@@ -64,7 +64,6 @@ As ferramentas abaixo compõem o catálogo visual planejado ou dependem de decis
 | Ferramenta | Identificador Previsto | Categoria | Dependência Arquitetural / Bloqueio |
 |---|---|---|---|
 | **Word para PDF** | `word-to-pdf` | Converter em PDF | ADR de Motor Office: conversão de DOC/DOCX preservando layout completo. Requer sidecar com motor de renderização (ex: LibreOffice / headless unoconv). |
-| **PDF para Word** | `pdf-to-word` | Converter de PDF | ADR de Motor Office: reconstrução de parágrafos, fluxos de texto e tabelas em DOCX. |
 | **PowerPoint para PDF** | `powerpoint-to-pdf` | Converter em PDF | Dependente do mesmo ADR de Motor Office (LibreOffice). |
 | **Excel para PDF** | `excel-to-pdf` | Converter em PDF | Dependente do mesmo ADR de Motor Office (LibreOffice). |
 | **PDF para PowerPoint** | `pdf-to-powerpoint` | Converter de PDF | Dependente do mesmo ADR de Motor Office (LibreOffice). |
@@ -76,7 +75,7 @@ As ferramentas abaixo compõem o catálogo visual planejado ou dependem de decis
 ## 4. Política de Disponibilidade e Plataformas
 
 1. **Fonte Única:** A disponibilidade ativa é governada por `@/platform/tool-availability.ts`, derivado diretamente de `coreToolRegistry`.
-2. **Catálogo compartilhado:** O client desktop (Tauri) e o website (Browser/PWA) compartilham o catálogo de 35 ferramentas ativas neste checkout. A existência do executor web não substitui a homologação do aplicativo instalado. Nenhuma ferramenta é exibida com selo "Em breve" ou sem executor associado.
+2. **Catálogo compartilhado:** O client desktop (Tauri) e o website (Browser/PWA) compartilham o catálogo de 36 ferramentas ativas neste checkout. A existência do executor web não substitui a homologação do aplicativo instalado. Nenhuma ferramenta é exibida com selo "Em breve" ou sem executor associado.
 3. **Privacidade e Local-First:** Toda operação de transformação executa localmente. Nenhum documento é transmitido para servidores remotos.
 
 ## 5. Complementação das ferramentas atuais

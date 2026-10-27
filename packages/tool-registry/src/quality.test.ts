@@ -30,6 +30,30 @@ const valid = () => ({
 const files = () => ({ exists: vi.fn(() => true), sha256: vi.fn(() => hash) });
 
 describe("índice Q-C0", () => {
+  it("exige justificativa para exclusão explícita sem duplicar perfil homologado", () => {
+    const data = {
+      ...valid(),
+      exclusions: [
+        { toolId: "pdf-to-word", reason: "DOC-C2 fora do escopo", docs: ["docs/TOOL-SPEC.md"] },
+      ],
+    };
+    expect(() => checkQualityIndex(data, ["pdf-merge", "pdf-to-word"], files())).not.toThrow();
+    expect(() =>
+      checkQualityIndex(
+        { ...data, exclusions: [{ ...data.exclusions[0], reason: "" }] },
+        ["pdf-merge", "pdf-to-word"],
+        files(),
+      ),
+    ).toThrow(/TEXT_REQUIRED/);
+    expect(() =>
+      checkQualityIndex(
+        { ...data, exclusions: [{ ...data.exclusions[0], toolId: "pdf-merge" }] },
+        ["pdf-merge"],
+        files(),
+      ),
+    ).toThrow(/DUPLICATE/);
+    expect(() => checkQualityIndex(data, ["pdf-merge"], files())).toThrow(/TOOL_COVERAGE/);
+  });
   it("aceita registros íntegros sem executar a ferramenta", () => {
     expect(() => checkQualityIndex(valid(), ["pdf-merge"], files())).not.toThrow();
   });

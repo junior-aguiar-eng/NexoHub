@@ -1,8 +1,10 @@
 # Q-C0 — índice local de evidências
 
 Consolidação inicial de 27/10/2026 sobre a base `a9f3385`, complementada pelo
-[fechamento técnico](Q-C0-FECHAMENTO.md). O índice cobre as 35 ferramentas ativas
-do Tool Registry. DOC-C2 continua fora
+[fechamento técnico](Q-C0-FECHAMENTO.md). O índice mantém 35 perfis com evidência.
+A integração com a `main` preserva PDF → Word, preexistente nessa branch, elevando
+o catálogo a 36 ferramentas. Essa ferramenta consta em `exclusions`, com motivo e
+documentação, sem receber perfil Q-C0. DOC-C2 continua fora
 do escopo; Camelot, Docling, qpdf, OpenCV e AVIF não passam a integrar o aplicativo.
 
 ## O que o gate demonstra
@@ -10,7 +12,9 @@ do escopo; Camelot, Docling, qpdf, OpenCV e AVIF não passam a integrar o aplica
 `pnpm quality:check` valida o [índice JSON](q-c0.json) contra `coreToolManifests`, exige
 origem/licença, expectativas, recusas e casos não medidos, verifica existência das referências
 e SHA-256 dos artefatos de corpus. Rejeita registros duplicados, ferramentas ausentes/planejadas,
-campos desconhecidos e caminhos fora do repositório. O teste de integração também resolve os
+campos desconhecidos e caminhos fora do repositório. Exclusões explícitas exigem motivo
+e documento existente; não podem duplicar perfis nem deixar ferramentas sem contabilização.
+O teste de integração também resolve os
 caminhos reais para recusar links simbólicos externos. O checker é usado por testes;
 não está exportado pelo pacote nem importado pelo aplicativo.
 

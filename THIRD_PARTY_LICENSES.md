@@ -87,6 +87,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @types/deep-eql | 4.0.2 | MIT |
 | JavaScript | @types/estree | 1.0.9 | MIT |
 | JavaScript | @types/node | 26.4.0 | MIT |
+| JavaScript | @types/node | 26.6.5 | MIT |
 | JavaScript | @types/nspell | 2.1.6 | MIT |
 | JavaScript | @types/react-dom | 19.2.5 | MIT |
 | JavaScript | @types/react | 19.2.18 | MIT |
@@ -111,6 +112,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | class-variance-authority | 0.7.1 | Apache-2.0 |
 | JavaScript | clsx | 2.1.1 | MIT |
 | JavaScript | convert-source-map | 2.0.0 | MIT |
+| JavaScript | core-util-is | 1.0.3 | MIT |
 | JavaScript | cropperjs | 2.3.1 | MIT |
 | JavaScript | css-tree | 3.2.1 | MIT |
 | JavaScript | css.escape | 1.5.1 | MIT |
@@ -122,6 +124,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | dequal | 2.0.3 | MIT |
 | JavaScript | detect-libc | 2.1.2 | Apache-2.0 |
 | JavaScript | dictionary-pt | 4.0.0 | (LGPL-3.0 OR MPL-2.0) |
+| JavaScript | docx | 9.14.0 | MIT |
 | JavaScript | dom-accessibility-api | 0.5.16 | MIT |
 | JavaScript | dom-accessibility-api | 0.6.3 | MIT |
 | JavaScript | emscripten-wasm-loader | 3.0.3 | MIT |
@@ -146,16 +149,22 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | graceful-fs | 4.2.11 | ISC |
 | JavaScript | guid-typescript | 1.0.9 | ISC |
 | JavaScript | has-property-descriptors | 1.0.2 | MIT |
+| JavaScript | hash.js | 1.1.7 | MIT |
 | JavaScript | html-encoding-sniffer | 6.0.0 | MIT |
 | JavaScript | hunspell-asm | 4.0.2 | MIT |
 | JavaScript | idb-keyval | 6.3.0 | Apache-2.0 |
+| JavaScript | immediate | 3.0.6 | MIT |
 | JavaScript | indent-string | 4.0.0 | MIT |
+| JavaScript | inherits | 2.0.4 | ISC |
 | JavaScript | is-buffer | 2.0.5 | MIT |
 | JavaScript | is-potential-custom-element-name | 1.0.1 | MIT |
 | JavaScript | is-url | 1.2.4 | MIT |
+| JavaScript | isarray | 1.0.0 | MIT |
 | JavaScript | jiti | 2.7.0 | MIT |
 | JavaScript | js-tokens | 4.0.0 | MIT |
 | JavaScript | jsdom | 30.0.1 | MIT |
+| JavaScript | jszip | 3.10.2 | (MIT OR GPL-3.0-or-later) |
+| JavaScript | lie | 3.3.0 | MIT |
 | JavaScript | lightningcss-win32-x64-msvc | 1.32.0 | MPL-2.0 |
 | JavaScript | lightningcss-win32-x64-msvc | 1.33.0 | MPL-2.0 |
 | JavaScript | lightningcss | 1.32.0 | MPL-2.0 |
@@ -168,6 +177,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | matcher | 4.0.0 | MIT |
 | JavaScript | mdn-data | 2.27.1 | CC0-1.0 |
 | JavaScript | min-indent | 1.0.1 | MIT |
+| JavaScript | minimalistic-assert | 1.0.1 | ISC |
 | JavaScript | motion-dom | 12.43.0 | MIT |
 | JavaScript | motion-utils | 12.39.0 | MIT |
 | JavaScript | motion | 12.23.24 | MIT |
@@ -200,25 +210,30 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | pngjs | 7.0.0 | MIT |
 | JavaScript | postcss | 8.5.31 | MIT |
 | JavaScript | pretty-format | 27.5.1 | MIT |
+| JavaScript | process-nextick-args | 2.0.1 | MIT |
 | JavaScript | protobufjs | 7.6.6 | BSD-3-Clause |
 | JavaScript | punycode | 2.3.1 | MIT |
 | JavaScript | react-dom | 19.2.8 | MIT |
 | JavaScript | react-is | 17.0.2 | MIT |
 | JavaScript | react | 19.2.8 | MIT |
+| JavaScript | readable-stream | 2.3.8 | MIT |
 | JavaScript | redent | 3.0.0 | MIT |
 | JavaScript | regenerator-runtime | 0.13.11 | MIT |
 | JavaScript | remove-trailing-separator | 1.1.0 | ISC |
 | JavaScript | require-from-string | 2.0.2 | MIT |
 | JavaScript | reselect | 5.3.0 | MIT |
 | JavaScript | rolldown | 1.2.15 | MIT |
+| JavaScript | safe-buffer | 5.1.2 | MIT |
 | JavaScript | saxes | 6.0.0 | ISC |
 | JavaScript | scheduler | 0.27.0 | MIT |
 | JavaScript | semver | 7.8.5 | ISC |
 | JavaScript | serialize-error | 8.1.0 | MIT |
+| JavaScript | setimmediate | 1.0.5 | MIT |
 | JavaScript | siginfo | 2.0.0 | ISC |
 | JavaScript | source-map-js | 1.2.2 | BSD-3-Clause |
 | JavaScript | stackback | 0.0.2 | MIT |
 | JavaScript | std-env | 4.2.0 | MIT |
+| JavaScript | string_decoder | 1.1.1 | MIT |
 | JavaScript | strip-indent | 3.0.0 | MIT |
 | JavaScript | symbol-tree | 3.2.4 | MIT |
 | JavaScript | tailwind-merge | 3.3.1 | MIT |
@@ -240,9 +255,11 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | type-fest | 0.20.2 | (MIT OR CC0-1.0) |
 | JavaScript | typescript | 7.0.2 | Apache-2.0 |
 | JavaScript | undici-types | 8.3.0 | MIT |
+| JavaScript | undici-types | 8.9.0 | MIT |
 | JavaScript | undici | 8.12.3 | MIT |
 | JavaScript | unixify | 1.0.0 | MIT |
 | JavaScript | use-sync-external-store | 1.6.0 | MIT |
+| JavaScript | util-deprecate | 1.0.2 | MIT |
 | JavaScript | vite | 8.3.5 | MIT |
 | JavaScript | vitest | 4.1.12 | MIT |
 | JavaScript | w3c-xmlserializer | 5.0.0 | MIT |

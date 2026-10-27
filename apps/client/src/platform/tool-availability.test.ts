@@ -17,7 +17,6 @@ describe("Fonte única de disponibilidade de ferramentas", () => {
   });
 
   it("não inclui ferramentas sem executor implementado", () => {
-    expect(activeToolIds.has("pdf-to-word")).toBe(false);
     expect(activeToolIds.has("word-to-pdf")).toBe(false);
   });
 
@@ -27,9 +26,10 @@ describe("Fonte única de disponibilidade de ferramentas", () => {
     expect(httpSupportedToolIds).toBe(activeToolIds);
   });
 
-  it("contém exatamente as 35 ferramentas ativas do produto", () => {
-    // 29 ferramentas PDF/Texto + 6 ferramentas de imagem
+  it("contém exatamente as 36 ferramentas ativas do produto", () => {
+    // 30 ferramentas PDF/Texto + 6 ferramentas de imagem
     expect(activeToolIds.has("pdf-repair")).toBe(true);
-    expect(activeToolIds.size).toBe(35);
+    expect(activeToolIds.has("pdf-to-word")).toBe(true);
+    expect(activeToolIds.size).toBe(36);
   });
 });

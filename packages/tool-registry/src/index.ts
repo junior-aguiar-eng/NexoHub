@@ -389,6 +389,17 @@ export const coreToolManifests = [
     capabilities: imageCapabilities,
     executor: "browser",
   },
+  {
+    id: "pdf-to-word",
+    version: "1.0.0",
+    name: "PDF para Word",
+    category: "pdf",
+    surfaces: ["quick", "studio"],
+    accepts: ["application/pdf"],
+    produces: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+    capabilities: pdfCapabilities,
+    executor: "browser",
+  },
 ] as const satisfies readonly ToolManifest[];
 
 export function createCoreToolRegistry(): ToolRegistry {
@@ -404,17 +415,6 @@ export const coreToolRegistry = createCoreToolRegistry();
  * Não são registradas no registry ativo até que o executor nativo e ADR estejam consolidados.
  */
 export const plannedToolManifests = [
-  {
-    id: "pdf-to-word",
-    version: "1.0.0",
-    name: "PDF para Word",
-    category: "pdf",
-    surfaces: ["quick", "studio"],
-    accepts: ["application/pdf"],
-    produces: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
-    capabilities: pdfCapabilities,
-    executor: "native",
-  },
   {
     id: "word-to-pdf",
     version: "1.0.0",

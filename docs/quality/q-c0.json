@@ -26,7 +26,7 @@
         {
           "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
           "kind": "generator",
-          "sha256": "555462ca2b1208efd53f99b907382441d8526c175a66a7002f4618800bfe1500"
+          "sha256": "bb453b3ea6e40c620902a802a856417974566834f34eec816f27fc5ce854125d"
         }
       ]
     },
@@ -483,7 +483,7 @@
         {
           "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
           "kind": "generator",
-          "sha256": "555462ca2b1208efd53f99b907382441d8526c175a66a7002f4618800bfe1500"
+          "sha256": "bb453b3ea6e40c620902a802a856417974566834f34eec816f27fc5ce854125d"
         },
         {
           "path": "apps/client/src/platform/document-reader.test.ts",
@@ -576,7 +576,7 @@
         {
           "path": "apps/client/e2e/tool-quality.spec.ts",
           "kind": "generator",
-          "sha256": "91f1d5faeabc11d758c80e95a87cce5289369095815129cf72779f2765b84999"
+          "sha256": "16227f8690e87fbd85ed884b25c1449000475fd204a5180cbb6046021165ee2f"
         },
         {
           "path": "apps/client/e2e/pdf-viewport.spec.ts",
@@ -1391,6 +1391,13 @@
         "apps/client/src/platform/image-composition-state.test.ts",
         "apps/client/e2e/image-photo-quality.spec.ts"
       ]
+    }
+  ],
+  "exclusions": [
+    {
+      "toolId": "pdf-to-word",
+      "reason": "Ferramenta preexistente na main, integrada sem ampliar homologação Q-C0. DOC-C2 permanece fora do escopo.",
+      "docs": ["docs/CATALOGO-FERRAMENTAS.md"]
     }
   ]
 }

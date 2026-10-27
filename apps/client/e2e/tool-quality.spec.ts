@@ -157,3 +157,42 @@ test("repara PDF corrompido com lixo inicial e exibe diagnóstico", async ({ pag
   await expect(page.getByText(/1 de 1 páginas recuperadas/i)).toBeVisible();
   await expect(page.getByRole("link", { name: /Baixar PDF Reparado/i })).toBeVisible();
 });
+
+test("converte PDF com texto para Word (.docx) exibindo estatísticas e prévia", async ({
+  page,
+}) => {
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const p = pdf.addPage([500, 300]);
+  p.drawText("Contrato de Prestacao de Servicos NexoHub", {
+    x: 50,
+    y: 240,
+    size: 16,
+    font,
+  });
+  p.drawText("Clausula primeira: O presente documento valida a conversao perfeita para DOCX.", {
+    x: 50,
+    y: 200,
+    size: 12,
+    font,
+  });
+
+  const pdfBytes = await pdf.save();
+
+  await page.goto(route("/pdf-para-word"));
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "contrato.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from(pdfBytes),
+  });
+
+  await expect(page.getByTestId("pdf-word-idle")).toBeVisible();
+  await page
+    .getByTestId("pdf-word-idle")
+    .getByRole("button", { name: /Converter para Word/i })
+    .click();
+
+  await expect(page.getByTestId("pdf-word-success")).toBeVisible();
+  await expect(page.getByText("Estatísticas da Conversão")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Baixar documento Word/i })).toBeVisible();
+});

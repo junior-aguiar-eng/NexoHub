@@ -91,7 +91,7 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
       type: "application/pdf",
     });
     const onOperationComplete = vi.fn();
-    const tool = { ...mockPdfCompressTool, id: "pdf-to-word" };
+    const tool = { ...mockPdfCompressTool, id: "word-to-pdf" };
     render(
       <DedicatedToolView
         tool={tool}

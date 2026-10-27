@@ -46,7 +46,14 @@ export function checkQualityIndex(
   activeIds: readonly string[],
   files: QualityFiles,
 ): void {
-  const index = object(value, ["schemaVersion", "scope", "limitations", "corpora", "tools"]);
+  const index = object(value, [
+    "schemaVersion",
+    "scope",
+    "limitations",
+    "corpora",
+    "tools",
+    "exclusions",
+  ]);
   if (index.schemaVersion !== 1 || index.scope !== "web-local-evidence")
     throw new Error("Q_C0_SCHEMA_UNSUPPORTED");
   strings(index.limitations);
@@ -97,6 +104,16 @@ export function checkQualityIndex(
     strings(tool.unmeasured);
     strings(tool.docs).forEach(exists);
     strings(tool.tests).forEach(exists);
+  }
+  if (index.exclusions !== undefined) {
+    for (const raw of rows(index.exclusions)) {
+      const exclusion = object(raw, ["toolId", "reason", "docs"]);
+      const id = text(exclusion.toolId);
+      if (tools.has(id)) throw new Error(`Q_C0_DUPLICATE: ${id}`);
+      text(exclusion.reason);
+      strings(exclusion.docs).forEach(exists);
+      tools.add(id);
+    }
   }
   if (
     new Set(activeIds).size !== activeIds.length ||

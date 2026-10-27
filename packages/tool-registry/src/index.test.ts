@@ -11,7 +11,7 @@ describe("catálogo central de ferramentas", () => {
   it("não inclui ferramentas planejadas sem executor no registry ativo", () => {
     const registry = createCoreToolRegistry();
     const activeIds = registry.list("quick").map((tool) => tool.id);
-    expect(activeIds).not.toContain("pdf-to-word");
+    expect(activeIds).toContain("pdf-to-word");
     expect(activeIds).not.toContain("word-to-pdf");
   });
 

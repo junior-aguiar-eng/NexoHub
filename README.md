@@ -23,7 +23,7 @@
     <img src="https://img.shields.io/badge/Licen%C3%A7a-MPL--2.0-blue.svg" alt="Licença MPL-2.0" />
   </a>
   <img src="https://img.shields.io/badge/Privacidade-100%25%20Local--First-emerald.svg" alt="Local-First" />
-  <img src="https://img.shields.io/badge/Ferramentas%20Ativas-35%20Operacionais-rose.svg" alt="35 Ferramentas" />
+  <img src="https://img.shields.io/badge/Ferramentas%20Ativas-36%20Operacionais-rose.svg" alt="36 Ferramentas" />
   <img src="https://img.shields.io/badge/Idioma-pt--BR-purple.svg" alt="Português do Brasil" />
 </p>
 
@@ -52,11 +52,11 @@ Sem cadastro, sem filas e sem limites artificiais de páginas:
 | 💸 **Livre e Gratuito** | Código aberto (MPL-2.0). Sem planos pagos, assinaturas, paywalls ou filas artificiais. |
 | 🔒 **Imutabilidade Estrita** | O documento original importado jamais é sobrescrito; toda transformação produz um novo artefato derivado. |
 | ⚡ **Design Contemporâneo** | Interface minimalista com parallax dinâmico suave, atalhos rápidos de teclado (`Ctrl + K`) e foco operacional. |
-| 💻 **Paridade Web & Desktop** | O mesmo catálogo de 35 ferramentas operacionais ativas tanto no client Web quanto no aplicativo Windows nativo. |
+| 💻 **Paridade Web & Desktop** | O mesmo catálogo de 36 ferramentas operacionais ativas tanto no client Web quanto no aplicativo Windows nativo. |
 
 ---
 
-## 🛠️ Catálogo de Ferramentas Ativas (35 Ferramentas)
+## 🛠️ Catálogo de Ferramentas Ativas (36 Ferramentas)
 
 Todas as ferramentas abaixo possuem **executores reais e funcionais** na Web e no Desktop Windows x64.
 
@@ -86,7 +86,7 @@ Todas as ferramentas abaixo possuem **executores reais e funcionais** na Web e n
 </details>
 
 <details open>
-<summary><strong>🔄 3. Converter em PDF & de PDF (5 ferramentas)</strong></summary>
+<summary><strong>🔄 3. Converter em PDF & de PDF (6 ferramentas)</strong></summary>
 
 | Ferramenta | Descrição Operacional | Motor de Execução |
 |---|---|---|
@@ -94,6 +94,7 @@ Todas as ferramentas abaixo possuem **executores reais e funcionais** na Web e n
 | **HTML para PDF** | Converter HTML semântico em PDF com títulos, listas e tabelas; sem preservar o layout CSS original | Parser semântico / `pdf-lib` |
 | **PDF para JPG** | Exportar páginas em alta definição (150 DPI) com download direto ou em ZIP | PDF.js + ZIP em memória |
 | **PDF para Excel** | Extração posicional tabular para planilha OpenXML (`.xlsx`) ou `.csv` | PDF.js + Excel Engine |
+| **PDF para Word** | Extração estruturada de texto, títulos e parágrafos fluidos em DOCX | PDF.js + docx Engine (MIT) |
 | **Extrair Imagens** | Identificar e salvar recursos gráficos (`XObject`) em PNG/JPG nativo | PDF.js / `pdf-lib` |
 
 </details>

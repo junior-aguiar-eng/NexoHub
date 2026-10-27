@@ -256,6 +256,15 @@ const presentation = {
     icon: FileSpreadsheet,
     accentColor: "#107C41", // Verde Esmeralda Excel
   },
+  "pdf-to-word": {
+    searchAliases: ["word", "docx", "converter word", "converter docx", "texto word"],
+    suite: "convert" as const,
+    titleKey: "tool.pdfToWord.title" as const,
+    descriptionKey: "tool.pdfToWord.description" as const,
+    uploadTaglineKey: "tool.pdfToWord.tagline" as const,
+    icon: FileText,
+    accentColor: "#2B579A", // Azul Oficial Word
+  },
   "pdf-remove-pages": {
     suite: "organize" as const,
     titleKey: "tool.pdfRemovePages.title" as const,

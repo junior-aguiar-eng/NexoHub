@@ -482,7 +482,7 @@ test("anuncia Traduzir Texto e abre a tela dedicada", async ({ page }) => {
 
 test("não anuncia conversores ou proteção sem executor", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "PDF para Word" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "PDF para Word" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Word para PDF" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "PowerPoint para PDF" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Proteger PDF" })).toBeVisible();

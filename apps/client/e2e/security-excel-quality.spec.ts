@@ -211,7 +211,7 @@ for (const kind of ["extensão privada", "MediaBox invertido"])
     ).toBeVisible();
   });
 for (const width of [390, 768, 1024, 1440])
-  test(`revisão aplicada sem sobreposição em ${width}px`, async ({ page }) => {
+  test(`revisão aplicada sem sobreposição em ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 1000 });
     await upload(page, `${process.env.NEXOHUB_BASE_PATH ?? "/"}ocultar-pdf`, await source());
     await workspaceOptions(page);
@@ -232,7 +232,7 @@ for (const width of [390, 768, 1024, 1440])
     }
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({
-      path: `/workspace/artifacts/complementacao-ocultacao-2026-10-24/aplicada-${width}.png`,
+      path: testInfo.outputPath(`aplicada-${width}.png`),
       fullPage: true,
     });
   });

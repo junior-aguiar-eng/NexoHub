@@ -5,7 +5,7 @@ import { assertInstallerPolicy } from "./installer-policy.mjs";
 const root = resolve(import.meta.dirname, "..");
 assertInstallerPolicy(readFileSync(resolve(root, "installer/nexohub.iss"), "utf8"));
 const readJson = (path) => JSON.parse(readFileSync(resolve(root, path), "utf8"));
-const expected = process.env.NEXOHUB_RELEASE_VERSION ?? "0.1.0";
+const expected = process.env.NEXOHUB_RELEASE_VERSION ?? "0.2.0";
 const pythonVersion = expected
   .replace(/-alpha\.(\d+)$/, "a$1")
   .replace(/-beta\.(\d+)$/, "b$1")
@@ -34,7 +34,7 @@ if (tauri.bundle?.active !== false) {
 }
 
 const cargo = readFileSync(resolve(root, "Cargo.lock"), "utf8");
-for (const crate of ["nexohub-core", "nexohub-desktop"]) {
+for (const crate of ["nexohub-core", "nexohub-server", "nexohub-desktop"]) {
   if (!cargo.includes(`name = "${crate}"\nversion = "${expected}"`)) {
     throw new Error(`Cargo.lock não contém ${crate} ${expected}`);
   }

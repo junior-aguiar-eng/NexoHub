@@ -38,7 +38,11 @@ for (const relPath of jsonFiles) {
 }
 
 // 2. Atualizar Cargo.toml
-const cargoTomlFiles = ["crates/nexohub-core/Cargo.toml", "apps/desktop/src-tauri/Cargo.toml"];
+const cargoTomlFiles = [
+  "crates/nexohub-core/Cargo.toml",
+  "crates/nexohub-server/Cargo.toml",
+  "apps/desktop/src-tauri/Cargo.toml",
+];
 
 for (const relPath of cargoTomlFiles) {
   const fullPath = resolve(root, relPath);

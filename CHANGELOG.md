@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.2.0] - 2026-10-27
+
+### Entrega
+
+- Consolidação das ferramentas documentais e de imagem, com revisão das mesas,
+  prévias e exportações; Q-C0 mantém 35 perfis restritos documentados.
+- Instalador Windows com o logo atual do camaleão, incluindo atualização dos
+  ícones de atalhos em upgrades.
+- LanguageTool e Java fora do instalador: preparo opcional por download oficial,
+  com hashes e revisão textual local, conforme ADR-019.
+- Atualização do Tokio para 1.53.3 para corrigir RUSTSEC-2026-0386 e reconciliação
+  dos E2E com o catálogo integrado e capturas portáveis.
+
+### Limites
+
+- Os perfis de qualidade têm os limites descritos em `docs/quality`; esta versão
+  não amplia a homologação para todos os documentos ou ambientes.
+- DOC-C2 permanece fora da homologação desta entrega. PDF para Word já integra
+  o catálogo e não recebe certificação de qualidade por esta publicação.
+- O instalador é destinado ao Windows x64. O runtime opcional exige download;
+  não se declara suporte desktop a outras plataformas.
+
+## Histórico de desenvolvimento
+
 - CMP-C1: navegação por alterações filtradas, ajuste de escala, prévias por demanda e relatório
   de comparação com fonte local incorporada, texto completo paginado e glifos ausentes explícitos.
 

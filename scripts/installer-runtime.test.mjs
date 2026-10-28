@@ -15,7 +15,7 @@ const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 test("setup verifica staging, repete sem download e preserva conflitos", {
   skip: process.platform !== "win32",
 }, async () => {
-  const root = resolve(repository, `.superpowers/installer-runtime-test-${Date.now()}`);
+  const root = resolve(repository, `target/qa/installer-runtime-test-${Date.now()}`);
   const archives = resolve(root, "archives");
   await mkdir(archives, { recursive: true });
   const cli = Buffer.from("jar-fixture");

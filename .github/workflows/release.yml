@@ -92,12 +92,25 @@ jobs:
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm build:web
       - run: uv build --project engines/python
+      - name: Empacotar artefatos portáteis preservando diretórios e avisos
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from zipfile import ZIP_DEFLATED, ZipFile
+          version = json.loads(Path('package.json').read_text())['version']
+          output = Path('release-portable')
+          output.mkdir()
+          with ZipFile(output / f'NexoHub_{version}_portable.zip', 'w', ZIP_DEFLATED) as archive:
+              for root in (Path('apps/client/dist'), Path('engines/python/dist')):
+                  for path in sorted(root.rglob('*')):
+                      if path.is_file():
+                          archive.write(path, path.as_posix())
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: nexohub-community-portable
-          path: |
-            apps/client/dist/**
-            engines/python/dist/**
+          path: release-portable/*.zip
           if-no-files-found: error
 
   publish-release:

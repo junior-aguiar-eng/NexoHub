@@ -679,7 +679,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | tinyvec | 1.12.0 | Zlib OR Apache-2.0 OR MIT |
 | Rust | tokio-macros | 2.7.2 | MIT |
 | Rust | tokio-util | 0.7.19 | MIT |
-| Rust | tokio | 1.53.1 | MIT |
+| Rust | tokio | 1.53.3 | MIT |
 | Rust | toml_datetime | 0.6.3 | MIT OR Apache-2.0 |
 | Rust | toml_datetime | 0.7.5+spec-1.1.0 | MIT OR Apache-2.0 |
 | Rust | toml_datetime | 1.1.1+spec-1.1.0 | MIT OR Apache-2.0 |

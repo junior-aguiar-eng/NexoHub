@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.1] - 2026-10-28
+
+### Corrigido
+
+- Carregamento dos workers de comparação, reparo e edição de PDF no Windows.
+- Ajuste da página e proporção das imagens inseridas na mesa de edição.
+- Salvamento nativo de formatos de imagem e documentos gerados pelas ferramentas.
+- OCR com opções de idioma e PDF pesquisável, e tradução pelo motor local no Windows.
+- Organização das ferramentas de edição e comparação e rótulos no catálogo e no OCR.
+- Acesso a fontes e prévias locais conforme a política de conteúdo do aplicativo.
+
+### Limites
+
+- OCR e tradução podem exigir download de recursos no primeiro uso. LanguageTool e Java
+  permanecem opcionais no instalador Windows x64.
+- Os testes locais não cobriram o processamento de todas as ferramentas no Windows.
+
 ## [0.2.0] - 2026-10-27
 
 ### Entrega

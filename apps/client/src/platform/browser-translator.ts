@@ -109,6 +109,7 @@ export async function performBrowserTranslation(
         text,
         sourceLang: options.sourceLang,
         targetLang: options.targetLang,
+        preservedNames: options.preservedNames,
       },
       options,
       resolve,

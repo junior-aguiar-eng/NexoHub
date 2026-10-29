@@ -134,6 +134,7 @@ export interface LauncherToolInput {
   readonly onOcrTextExtracted?: (text: string) => void;
   readonly translationSourceLang?: TranslationLanguage;
   readonly translationTargetLang?: TranslationLanguage;
+  readonly translationPreservedNames?: readonly string[];
   readonly onTranslationProgress?: (info: TranslationProgressInfo) => void;
   readonly translationSignal?: AbortSignal;
   readonly onReviewProgress?: (info: { progress: number; message: string }) => void;
@@ -886,6 +887,7 @@ async function executeTool(
 
       // Execução pelo motor neural offline no navegador
       const translationResult = await performBrowserTranslation(rawText, {
+        preservedNames: input.translationPreservedNames,
         sourceLang,
         targetLang,
         signal:

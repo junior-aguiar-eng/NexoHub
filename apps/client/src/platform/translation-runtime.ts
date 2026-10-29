@@ -205,8 +205,9 @@ export async function performRuntimeTranslation(
     engine,
   });
   if (sourceLang === targetLang || !text.trim()) return result(text);
-  const chunks = segmentTextForTranslation(text);
-  const totalChunks = chunks.filter((chunk) => !isPreservedChunk(chunk)).length;
+  const preservedNames = options.preservedNames?.map((name) => name.trim()).filter(Boolean);
+  const chunks = segmentTextForTranslation(text, 400, preservedNames);
+  const totalChunks = chunks.filter((chunk) => !isPreservedChunk(chunk, preservedNames)).length;
   if (!totalChunks) return result(text);
   const translator = await getPipeline(onProgress);
   let currentChunk = 0;
@@ -214,7 +215,7 @@ export async function performRuntimeTranslation(
   onProgress?.({ status: "translating", progress: 80, currentChunk, totalChunks });
   for (const chunk of chunks) {
     if (signal?.aborted) throw new Error("OPERACAO_CANCELADA");
-    if (isPreservedChunk(chunk)) {
+    if (isPreservedChunk(chunk, preservedNames)) {
       output.push(chunk);
       continue;
     }

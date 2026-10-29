@@ -79,3 +79,14 @@ describe("cancelamento da tradução na interface", () => {
     expect(signal?.aborted).toBe(true);
   });
 });
+
+it("encaminha a lista explícita de nomes ao tradutor", async () => {
+  engine.mockResolvedValue(result);
+  open();
+  fireEvent.change(screen.getByLabelText("Nomes a preservar"), {
+    target: { value: " João Costa \nMaria Silva" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Executar agora" }));
+  await waitFor(() => expect(engine).toHaveBeenCalledOnce());
+  expect(engine.mock.calls[0][1].preservedNames).toEqual(["João Costa", "Maria Silva"]);
+});

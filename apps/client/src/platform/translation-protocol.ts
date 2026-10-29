@@ -11,6 +11,7 @@ export interface TranslationProgressInfo {
 export interface BrowserTranslationOptions {
   sourceLang: TranslationLanguage;
   targetLang: TranslationLanguage;
+  preservedNames?: readonly string[];
   onProgress?: (info: TranslationProgressInfo) => void;
   signal?: AbortSignal;
 }
@@ -35,6 +36,7 @@ export interface TranslationWorkerRequest {
   text: string;
   sourceLang: TranslationLanguage;
   targetLang: TranslationLanguage;
+  preservedNames?: readonly string[];
 }
 export type TranslationWorkerResponse =
   | { id: number; type: "progress"; progress: TranslationProgressInfo }

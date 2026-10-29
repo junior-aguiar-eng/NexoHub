@@ -1252,6 +1252,9 @@ export const ptBR = {
   "workspace.translate.translating": "Traduzindo texto...",
   "workspace.translate.outputPlaceholder": "O texto traduzido aparecerá aqui...",
   "workspace.translate.copy": "Copiar Tradução",
+  "workspace.translate.preservedNames": "Nomes a preservar",
+  "workspace.translate.preservedNamesHelp":
+    "Informe um nome por linha, exatamente como aparece no texto. Maiúsculas, acentos e espaços são considerados. Confira a tradução ao redor dos nomes.",
   "workspace.translate.sourceLang": "Idioma de Origem",
   "workspace.translate.targetLang": "Idioma de Destino",
   "workspace.translate.lang.en": "Inglês",

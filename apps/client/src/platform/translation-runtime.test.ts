@@ -136,3 +136,21 @@ it("identifica operação sem inferência sem atribuir tradução ao modelo", as
   expect(result.engine).toBe("identity");
   expect(mocks.pipeline).not.toHaveBeenCalled();
 });
+
+it("não envia nomes preservados ao modelo nem perde nomes com acentos", async () => {
+  const infer = vi.fn(async (text: string) => [
+    { translation_text: text.replace("respondeu", "answered") },
+  ]);
+  mocks.pipeline.mockResolvedValue(infer);
+  const result = await performRuntimeTranslation("João Costa respondeu a Maria Silva.", {
+    sourceLang: "pt",
+    targetLang: "en",
+    preservedNames: ["João Costa", "Maria Silva"],
+  });
+  expect(result.translatedText).toBe("João Costa answered a Maria Silva.");
+  expect(
+    infer.mock.calls.every(
+      ([text]) => !text.includes("João Costa") && !text.includes("Maria Silva"),
+    ),
+  ).toBe(true);
+});

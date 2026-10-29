@@ -13,6 +13,7 @@ scope.onmessage = ({ data }) => {
       const result = await performRuntimeTranslation(data.text, {
         sourceLang: data.sourceLang,
         targetLang: data.targetLang,
+        preservedNames: data.preservedNames,
         onProgress: (progress) => scope.postMessage({ id: data.id, type: "progress", progress }),
       });
       scope.postMessage({ id: data.id, type: "result", result });

@@ -210,6 +210,7 @@ export function DedicatedToolView({
     "recommended",
   );
   const [translationSourceLang, setTranslationSourceLang] = useState<string>("en");
+  const [translationPreservedNames, setTranslationPreservedNames] = useState("");
   const [translationTargetLang, setTranslationTargetLang] = useState<string>("pt");
   const [translationProgressStatus, setTranslationProgressStatus] = useState<string>("");
   const [translationProgress, setTranslationProgress] = useState<TranslationProgressInfo | null>(
@@ -1608,6 +1609,10 @@ export function DedicatedToolView({
         },
         translationSourceLang: translationSourceLang as "en" | "pt" | "es",
         translationTargetLang: translationTargetLang as "en" | "pt" | "es",
+        translationPreservedNames: translationPreservedNames
+          .split(/\r?\n/)
+          .map((name) => name.trim())
+          .filter(Boolean),
         translationSignal: isTranslation ? translationController.current?.signal : undefined,
         onTranslationProgress: (info) => {
           if (run !== translationRun.current) return;
@@ -2475,6 +2480,12 @@ export function DedicatedToolView({
             cancelTranslation();
             clearTranslationResult();
             setTranslationTargetLang(l);
+          }}
+          preservedNames={translationPreservedNames}
+          onPreservedNamesChange={(value) => {
+            cancelTranslation();
+            clearTranslationResult();
+            setTranslationPreservedNames(value);
           }}
           onSwapLanguages={handleSwapLanguages}
           translatedText={translatedText}

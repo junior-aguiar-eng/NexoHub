@@ -29,7 +29,8 @@ const profileName = process.argv[2] ?? "m2m100";
 const probe = process.argv.includes("--cache-probe");
 const segmented = process.argv.includes("--segmented");
 const runtimeProbe = process.argv.includes("--runtime-probe");
-const artifact = `${profileName}${runtimeProbe ? "-runtime-probe" : probe ? "-cache-probe" : segmented ? "-segmented" : ""}`;
+const preserveNames = process.argv.includes("--preserve-names");
+const artifact = `${preserveNames ? "names-" : ""}${profileName}${runtimeProbe ? "-runtime-probe" : probe ? "-cache-probe" : segmented ? "-segmented" : ""}`;
 // RevisÃµes resolvidas da API pÃºblica sÃ£o passadas explicitamente pelo controlador.
 const profile = {
   ...profiles[profileName],
@@ -139,8 +140,8 @@ try {
                 type: "sample",
                 sample: {
                   id: "runtime-worker",
-                  source: "pt",
-                  target: "en",
+                  source: data.sourceLang,
+                  target: data.targetLang,
                   input: data.text,
                   output: message.result.translatedText,
                   engine: message.result.engine,
@@ -177,7 +178,8 @@ try {
         id: runtimeProbe ? 1 : profile.id,
         text: "Maria Silva não autorizou o pagamento de 125 euros em 14/03/2026.",
         sourceLang: "pt",
-        targetLang: "en",
+        targetLang: preserveNames ? "es" : "en",
+        preservedNames: preserveNames ? ["Maria Silva"] : [],
       },
     );
   }

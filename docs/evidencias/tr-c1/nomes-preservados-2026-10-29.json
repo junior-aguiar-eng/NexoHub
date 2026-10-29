@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-29",
+  "scope": "Worker browser real com alterações locais; não corresponde ao binário instalado ou a revisão humana da nova saída.",
+  "completed": true,
+  "errors": [],
+  "samples": [
+    {
+      "cache": false,
+      "id": "runtime-worker",
+      "source": "pt",
+      "target": "es",
+      "input": "Maria Silva não autorizou o pagamento de 125 euros em 14/03/2026.",
+      "output": "Maria Silva No autorizó el pago de 125 euros el 14/03/2026.",
+      "engine": "transformers.js-m2m100",
+      "ms": 52637
+    },
+    {
+      "cache": true,
+      "id": "runtime-worker",
+      "source": "pt",
+      "target": "es",
+      "input": "Maria Silva não autorizou o pagamento de 125 euros em 14/03/2026.",
+      "output": "Maria Silva No autorizó el pago de 125 euros el 14/03/2026.",
+      "engine": "transformers.js-m2m100",
+      "ms": 24840.699999999255
+    }
+  ]
+}

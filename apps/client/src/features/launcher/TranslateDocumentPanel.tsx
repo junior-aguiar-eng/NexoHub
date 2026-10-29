@@ -6,6 +6,8 @@ import type { TranslationLanguage, TranslationProgressInfo } from "@/platform/br
 
 type TranslateDocumentPanelProps = {
   browserModel?: boolean;
+  preservedNames?: string;
+  onPreservedNamesChange?: (value: string) => void;
   sourceLang: TranslationLanguage;
   targetLang: TranslationLanguage;
   onSourceLangChange: (lang: TranslationLanguage) => void;
@@ -27,6 +29,8 @@ type TranslateDocumentPanelProps = {
 
 export function TranslateDocumentPanel({
   browserModel = true,
+  preservedNames = "",
+  onPreservedNamesChange,
   sourceLang,
   targetLang,
   onSourceLangChange,
@@ -180,6 +184,24 @@ export function TranslateDocumentPanel({
             : "workspace.translate.downloadFallback",
         )}
       </p>
+
+      {browserModel && onPreservedNamesChange && (
+        <div>
+          <label htmlFor="translation-preserved-names">
+            {translate("workspace.translate.preservedNames")}
+          </label>
+          <textarea
+            id="translation-preserved-names"
+            className="w-full rounded-md border p-2"
+            value={preservedNames}
+            onChange={(event) => onPreservedNamesChange(event.target.value)}
+            aria-describedby="translation-preserved-names-help"
+          />
+          <p id="translation-preserved-names-help" className="text-sm text-muted-foreground">
+            {translate("workspace.translate.preservedNamesHelp")}
+          </p>
+        </div>
+      )}
 
       {/* Caixa de Progresso de Download / Tradução em Tempo Real */}
       {isRunning && (

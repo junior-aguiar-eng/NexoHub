@@ -2,7 +2,8 @@
 const LITERAL_PATTERN =
   /https?:\/\/[^\s<>]*[^\s<>.,;:!?]|www\.[^\s<>]*[^\s<>.,;:!?]|[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}|\{\{[^{}]*\}\}|\$\{[^{}]*\}|%[A-Za-z_][A-Za-z_0-9]*%/g;
 
-export function isPreservedChunk(chunk: string): boolean {
+export function isPreservedChunk(chunk: string, preservedTerms: readonly string[] = []): boolean {
+  if (preservedTerms.includes(chunk)) return true;
   if (/^[\s\p{P}\p{S}]+$/u.test(chunk)) return true;
   LITERAL_PATTERN.lastIndex = 0;
   const match = LITERAL_PATTERN.exec(chunk);
@@ -13,7 +14,11 @@ export function isPreservedChunk(chunk: string): boolean {
  * Limita os blocos de prosa à janela de contexto do modelo sem perder caracteres.
  * Literais podem exceder o limite: permanecem inteiros e não são enviados ao modelo.
  */
-export function segmentTextForTranslation(text: string, maxChunkLength: number = 400): string[] {
+export function segmentTextForTranslation(
+  text: string,
+  maxChunkLength: number = 400,
+  preservedTerms: readonly string[] = [],
+): string[] {
   if (!Number.isInteger(maxChunkLength) || maxChunkLength < 2) {
     throw new Error("LIMITE_DE_BLOCO_INVALIDO");
   }
@@ -54,10 +59,25 @@ export function segmentTextForTranslation(text: string, maxChunkLength: number =
     }
   }
   // Quebras, recuos e marcadores não dependem de o modelo respeitar formatação.
-  const separators = new RegExp(`(${LITERAL_PATTERN.source}|\\r\\n|[\\r\\n\\t]+)`, "g");
+  const names = [...new Set(preservedTerms.map((term) => term.trim()).filter(Boolean))]
+    .sort((a, b) => b.length - a.length)
+    .map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const namePattern = names.length
+    ? `(?<![\\p{L}\\p{N}\\p{M}_])(?:${names.join("|")})(?![\\p{L}\\p{N}\\p{M}_])|`
+    : "";
+  const separators = new RegExp(
+    `(${namePattern}${LITERAL_PATTERN.source}|\\r\\n|[\\r\\n\\t]+)`,
+    "gu",
+  );
   for (const part of text.split(separators)) {
     if (!part) continue;
-    if (isPreservedChunk(part)) chunks.push(part);
+    if (
+      isPreservedChunk(
+        part,
+        preservedTerms.map((term) => term.trim()),
+      )
+    )
+      chunks.push(part);
     else appendPlain(part);
   }
   return chunks;

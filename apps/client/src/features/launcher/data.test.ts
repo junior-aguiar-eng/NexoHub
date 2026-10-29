@@ -1,8 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import { HttpDocumentCorePort } from "@/platform/http-document-core";
-import { resolveLauncherTools } from "./data";
+import { pdfSuites, resolveLauncherTools } from "./data";
 
 describe("Strict Functional Tools Catalog", () => {
+  it("agrupa edição, comparação e formulários de PDF na categoria correspondente", () => {
+    const tools = resolveLauncherTools();
+    const category = pdfSuites.find((suite) => suite.id === "edit");
+    expect(category).toBeDefined();
+    for (const id of ["pdf-edit", "pdf-compare", "pdf-form-fill"]) {
+      expect(tools.find((tool) => tool.id === id)?.suite).toBe("edit");
+    }
+  });
   it("mantém as ferramentas de navegador disponíveis no website com adapter HTTP", () => {
     const tools = resolveLauncherTools([], new HttpDocumentCorePort());
     const ids = tools.map((tool) => tool.id);

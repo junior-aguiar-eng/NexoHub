@@ -1,3 +1,6 @@
+// Mantém o parser no próprio worker de comparação: workers filhos não recebem
+// os recursos do protocolo Tauri de forma confiável no WebView2.
+import "pdfjs-dist/legacy/build/pdf.worker.mjs?nexohub-worker-reader";
 import { comparePdfDocuments } from "./pdf-comparison";
 import { createComparisonReportWriter, serializePdfComparison } from "./pdf-comparison-report";
 import type { PdfComparisonPair } from "./pdf-comparison-types";

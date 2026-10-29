@@ -201,8 +201,6 @@ export async function comparePdfDocuments(
     throw new Error("PDF_COMPARACAO_LIMITE_EXCEDIDO");
   const tasks: pdfjs.PDFDocumentLoadingTask[] = [];
   let activeRender: pdfjs.RenderTask | undefined;
-  let parserWorker: Worker | undefined;
-  let pdfWorker: pdfjs.PDFWorker | undefined;
   let workPixels = 0;
   let totalCharacters = 0;
   let renderCount = 0,
@@ -229,14 +227,7 @@ export async function comparePdfDocuments(
   };
   async function open(bytes: Uint8Array) {
     const inWorker = typeof document === "undefined" && typeof OffscreenCanvas !== "undefined";
-    if (inWorker && !pdfWorker) {
-      // A inicialização automática do PDF.js usa window.location, ausente no worker.
-      // Um port explícito mantém o parser no worker filho sem executar seu bootstrap no pai.
-      parserWorker = new Worker(new URL(pdfjsWorker, location.href), { type: "module" });
-      pdfWorker = pdfjs.PDFWorker.create({ port: parserWorker });
-    }
     const task = pdfjs.getDocument({
-      ...(pdfWorker ? { worker: pdfWorker } : {}),
       data: bytes.slice(),
       useSystemFonts: !inWorker,
       disableFontFace: inWorker,
@@ -495,7 +486,5 @@ export async function comparePdfDocuments(
   } finally {
     signal?.removeEventListener("abort", cancel);
     await Promise.allSettled(tasks.map((task) => task.destroy()));
-    pdfWorker?.destroy();
-    parserWorker?.terminate();
   }
 }

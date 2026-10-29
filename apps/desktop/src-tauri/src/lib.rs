@@ -58,17 +58,23 @@ fn validate_export_name(name: &str) -> Result<&'static str, CoreError> {
         ));
     }
     let lower = name.to_ascii_lowercase();
-    if lower.ends_with(".pdf") {
-        Ok("pdf")
-    } else if lower.ends_with(".zip") {
-        Ok("zip")
-    } else if lower.ends_with(".txt") {
-        Ok("txt")
-    } else {
-        Err(CoreError::new(
+    match lower.rsplit_once('.').map(|(_, extension)| extension) {
+        Some("pdf") => Ok("pdf"),
+        Some("zip") => Ok("zip"),
+        Some("txt") => Ok("txt"),
+        Some("png") => Ok("png"),
+        Some("jpg") => Ok("jpg"),
+        Some("jpeg") => Ok("jpeg"),
+        Some("webp") => Ok("webp"),
+        Some("md") => Ok("md"),
+        Some("docx") => Ok("docx"),
+        Some("xlsx") => Ok("xlsx"),
+        Some("csv") => Ok("csv"),
+        Some("json") => Ok("json"),
+        _ => Err(CoreError::new(
             nexohub_core::ErrorCode::InvalidArgument,
             "Formato de exportação inválido.",
-        ))
+        )),
     }
 }
 
@@ -509,6 +515,12 @@ mod export_tests {
         assert_eq!(validate_export_name("documento.pdf").unwrap(), "pdf");
         assert_eq!(validate_export_name("partes.zip").unwrap(), "zip");
         assert_eq!(validate_export_name("comparacao.diff.txt").unwrap(), "txt");
+        for extension in [
+            "png", "jpg", "jpeg", "webp", "md", "docx", "xlsx", "csv", "json",
+        ] {
+            let name = format!("resultado.{extension}");
+            assert_eq!(validate_export_name(&name).unwrap(), extension);
+        }
         assert!(validate_export_name("../documento.pdf").is_err());
         assert!(validate_export_name("C:\\documento.pdf").is_err());
         assert!(validate_export_name("documento.exe").is_err());

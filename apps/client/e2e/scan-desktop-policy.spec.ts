@@ -2,6 +2,35 @@ import { readFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import { createScanImage } from "../src/platform/__fixtures__/q-c0-compress-scan/corpus";
 
+test("política desktop permite ler recursos locais e prévias blob", async ({ page }) => {
+  const config = JSON.parse(
+    await readFile(new URL("../../desktop/src-tauri/tauri.conf.json", import.meta.url), "utf8"),
+  );
+  const policy = config.app.security.csp
+    .split(";")
+    .find((directive: string) => directive.trim().startsWith("connect-src"));
+  await page.route("**/*", async (route) => {
+    if (route.request().resourceType() !== "document") return route.continue();
+    const response = await route.fetch();
+    await route.fulfill({
+      response,
+      headers: { ...response.headers(), "content-security-policy": policy },
+    });
+  });
+  await page.goto(`${process.env.NEXOHUB_BASE_PATH ?? "/"}pdf`);
+  const result = await page.evaluate(async (base) => {
+    const blobUrl = URL.createObjectURL(new Blob(["previa"]));
+    try {
+      const blob = await fetch(blobUrl).then((response) => response.text());
+      const font = await fetch(`${base}fonts/pdf-comparison/SourceSans3-Regular.ttf`);
+      return { blob, font: font.ok };
+    } finally {
+      URL.revokeObjectURL(blobUrl);
+    }
+  }, process.env.NEXOHUB_BASE_PATH ?? "/");
+  expect(result).toEqual({ blob: "previa", font: true });
+});
+
 test("scanner exibe a foto com a política de imagens do desktop", async ({ page }) => {
   const config = JSON.parse(
     await readFile(new URL("../../desktop/src-tauri/tauri.conf.json", import.meta.url), "utf8"),

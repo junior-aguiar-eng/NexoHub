@@ -37,6 +37,7 @@ import type { LauncherTool, Suite } from "./model";
 export const pdfSuites: readonly Suite[] = [
   { id: "overview", labelKey: "suite.all", ariaLabel: "Todas" },
   { id: "organize", labelKey: "suite.organize", ariaLabel: "Organizar PDF" },
+  { id: "edit", labelKey: "suite.editPdf" },
   { id: "optimize", labelKey: "suite.optimize", ariaLabel: "Otimizar PDF" },
   { id: "convert", labelKey: "suite.convert", ariaLabel: "Converter PDF" },
   { id: "text", labelKey: "suite.text", ariaLabel: "Texto e OCR" },
@@ -55,7 +56,7 @@ export const suites: readonly Suite[] = pdfSuites;
 
 const presentation = {
   "pdf-edit": {
-    suite: "organize" as const,
+    suite: "edit" as const,
     titleKey: "editor.title" as const,
     descriptionKey: "editor.description" as const,
     uploadTaglineKey: "editor.tagline" as const,
@@ -63,7 +64,7 @@ const presentation = {
     accentColor: "#e76b53",
   },
   "pdf-compare": {
-    suite: "text" as const,
+    suite: "edit" as const,
     titleKey: "pdfCompare.title" as const,
     descriptionKey: "pdfCompare.toolDescription" as const,
     uploadTaglineKey: "pdfCompare.tagline" as const,
@@ -233,7 +234,7 @@ const presentation = {
     accentColor: "#9333EA", // Roxo Ametista
   },
   "pdf-form-fill": {
-    suite: "text" as const,
+    suite: "edit" as const,
     titleKey: "tool.pdfFormFill.title" as const,
     descriptionKey: "tool.pdfFormFill.description" as const,
     uploadTaglineKey: "tool.pdfFormFill.tagline" as const,

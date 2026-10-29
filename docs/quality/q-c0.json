@@ -26,7 +26,7 @@
         {
           "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
           "kind": "generator",
-          "sha256": "bb453b3ea6e40c620902a802a856417974566834f34eec816f27fc5ce854125d"
+          "sha256": "cd13693ddf99a5bc3c0bf84249efc4eb7f935c10ddd843945ecf5120236be7d7"
         }
       ]
     },
@@ -90,7 +90,7 @@
         {
           "path": "apps/client/e2e/image-photo-quality.spec.ts",
           "kind": "generator",
-          "sha256": "852de353085bae7b857e94254b568c0c3a5400e7dece56445a22c44c9b17adc9"
+          "sha256": "50f22701f6aa6d3eabe2d6b0bdb93e8146cd14542e00d6507a951caed9508022"
         }
       ]
     },
@@ -410,7 +410,7 @@
         {
           "path": "apps/client/e2e/four-tools-regression.spec.ts",
           "kind": "generator",
-          "sha256": "a889eb71fd565ce2a7fd4db53ee99d58a2854a9eb28b47d60a8b7de0a3b8101b"
+          "sha256": "f895221c5e8e91a61a7739f3057ce582e7093bfc37c6180b57000c61c0a43807"
         }
       ]
     },
@@ -471,7 +471,7 @@
         {
           "path": "apps/client/e2e/language-image-quality.spec.ts",
           "kind": "generator",
-          "sha256": "ca41aa5d57690e8b9debcdaf69f211c3f0465b62049dc4921f23e71356a44ffa"
+          "sha256": "681623ae708cdc881a5b65bed388125286c66866814599ee3f2e103ffd278656"
         }
       ]
     },
@@ -483,7 +483,7 @@
         {
           "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
           "kind": "generator",
-          "sha256": "bb453b3ea6e40c620902a802a856417974566834f34eec816f27fc5ce854125d"
+          "sha256": "cd13693ddf99a5bc3c0bf84249efc4eb7f935c10ddd843945ecf5120236be7d7"
         },
         {
           "path": "apps/client/src/platform/document-reader.test.ts",
@@ -505,7 +505,7 @@
         {
           "path": "apps/client/e2e/four-tools-regression.spec.ts",
           "kind": "generator",
-          "sha256": "a889eb71fd565ce2a7fd4db53ee99d58a2854a9eb28b47d60a8b7de0a3b8101b"
+          "sha256": "f895221c5e8e91a61a7739f3057ce582e7093bfc37c6180b57000c61c0a43807"
         }
       ]
     },

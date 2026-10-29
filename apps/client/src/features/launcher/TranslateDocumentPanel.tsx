@@ -173,11 +173,13 @@ export function TranslateDocumentPanel({
         </div>
       </div>
 
-      {browserModel && (
-        <p className="text-sm text-muted-foreground">
-          {translate("workspace.translate.downloadRequired")}
-        </p>
-      )}
+      <p className="text-sm text-muted-foreground">
+        {translate(
+          browserModel
+            ? "workspace.translate.downloadRequired"
+            : "workspace.translate.downloadFallback",
+        )}
+      </p>
 
       {/* Caixa de Progresso de Download / Tradução em Tempo Real */}
       {isRunning && (

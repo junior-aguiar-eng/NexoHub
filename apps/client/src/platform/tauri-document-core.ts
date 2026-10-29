@@ -14,6 +14,8 @@ import { tauriSupportedToolIds } from "./tool-availability";
 
 export class TauriDocumentCorePort implements DocumentCorePort {
   readonly supportedToolIds: ReadonlySet<string> = tauriSupportedToolIds;
+  readonly ocrEngine = "browser" as const;
+  readonly translationEngine = "browser" as const;
 
   private projectPath: string | null = null;
 

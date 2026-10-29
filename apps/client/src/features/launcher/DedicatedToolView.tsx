@@ -2872,7 +2872,11 @@ export function DedicatedToolView({
                 ? "Selecionar arquivo de texto"
                 : isImageTool || tool.manifest.category === "image"
                   ? translate("dedicated.selectImages")
-                  : translate("dedicated.selectFiles")}
+                  : translate(
+                      tool.id === "pdf-ocr"
+                        ? "dedicated.selectPdfOrImage"
+                        : "dedicated.selectFiles",
+                    )}
             </span>
           </button>
           <p className="ilovepdf-main-drop-hint">{translate("dedicated.orDragDrop")}</p>

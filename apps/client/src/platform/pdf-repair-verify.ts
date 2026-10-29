@@ -3,21 +3,12 @@ import parserUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 
 /** Reabre todas as páginas da saída em leitor independente, sem executar scripts do documento. */
 export async function verifyRepairedPdf(bytes: Uint8Array, expectedPages: number): Promise<void> {
-  let parser: Worker | undefined, pdfWorker: pdfjs.PDFWorker | undefined;
   let task: pdfjs.PDFDocumentLoadingTask | undefined;
   try {
-    if (
-      typeof document === "undefined" &&
-      typeof Worker !== "undefined" &&
-      typeof location !== "undefined"
-    ) {
-      parser = new Worker(new URL(parserUrl, location.href), { type: "module" });
-      pdfWorker = pdfjs.PDFWorker.create({ port: parser });
-    } else if (typeof process === "undefined" || !process.versions?.node)
+    if (typeof process === "undefined" || !process.versions?.node)
       pdfjs.GlobalWorkerOptions.workerSrc = parserUrl;
     task = pdfjs.getDocument({
       data: bytes.slice(),
-      ...(pdfWorker ? { worker: pdfWorker } : {}),
       stopAtErrors: true,
       disableFontFace: true,
       useSystemFonts: false,
@@ -38,7 +29,5 @@ export async function verifyRepairedPdf(bytes: Uint8Array, expectedPages: number
     throw new Error("PDF_REPAIR_VERIFICATION");
   } finally {
     if (task) await task.destroy();
-    pdfWorker?.destroy();
-    parser?.terminate();
   }
 }

@@ -57,4 +57,9 @@ it("informa somente o download necessário sem expor detalhes técnicos", () => 
   expect(
     screen.queryByText("Para traduzir, é necessário fazer um download no primeiro uso."),
   ).not.toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "Se o tradutor local estiver indisponível, pode ser necessário baixar recursos para traduzir.",
+    ),
+  ).toBeVisible();
 });

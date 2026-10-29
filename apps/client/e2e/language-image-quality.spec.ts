@@ -5,6 +5,12 @@ import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 
 const base = process.env.NEXOHUB_BASE_PATH === "/hub/" ? "/hub" : "";
 
+test("OCR informa que aceita PDF ou imagem na seleção", async ({ page }) => {
+  await page.goto(`${base}/ocr-pdf`);
+  await expect(page.getByRole("button", { name: "Selecionar PDF ou imagem" })).toBeVisible();
+  await expect(page.locator('input[type="file"]')).toHaveAttribute("accept", /\.png/);
+});
+
 test("OCR preserva texto existente, códigos contíguos e PDF sem camada duplicada", async ({
   page,
 }) => {

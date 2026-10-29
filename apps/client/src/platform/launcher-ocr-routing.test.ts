@@ -3,6 +3,7 @@ import { expect, it, vi } from "vitest";
 import { performBrowserOcr } from "./browser-ocr";
 import { HttpDocumentCorePort } from "./http-document-core";
 import { type LauncherToolInput, runLauncherTool } from "./launcher-tool-runner";
+import { TauriDocumentCorePort } from "./tauri-document-core";
 
 vi.mock("./browser-ocr", () => ({ performBrowserOcr: vi.fn() }));
 
@@ -82,4 +83,51 @@ it("não troca silenciosamente PDF pesquisável por TXT quando a camada falha", 
     code: "EXECUTION_FAILED",
     message: expect.stringMatching(/PDF pesquisável/),
   });
+});
+
+it("OCR desktop respeita as opções e produz PDF pesquisável", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const bytes = await pdf.save();
+  const file = new File([bytes as BlobPart], "scan.pdf", { type: "application/pdf" });
+  vi.mocked(performBrowserOcr).mockResolvedValue({
+    text: "Texto reconhecido",
+    lines: [],
+    searchablePdfBytes: bytes,
+    pages: 1,
+    pageResults: [],
+    pageReports: [],
+    engine: "tesseract.js",
+  });
+  const port = new TauriDocumentCorePort();
+  const invoke = vi.fn(async (command: string) => {
+    if (command === "pick_project_folder") return { path: "C:/teste" };
+    if (command === "import_document_bytes")
+      return { document: { id: "doc" }, artifact: { id: "art" } };
+    if (command === "execute_ocr") return { lines: [{ text: "Sem opções" }] };
+    return {};
+  });
+  Object.assign(port, { invoke, persistLauncherResult: undefined });
+  const input: LauncherToolInput = {
+    files: [file],
+    splitMode: "pages",
+    splitIntervals: [],
+    mergeIntervals: false,
+    selectedPages: [],
+    pages: [],
+    rotateAngle: 0,
+    compressionLevel: "recommended",
+    firstText: "",
+    secondText: "",
+    ocrLanguage: "spa",
+    ocrEnhanceContrast: false,
+    ocrOutputMode: "searchable-pdf",
+  };
+  const result = await runLauncherTool(port, "pdf-ocr", input);
+  expect(performBrowserOcr).toHaveBeenCalledWith(
+    file,
+    expect.objectContaining({ language: "spa", enhanceContrast: false }),
+  );
+  expect(result.fileName).toBe("scan_ocr_pesquisavel.pdf");
+  expect(invoke).not.toHaveBeenCalled();
 });

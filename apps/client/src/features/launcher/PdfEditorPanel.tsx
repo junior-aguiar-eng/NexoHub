@@ -145,6 +145,8 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
   const savedSnapshot = useRef(new WeakSet([history.present])),
     started = useRef(false),
     stage = useRef<HTMLDivElement>(null);
+  const [scrollArea, setScrollArea] = useState<HTMLElement | null>(null);
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const imageInput = useRef<HTMLInputElement>(null),
     pdfInput = useRef<HTMLInputElement>(null);
   const gesture = useRef<
@@ -163,6 +165,26 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
     revision = output?.editorRevision,
     info = revision?.pages[page];
   const preview = useMemo(() => bitmapUrl(revision?.preview), [revision?.preview]);
+  useEffect(() => {
+    const area = scrollArea;
+    if (!area) return;
+    const update = () => {
+      const style = getComputedStyle(area);
+      const width =
+        area.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      const height =
+        area.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+      if (width > 0 && height > 0) setViewportSize({ width, height });
+    };
+    update();
+    const observer = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(update);
+    observer?.observe(area);
+    window.addEventListener("resize", update);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [scrollArea]);
   const dirty = !savedSnapshot.current.has(history.present);
   const selectedOriginal = info?.texts.find((o) => o.id === selected);
   const replacementIssue =
@@ -399,11 +421,12 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
       strokeWidth: 2,
       image,
     };
-    if (image)
-      element.height = Math.min(
-        0.5,
-        (element.width * info.width * image.height) / image.width / info.height,
-      );
+    if (image) {
+      const proportionalHeight =
+        (element.width * info.width * image.height) / image.width / info.height;
+      if (proportionalHeight > 0.5) element.width *= 0.5 / proportionalHeight;
+      element.height = Math.min(0.5, proportionalHeight);
+    }
     if (
       await commit(
         commitEditorSnapshot(history, {
@@ -967,13 +990,21 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                   mode === "draw" ? "drawHint" : mode === "existing" ? "unsupported" : "selectHint",
                 )}
               </p>
-              {/* biome-ignore lint/a11y/noNoninteractiveTabindex: área rolável acessível pelo teclado */}
-              <section className="pdf-editor-scroll" tabIndex={0} aria-label={t("title")}>
+              <section
+                ref={setScrollArea}
+                className="pdf-editor-scroll"
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: área rolável acessível pelo teclado
+                tabIndex={0}
+                aria-label={t("title")}
+              >
                 <div
                   ref={stage}
                   className={`pdf-editor-stage mode-${mode}`}
                   style={{
-                    width: `${zoom * 100}%`,
+                    width:
+                      info && viewportSize.width && viewportSize.height
+                        ? `${Math.min(viewportSize.width, (viewportSize.height * info.width) / info.height) * zoom}px`
+                        : `${zoom * 100}%`,
                     aspectRatio: info ? `${info.width}/${info.height}` : undefined,
                   }}
                   onPointerDown={(event) => start(event)}

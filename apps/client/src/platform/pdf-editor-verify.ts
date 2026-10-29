@@ -9,21 +9,12 @@ export async function verifyEditorText(
   snapshot: EditorSnapshot,
   pages: EditorPage[],
 ): Promise<void> {
-  let parser: Worker | undefined, pdfWorker: pdfjs.PDFWorker | undefined;
   let task: pdfjs.PDFDocumentLoadingTask | undefined;
   try {
-    if (
-      typeof document === "undefined" &&
-      typeof Worker !== "undefined" &&
-      typeof location !== "undefined"
-    ) {
-      parser = new Worker(new URL(parserUrl, location.href), { type: "module" });
-      pdfWorker = pdfjs.PDFWorker.create({ port: parser });
-    } else if (typeof process === "undefined" || !process.versions?.node)
+    if (typeof process === "undefined" || !process.versions?.node)
       pdfjs.GlobalWorkerOptions.workerSrc = parserUrl;
     task = pdfjs.getDocument({
       data: bytes.slice(),
-      ...(pdfWorker ? { worker: pdfWorker } : {}),
       disableFontFace: true,
       useSystemFonts: false,
       stopAtErrors: true,
@@ -116,7 +107,5 @@ export async function verifyEditorText(
     }
   } finally {
     if (task) await task.destroy();
-    pdfWorker?.destroy();
-    parser?.terminate();
   }
 }

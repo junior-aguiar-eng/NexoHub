@@ -1,6 +1,61 @@
 import { expect, test } from "@playwright/test";
 import { PDFDocument } from "pdf-lib";
 
+test("cabeçalho de imagem não sobrepõe a busca nas larguras intermediárias", async ({ page }) => {
+  for (const width of [1100, 1200, 1399, 1400]) {
+    await page.setViewportSize({ width, height: 720 });
+    await page.goto("/img");
+    const layout = await page.locator(".app-header").evaluate((header) => {
+      const search = header.querySelector(".header-actions")?.getBoundingClientRect();
+      const items = [
+        ...header.querySelectorAll(
+          ".header-main-nav > button, .header-main-nav .nav-dropdown-wrapper",
+        ),
+      ];
+      return (
+        !!search && items.every((item) => item.getBoundingClientRect().right <= search.left + 1)
+      );
+    });
+    expect(layout, `largura ${width}`).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+  }
+});
+
+test("filtro de edição reúne editor, comparador e formulários PDF", async ({ page }) => {
+  await page.goto("/pdf");
+  await page.getByRole("button", { name: "Editar e comparar PDF", exact: true }).click();
+  const cards = page.locator(".tool-card");
+  await expect(cards).toHaveCount(3);
+  for (const name of ["Editar PDF", "Comparar PDF", "Preencher Formulário PDF"]) {
+    await expect(cards.getByRole("heading", { name, exact: true })).toBeVisible();
+  }
+});
+
+test("nomes do menu de ferramentas permanecem dentro de suas colunas na janela Windows", async ({
+  page,
+}) => {
+  for (const width of [800, 1100, 1440]) {
+    await page.setViewportSize({ width, height: 720 });
+    await page.goto("/pdf");
+    await page.getByRole("button", { name: "Todas as ferramentas PDF" }).click();
+    const errors = await page.locator(".megamenu-item").evaluateAll((items) =>
+      items.flatMap((item) => {
+        const label = item.querySelector("span"),
+          column = item.closest(".megamenu-column");
+        if (!label || !column) throw new Error("Item incompleto");
+        const text = label.getBoundingClientRect(),
+          bounds = column.getBoundingClientRect();
+        return text.right > bounds.right + 1 || text.left < bounds.left - 1
+          ? [label.textContent]
+          : [];
+      }),
+    );
+    expect(errors, `largura ${width}`).toEqual([]);
+  }
+});
+
 test("seletor compacto mantém nomes acessíveis e alternância no celular", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/pdf");

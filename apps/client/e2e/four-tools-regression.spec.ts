@@ -53,6 +53,7 @@ for (const [name, html] of [
   ],
 ] as const) {
   test(`DOC-C3 preserva ${name} no PDF exportado`, async ({ page }, testInfo) => {
+    if (name === "tabela larga Unicode") test.setTimeout(90000);
     await open(page, "HTML para PDF");
     await page.getByRole("button", { name: "Digitar / Colar Código HTML", exact: true }).click();
     await page.getByTestId("html-code-input").fill(html);

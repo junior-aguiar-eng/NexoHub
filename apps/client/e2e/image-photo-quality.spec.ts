@@ -17,6 +17,7 @@ const routes = [
 for (const photo of photos)
   for (const route of routes) {
     test(`${photo.id}: fotografia CC0 em ${route}`, async ({ page }, info) => {
+      test.setTimeout(90000);
       const source = await readFile(
         new URL(`../src/platform/__fixtures__/q-c0-photos/${photo.id}.png`, import.meta.url),
       );

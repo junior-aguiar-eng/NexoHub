@@ -50,6 +50,56 @@ async function texts(bytes: Uint8Array) {
   }
 }
 
+test("ao abrir, a página inteira cabe na mesa de edição em uma janela Windows", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1100, height: 720 });
+  await open(page);
+  await expect
+    .poll(() =>
+      page.locator(".pdf-editor-stage").evaluate((stage) => {
+        const viewport = stage.closest(".pdf-editor-scroll");
+        if (!viewport) throw new Error("Área da página indisponível");
+        const image = stage.getBoundingClientRect();
+        const bounds = viewport.getBoundingClientRect();
+        return (
+          image.top >= bounds.top &&
+          image.bottom <= bounds.bottom &&
+          image.left >= bounds.left &&
+          image.right <= bounds.right
+        );
+      }),
+    )
+    .toBe(true);
+});
+
+test("imagem vertical inserida preserva sua proporção na página", async ({ page }) => {
+  await open(page);
+  const png = await page.evaluate(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 20;
+    canvas.height = 300;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas indisponível");
+    ctx.fillStyle = "red";
+    ctx.fillRect(0, 0, 20, 300);
+    return canvas.toDataURL("image/png").split(",")[1];
+  });
+  await page
+    .locator('input[type="file"]')
+    .and(page.getByLabel("Inserir imagem", { exact: true }))
+    .setInputFiles({
+      name: "vertical.png",
+      mimeType: "image/png",
+      buffer: Buffer.from(png, "base64"),
+    });
+  const inserted = page.getByRole("button", { name: "Selecionar elemento: Inserir imagem" });
+  await expect(inserted).toBeVisible();
+  const bounds = await inserted.locator("..").boundingBox();
+  if (!bounds) throw new Error("Imagem ausente");
+  expect(bounds.width / bounds.height).toBeCloseTo(20 / 300, 2);
+});
+
 test("explica incompatibilidade e exige fonte explícita para novos glifos antes da exportação", async ({
   page,
 }, info) => {

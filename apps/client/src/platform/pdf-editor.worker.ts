@@ -1,5 +1,6 @@
 import { init } from "@embedpdf/pdfium";
 import wasmUrl from "@embedpdf/pdfium/pdfium.wasm?url";
+import "pdfjs-dist/legacy/build/pdf.worker.mjs?nexohub-worker-reader";
 import { PdfEditorEngine } from "./pdf-editor-engine";
 import type { EditorWorkerRequest } from "./pdf-editor-types";
 

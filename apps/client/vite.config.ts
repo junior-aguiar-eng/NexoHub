@@ -5,11 +5,25 @@ import { defineConfig } from "vitest/config";
 
 const tauriHost = process.env.TAURI_DEV_HOST;
 
+function pdfjsWorkerReader() {
+  return {
+    name: "pdfjs-worker-reader",
+    enforce: "pre" as const,
+    transform(code: string, id: string) {
+      if (!id.includes("pdf.worker.mjs?nexohub-worker-reader")) return;
+      const bootstrap = "this.initializeFromPort(self);";
+      if (!code.includes(bootstrap)) throw new Error("Bootstrap PDF.js não encontrado");
+      return code.replace(bootstrap, "/* O worker da ferramenta fornece seu próprio canal. */");
+    },
+  };
+}
+
 export default defineConfig({
   base: process.env.NEXOHUB_BASE_PATH || "/",
   plugins: [
     react(),
     tailwindcss(),
+    pdfjsWorkerReader(),
     {
       name: "pdfjs-unlock-internals",
       enforce: "pre",
@@ -50,7 +64,7 @@ export default defineConfig({
     exclude: ["hunspell-asm", "emscripten-wasm-loader"],
   },
   clearScreen: false,
-  worker: { format: "es" },
+  worker: { format: "es", plugins: () => [pdfjsWorkerReader()] },
   server: {
     host: tauriHost || false,
     port: 5180,

@@ -15,8 +15,9 @@ offline no computador do usuário.
 
 ## Experiência do Produto
 
-- **Hub de Ferramentas (Home):** catálogo de ferramentas práticas organizado em 5 categorias ergonômicas:
+- **Hub de Ferramentas (Home):** catálogo de ferramentas práticas organizado em 6 categorias:
   - **Organizar PDF:** Organizar páginas, Juntar múltiplos PDFs, Dividir intervalos, Rotacionar páginas e Numeração automática de páginas.
+  - **Editar e comparar PDF:** Editar conteúdo compatível, comparar documentos e preencher formulários.
   - **Otimizar PDF:** Comprimir PDF com perfis reais de compactação estrutural e imagens.
   - **Converter PDF:** Imagens (JPG/PNG/WebP) para PDF e PDF para imagens JPG de alta resolução (ZIP).
   - **Texto e OCR:** Reconhecimento óptico de caracteres (OCR) local, Comparação semântica de textos, Revisão ortográfica/morfológica contextual e Tradução rápida offline.

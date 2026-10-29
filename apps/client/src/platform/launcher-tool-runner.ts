@@ -877,7 +877,7 @@ async function executeTool(
             (typeof error === "object" &&
               error !== null &&
               "code" in error &&
-              error.code === "RESOURCE_NOT_FOUND");
+              (error.code === "RESOURCE_NOT_FOUND" || error.code === "REVIEW_UNAVAILABLE"));
           if (!isUnavailable) {
             throw error;
           }

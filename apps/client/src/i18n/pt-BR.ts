@@ -166,7 +166,7 @@ export const ptBR = {
   "editor.newText": "Seu texto aqui",
   "editor.zoomIn": "Ampliar zoom",
   "editor.zoomOut": "Reduzir zoom",
-  "editor.fit": "Ajustar à largura",
+  "editor.fit": "Ajustar página",
   "editor.replace": "Substituir PDF",
   "editor.discard": "Há alterações ainda não salvas. Deseja descartá-las?",
   "editor.signed": "Este PDF possui assinatura digital. Qualquer edição pode invalidá-la.",
@@ -352,6 +352,7 @@ export const ptBR = {
   "suite.all": "Todas",
   "suite.popular": "Mais acessadas",
   "suite.organize": "Organizar PDF",
+  "suite.editPdf": "Editar e comparar PDF",
   "suite.optimize": "Otimizar PDF",
   "suite.convert": "Converter PDF",
   "suite.text": "Texto e OCR",
@@ -858,6 +859,7 @@ export const ptBR = {
   "footer.tagline": "Simples, rápido e no seu computador.",
   "dedicated.back": "Todas as ferramentas",
   "dedicated.selectFiles": "Selecionar arquivo PDF",
+  "dedicated.selectPdfOrImage": "Selecionar PDF ou imagem",
   "dedicated.selectImages": "Selecionar imagens",
   "dedicated.selectMoreFiles": "Adicionar mais arquivos",
   "dedicated.orDragDrop": "ou arraste e solte seus arquivos aqui",
@@ -1257,6 +1259,8 @@ export const ptBR = {
   "workspace.translate.lang.es": "Espanhol",
   "workspace.translate.downloadRequired":
     "Para traduzir, é necessário fazer um download no primeiro uso.",
+  "workspace.translate.downloadFallback":
+    "Se o tradutor local estiver indisponível, pode ser necessário baixar recursos para traduzir.",
   "workspace.translate.downloadNotice": "Aguarde a conclusão do download para traduzir.",
   "workspace.compress.title": "Resultado da Compressão",
   "workspace.compress.savings": "de economia alcançada",

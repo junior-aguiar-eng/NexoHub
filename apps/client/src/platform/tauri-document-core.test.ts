@@ -6,6 +6,12 @@ describe("TauriDocumentCorePort", () => {
     delete window.__TAURI_INTERNALS__;
   });
 
+  it("usa os motores locais do navegador para OCR e tradução", () => {
+    const port = new TauriDocumentCorePort();
+    expect(port.ocrEngine).toBe("browser");
+    expect(port.translationEngine).toBe("browser");
+  });
+
   it("envia o resultado ao diálogo nativo de salvamento", async () => {
     const invoke = vi.fn(async () => "C:/Saidas/resultado.pdf");
     window.__TAURI_INTERNALS__ = {

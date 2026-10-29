@@ -370,6 +370,32 @@ describe("Tool Runner do Launcher", () => {
     engine.mockRestore();
   });
 
+  it("usa tradução local no navegador quando o motor nativo está indisponível", async () => {
+    const port = new BrowserDocumentCorePort();
+    const invoke = vi.fn(async () => {
+      throw { code: "REVIEW_UNAVAILABLE" };
+    });
+    Object.assign(port, { invoke, translationEngine: "core" });
+    const engine = vi.spyOn(browserTranslator, "performBrowserTranslation").mockResolvedValueOnce({
+      translatedText: "Olá",
+      sourceLang: "en",
+      targetLang: "pt",
+      engine: "transformers.js-m2m100",
+    });
+    try {
+      const result = await runLauncherTool(port, "text-translate", {
+        ...input([new File(["Hello"], "documento.txt", { type: "text/plain" })]),
+        firstText: "Hello",
+        translationSourceLang: "en",
+        translationTargetLang: "pt",
+      });
+      expect(await result.blob.text()).toBe("Olá");
+      expect(engine).toHaveBeenCalledOnce();
+    } finally {
+      engine.mockRestore();
+    }
+  });
+
   it("rejeita tradução sem texto de entrada", async () => {
     const port = new BrowserDocumentCorePort();
     await expect(

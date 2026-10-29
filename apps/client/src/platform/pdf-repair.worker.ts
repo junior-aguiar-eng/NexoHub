@@ -1,3 +1,4 @@
+import "pdfjs-dist/legacy/build/pdf.worker.mjs?nexohub-worker-reader";
 import { repairPdfDocument } from "./pdf-repair-engine";
 import { verifyRepairedPdf } from "./pdf-repair-verify";
 

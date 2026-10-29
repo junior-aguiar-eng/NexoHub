@@ -18,8 +18,8 @@
 | 13 | Revisão (Corretor contextual e morfológico integrado com achados estruturados) | Concluída |
 | 14 | Receitas NexoFlow (DAG visual, presets e runner topológico integrados) | Concluída |
 | 15 | Hardening orientado a falhas, limites de segurança e mitigação de vulnerabilidades | Concluída |
-| 16 | Release engineering (Instalador Windows Inno Setup Authenticode, CI multi-job e Deploy Cloud Run contínuo) | Concluída |
-| 17 | Recuperação Estrutural de PDF (`pdf-repair` local-first para reconstrução de xref e trailers corrompidos) | Motor web implementado; homologação nativa pendente |
+| 16 | Release engineering (instalador Windows, CI multi-job e deploy Cloud Run) | Pipeline existente; assinatura Authenticode do instalador ainda pendente |
+| 17 | Recuperação Estrutural de PDF (`pdf-repair` local-first para reconstrução de xref e trailers corrompidos) | Motor web usado no desktop; perfis e limites em [R-C1](R-C1-VALIDACAO.md), sem homologação universal |
 | 18 | Motor de Documentos Office (ADR e sidecar para conversão fiel bidirecional Word, PowerPoint e Excel) | Planejada |
 | 19 | Arquivamento Padronizado PDF/A (Conversão com conformidade ISO 19005-1/2 e validação estrita) | Planejada |
 | 20 | PDF Intelligence Local (Resumo documental via modelos neurais estritamente locais em WebGPU/ONNX) | Planejada |
@@ -49,7 +49,7 @@ para relatórios de auditoria ou planos novos.
 | 9 | OCR-C1: OCR medido e preparação de digitalizações | [Estabilização](superpowers/plans/2026-09-24-estabilizacao-ferramentas-atuais.md#ocr-c1--ocr-medido-e-preparação-compartilhada-com-o-scanner) | Entrega local: corpus, cancelamento e PDF misto; candidato OpenCV reprovado para integração. DOC-C2 não iniciado, fora do escopo desta entrega |
 | 10 | XL-C1/MD-C1: tabelas e ordem de leitura mais controláveis | [XL-C1](XL-C1.md), [MD-C1](MD-C1.md) e Estabilização | XL-C1 entregue localmente; MD-C1 entregue localmente: leitura revisável, tabelas, relatório por página e OCR explícito. Comparação Camelot/Docling concluída isoladamente; integração condicionada a decisão de runtime |
 | 11 | IM-C4: qualidade de exportação e AVIF; DOC-C3: paginação HTML; TR-C1: tradução | Respectivos planos acima | Qualidade de exportação IM-C4 entregue; [AVIF avaliado isoladamente](IM-C4-AVIF.md), integração condicionada; [DOC-C3](DOC-C3.md) entregue localmente com paginação e cabeçalhos; TR-C1 deve anteceder qualquer declaração de licença comercial do tradutor |
-| 12 | R-C1: avaliar qpdf para Reparar PDF | [Reparar PDF](REPARAR-PDF.md#complementação-do-motor--24102026) | Entrega local validada: qpdf avaliado sem integração, regex removida, worker cancelável e saída verificada; limites em [R-C1](R-C1-VALIDACAO.md). Homologação Windows separada |
+| 12 | R-C1: avaliar qpdf para Reparar PDF | [Reparar PDF](REPARAR-PDF.md#complementação-do-motor--24102026) | Entrega local validada: qpdf avaliado sem integração, regex removida, worker cancelável e saída verificada; limites em [R-C1](R-C1-VALIDACAO.md). Teste no Windows não implica recuperação de todo PDF danificado |
 | 13 | DOC-C4: preservar campos ao remover/extrair páginas e medir grade grande | [Quatro ferramentas](superpowers/plans/2026-10-23-corrigir-quatro-ferramentas.md#doc-c4--remover-e-extrair-páginas-preservação-e-uso-em-documentos-grandes) | [Entrega local validada](DOC-C4.md): campos e geometria em PDF/ZIP, fila cancelável e ensaio de 500 páginas; grade mantida sem virtualização. DOC-C2 fora do escopo |
 
 ### Regras comuns de execução e aceite

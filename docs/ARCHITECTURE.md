@@ -63,7 +63,7 @@ O `@nexohub/tool-registry` é o catálogo canônico consumido pelas superfícies
 `@nexohub/tool-sdk` valida manifestos, antecipa indisponibilidade e encaminha execuções canceláveis
 ao adapter declarado.
 
-O ecossistema conta com 35 ferramentas ativas no catálogo web deste checkout, descritas no
+O ecossistema conta com 36 ferramentas implementadas no catálogo deste checkout, descritas no
 [catálogo canônico](CATALOGO-FERRAMENTAS.md). Entre seus grupos estão:
 - **Manipulação documental de PDF:** `pdf-organize`, `pdf-merge`, `pdf-split`, `pdf-rotate`, `pdf-compress`,
   `images-to-pdf`, `pdf-to-jpg`, `pdf-watermark` e `pdf-page-numbers` (executores em `pdf-lib` no
@@ -75,7 +75,7 @@ As seis adições web são `pdf-to-markdown`, `pdf-crop`, `pdf-sign`, `pdf-extra
 `pdf-form-fill` e `pdf-unlock`. Seus módulos locais se integram ao executor compartilhado;
 `pdf-engine` reexporta as operações para manter os consumidores existentes. O desbloqueio usa
 uma ponte interna versionada do PDF.js, descrita em [PDF-UNLOCK.md](PDF-UNLOCK.md).
-Esta entrega não homologa o desktop.
+O registro desta entrega web não homologa, por si só, o desktop.
 
 A proteção web usa AES-256 por padrão. Ocultar PDF reconstrói páginas rasterizadas para não
 manter conteúdo recuperável sob as tarjas. A conversão para Excel usa texto local e coordenadas,
@@ -127,7 +127,7 @@ materializa um novo documento a partir de conteúdo validado. O original importa
 novamente. Antes do parsing, o engine rejeita caminhos internos inseguros, links simbólicos,
 criptografia e arquivos que excedam os limites de tamanho, itens ou compressão.
 
-No website, a tradução usa NLLB q8 com Transformers.js em um worker dedicado e reutilizável.
+No website, a tradução usa M2M100 q8 com Transformers.js em um worker dedicado e reutilizável.
 O texto permanece no navegador; apenas os recursos do modelo são baixados. Cancelamento encerra
 o worker e downloads sem atividade possuem prazo de 60 segundos. O fluxo está descrito em
 [TRADUCAO-WEB.md](TRADUCAO-WEB.md).

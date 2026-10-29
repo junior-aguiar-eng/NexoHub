@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-29",
+  "installedVersion": "0.2.2",
+  "source": "Contagens emitidas no console do teste Playwright windows-pages-e2e: tradução persiste após fechar e reabrir online e offline",
+  "result": "passed",
+  "offlineMethod": "context.setOffline(true) no WebView2; rede do computador permaneceu ativa",
+  "sameProfileAcrossProcesses": true,
+  "phases": [
+    {
+      "phase": "primeira-carga",
+      "modelRequests": 18,
+      "offline": false
+    },
+    {
+      "phase": "reabertura-online",
+      "modelRequests": 0,
+      "offline": false
+    },
+    {
+      "phase": "reabertura-offline",
+      "modelRequests": 0,
+      "offline": true
+    }
+  ]
+}

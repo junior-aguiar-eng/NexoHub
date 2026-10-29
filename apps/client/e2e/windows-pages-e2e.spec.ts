@@ -1,5 +1,5 @@
 import { type ChildProcess, spawn } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -14,7 +14,7 @@ let browser: Browser;
 let page: Page;
 let profile: string;
 
-test.beforeAll(async () => {
+async function launchWindowsApp() {
   const executable = process.env.NEXOHUB_DESKTOP_EXE;
   test.skip(process.platform !== "win32" || !executable, "Informe NEXOHUB_DESKTOP_EXE no Windows");
   if (!executable) throw new Error("Executável Windows não informado");
@@ -26,12 +26,12 @@ test.beforeAll(async () => {
   await new Promise<void>((resolve, reject) =>
     server.close((error) => (error ? reject(error) : resolve())),
   );
-  profile = await mkdtemp(path.join(os.tmpdir(), "nexohub-pages-e2e-"));
+  profile ||= await mkdtemp(path.join(os.tmpdir(), "nexohub-pages-e2e-"));
   app = spawn(executable, [], {
     env: {
       ...process.env,
       WEBVIEW2_USER_DATA_FOLDER: profile,
-      WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port}`,
+      WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port}${process.env.NEXOHUB_NETWORK_HTTP1 === "1" ? " --disable-http2 --disable-quic" : ""}${process.env.NEXOHUB_NETWORK_LOG ? ` --log-net-log="${process.env.NEXOHUB_NETWORK_LOG}"` : ""}`,
     },
   });
   const endpoint = `http://127.0.0.1:${port}`;
@@ -52,7 +52,9 @@ test.beforeAll(async () => {
   await expect(page.getByRole("button", { name: "Todas as ferramentas PDF" })).toBeVisible({
     timeout: 30000,
   });
-});
+}
+
+test.beforeAll(launchWindowsApp);
 
 test.afterAll(async () => {
   if (browser) await browser.close();
@@ -585,4 +587,212 @@ test("Windows: salvar o resultado abre diálogo nativo e grava PDF", async () =>
   } finally {
     await task.destroy();
   }
+});
+
+for (const [route, extension] of [
+  ["comprimir-imagem", "png"],
+  ["converter-imagem", "jpg"],
+  ["pdf-para-excel", "xlsx"],
+] as const) {
+  test(`Windows: exportação nativa ${extension} grava arquivo utilizável`, async () => {
+    test.setTimeout(180000);
+    if (extension === "xlsx") {
+      const pdf = await PDFDocument.create();
+      const sheet = pdf.addPage([600, 400]);
+      for (const [i, row] of [
+        ["Codigo", "Produto"],
+        ["00123", "Papel"],
+      ].entries()) {
+        row.forEach((text, j) => {
+          sheet.drawText(text, { x: 40 + j * 180, y: 330 - i * 30, size: 12 });
+        });
+      }
+      await uploadPdf(route, await pdf.save());
+      await expect(page.getByTestId("excel-preview-table")).toContainText("00123");
+    } else {
+      await navigate(route);
+      const png = await readFile("src/assets/nexohub-icon.png");
+      await page
+        .locator('input[type="file"]')
+        .first()
+        .setInputFiles({ name: "imagem.png", mimeType: "image/png", buffer: png });
+      await expect(page.getByRole("region", { name: "Imagens do lote" })).toBeVisible();
+    }
+    await page.locator(".ilovepdf-action-red-btn").click();
+    await page.getByRole("button", { name: /Baixar arquivo gerado/i }).click();
+    const output = test.info().outputPath(`resultado.${extension}`);
+    console.log(`Selecione o destino de teste: ${output}`);
+    await expect
+      .poll(
+        async () => {
+          try {
+            return (await readFile(output)).length;
+          } catch {
+            return 0;
+          }
+        },
+        { timeout: 120000 },
+      )
+      .toBeGreaterThan(0);
+    const bytes = await readFile(output);
+    if (extension === "xlsx") {
+      expect(strFromU8(unzipSync(bytes)["xl/worksheets/sheet1.xml"])).toContain("00123");
+    } else {
+      const dimensions = await page.evaluate(
+        async (data) => {
+          const bitmap = await createImageBitmap(new Blob([new Uint8Array(data)]));
+          const result = [bitmap.width, bitmap.height];
+          bitmap.close();
+          return result;
+        },
+        [...bytes],
+      );
+      expect(dimensions[0]).toBeGreaterThan(0);
+      expect(dimensions[1]).toBeGreaterThan(0);
+    }
+  });
+}
+
+test("Windows: medir OCR na fotografia privada", async () => {
+  test.setTimeout(180000);
+  const source = process.env.NEXOHUB_PRIVATE_OCR_PDF;
+  test.skip(
+    !source || !process.env.NEXOHUB_PRIVATE_OCR_REFERENCES,
+    "Informe os caminhos privados do PDF e das referências",
+  );
+  if (!source) return;
+  await uploadPdf("ocr-pdf", await readFile(source));
+  await page.locator(".ilovepdf-action-red-btn").click();
+  await expect
+    .poll(() => page.locator(".ocr-result-textarea").inputValue(), { timeout: 120000 })
+    .not.toBe("");
+  const text = (await page.locator(".ocr-result-textarea").inputValue())
+    .normalize("NFC")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+  const referenceFile = process.env.NEXOHUB_PRIVATE_OCR_REFERENCES;
+  if (!referenceFile) throw new Error("Informe NEXOHUB_PRIVATE_OCR_REFERENCES");
+  const referenceData: { anchorMatches: { reference: string }[] } = JSON.parse(
+    await readFile(referenceFile, "utf8"),
+  );
+  const anchors = referenceData.anchorMatches.map(({ reference }) => reference);
+  console.log(
+    `OCR privado: ${text.length} caracteres; ${anchors.filter((anchor) => text.includes(anchor)).length}/4 referências encontradas`,
+  );
+  expect(text.trim().length).toBeGreaterThan(0);
+});
+
+test("Windows: medir tradução real de frase autoral", async () => {
+  test.setTimeout(720000);
+  test.skip(process.env.NEXOHUB_TRANSLATION_REAL !== "1", "Defina NEXOHUB_TRANSLATION_REAL=1");
+  await navigate("traduzir-texto");
+  await page.getByRole("button", { name: "Digitar Texto" }).click();
+  await page
+    .locator("#dedicated-tool-direct-textarea")
+    .fill("Maria Silva did not authorize the payment of 125 euros on 14/03/2026.");
+  const failures: string[] = [];
+  page.on("requestfailed", (request) => {
+    const url = new URL(request.url());
+    failures.push(`${url.origin}${url.pathname}: ${request.failure()?.errorText}`);
+  });
+  page.on("response", (response) => {
+    if (response.status() >= 400) {
+      const url = new URL(response.url());
+      failures.push(`${url.origin}${url.pathname}: HTTP ${response.status()}`);
+    }
+  });
+  await page.getByRole("button", { name: "Executar agora", exact: true }).click();
+  const output = page.locator(".text-translate-output-textarea");
+  await expect
+    .poll(
+      async () =>
+        (await output.inputValue()) || (await page.getByRole("alert").allTextContents()).join(" "),
+      { timeout: 660000 },
+    )
+    .not.toBe("");
+  const translated = await output.inputValue();
+  console.log(`Falhas de recursos: ${JSON.stringify(failures)}`);
+  expect(translated, (await page.getByRole("alert").allTextContents()).join(" ")).not.toBe("");
+  console.log(
+    `Tradução autoral: nome=${translated.includes("Maria Silva")}; números=${["125", "14", "03", "2026"].every((value) => translated.includes(value))}; negação=${/\bnão\b/i.test(translated)}`,
+  );
+  expect(translated).toContain("Maria Silva");
+  for (const number of ["125", "14", "03", "2026"]) expect(translated).toContain(number);
+  expect(translated).toMatch(/\bnão\b/i);
+  await page.route("**/*", async (route) => {
+    const host = new URL(route.request().url()).hostname;
+    if (host === "huggingface.co" || host.endsWith(".hf.co")) await route.abort();
+    else await route.continue();
+  });
+  await page.reload();
+  await page.getByRole("button", { name: "Digitar Texto" }).click();
+  await page.locator("#dedicated-tool-direct-textarea").fill("The payment was not authorized.");
+  await page.getByRole("button", { name: "Executar agora", exact: true }).click();
+  await expect
+    .poll(
+      async () =>
+        (await output.inputValue()) || (await page.getByRole("alert").allTextContents()).join(" "),
+      { timeout: 180000 },
+    )
+    .not.toBe("");
+  const cached = await output.inputValue();
+  expect(cached, (await page.getByRole("alert").allTextContents()).join(" ")).not.toBe("");
+  console.log(
+    `Tradução após recarregar com rede do modelo bloqueada: negação=${/\bnão\b/i.test(cached)}`,
+  );
+  expect(cached).toMatch(/\bnão\b/i);
+});
+
+test("Windows: tradução persiste após fechar e reabrir online e offline", async () => {
+  test.setTimeout(1200000);
+  test.skip(
+    process.env.NEXOHUB_TRANSLATION_PERSISTENCE !== "1",
+    "Defina NEXOHUB_TRANSLATION_PERSISTENCE=1",
+  );
+  const phases: { phase: string; modelRequests: number; offline: boolean }[] = [];
+  async function translate(phase: string, offline: boolean) {
+    let requests = 0;
+    page.on("request", (request) => {
+      const host = new URL(request.url()).hostname;
+      if (host === "huggingface.co" || host.endsWith(".hf.co")) requests++;
+    });
+    if (offline) await browser.contexts()[0].setOffline(true);
+    await navigate("traduzir-texto");
+    await page.getByRole("button", { name: "Digitar Texto" }).click();
+    await page
+      .locator("#dedicated-tool-direct-textarea")
+      .fill("The payment of 125 euros was not authorized.");
+    await page.getByRole("button", { name: "Executar agora", exact: true }).click();
+    const output = page.locator(".text-translate-output-textarea");
+    await expect
+      .poll(
+        async () =>
+          (await output.inputValue()) ||
+          (await page.getByRole("alert").allTextContents()).join(" "),
+        { timeout: 660000 },
+      )
+      .not.toBe("");
+    const value = await output.inputValue();
+    expect(value, (await page.getByRole("alert").allTextContents()).join(" ")).toMatch(/não/i);
+    expect(value).toContain("125");
+    phases.push({ phase, modelRequests: requests, offline });
+    console.log(`PERSISTENCIA ${JSON.stringify(phases.at(-1))}`);
+    if (phase !== "primeira-carga") expect(requests).toBe(0);
+  }
+  async function closeAndReopen() {
+    console.log(`FECHAR JANELA DE TESTE: pid=${app.pid}; perfil=${profile}`);
+    await expect.poll(() => app.exitCode, { timeout: 180000 }).not.toBeNull();
+    await browser.close().catch(() => {});
+    await launchWindowsApp();
+  }
+  await translate("primeira-carga", false);
+  await closeAndReopen();
+  await translate("reabertura-online", false);
+  await closeAndReopen();
+  await translate("reabertura-offline", true);
+  const evidence = test.info().outputPath("persistencia.json");
+  await writeFile(evidence, JSON.stringify(phases, null, 2));
+  await test
+    .info()
+    .attach("persistencia.json", { path: evidence, contentType: "application/json" });
 });

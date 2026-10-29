@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.2] - 2026-10-29
+
+### Corrigido
+
+- Evita bloqueio da interface Windows ao escolher pastas, documentos ou local de salvamento.
+- Ajusta a espera pela prévia no teste de imagens em lote para evitar falhas intermitentes.
+
+### Validação e limites
+
+- Os fluxos Windows foram exercitados com documentos de teste, incluindo a escolha de pasta
+  e o salvamento de um PDF pelo diálogo nativo.
+- A validação não cobre todas as combinações de formatos, opções, documentos e dispositivos.
+
 ## [0.2.1] - 2026-10-28
 
 ### Corrigido

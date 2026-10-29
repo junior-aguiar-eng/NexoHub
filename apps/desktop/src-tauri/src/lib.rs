@@ -79,7 +79,7 @@ fn validate_export_name(name: &str) -> Result<&'static str, CoreError> {
 }
 
 #[tauri::command]
-fn save_launcher_output(
+async fn save_launcher_output(
     app: tauri::AppHandle,
     request: SaveLauncherOutputRequest,
 ) -> Result<Option<String>, CoreError> {
@@ -300,7 +300,7 @@ struct PickDocumentFileResult {
 }
 
 #[tauri::command]
-fn pick_project_folder(
+async fn pick_project_folder(
     app: tauri::AppHandle,
     request: PickProjectFolderRequest,
 ) -> Result<Option<PickProjectFolderResult>, CoreError> {
@@ -332,7 +332,7 @@ fn pick_project_folder(
 }
 
 #[tauri::command]
-fn pick_document_file(
+async fn pick_document_file(
     app: tauri::AppHandle,
     request: PickDocumentFileRequest,
 ) -> Result<Option<PickDocumentFileResult>, CoreError> {

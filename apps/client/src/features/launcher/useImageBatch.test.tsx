@@ -18,7 +18,10 @@ it("libera URLs ao selecionar, esvaziar e desmontar o lote sem repetir inspeçõ
   const view = renderHook(({ items, selected }) => useImageBatch(items, selected), {
     initialProps: { items: files, selected: 0 },
   });
-  await waitFor(() => expect(view.result.current.pending).toBe(false));
+  await waitFor(() => {
+    expect(view.result.current.pending).toBe(false);
+    expect(view.result.current.previewUrl).toBeDefined();
+  });
   const first = view.result.current.previewUrl;
   view.rerender({ items: files, selected: 1 });
   await waitFor(() => expect(view.result.current.previewUrl).toBeDefined());

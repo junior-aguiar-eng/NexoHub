@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.3] - 2026-10-29
+
+### Adicionado
+
+- Campo “Nomes a preservar” na tradução local: os nomes informados são mantidos literalmente.
+
+### Validação e limites
+
+- Validado o cache do tradutor após fechar e reabrir o aplicativo 0.2.2, inclusive com WebView2 offline.
+- Ampliados os testes Windows de exportação PNG, JPG e XLSX, com reabertura dos arquivos.
+- A preservação dos nomes pode reduzir o contexto da tradução ao redor deles; a saída exige revisão.
+- Interrupções intermitentes de download e baixa qualidade de OCR na fotografia investigada continuam com os limites registrados na documentação.
+- LanguageTool e Java permanecem opcionais. O instalador não possui assinatura Authenticode.
+
 ## [0.2.2] - 2026-10-29
 
 ### Corrigido

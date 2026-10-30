@@ -75,14 +75,16 @@ Arquivos novos abaixo são propostas; os caminhos existentes foram examinados ne
 
 **Interfaces:** `CloudIdentityPort.signIn(method: "google" | "emailLink"): Promise<void>`, `getIdToken(): Promise<string | null>`, `signOut(): Promise<void>`; servidor `authenticate(headers) -> Result<VerifiedPrincipal, CloudError>` e `admit(principal, invitation) -> Participant`.
 
-- [ ] Escrever testes para token falso/expirado/emissor errado/audiência errada, e-mail não confirmado, participante suspenso e 301º participante.
+- [x] Escrever testes para token falso/expirado/emissor errado/audiência errada, e-mail não confirmado, participante suspenso e 301º participante.
 - [ ] Testar token antes válido e depois revogado, mantendo participante ativo: nova reserva deve ser recusada. Diferenciar logout deste dispositivo de revogação de todas as sessões; indisponibilidade da conferência de revogação recusa processamento pago.
-- [ ] Escrever testes de Google e e-mail vinculados ao mesmo participante, conta excluída/recriada e dois dispositivos compartilhando saldo; exigir ausência de nova franquia.
-- [ ] Rodar `cargo test -p nexohub-server --test cloud_auth` e os testes TS próximos; verificar vermelho antes de implementar.
-- [ ] Implementar verificador de tokens com biblioteca mantida/auditada e chaves oficiais em cache; verificar suspensão/admissão e revogação no servidor. Usar mecanismo oficial de revogação/`validSince` comparado a `auth_time`, além de marco central para revogação administrativa; assinatura e expiração não bastam. Nenhum token em logs.
+- [x] Escrever testes de Google e e-mail vinculados ao mesmo participante, conta excluída/recriada e dois dispositivos compartilhando saldo; exigir ausência de nova franquia.
+- [x] Rodar `cargo test -p nexohub-server --test cloud_auth` e os testes TS próximos; verificar vermelho antes de implementar.
+- [x] Implementar verificador de tokens com biblioteca mantida/auditada e chaves oficiais em cache; verificar suspensão/admissão e revogação no servidor. Usar mecanismo oficial de revogação/`validSince` comparado a `auth_time`, além de marco central para revogação administrativa; assinatura e expiração não bastam. Nenhum token em logs.
 - [ ] Integrar SDK oficial de autenticação somente no adapter browser. No Windows, navegador do sistema e código de retorno único/desafio, 60 s, consumido uma vez; verificar replay, interceptação, estado errado e logout. Nenhum token em URL ou armazenamento desprotegido.
 - [ ] Implementar admissão por convite e comando administrativo com IAM; todo vínculo de participante é auditado. Regra de identidade da pessoa depende da lista de convites, não de fingerprint/IP.
 - [ ] Testes acima verdes e login manual sintético nas duas plataformas; recusar liberação se o fluxo Windows depender de WebView Google ou de senha manipulada pelo backend próprio.
+
+**Estado em 30/10/2026:** verificador, adapter browser em memória e admissão persistente testados; fluxo nativo Windows, comando administrativo IAM, vinculação na interface e login real permanecem pendentes. Logout do adapter é local; revogação central é conferida no servidor. Evidências: [identidade e reservas](../../evidencias/hybrid/AUTH-RESERVAS-2026-10-30.md).
 
 ## Tarefa 3 — saldo, preços e reservas atômicas
 
@@ -90,15 +92,17 @@ Arquivos novos abaixo são propostas; os caminhos existentes foram examinados ne
 
 **Interfaces:** `estimate_max_cost(input, prices, policy) -> CostReservation`; `reserve(principal, request, idempotency_key) -> Reservation`; `settle(reservation_id, evidence) -> Settlement`; `usage(participant_id, period) -> CloudUsage`.
 
-**Dados:** `participants/{id}`, `invitations/{id}`, `periods/{period}/global`, `periods/{period}/participants/{id}`, `jobs/{jobId}`, `reservations/{id}`, `audit/{eventId}`. Documento global conserva pools, reservas e slots. Não usar contadores fragmentados para decisão financeira sem transação consistente.
+**Dados:** `participants/{id}`, `invitations/{id}`, `periods/{period}`, `periods/{period}/participants/{id}`, `jobs/{jobId}`, `reservations/{id}`, `audit/{eventId}`. Saldo mensal global em `periods/{period}`; reservas/vagas em `pilot/holds` e `participants/{id}/state/holds`, independentes do mês. Não usar contadores fragmentados para decisão financeira sem transação consistente.
 
-- [ ] Escrever testes vermelhos: 100 reservas simultâneas disputam pool com apenas US$ 0,01; custo por reserva US$ 0,006; exatamente uma vence. O mesmo vale para saldo individual e slots.
-- [ ] Testar saldo mensal, renovação, bloqueio nos 15 minutos antes da virada, carry-over conservador de job inconclusivo, pedido repetido, ID reutilizado para outro arquivo e preço com mais de 7 dias. Testar US$ 0,20 = 200.000 micros, sem arredondamento permissivo.
-- [ ] Rodar `cargo test -p nexohub-server --test cloud_ledger` e confirmar as falhas previstas.
-- [ ] Implementar transação que reserva unidades/dólares/vagas juntas; `used + reserved + maximum <= limit`. Persistir despacho pendente no mesmo commit, sem chamar serviços externos no callback transacional.
-- [ ] Implementar Firestore server-side com precondições/transação e IAM; usar ambiente emulado para concorrência. Testar duas instâncias independentes contra o mesmo emulador.
-- [ ] Preço máximo inclui timeout/recursos, API, bytes de tráfego e retenção permitidos; não usar média de benchmark para autorizar gasto. Custos de pré-inspeção também são reservados.
-- [ ] Reexecutar testes unitários e de integração. Exigir zero saldos negativos e nenhuma duplicação de débito/reserva.
+- [x] Escrever testes vermelhos: 100 reservas simultâneas disputam pool com apenas US$ 0,01; custo por reserva US$ 0,006; exatamente uma vence. O mesmo vale para saldo individual e slots.
+- [x] Testar saldo mensal, renovação, bloqueio nos 15 minutos antes da virada, carry-over conservador de job inconclusivo, pedido repetido, ID reutilizado para outro arquivo e preço com mais de 7 dias. Testar US$ 0,20 = 200.000 micros, sem arredondamento permissivo.
+- [x] Rodar `cargo test -p nexohub-server --test cloud_ledger` e confirmar as falhas previstas. Integração exige `FIRESTORE_EMULATOR_HOST` e `-- --include-ignored`.
+- [x] Implementar transação que reserva unidades/dólares/vagas juntas; `used + reserved + maximum <= limit`. Persistir despacho pendente no mesmo commit, sem chamar serviços externos no callback transacional.
+- [x] Implementar Firestore server-side com precondições/transação e IAM; usar ambiente emulado para concorrência. Testar duas instâncias independentes contra o mesmo emulador.
+- [x] Preço máximo inclui timeout/recursos, API, bytes de tráfego e retenção permitidos; não usar média de benchmark para autorizar gasto. Custos de pré-inspeção também são reservados.
+- [x] Reexecutar testes unitários e de integração. Exigir zero saldos negativos e nenhuma duplicação de débito/reserva.
+
+**Estado em 30/10/2026:** tarefa 3 validada em emulador, sem IAM provisionado ou rota de processamento ativada. CAS usa `batchGet` + commit atômico com precondição em todos os documentos lidos. Reservas inconclusivas atravessam a competência; liquidação entre meses e autorização de worker aguardam evidência de faturamento/reconciliador da tarefa 5. O custo da entrada interna do ledger será calculado por orçamento/inspeção, nunca aceito do cliente.
 
 ## Tarefa 4 — orçamento, consentimento e upload limitado
 

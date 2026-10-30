@@ -2,7 +2,7 @@
 
 ## Evolução híbrida aprovada, ainda sem ativação
 
-O [ADR-020](adr/ADR-020-nuvem-opcional-cotas.md) autoriza implementar nuvem opcional para até 300 participantes, preservando o processamento local gratuito e sem conta. A primeira etapa acrescenta contratos e política validada, obrigatoriamente desativada. Identidade, cotas persistentes, motores e deploy ainda dependem das etapas do plano; não são capacidades disponíveis por haver um contrato. A descrição abaixo continua sendo a arquitetura local padrão. A autorização remota limitada do ADR-015 e a evolução do ADR-020 delimitam as exceções às restrições locais descritas neste documento.
+O [ADR-020](adr/ADR-020-nuvem-opcional-cotas.md) autoriza implementar nuvem opcional para até 300 participantes, preservando o processamento local gratuito e sem conta. A base contém contratos, política desativada, verificador de identidade, adapter browser e ledger persistente com precondições atômicas no Firestore. Identidade e reservas foram testadas com fixtures/emulador, sem ligação à UI ou rotas públicas. Fluxo Windows, orçamentos/upload, workers, proteção de rotas, homologação e deploy continuam nas etapas seguintes. A descrição abaixo continua sendo a arquitetura local padrão. A autorização remota limitada do ADR-015 e a evolução do ADR-020 delimitam as exceções às restrições locais descritas neste documento.
 
 O NexoHub adota monólito modular, ports and adapters e módulos verticais. O client React/TypeScript
 é compartilhado pela web e pelo shell Tauri; não existe um segundo frontend desktop.

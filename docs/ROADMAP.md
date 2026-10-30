@@ -4,7 +4,7 @@ Estado em 30/10/2026: Windows **0.2.4 publicado e instalado**, com [validação 
 
 ## Evolução híbrida — implementação autorizada em 30/10/2026
 
-O [plano de nuvem opcional](superpowers/plans/2026-10-30-nuvem-hibrida-300.md) e o [ADR-020](adr/ADR-020-nuvem-opcional-cotas.md) preservam uso local gratuito e sem login. Início com contratos e política desativada, sem provisionamento, publicação ou alteração da versão instalada. Os motores remotos só serão ativados após identidade, ledger persistente, limites, consentimento e homologação. As pendências de OCR/reset/Office anteriores continuam independentes; DOC-C2 permanece fora deste escopo.
+O [plano de nuvem opcional](superpowers/plans/2026-10-30-nuvem-hibrida-300.md) e o [ADR-020](adr/ADR-020-nuvem-opcional-cotas.md) preservam uso local gratuito e sem login. Contratos, política, verificação de identidade e ledger persistente implementados e testados localmente; adapter browser ainda sem ligação à interface. Fluxo Windows, comando IAM e integração das rotas permanecem pendentes. Sem provisionamento, publicação ou alteração da versão instalada. Os motores remotos só serão ativados após identidade, ledger persistente, limites, consentimento e homologação. As pendências de OCR/reset/Office anteriores continuam independentes; DOC-C2 permanece fora deste escopo.
 
 | Fase | Entrega | Estado |
 | --- | --- | --- |

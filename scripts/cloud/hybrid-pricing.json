@@ -1,0 +1,14 @@
+{
+  "version": "2026-10-30.1",
+  "verifiedAt": 1793318400,
+  "cpuNanosPerVcpuSecond": 33600,
+  "memoryNanosPerGibSecond": 3500,
+  "ocrNanosPerPage": 1500000,
+  "translationNanosPerCharacter": 20000,
+  "egressNanosPerGib": 190000000,
+  "storageNanosPerGibSecond": 14,
+  "overheadUsdMicros": 2000,
+  "startupSeconds": 240,
+  "inspectionSeconds": 5,
+  "downloadTimeoutSeconds": 120
+}

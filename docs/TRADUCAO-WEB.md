@@ -56,14 +56,17 @@ O original deve ser consultado antes de usar ou exportar a tradução.
 Testes unitários cobrem cache fixado, fila, cancelamento tardio, descarte de mensagens antigas,
 timeout e progresso. E2E com rede retida/interrompida verificam a interface, não qualidade neural.
 O ensaio de cache usou pesos reais, SHA-256 e bloqueio do Hugging Face em worker novo.
-Máquinas de baixa RAM, outros navegadores, WebGPU e aplicativo Tauri instalado não foram homologados.
+Máquinas de baixa RAM, outros navegadores e WebGPU permanecem fora da homologação desse ensaio. A execução no aplicativo Windows 0.2.3 foi posteriormente validada nos casos descritos em [Validação de release](RELEASE-VALIDATION.md).
 
 
 ## Nomes informados pelo usuário — 29/10/2026
 
-O motor browser aceita uma lista explícita em “Nomes a preservar”, um nome por linha. A correspondência considera maiúsculas, acentos e espaços, com limites de palavra Unicode; nomes sobrepostos priorizam o mais longo. Os trechos correspondentes são copiados literalmente e não são enviados ao modelo. Nomes ausentes da lista não recebem essa garantia. O mesmo nome repetido é preservado em cada ocorrência. O texto ao redor é traduzido em segmentos menores, o que pode reduzir contexto e exige revisão. Alterar a lista cancela a tradução corrente e invalida o resultado anterior. O campo é exibido para o motor browser, utilizado pelo aplicativo Windows distribuído; o caminho nativo CTranslate2 é separado. Esta alteração de código ainda não foi publicada em nova versão instalada.
+O motor browser aceita uma lista explícita em “Nomes a preservar”, um nome por linha. A correspondência considera maiúsculas, acentos e espaços, com limites de palavra Unicode; nomes sobrepostos priorizam o mais longo. Os trechos correspondentes são copiados literalmente e não são enviados ao modelo. Nomes ausentes da lista não recebem essa garantia. O mesmo nome repetido é preservado em cada ocorrência. O texto ao redor é traduzido em segmentos menores, o que pode reduzir contexto e exige revisão. Alterar a lista cancela a tradução corrente e invalida o resultado anterior. O campo é exibido para o motor browser, utilizado pelo aplicativo Windows distribuído; o caminho nativo CTranslate2 é separado. O campo integra a release Windows 0.2.3 e o website publicado. A versão instalada foi verificada com tradução real e nome preservado.
 
 
 ## Cache depois de reiniciar o Windows app
 
 O ensaio de 29/10/2026 no aplicativo instalado 0.2.2 confirmou reutilização dos recursos em três processos do mesmo perfil: primeira carga com rede, reabertura com zero requisições ao modelo e outra reabertura com WebView2 offline, também sem requisições ao modelo. A tradução efetiva terminou nas três fases. Método e limitações estão em [Persistência da tradução no Windows](TRADUCAO-CACHE-WINDOWS-2026-10-29.md). Limpeza do cache, troca de perfil ou revisão do modelo podem exigir novo download.
+
+
+A validação posterior da 0.2.3 também executou tradução com nome preservado após reiniciar o processo, com WebView2 offline e zero requisições ao modelo. O resultado e as limitações constam da [evidência da release](evidencias/releases/windows-0.2.3.json). Isso complementa, sem substituir, o ensaio histórico da 0.2.2.

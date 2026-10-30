@@ -1,5 +1,7 @@
 # Q-C0 — índice local de evidências
 
+> Estado da distribuição atual: Windows 0.2.3, com [validação de instalação e atualização](../RELEASE-VALIDATION.md). Essa publicação não altera os 35 perfis do índice Q-C0 descritos abaixo.
+
 Consolidação inicial de 27/10/2026 sobre a base `a9f3385`, complementada pelo
 [fechamento técnico](Q-C0-FECHAMENTO.md). O índice mantém 35 perfis com evidência.
 A integração com a `main` preserva PDF → Word, preexistente nessa branch, elevando

@@ -1,5 +1,7 @@
 # TR-C1 — licença, qualidade e execução local
 
+> Este é o registro histórico do estudo TR-C1. O comportamento publicado, a lista de nomes e o cache da versão instalada estão descritos em [Tradução no website](TRADUCAO-WEB.md) e [Validação de release](RELEASE-VALIDATION.md). A revisão humana de 30 comparações, posterior a este estudo, está registrada na [investigação de 29/10](INVESTIGACAO-OCR-TRADUCAO-2026-10-29.md).
+
 ## Ajuste de apresentação solicitado pelo usuário
 
 Os avisos técnicos foram retirados da interface. O cliente vê somente:

@@ -1,6 +1,12 @@
 # Publicação do website em https://nexojuris.ia.br/hub/
 
-## Estado e escopo
+## Estado atual — 29/10/2026
+
+O website está publicado em `/hub/` pelo [workflow de deploy](../.github/workflows/deploy-cloudrun.yml), após sucesso da CI de `main`. A revisão `c86dda4` foi publicada e a [execução](https://github.com/junior-aguiar-eng/NexoHub/actions/runs/40927205950) terminou com sucesso. O workflow confere a revisão, publica por digest, valida endpoints públicos e restaura o tráfego anterior se a conferência pública falhar. Deploy web, release Windows e instalação local têm evidências separadas.
+
+As instruções de migração e inventário abaixo preservam o contexto de 23/10/2026; não indicam que uma nova alteração de mapa ou DNS seja necessária para publicar atualizações no destino existente.
+
+## Estado e escopo da migração
 
 O código aceita `NEXOHUB_BASE_PATH=/hub/`; o padrão permanece `/` para o subdomínio e desktop.
 O argumento de build do Docker tem o mesmo nome. Não basta configurar uma variável no runtime:

@@ -1,0 +1,81 @@
+{
+  "version": "0.2.3",
+  "date": "2026-10-29",
+  "sourceCommit": "c86dda4b45b282f0c5aa4c42a2f57da3542ea152",
+  "workflow": "https://github.com/junior-aguiar-eng/NexoHub/actions/runs/40925060477",
+  "installer": {
+    "file": "NexoHub_0.2.3_x64-setup.exe",
+    "bytes": 21282873,
+    "sha256": "68e41c57ff06894278219bd3e960747927e3ab225a6835a46dd121c7ff5a869c",
+    "checksumMatched": true,
+    "authenticode": "NotSigned"
+  },
+  "portable": {
+    "file": "NexoHub_0.2.3_portable.zip",
+    "sha256": "38c9a147887be4ac6830bf0299abb21dee8e50a1e7df7750db6d3f97d5677ebc",
+    "zipIntegrity": true,
+    "entries": 101,
+    "noticeFiles": 3
+  },
+  "sandbox": {
+    "network": "disabled",
+    "memoryMB": 4096,
+    "result": {
+      "cleanVersion": "0.2.3",
+      "cleanLaunch": {
+        "title": "NexoHub",
+        "version": "0.2.3",
+        "responding": true
+      },
+      "cleanUninstall": true,
+      "previousVersion": "0.2.2",
+      "upgradeLaunch": {
+        "title": "NexoHub",
+        "version": "0.2.3",
+        "responding": true
+      },
+      "shortcut": {
+        "target": "C:\\NexoHub-QA\\nexohub-desktop.exe",
+        "icon": "C:\\NexoHub-QA\\nexohub-camaleao.ico,0"
+      },
+      "installedExeHash": "7ea6e8bd511270ba088f01b0b4c43f5be6a869a2789ddc1deb6bd74f59df146d",
+      "iconHash": "26be96db52cf671782e2f413a03547f429167bb915f68d24f2da69adf1c50f65",
+      "documentPreserved": true,
+      "finalUninstall": true,
+      "success": true
+    },
+    "harnessNote": "O primeiro ensaio teve execuções sobrepostas pelo comando de login e pela chamada manual. A aprovação usa uma VM nova, sem comando de login, com uma única execução explícita."
+  },
+  "hostUpgrade": {
+    "from": "0.2.2",
+    "to": "0.2.3",
+    "installerExitCode": 0,
+    "installedExeSha256": "7ea6e8bd511270ba088f01b0b4c43f5be6a869a2789ddc1deb6bd74f59df146d",
+    "matchesSandbox": true,
+    "registeredDisplayVersion": "0.2.3",
+    "restartRequired": false
+  },
+  "installedFeatureValidation": {
+    "success": true,
+    "phases": [
+      {
+        "offline": false,
+        "modelRequests": 18,
+        "namesField": true,
+        "output": "Maria Silva No autorizó el pago de 125 euros el 14/03/2026."
+      },
+      {
+        "offline": true,
+        "modelRequests": 0,
+        "namesField": true,
+        "output": "Maria Silva No autorizó el pago de 125 euros el 14/03/2026."
+      }
+    ]
+  },
+  "limitations": [
+    "Amostra sintética; não é certificação universal de OCR ou fidelidade de tradução.",
+    "Offline foi emulado no contexto WebView2 após reiniciar a instância de teste; a rede do computador permaneceu ativa.",
+    "LanguageTool/Java são opcionais e não foram reinstalados neste ensaio.",
+    "A preservação de nomes pode afetar capitalização e fluidez ao redor deles."
+  ]
+}

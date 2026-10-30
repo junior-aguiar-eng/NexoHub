@@ -5,6 +5,10 @@ Windows-first e com client web suportado. Sem complexidade, burocracia ou termos
 o foco é a produtividade direta ao estilo iLovePDF, com a segurança e privacidade do processamento
 offline no computador do usuário.
 
+## Versão disponível
+
+Windows 0.2.3 publicado em 29/10/2026; website em [nexojuris.ia.br/hub/](https://nexojuris.ia.br/hub/). Instalação, atualização e casos de tradução instalada foram conferidos; o [relatório de release](RELEASE-VALIDATION.md) delimita as evidências. OCR, tradução e revisão opcional podem exigir recursos baixados no primeiro uso. A disponibilidade offline depende dos recursos locais.
+
 ## Plataformas
 
 - **Windows desktop:** alvo produtivo principal. O aplicativo usa Tauri v2, Rust e WebView2,
@@ -15,21 +19,22 @@ offline no computador do usuário.
 
 ## Experiência do Produto
 
-- **Hub de Ferramentas (Home):** catálogo de ferramentas práticas organizado em 6 categorias:
-  - **Organizar PDF:** Organizar páginas, Juntar múltiplos PDFs, Dividir intervalos, Rotacionar páginas e Numeração automática de páginas.
-  - **Editar e comparar PDF:** Editar conteúdo compatível, comparar documentos e preencher formulários.
-  - **Otimizar PDF:** Comprimir PDF com perfis reais de compactação estrutural e imagens.
-  - **Converter PDF:** Imagens (JPG/PNG/WebP) para PDF e PDF para imagens JPG de alta resolução (ZIP).
-  - **Texto e OCR:** Reconhecimento óptico de caracteres (OCR) local, Comparação semântica de textos, Revisão ortográfica/morfológica contextual e Tradução rápida offline.
-  - **Segurança:** Inserção de Marca d'água com carimbo textual configurável.
-  
+- **Hub de Ferramentas (Home):** modo PDF/texto com seis grupos e modo Imagem com seis ferramentas:
+  - **Organizar PDF:** organizar, juntar, dividir, rotacionar, recortar, numerar, remover e extrair páginas.
+  - **Editar e comparar PDF:** editar conteúdo compatível, comparar documentos e preencher formulários.
+  - **Otimizar PDF:** comprimir e reparar dentro dos perfis suportados.
+  - **Converter PDF:** imagem, JPG, extração de imagens, Markdown, Excel, Word, HTML e digitalização com câmera/imagens locais.
+  - **Texto e OCR:** reconhecer, comparar, revisar e traduzir texto; nomes explícitos podem ser preservados na tradução.
+  - **Segurança:** marca d’água, proteção, ocultação, rubrica visual e desbloqueio com senha conhecida.
+  - **Modo Imagem:** comprimir, redimensionar, recortar, converter, girar e aplicar marca d’água.
+
   *Critério estrito de vitrine:* Somente são anunciadas e disponibilizadas ferramentas com executor funcional ativo e testado (36 ferramentas implementadas no catálogo; cada perfil e plataforma tem limitações próprias de homologação). Ferramentas planejadas dependentes de novos motores ou ADRs (como conversores Office complexos e PDF/A) são documentadas no [Catálogo de Ferramentas](CATALOGO-FERRAMENTAS.md) e permanecem desativadas da vitrine até sua homologação completa.
 
 - **Tela Dedicada por Ferramenta (`DedicatedToolView`):** experiência sem fricção ao estilo iLovePDF:
   1. O usuário clica na ferramenta desejada.
   2. Acessa uma tela focada com botão amplo de seleção/arraste de arquivo PDF ou texto.
   3. Ajusta as opções efetivamente usadas pelo executor.
-  4. Executa a tarefa localmente (na memória do navegador ou no core Rust) e baixa o arquivo resultante instantaneamente.
+  4. Executa a tarefa localmente (na memória do navegador ou no core Rust) e salva ou baixa um novo arquivo resultante, conforme a plataforma.
 
 ## Garantias do produto
 
@@ -38,7 +43,7 @@ offline no computador do usuário.
 - **Privacidade total (Local-first):** arquivos são processados diretamente na máquina do usuário;
 - **Originais preservados:** as operações produzem novos arquivos derivados, sem sobrescrever o original;
 - **Indisponibilidade transparente:** requisitos de sidecars opcionais (como OCR ou corretor) são
-  gerenciados de forma explícita através de Superpoderes locais.
+  gerenciados de forma explícita pelo fluxo de capacidades locais e pela instalação opcional do runtime.
 
 Contas obrigatórias, billing, telemetria invasiva, jargões jurídicos e mesas de edição excessivamente
 complexas estão fora do escopo do produto.

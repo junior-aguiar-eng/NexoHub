@@ -128,7 +128,7 @@ novamente. Antes do parsing, o engine rejeita caminhos internos inseguros, links
 criptografia e arquivos que excedam os limites de tamanho, itens ou compressão.
 
 No website, a tradução usa M2M100 q8 com Transformers.js em um worker dedicado e reutilizável.
-O texto permanece no navegador; apenas os recursos do modelo são baixados. Cancelamento encerra
+O texto permanece no navegador/WebView2; apenas os recursos do modelo são baixados. A tela atual usa esse mesmo caminho no aplicativo Windows distribuído. A lista explícita de nomes é propagada por executor e worker e preserva as correspondências na segmentação. Cancelamento encerra
 o worker e downloads sem atividade possuem prazo de 60 segundos. O fluxo está descrito em
 [TRADUCAO-WEB.md](TRADUCAO-WEB.md).
 

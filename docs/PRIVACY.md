@@ -8,11 +8,11 @@ possui telemetria própria, conta obrigatória, sincronização ou upload autom�
 
 ## Rede
 
-A aplicação instalada não precisa acessar a rede para as funções locais. O processo de build pode
-baixar dependências e sidecars das fontes fixadas nos lockfiles e em
-`runtime/languagetool-community.json`; checksums são validados antes do empacotamento. Uma Tool que
-venha a usar rede deverá declarar capability própria, finalidade, dados transmitidos e alternativa
-local quando existente.
+Os fluxos padrão processam documentos no dispositivo. O primeiro uso de OCR ou tradução pode baixar recursos públicos do motor, idiomas, tokenizer e pesos. A tarefa opcional do instalador baixa LanguageTool/Java e confere os hashes fixados em `runtime/languagetool-community.json`. Esses downloads contatam servidores dos fornecedores e envolvem os metadados usuais de uma requisição HTTP; o documento ou texto a processar não é enviado junto.
+
+O modelo de tradução pode ser reutilizado localmente após o download; a versão Windows 0.2.3 foi testada após reiniciar o processo com WebView2 offline. Cache apagado, outro perfil, restrições de armazenamento ou mudança de modelo podem exigir novo download. O website precisa ser carregado pelo navegador; esse teste não certifica instalação PWA nem acesso inicial sem rede.
+
+Builds também baixam dependências conforme lockfiles e manifestos. O servidor HTTP opcional e os fluxos de publicação são distintos do processamento local padrão. Qualquer nova integração remota precisa declarar finalidade e dados transmitidos.
 
 ## Dados e logs
 

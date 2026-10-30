@@ -2,7 +2,7 @@
 
 Este documento é a fonte de verdade para o inventário, status funcional, plataformas atendidas, executores e limitações operacionais de todas as ferramentas do NexoHub.
 
-Data da última auditoria canônica: 23/10/2026.
+Inventário-base de 23/10/2026, reconciliado documentalmente em 29/10/2026 com os agrupamentos da interface e a release Windows 0.2.3. Esta revisão não amplia os perfis homologados.
 
 ---
 
@@ -14,6 +14,8 @@ Data da última auditoria canônica: 23/10/2026.
 
 ---
 
+O total implementado não significa homologação universal: o Q-C0 mantém 35 perfis restritos, com PDF para Word excluído daquele recorte. A [validação da release 0.2.3](RELEASE-VALIDATION.md) registra os fluxos instalados exercitados. As superfícies compartilham o catálogo; não se presume um endpoint remoto correspondente a cada operação browser.
+
 ## 2. Matriz Completa de Ferramentas
 
 | ID | Nome | Categoria | Status | Plataformas | Executor | Limitações Conhecidas & Observações |
@@ -23,31 +25,31 @@ Data da última auditoria canônica: 23/10/2026.
 | `pdf-split` | Dividir PDF | Organizar | Implementada | Web, Desktop, HTTP | native (fallback browser) | Modos por página e por intervalo; exporta PDF único ou ZIP. |
 | `pdf-remove-pages` | Remover Páginas | Organizar | Implementada | Web, Desktop, HTTP | browser | Remove páginas específicas mantendo a integridade do restante. |
 | `pdf-extract-pages` | Extrair Páginas | Organizar | Implementada | Web, Desktop, HTTP | browser | Exporta páginas escolhidas para novo PDF ou pacote ZIP. |
-| `pdf-rotate` | Rotacionar PDF | Editar | Implementada | Web, Desktop, HTTP | native (fallback browser) | Rotação em ângulos retos (90°, 180°, 270°). |
-| `pdf-crop` | Recortar PDF | Editar | Implementada | Web, Desktop, HTTP | browser | Ajusta CropBox visual. Não elimina irreversivelmente dados externos. |
+| `pdf-rotate` | Rotacionar PDF | Organizar | Implementada | Web, Desktop, HTTP | native (fallback browser) | Rotação em ângulos retos (90°, 180°, 270°). |
+| `pdf-crop` | Recortar PDF | Organizar | Implementada | Web, Desktop, HTTP | browser | Ajusta CropBox visual. Não elimina irreversivelmente dados externos. |
 | `pdf-edit` | Editar PDF | Editar | Implementada | Web, Desktop, HTTP | browser | Edição tipográfica pontual e substituição de textos em sandbox. |
-| `pdf-page-numbers` | Inserir Números de Página | Editar | Implementada | Web, Desktop, HTTP | browser | Posições em cabeçalho/rodapé, múltiplos formatos e controle de início. |
-| `pdf-watermark` | Inserir Marca d'água | Editar | Implementada | Web, Desktop, HTTP | browser | Carimbo textual com controle de cor, opacidade e rotação. |
+| `pdf-page-numbers` | Inserir Números de Página | Organizar | Implementada | Web, Desktop, HTTP | browser | Posições em cabeçalho/rodapé, múltiplos formatos e controle de início. |
+| `pdf-watermark` | Inserir Marca d'água | Segurança | Implementada | Web, Desktop, HTTP | browser | Carimbo textual com controle de cor, opacidade e rotação. |
 | `pdf-form-fill` | Preencher Formulário PDF | Editar | Implementada | Web, Desktop, HTTP | browser | Suporta AcroForm (texto, check, radio, select). Não suporta XFA. |
 | `pdf-sign` | Assinar PDF | Segurança | Implementada | Web, Desktop, HTTP | browser | Rubrica visual (desenho/texto/imagem). Não substitui certificado digital ICP-Brasil. |
 | `pdf-protect` | Proteger PDF | Segurança | Implementada | Web, Desktop, HTTP | browser | Criptografia com senha de abertura e permissões granulares. |
 | `pdf-unlock` | Desbloquear PDF | Segurança | Implementada | Web, Desktop, HTTP | browser | Descriptografa RC4/AES conhecendo a senha do proprietário. |
 | `pdf-redact` | Ocultar PDF (Tarja) | Segurança | Implementada | Web, Desktop, HTTP | browser | Modo imagem padrão; preservação opcional para PDFs simples, com remoção nativa, recusas explícitas e revisão do arquivo gerado. |
-| `pdf-compare` | Comparar PDF | Segurança | Implementada | Web, Desktop, HTTP | browser | Análise estrutural/visual entre duas versões com relatório gerado. |
+| `pdf-compare` | Comparar PDF | Editar | Implementada | Web, Desktop, HTTP | browser | Análise estrutural/visual entre duas versões com relatório gerado. |
 | `pdf-compress` | Comprimir PDF | Otimizar | Implementada | Web, Desktop, HTTP | native (fallback browser) | Perfis de compressão estrutural e reencodagem de imagens. Rejeita PDFs assinados. |
-| `pdf-repair` | Reparar PDF | Otimizar | Implementada | Web, Desktop, HTTP | browser | Reconstrução de xref/trailer, resgate resiliente de páginas legíveis e relatório diagnóstico. |
-| `pdf-ocr` | OCR em PDF | Otimizar / Texto | Implementada | Web, Desktop, HTTP | browser (fallback native) | Reconhecimento óptico local. Gera texto e PDF pesquisável. |
+| `pdf-repair` | Reparar PDF | Otimizar | Implementada | Web, Desktop, HTTP | browser | Resserializa o grafo reconhecido e verifica a saída; recusa estruturas ambíguas, assinaturas e dados irrecuperáveis. Não faz recuperação parcial página a página. Ver R-C1. |
+| `pdf-ocr` | OCR em PDF | Texto e OCR | Implementada | Web, Desktop, HTTP | browser (fallback native) | Reconhecimento óptico local. Gera texto e PDF pesquisável. |
 | `images-to-pdf` | Imagem para PDF | Converter em PDF | Implementada | Web, Desktop, HTTP | browser | Suporta JPG, PNG e WebP com orientação e margens. |
 | `html-to-pdf` | HTML para PDF | Converter em PDF | Implementada | Web, Desktop, HTTP | browser | Converte títulos, parágrafos, listas e tabelas em layout próprio. Não preserva o layout CSS original nem executa scripts ou carrega recursos externos. |
-| `scan-to-pdf` | Digitalizar para PDF | Converter em PDF | Implementada | Web, Desktop, HTTP | browser | Captura de câmera ou scanner local compilada em PDF. |
+| `scan-to-pdf` | Digitalizar para PDF | Converter em PDF | Implementada | Web, Desktop, HTTP | browser | Captura da câmera ou importação de imagens locais para PDF. Não declara integração direta com hardware de scanner. |
 | `pdf-to-jpg` | PDF para JPG | Converter de PDF | Implementada | Web, Desktop, HTTP | browser | Exporta páginas em 150 DPI empacotadas em arquivo ZIP ou imagem única. |
 | `pdf-to-excel` | PDF para Excel | Converter de PDF | Implementada | Web, Desktop, HTTP | browser | Extração tabular para OpenXML (.xlsx) ou CSV. Heurística posicional. |
 | `pdf-to-word` | PDF para Word | Converter de PDF | Implementada | Web, Desktop, HTTP | browser | Extração semântica de parágrafos, estilos (negrito/itálico) e quebras de página nativas em DOCX. |
 | `pdf-extract-images` | Extrair Imagens | Converter de PDF | Implementada | Web, Desktop, HTTP | browser | Extrai objetos de imagem (XObject) nos formatos JPEG ou PNG nativos. |
-| `pdf-to-markdown` | PDF para Markdown | PDF Intelligence | Implementada | Web, Desktop, HTTP | browser | Extrai texto formatado, listas e tabelas tabulares heurísticas. |
-| `text-translate` | Traduzir Texto/Documento | PDF Intelligence | Implementada | Web, Desktop, HTTP | browser (fallback native) | Tradução neural offline (Transformers.js/Bergamot). Saída estrita em text/plain. |
-| `text-compare` | Comparar Textos | Texto | Implementada | Web, Desktop, HTTP | browser | Diff semântico e estrutural de textos com estatísticas. |
-| `text-review` | Revisar Texto | Texto | Implementada | Web, Desktop, HTTP | browser (fallback native) | Correção ortográfica e gramatical via LanguageTool/Hunspell offline. |
+| `pdf-to-markdown` | PDF para Markdown | Converter de PDF | Implementada | Web, Desktop, HTTP | browser | Extrai texto formatado, listas e tabelas tabulares heurísticas. |
+| `text-translate` | Traduzir Texto/Documento | Texto e OCR | Implementada | Web, Desktop, HTTP | browser; nativo separado | Tela atual: M2M100 q8 em worker para pt/en/es, com download inicial e cache. Lista explícita preserva nomes; saída text/plain. CTranslate2 nativo é outro caminho. |
+| `text-compare` | Comparar Textos | Texto e OCR | Implementada | Web, Desktop, HTTP | browser | Diff textual com estatísticas de adições e remoções; não classifica equivalência de significado. |
+| `text-review` | Revisar Texto | Texto e OCR | Implementada | Web, Desktop, HTTP | browser (fallback native) | Hunspell/regras locais no navegador; LanguageTool/Java opcionais no Windows. As capacidades diferem entre os motores. |
 | `image-compress` | Comprimir Imagem | Imagem | Implementada | Web, Desktop, HTTP | browser | Otimização de imagens JPG, PNG e WebP no navegador. |
 | `image-resize` | Redimensionar Imagem | Imagem | Implementada | Web, Desktop, HTTP | browser | Redimensionamento proporcional ou por pixels exatos. |
 | `image-crop` | Recortar Imagem | Imagem | Implementada | Web, Desktop, HTTP | browser | Corte retangular com coordenadas visuais. |

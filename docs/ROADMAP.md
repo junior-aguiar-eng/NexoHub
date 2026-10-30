@@ -1,5 +1,7 @@
 # Roadmap
 
+Estado em 29/10/2026: Windows **0.2.3 publicado e instalado**, com [validação de release](RELEASE-VALIDATION.md). A lista explícita de nomes integra o tradutor e o cache foi exercitado após reiniciar, inclusive offline no WebView2. Continuam abertos a assinatura Authenticode, a leitura da fotografia privada pelo OCR e a causa dos resets intermitentes no download. As fases “Concluída” abaixo descrevem implementação no escopo entregue, não homologação irrestrita de qualidade.
+
 | Fase | Entrega | Estado |
 | --- | --- | --- |
 | 0 | Monorepo, client compartilhado, Tauri Windows, Rust, Python/uv, qualidade e CI | Concluída |
@@ -9,7 +11,7 @@
 | 4 | Quick Tools PDF reais (Organizar, Juntar, Dividir, Rotacionar, Comprimir, Marca d'água, Numeração, Imagem↔PDF) | Concluída |
 | 5 | Studio sobre o Document Core (árvore documental, âncoras e histórico SQLite) | Concluída |
 | 6 | Nexo Layers, NexoFlow e promoção Quick → Studio | Concluída |
-| 7 | Texto e revisões UTF-8 imutáveis (Comparador semântico de textos) | Concluída |
+| 7 | Texto e revisões UTF-8 imutáveis (Comparador textual) | Concluída |
 | 8 | Overlay PDF | Concluída |
 | 9 | OCR (Reconhecimento óptico local integrado à tela dedicada e sidecar nativo) | Concluída |
 | 10 | Anchors (localizadores independentes para texto, PDF e OCR) | Concluída |

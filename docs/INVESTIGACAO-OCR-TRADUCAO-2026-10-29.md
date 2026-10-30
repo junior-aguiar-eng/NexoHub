@@ -1,5 +1,7 @@
 # Investigação de tradução e OCR — 29/10/2026
 
+> Registro dos ensaios realizados antes da publicação da 0.2.3. As expressões “alteração local” e “ainda não distribuída” abaixo descrevem aquele momento. A lista de nomes foi depois publicada e validada no aplicativo instalado; o estado atual está em [Validação de release](RELEASE-VALIDATION.md). As conclusões de OCR e de causa de resets continuam abertas.
+
 Escopo: Windows instalado 0.2.2 e checkout principal na base `460cf4546ecdbe88308f16f8f6c9a346ea4b48ea`. Arquivos privados e derivados permanecem locais; os testes de tradução usam texto autoral fictício.
 
 ## Download do modelo

@@ -1,5 +1,7 @@
 # Persistência da tradução no Windows — 29/10/2026
 
+> Este documento preserva o ensaio da versão 0.2.2. A validação posterior na 0.2.3 também traduziu após reiniciar com WebView2 offline; resultado em [Validação de release](RELEASE-VALIDATION.md).
+
 Aplicativo instalado 0.2.2, executável em `%LOCALAPPDATA%/Programs/NexoHub/nexohub-desktop.exe`. Perfil temporário exclusivo criado pelo teste e reutilizado em três processos distintos; o perfil pessoal não foi modificado. O teste usa texto autoral fictício e confere o número 125 e o marcador de negação na saída.
 
 | Fase | Resultado | Requisições a Hugging Face/CDN |

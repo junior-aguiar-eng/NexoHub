@@ -1,5 +1,7 @@
 # Validação das prioridades — 29/10/2026
 
+> Registro da etapa anterior à release 0.2.3. A revisão humana e a publicação ocorreram posteriormente: consulte [Investigação](INVESTIGACAO-OCR-TRADUCAO-2026-10-29.md) e [Validação de release](RELEASE-VALIDATION.md). As contagens e resultados abaixo permanecem os da execução descrita.
+
 Escopo: checkout principal, base `460cf4546ecdbe88308f16f8f6c9a346ea4b48ea`; aplicativo Windows instalado 0.2.2. As alterações nesta avaliação permanecem locais.
 
 ## Exportação no Windows e reparo

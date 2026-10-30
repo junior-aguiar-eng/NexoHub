@@ -18,6 +18,8 @@ tokenizer. `t5-shared` usa um SentencePiece compartilhado, prefixo de idioma e E
 `sentencepiece-pair` usa tokenizers separados e prefixo opcional para OPUS-MT. Sem um modelo
 compatível, o protocolo retorna `TRANSLATION_UNAVAILABLE` e não produz texto fictício.
 
+O engine nativo é separado dos executores do client. A tela de tradução web/Windows usa M2M100 em worker no navegador/WebView2; não exige instalar os modelos CTranslate2 descritos acima. A revisão textual Windows com LanguageTool/Java também é uma instalação opcional separada, não implica que este pacote Python esteja incluído no instalador Community. Consulte a [arquitetura](../../docs/ARCHITECTURE.md) e o [ADR-019](../../docs/adr/ADR-019-distribuicao-runtime-languagetool.md).
+
 Execução de desenvolvimento:
 
 ```powershell

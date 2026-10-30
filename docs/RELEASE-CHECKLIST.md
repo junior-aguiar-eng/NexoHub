@@ -1,5 +1,9 @@
 # Checklist de release
 
+## Referência atual
+
+Release publicada: [0.2.3](https://github.com/junior-aguiar-eng/NexoHub/releases/tag/v0.2.3), em 29/10/2026. A [validação](RELEASE-VALIDATION.md) registra hashes, instalação limpa, upgrade e verificações no aplicativo instalado. Este checklist continua aplicável às próximas releases; não substitui evidência de execução.
+
 ## Preparação
 
 - Confirmar versão idêntica nos manifests e lockfiles com `pnpm release:verify`.
@@ -25,3 +29,6 @@
 - Certificar somente Windows até existir validação expressa de outra plataforma.
 - Criar tag anotada apenas após aprovação; comparar os artifacts publicados com os checksums.
 - Registrar limitações conhecidas sem declarar capacidades não testadas.
+- Conferir o arquivo instalado e a versão registrada no Windows, além da tag e do nome do instalador.
+- Conferir o campo de nomes no tradutor e testar reutilização do modelo depois de fechar/reabrir, com perfil fixo e offline explicitamente delimitado.
+- Registrar o estado Authenticode: a 0.2.3 permanece `NotSigned`; checksum não equivale a assinatura do publicador.

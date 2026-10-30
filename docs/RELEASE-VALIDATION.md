@@ -1,4 +1,20 @@
-# Validação local da release engineering
+# Validação de release
+
+## Estado atual — 0.2.3, publicada em 29/10/2026
+
+A [release Windows 0.2.3](https://github.com/junior-aguiar-eng/NexoHub/releases/tag/v0.2.3) foi publicada como versão normal e latest, com instalador Inno Setup x64, ZIP web/Python, `SHA256SUMS.txt` e evidência JSON. O build e os gates da tag terminaram com sucesso na [execução oficial](https://github.com/junior-aguiar-eng/NexoHub/actions/runs/40925060477).
+
+- Instalador: `NexoHub_0.2.3_x64-setup.exe`, 21.282.873 bytes; SHA-256 `68e41c57ff06894278219bd3e960747927e3ab225a6835a46dd121c7ff5a869c`.
+- Windows Sandbox com 4 GiB e rede desabilitada: instalação limpa, abertura, atualização de 0.2.2 para 0.2.3, atalho/ícone, preservação de documento sintético e desinstalação aprovados.
+- Instalação local atualizada; arquivo executável e registro do Windows confirmaram 0.2.3. O executável respondeu e seu hash coincidiu com o do Sandbox. Não foi necessário reiniciar o Windows.
+- Na versão instalada, campo de nomes e tradução real foram verificados. Após encerrar e reabrir a instância de teste com WebView2 offline, a tradução terminou sem solicitar o modelo novamente.
+- Os quatro arquivos publicados foram baixados novamente e comparados com os validados. A [evidência versionada](evidencias/releases/windows-0.2.3.json) corresponde ao JSON anexado à release.
+
+O instalador permanece `NotSigned`, sem assinatura Authenticode. LanguageTool/Java são opcionais e não foram reinstalados neste ensaio. A condição offline da tradução foi emulada no contexto WebView2; o host permaneceu conectado. Os testes usam amostras sintéticas e não certificam todas as ferramentas, formatos ou documentos. A fotografia investigada no OCR continua reprovada e os resets intermitentes de download não tiveram causa final comprovada.
+
+## Registro histórico — release engineering de setembro de 2026
+
+O registro abaixo descreve os artefatos e os gates daquela execução. NSIS/MSI e runtimes incorporados pertencem ao empacotamento antigo; não representam a composição ou o estado da release 0.2.3. Os gates listados como pendentes são históricos.
 
 Data: 2 de setembro de 2026. Plataforma: Windows x64.
 

@@ -426,6 +426,7 @@ pub fn create_app(static_dir: Option<PathBuf>) -> Router {
 
     let app = Router::new()
         .nest("/api/v1", api_routes)
+        .nest("/api/v1/cloud", cloud::routes::router(None))
         .layer(DefaultBodyLimit::max(50 * 1024 * 1024))
         .layer(
             CorsLayer::new()

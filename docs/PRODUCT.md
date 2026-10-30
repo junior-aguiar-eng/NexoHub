@@ -11,7 +11,7 @@ Windows 0.2.4 publicado em 30/10/2026; website em [nexojuris.ia.br/hub/](https:/
 
 ## Evolução opcional em implementação
 
-O [ADR-020](adr/ADR-020-nuvem-opcional-cotas.md) registra a estrutura híbrida aprovada para 300 participantes, com Google/e-mail confirmado apenas para nuvem e cotas verificadas no servidor. O modo local continua gratuito e sem login. Neste estágio existem contratos/política desativada, verificador de identidade, adapter browser e cotas/reservas persistentes validadas em emulador. A interface e as rotas públicas não ativam essas funções; não há nova funcionalidade cloud publicada nem ampliação da homologação de OCR/Office.
+O [ADR-020](adr/ADR-020-nuvem-opcional-cotas.md) registra a estrutura híbrida aprovada para 300 participantes, com Google/e-mail confirmado apenas para nuvem e cotas verificadas no servidor. O modo local continua gratuito e sem login. Neste estágio existem contratos/política desativada, verificador de identidade, adapter browser e cotas/reservas persistentes validadas em emulador. Login Windows/web e conta/saldo estão integrados com controles desativados, sem conexão real a Google/Firestore; não há nova funcionalidade cloud publicada nem ampliação da homologação de OCR/Office.
 
 ## Plataformas
 

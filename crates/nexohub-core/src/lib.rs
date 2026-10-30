@@ -4,6 +4,7 @@ pub mod anchor_tools;
 mod atomic_file;
 mod blob_store;
 pub mod capabilities;
+pub mod cloud_identity;
 pub mod commands;
 pub mod domain;
 pub mod error;

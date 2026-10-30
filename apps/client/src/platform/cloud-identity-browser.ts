@@ -12,6 +12,7 @@ import {
   signOut,
 } from "firebase/auth";
 import { CloudIdentityError, type CloudIdentityPort } from "./cloud-identity";
+import { sealDesktopSession } from "./desktop-handoff";
 
 export interface BrowserCloudIdentityConfig {
   readonly apiKey: string;
@@ -65,12 +66,17 @@ export function createBrowserCloudIdentity(config: BrowserCloudIdentityConfig): 
     throw new CloudIdentityError("AUTH_UNAVAILABLE");
   };
   return {
-    async signIn(method, email) {
+    async signIn(method, email, binding) {
       try {
         if (method === "emailLink") {
           const value = checkedEmail(email);
+          const target = new URL(config.redirectUrl);
+          if (binding) {
+            for (const [key, entry] of Object.entries(binding))
+              target.searchParams.set(key, String(entry));
+          }
           await sendSignInLinkToEmail(ready(), value, {
-            url: config.redirectUrl,
+            url: target.href,
             handleCodeInApp: true,
           });
         } else {
@@ -105,6 +111,20 @@ export function createBrowserCloudIdentity(config: BrowserCloudIdentityConfig): 
     async getIdToken() {
       try {
         return auth?.currentUser?.emailVerified ? await auth.currentUser.getIdToken() : null;
+      } catch (error) {
+        return sanitized(error);
+      }
+    },
+    async prepareDesktopHandoff(binding) {
+      try {
+        const current = ready();
+        await confirmed(current);
+        const user = current.currentUser;
+        if (!user?.refreshToken) throw new CloudIdentityError("AUTH_REQUIRED");
+        return await sealDesktopSession(binding, {
+          idToken: await user.getIdToken(),
+          refreshToken: user.refreshToken,
+        });
       } catch (error) {
         return sanitized(error);
       }

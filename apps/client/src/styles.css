@@ -11187,3 +11187,85 @@ html:has(.image-composition-panel) {
   gap: var(--space-3);
   flex-wrap: wrap;
 }
+
+.cloud-account {
+  position: relative;
+}
+.cloud-account-panel {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 50;
+  width: min(340px, 90vw);
+  padding: 18px;
+  background: var(--bg-card, white);
+  color: var(--text-primary, #17212b);
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px #0002;
+}
+.cloud-account-panel label,
+.cloud-account-panel input {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+}
+.cloud-account-panel button {
+  margin: 6px 0;
+}
+.cloud-login {
+  max-width: 520px;
+  margin: 40px auto;
+  padding: 24px;
+}
+.cloud-login input,
+.cloud-login button {
+  display: block;
+  margin: 12px 0;
+}
+
+.cloud-account-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.cloud-account-panel p {
+  margin: 0 0 10px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.cloud-account-panel input,
+.cloud-login input {
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid #c9cdd4;
+  border-radius: 6px;
+}
+.cloud-account-panel button,
+.cloud-login button {
+  padding: 8px 12px;
+  border: 1px solid #c9cdd4;
+  border-radius: 6px;
+}
+.cloud-account-panel button:disabled,
+.cloud-account-panel input:disabled,
+.cloud-login button:disabled,
+.cloud-login input:disabled {
+  background: #f4f5f7;
+  color: #7b8491;
+  cursor: not-allowed;
+}
+@media (max-width: 759px) {
+  .cloud-account-label {
+    display: none;
+  }
+  .cloud-account-trigger {
+    padding: 8px;
+  }
+}

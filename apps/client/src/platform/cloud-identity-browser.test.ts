@@ -101,3 +101,19 @@ it("completa e-mail confirmado e não expõe mensagens sensíveis do SDK", async
   sdk.popup.mockRejectedValueOnce(new Error("sensitive-provider-data"));
   await expect(identity.signIn("google")).rejects.toThrow("AUTH_UNAVAILABLE");
 });
+
+it("link de e-mail preserva o vínculo público da instância Windows", async () => {
+  const identity = createBrowserCloudIdentity(config);
+  const binding = {
+    state: "a".repeat(64),
+    challenge: "b".repeat(64),
+    publicKey: "c".repeat(588),
+    port: 12345,
+    method: "emailLink" as const,
+  };
+  await identity.signIn("emailLink", "person@example.invalid", binding);
+  const target = new URL(sdk.send.mock.calls.at(-1)?.[2]?.url);
+  expect(target.searchParams.get("state")).toBe(binding.state);
+  expect(target.searchParams.get("challenge")).toBe(binding.challenge);
+  expect(target.searchParams.has("refreshToken")).toBe(false);
+});

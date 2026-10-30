@@ -23,6 +23,6 @@ Mantêm-se proteção contra caminhos arbitrários, minimização de dados, exec
 
 ## Consequências e estado implementado
 
-Em 30/10/2026: política e contratos, verificador Firebase RS256/revogação, adapter browser e ledger Firestore com CAS atômico implementados. Testes usam tokens sintéticos e emulador local, sem login Google real. `cloudEnabled=false` permanece obrigatório; nenhuma rota/UI de nuvem está conectada. Windows, comando IAM, orçamentos/upload, workers e homologação continuam pendentes. A [evidência de identidade e reservas](../evidencias/hybrid/AUTH-RESERVAS-2026-10-30.md) distingue implementação de ativação.
+Em 30/10/2026: política e contratos, verificador Firebase RS256/revogação, adapter browser e ledger Firestore com CAS atômico implementados. Testes usam tokens sintéticos e emulador local, sem login Google real. `cloudEnabled=false` permanece obrigatório; login Windows por navegador/PKCE, proteção DPAPI, comando IAM e UI/rotas de conta foram preparados/testados, mantendo os gates fechados. Login/IAM reais, orçamentos/upload, workers e homologação continuam pendentes. A [evidência de identidade e reservas](../evidencias/hybrid/AUTH-RESERVAS-2026-10-30.md) distingue implementação de ativação.
 
 Pendências anteriores permanecem: OCR da fotografia investigada, causa dos resets do tradutor, assinatura Authenticode e fidelidade de conversões complexas. Não impedem contratos/política, mas também não serão consideradas resolvidas por adicionar nuvem.

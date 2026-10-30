@@ -76,15 +76,15 @@ Arquivos novos abaixo são propostas; os caminhos existentes foram examinados ne
 **Interfaces:** `CloudIdentityPort.signIn(method: "google" | "emailLink"): Promise<void>`, `getIdToken(): Promise<string | null>`, `signOut(): Promise<void>`; servidor `authenticate(headers) -> Result<VerifiedPrincipal, CloudError>` e `admit(principal, invitation) -> Participant`.
 
 - [x] Escrever testes para token falso/expirado/emissor errado/audiência errada, e-mail não confirmado, participante suspenso e 301º participante.
-- [ ] Testar token antes válido e depois revogado, mantendo participante ativo: nova reserva deve ser recusada. Diferenciar logout deste dispositivo de revogação de todas as sessões; indisponibilidade da conferência de revogação recusa processamento pago.
+- [x] Testar token antes válido e depois revogado, mantendo participante ativo: nova reserva deve ser recusada. Diferenciar logout deste dispositivo de revogação de todas as sessões; indisponibilidade da conferência de revogação recusa processamento pago.
 - [x] Escrever testes de Google e e-mail vinculados ao mesmo participante, conta excluída/recriada e dois dispositivos compartilhando saldo; exigir ausência de nova franquia.
 - [x] Rodar `cargo test -p nexohub-server --test cloud_auth` e os testes TS próximos; verificar vermelho antes de implementar.
 - [x] Implementar verificador de tokens com biblioteca mantida/auditada e chaves oficiais em cache; verificar suspensão/admissão e revogação no servidor. Usar mecanismo oficial de revogação/`validSince` comparado a `auth_time`, além de marco central para revogação administrativa; assinatura e expiração não bastam. Nenhum token em logs.
-- [ ] Integrar SDK oficial de autenticação somente no adapter browser. No Windows, navegador do sistema e código de retorno único/desafio, 60 s, consumido uma vez; verificar replay, interceptação, estado errado e logout. Nenhum token em URL ou armazenamento desprotegido.
-- [ ] Implementar admissão por convite e comando administrativo com IAM; todo vínculo de participante é auditado. Regra de identidade da pessoa depende da lista de convites, não de fingerprint/IP.
+- [x] Integrar SDK oficial de autenticação somente no adapter browser. No Windows, navegador do sistema e código de retorno único/desafio, 60 s, consumido uma vez; verificar replay, interceptação, estado errado e logout. Nenhum token em URL ou armazenamento desprotegido.
+- [x] Implementar admissão por convite e comando administrativo com IAM; todo vínculo de participante é auditado. Regra de identidade da pessoa depende da lista de convites, não de fingerprint/IP.
 - [ ] Testes acima verdes e login manual sintético nas duas plataformas; recusar liberação se o fluxo Windows depender de WebView Google ou de senha manipulada pelo backend próprio.
 
-**Estado em 30/10/2026:** verificador, adapter browser em memória e admissão persistente testados; fluxo nativo Windows, comando administrativo IAM, vinculação na interface e login real permanecem pendentes. Logout do adapter é local; revogação central é conferida no servidor. Evidências: [identidade e reservas](../../evidencias/hybrid/AUTH-RESERVAS-2026-10-30.md).
+**Estado em 30/10/2026:** verificador, adapters browser/Windows, retorno único cifrado com PKCE/state, DPAPI, CLI IAM e conta/saldo integrados à UI/rotas, com gates fechados. Testes locais, criptografia nativa e emulador validados; login manual real e IAM de produção não homologados nem ativados. A última caixa permanece aberta por esse gate, sem declarar a tarefa inteira concluída. Evidências: [identidade e reservas](../../evidencias/hybrid/AUTH-RESERVAS-2026-10-30.md) e [Windows/IAM/UI](../../evidencias/hybrid/LOGIN-WINDOWS-IAM-2026-10-30.md).
 
 ## Tarefa 3 — saldo, preços e reservas atômicas
 

@@ -89,7 +89,7 @@ jobs:
             sleep 1
           done
           curl --silent --fail "http://$FIRESTORE_EMULATOR_HOST/" > /dev/null
-          cargo test -p nexohub-server --test cloud_auth --test cloud_firestore --test cloud_ledger --locked -- --include-ignored
+          cargo test -p nexohub-server --test cloud_auth --test cloud_firestore --test cloud_ledger --test cloud_admin --test cloud_desktop --test cloud_identity_routes --locked -- --include-ignored
 
   python:
     name: Python Engine

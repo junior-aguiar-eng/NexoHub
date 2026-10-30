@@ -1,11 +1,14 @@
 //! Contratos internos da nuvem opcional. Nenhum motor ou rota paga é habilitado aqui.
 
+pub mod admin;
 pub mod admission;
 pub mod auth;
+pub mod desktop;
 pub mod firestore;
 pub mod ledger;
 pub mod policy;
 pub mod pricing;
+pub mod routes;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CloudError {

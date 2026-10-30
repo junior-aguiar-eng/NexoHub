@@ -70,6 +70,9 @@ impl AdmissionService {
 
     /// Somente código administrativo com IAM. Não expor como endpoint de participante.
     pub fn invite(&self, email: &str, now: u64) -> Result<(), CloudError> {
+        self.invite_by(email, now, "system")
+    }
+    pub fn invite_by(&self, email: &str, now: u64, actor: &str) -> Result<(), CloudError> {
         let normalized = email.trim().to_ascii_lowercase();
         if normalized.len() > 254 || !normalized.contains('@') {
             return Err(CloudError::InvalidRequest);
@@ -97,7 +100,7 @@ impl AdmissionService {
                 if old.expires_at > now || docs.contains_key(&member_path) { return Ok(()); }
             }
             write(docs, &path, &candidate)?;
-            docs.insert(audit.clone(), serde_json::json!({"kind":"invitation","participantId":candidate.participant_id,"at":now}));
+            docs.insert(audit.clone(), serde_json::json!({"kind":"invitation","participantId":candidate.participant_id,"actor":hash(actor),"at":now}));
             Ok(())
         })
     }

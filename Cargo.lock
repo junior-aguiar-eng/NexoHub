@@ -2145,7 +2145,7 @@ checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 
 [[package]]
 name = "nexohub-core"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "blake3",
  "dunce",
@@ -2162,7 +2162,7 @@ dependencies = [
 
 [[package]]
 name = "nexohub-desktop"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "nexohub-core",
  "serde",
@@ -2173,7 +2173,7 @@ dependencies = [
 
 [[package]]
 name = "nexohub-server"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "axum",
  "dunce",

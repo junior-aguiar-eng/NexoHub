@@ -1,6 +1,6 @@
 [package]
 name = "nexohub-server"
-version = "0.2.3"
+version = "0.2.4"
 description = "Servidor Web HTTP e API de produção do NexoHub para Cloud Run"
 edition.workspace = true
 license.workspace = true

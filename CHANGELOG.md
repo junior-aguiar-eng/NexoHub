@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.4] - 2026-10-30
+
+### Corrigido
+
+- Removidos os arquivos do monograma antigo, incluindo ícones legados de outras plataformas.
+- README público e imagens de teste usam o camaleão aprovado; teste de regressão impede o retorno dos arquivos antigos.
+- O ícone principal do aplicativo Windows e dos atalhos permanece o camaleão.
+
+### Limites
+
+- LanguageTool e Java continuam opcionais. O instalador permanece sem assinatura Authenticode.
+- Esta versão não altera os limites documentados do OCR e da tradução.
+
 ## [0.2.3] - 2026-10-29
 
 ### Adicionado

@@ -44,7 +44,7 @@ test("mantém ferramentas locais e sugestões quando o website usa o adapter HTT
 });
 
 test("converte todos os lotes de imagens selecionados em um PDF", async ({ page }) => {
-  const png = await readFile("src/assets/nexohub-icon.png");
+  const png = await readFile("src/assets/nexohub-camaleao.png");
   await page.goto("/imagem-para-pdf");
   await page.locator('input[type="file"]').setInputFiles([
     { name: "primeira.png", mimeType: "image/png", buffer: png },

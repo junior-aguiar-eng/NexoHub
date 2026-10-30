@@ -93,7 +93,7 @@ describe("PDF pesquisável com Tesseract 7", () => {
       source.addPage([100, 100]);
       source.addPage([100, 100]);
       const bytes =
-        kind === "pdf" ? await source.save() : readFileSync("src/assets/nexohub-icon.png");
+        kind === "pdf" ? await source.save() : readFileSync("src/assets/nexohub-camaleao.png");
       const result = await performBrowserOcr(
         new Blob([bytes as unknown as BlobPart], {
           type: kind === "pdf" ? "application/pdf" : "image/png",

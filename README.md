@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="apps/client/src/assets/nexohub-icon.png" width="72" height="72" alt="Logo NexoHub" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/branding/camaleao-b/nexohub-camaleao-b-reverso.svg" />
+    <img src="apps/client/src/assets/nexohub-camaleao.svg" width="72" height="72" alt="NexoHub — camaleão" />
+  </picture>
 </p>
 
 # NexoHub

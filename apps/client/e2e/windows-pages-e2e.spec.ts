@@ -361,7 +361,7 @@ for (const [route, stamp] of [
 
 test("Windows: imagens para PDF preserva número de páginas", async () => {
   test.setTimeout(180000);
-  const png = await readFile("src/assets/nexohub-icon.png");
+  const png = await readFile("src/assets/nexohub-camaleao.png");
   await navigate("imagem-para-pdf");
   await page
     .locator('input[type="file"]')
@@ -476,7 +476,7 @@ test("Windows: HTML para PDF preserva texto convertido", async () => {
 
 test("Windows: digitalizar imagens produz PDF com duas páginas", async () => {
   await navigate("digitalizar-pdf");
-  const png = await readFile("src/assets/nexohub-icon.png");
+  const png = await readFile("src/assets/nexohub-camaleao.png");
   await page.locator('input[accept="image/jpeg,image/png,image/webp"]').setInputFiles([
     { name: "a.png", mimeType: "image/png", buffer: png },
     { name: "b.png", mimeType: "image/png", buffer: png },
@@ -611,7 +611,7 @@ for (const [route, extension] of [
       await expect(page.getByTestId("excel-preview-table")).toContainText("00123");
     } else {
       await navigate(route);
-      const png = await readFile("src/assets/nexohub-icon.png");
+      const png = await readFile("src/assets/nexohub-camaleao.png");
       await page
         .locator('input[type="file"]')
         .first()

@@ -1,6 +1,18 @@
 # Validação de release
 
-## Estado atual — 0.2.3, publicada em 29/10/2026
+## Estado atual — 0.2.4, publicada em 30/10/2026
+
+A [release Windows 0.2.4](https://github.com/junior-aguiar-eng/NexoHub/releases/tag/v0.2.4) incorpora a remoção dos arquivos do logo antigo. Os gates e o instalador passaram na [execução oficial](https://github.com/junior-aguiar-eng/NexoHub/actions/runs/41077574266).
+
+- Instalador: `NexoHub_0.2.4_x64-setup.exe`, 21.259.832 bytes; SHA-256 `3c7676ce03a82fab11c67c0142e9f8118806376d6eac0e772c547470b44e935b`.
+- Windows Sandbox com rede desabilitada: instalação limpa, abertura, atualização de 0.2.3 para 0.2.4, preservação de documento sintético, atalho com o camaleão e desinstalação aprovados.
+- Neste computador, executável e registro confirmaram 0.2.4; hash do executável igual ao da VM. Atualização sem reiniciar o Windows.
+- Camaleão conferido visualmente no ícone extraído do executável instalado e na interface PDF/Imagens; favicons atuais confirmados. O arquivo do ícone instalado corresponde ao aprovado no repositório.
+- ZIP com integridade verificada, três `NOTICE.txt` e sem os assets antigos. A [evidência versionada](evidencias/releases/windows-0.2.4.json) também está anexada à release.
+
+O instalador permanece `NotSigned`. LanguageTool/Java são opcionais e não foram reinstalados. Esta validação trata do instalador, da atualização e da marca; não repete todos os testes de ferramentas e não altera os limites de OCR e tradução registrados abaixo.
+
+## Registro anterior — 0.2.3, publicada em 29/10/2026
 
 A [release Windows 0.2.3](https://github.com/junior-aguiar-eng/NexoHub/releases/tag/v0.2.3) foi publicada como versão normal e latest, com instalador Inno Setup x64, ZIP web/Python, `SHA256SUMS.txt` e evidência JSON. O build e os gates da tag terminaram com sucesso na [execução oficial](https://github.com/junior-aguiar-eng/NexoHub/actions/runs/40925060477).
 

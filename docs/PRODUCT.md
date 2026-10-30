@@ -7,7 +7,7 @@ offline no computador do usuário.
 
 ## Versão disponível
 
-Windows 0.2.3 publicado em 29/10/2026; website em [nexojuris.ia.br/hub/](https://nexojuris.ia.br/hub/). Instalação, atualização e casos de tradução instalada foram conferidos; o [relatório de release](RELEASE-VALIDATION.md) delimita as evidências. OCR, tradução e revisão opcional podem exigir recursos baixados no primeiro uso. A disponibilidade offline depende dos recursos locais.
+Windows 0.2.4 publicado em 30/10/2026; website em [nexojuris.ia.br/hub/](https://nexojuris.ia.br/hub/). Instalação, atualização e casos de tradução instalada foram conferidos; o [relatório de release](RELEASE-VALIDATION.md) delimita as evidências. OCR, tradução e revisão opcional podem exigir recursos baixados no primeiro uso. A disponibilidade offline depende dos recursos locais.
 
 ## Plataformas
 

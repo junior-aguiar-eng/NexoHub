@@ -13,12 +13,12 @@ Estação documental gratuita e local-first para PDFs, textos e imagens, com apl
 [![Segurança e licenças](https://github.com/junior-aguiar-eng/NexoHub/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/junior-aguiar-eng/NexoHub/actions/workflows/security.yml)
 [![Licença MPL-2.0](https://img.shields.io/badge/Licen%C3%A7a-MPL--2.0-blue.svg)](LICENSE)
 
-> **Estado**: `0.2.4` em preparação — a versão Windows publicada e validada é a `0.2.3`. Os limites de cada ferramenta permanecem documentados.
+> **Estado**: `0.2.4` — versão Windows publicada e validada em 30/10/2026. Os limites de cada ferramenta permanecem documentados.
 
 ## Usar o NexoHub
 
 - **Web:** [abrir em nexojuris.ia.br/hub/](https://nexojuris.ia.br/hub/).
-- **Windows x64:** [baixar o instalador da versão 0.2.3](https://github.com/junior-aguiar-eng/NexoHub/releases/download/v0.2.3/NexoHub_0.2.3_x64-setup.exe).
+- **Windows x64:** [baixar o instalador da versão 0.2.4](https://github.com/junior-aguiar-eng/NexoHub/releases/download/v0.2.4/NexoHub_0.2.4_x64-setup.exe).
 - **Releases:** [versão mais recente e arquivos de validação](https://github.com/junior-aguiar-eng/NexoHub/releases/latest).
 
 Para usar o aplicativo instalado, não é necessário instalar Node.js, Rust ou Python. O instalador verifica o requisito WebView2. LanguageTool e Java são componentes **opcionais**, baixados separadamente quando escolhidos para a revisão textual local no Windows. O instalador atual não possui assinatura Authenticode.

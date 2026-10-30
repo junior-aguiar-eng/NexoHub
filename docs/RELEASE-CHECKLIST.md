@@ -2,7 +2,7 @@
 
 ## Referência atual
 
-Release publicada: [0.2.3](https://github.com/junior-aguiar-eng/NexoHub/releases/tag/v0.2.3), em 29/10/2026. A [validação](RELEASE-VALIDATION.md) registra hashes, instalação limpa, upgrade e verificações no aplicativo instalado. Este checklist continua aplicável às próximas releases; não substitui evidência de execução.
+Release publicada: [0.2.4](https://github.com/junior-aguiar-eng/NexoHub/releases/tag/v0.2.4), em 30/10/2026. A [validação](RELEASE-VALIDATION.md) registra hashes, instalação limpa, upgrade e verificações no aplicativo instalado. Este checklist continua aplicável às próximas releases; não substitui evidência de execução.
 
 ## Preparação
 
@@ -31,4 +31,4 @@ Release publicada: [0.2.3](https://github.com/junior-aguiar-eng/NexoHub/releases
 - Registrar limitações conhecidas sem declarar capacidades não testadas.
 - Conferir o arquivo instalado e a versão registrada no Windows, além da tag e do nome do instalador.
 - Conferir o campo de nomes no tradutor e testar reutilização do modelo depois de fechar/reabrir, com perfil fixo e offline explicitamente delimitado.
-- Registrar o estado Authenticode: a 0.2.3 permanece `NotSigned`; checksum não equivale a assinatura do publicador.
+- Registrar o estado Authenticode: a 0.2.4 permanece `NotSigned`; checksum não equivale a assinatura do publicador.

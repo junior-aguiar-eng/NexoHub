@@ -1,0 +1,81 @@
+{
+  "version": "0.2.4",
+  "date": "2026-10-30",
+  "sourceCommit": "6c095cf436d36b9a0be900ca2c387040f6c13c58",
+  "workflow": "https://github.com/junior-aguiar-eng/NexoHub/actions/runs/41077574266",
+  "installer": {
+    "file": "NexoHub_0.2.4_x64-setup.exe",
+    "bytes": 21259832,
+    "sha256": "3c7676ce03a82fab11c67c0142e9f8118806376d6eac0e772c547470b44e935b",
+    "checksumMatched": true,
+    "authenticode": "NotSigned"
+  },
+  "portable": {
+    "zipIntegrity": true,
+    "entries": 100,
+    "noticeFiles": 3,
+    "legacyAssetsAbsent": true,
+    "file": "NexoHub_0.2.4_portable.zip",
+    "sha256": "c8072f63c32fc9999e1bf0abfcc73df43f367798e9aebde09a27be5857e7bc4c"
+  },
+  "sandbox": {
+    "network": "disabled",
+    "memoryMB": 4096,
+    "result": {
+      "cleanVersion": "0.2.4",
+      "cleanLaunch": {
+        "title": "NexoHub",
+        "version": "0.2.4",
+        "responding": true
+      },
+      "cleanUninstall": true,
+      "previousVersion": "0.2.3",
+      "upgradeLaunch": {
+        "title": "NexoHub",
+        "version": "0.2.4",
+        "responding": true
+      },
+      "shortcut": {
+        "target": "C:\\NexoHub-QA\\nexohub-desktop.exe",
+        "icon": "C:\\NexoHub-QA\\nexohub-camaleao.ico,0"
+      },
+      "installedExeHash": "b80778519fa62ae393192f596672a12e9a08f1c4af3dae604d99ef17c4eee83e",
+      "iconHash": "26be96db52cf671782e2f413a03547f429167bb915f68d24f2da69adf1c50f65",
+      "documentPreserved": true,
+      "finalUninstall": true,
+      "success": true
+    }
+  },
+  "hostUpgrade": {
+    "installedExeSha256": "b80778519fa62ae393192f596672a12e9a08f1c4af3dae604d99ef17c4eee83e",
+    "registeredDisplayVersion": "0.2.4",
+    "installerExitCode": 0,
+    "from": "0.2.3",
+    "to": "0.2.4",
+    "matchesSandbox": true,
+    "restartRequired": false
+  },
+  "installedBrandingValidation": {
+    "success": true,
+    "results": [
+      {
+        "zone": "pdf",
+        "visibleChameleon": true,
+        "logoInstances": 2,
+        "favicons": ["http://tauri.localhost/favicon-pdf.svg"]
+      },
+      {
+        "zone": "img",
+        "visibleChameleon": true,
+        "logoInstances": 2,
+        "favicons": ["http://tauri.localhost/favicon-img.svg"]
+      }
+    ]
+  },
+  "limitations": [
+    "Amostras sintéticas; não certifica todas as ferramentas e documentos.",
+    "LanguageTool e Java são opcionais e não foram reinstalados neste ensaio.",
+    "Instalador sem assinatura Authenticode.",
+    "A primeira tentativa do teste de interface começou durante a navegação inicial; a execução aprovada aguardou a interface estar pronta."
+  ]
+}

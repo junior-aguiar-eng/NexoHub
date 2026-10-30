@@ -1,8 +1,8 @@
 # Arquitetura
 
-## Evolução híbrida aprovada, ainda sem ativação
+## Evolução híbrida e identidade opcional
 
-O [ADR-020](adr/ADR-020-nuvem-opcional-cotas.md) autoriza implementar nuvem opcional para até 300 participantes, preservando o processamento local gratuito e sem conta. A base contém contratos, política desativada, verificador de identidade, adapter browser e ledger persistente com precondições atômicas no Firestore. Login Windows por navegador do sistema/PKCE, sessão DPAPI, comando IAM e interface de conta/saldo estão integrados às rotas de identidade, todos com gates fechados. Testes usam fixtures/emulador; não há autenticação ou serviço real ativado. Orçamentos/upload, workers, proteção integral das rotas pagas, homologação e deploy continuam nas etapas seguintes. A descrição abaixo continua sendo a arquitetura local padrão. A autorização remota limitada do ADR-015 e a evolução do ADR-020 delimitam as exceções às restrições locais descritas neste documento.
+O [ADR-020](adr/ADR-020-nuvem-opcional-cotas.md) autoriza implementar nuvem opcional para até 300 participantes, preservando o processamento local gratuito sem login obrigatório. A identidade opcional Google/link de e-mail usa o projeto dedicado `nexohub-piloto-300`; o servidor compõe os serviços reais por configuração explícita, com identidade IAM restrita. Windows usa navegador do sistema/PKCE e DPAPI; web usa sessão da aba e SDK sob demanda. Conta/saldo e ledger Firestore são compartilhados entre plataformas. A [evidência de identidade real](evidencias/hybrid/IDENTIDADE-REAL-2026-10-30.md) registra o estado de homologação/publicação. `cloudEnabled=false` continua obrigatório para processamento documental. Orçamentos/upload, workers, proteção integral das rotas pagas e homologação de motores continuam pendentes. A descrição abaixo continua sendo a arquitetura local padrão, com as exceções delimitadas pelos ADRs 015 e 020.
 
 O NexoHub adota monólito modular, ports and adapters e módulos verticais. O client React/TypeScript
 é compartilhado pela web e pelo shell Tauri; não existe um segundo frontend desktop.

@@ -222,6 +222,11 @@ impl IdentityAuthority for GoogleIdentityAuthority {
     fn public_keys(&self) -> Result<PublicKeys, CloudError> {
         let response = self.client.get("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com").send().map_err(|_| CloudError::Unavailable)?;
         if !response.status().is_success() {
+            tracing::warn!(
+                stage = "identity_public_keys",
+                status = response.status().as_u16(),
+                "Falha na consulta de identidade"
+            );
             return Err(CloudError::Unavailable);
         }
         let max_age_seconds = response
@@ -250,6 +255,11 @@ impl IdentityAuthority for GoogleIdentityAuthority {
             .send()
             .map_err(|_| CloudError::Unavailable)?;
         if !response.status().is_success() {
+            tracing::warn!(
+                stage = "identity_account_lookup",
+                status = response.status().as_u16(),
+                "Falha na consulta de identidade"
+            );
             return Err(CloudError::Unavailable);
         }
         let data = super::firestore::limited_json(response)?;

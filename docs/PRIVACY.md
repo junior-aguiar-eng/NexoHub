@@ -8,6 +8,26 @@ possui telemetria própria, conta obrigatória, sincronização ou upload autom�
 
 ## Rede
 
+### Conta opcional em homologação
+
+A integração de identidade usa Firebase Authentication no projeto dedicado
+`nexohub-piloto-300`, com Google ou link enviado ao e-mail. Entrar não envia documentos.
+O uso local continua gratuito e não exige login. Somente participantes convidados podem
+consultar o saldo do piloto no servidor; a mesma identidade é usada na web e no Windows.
+O processamento documental em nuvem permanece desativado.
+
+O SDK web é carregado ao usar a conta, com sessão restrita à aba do navegador. No Windows,
+o login ocorre no navegador do sistema e a sessão fica protegida por DPAPI do usuário
+Windows. O servidor valida identidade, confirmação do e-mail e revogação; não armazena
+tokens de renovação em texto aberto. O retorno ao aplicativo usa um envelope cifrado,
+com validade lógica de 60 segundos e consumo único. A exclusão física no Firestore usa TTL,
+que é assíncrono e pode ocorrer depois da expiração lógica. Sair remove a sessão do dispositivo.
+Os dados de identidade e saldo são distintos dos arquivos documentais locais.
+
+Em 30/10/2026 o usuário autorizou vincular faturamento existente apenas para identidade e
+infraestrutura. Isso não autoriza chamadas a motores documentais pagos. Configuração,
+homologação real e publicação são etapas distintas, registradas nas evidências do projeto.
+
 Foi aprovada a implementação de um modo remoto optativo, descrito no [ADR-020](adr/ADR-020-nuvem-opcional-cotas.md). A política inicial permanece desativada; contratos não enviam documentos nem criam contas. Antes de disponibilizar esse modo, será exigida confirmação específica de envio com provedor/localização, unidades, saldo e retenção, além dos controles de identidade/cotas no servidor. Nenhuma falha do motor local deve provocar envio automático. As regras de processamento local abaixo permanecem aplicáveis ao produto disponível.
 
 Os fluxos padrão processam documentos no dispositivo. O primeiro uso de OCR ou tradução pode baixar recursos públicos do motor, idiomas, tokenizer e pesos. A tarefa opcional do instalador baixa LanguageTool/Java e confere os hashes fixados em `runtime/languagetool-community.json`. Esses downloads contatam servidores dos fornecedores e envolvem os metadados usuais de uma requisição HTTP; o documento ou texto a processar não é enviado junto.

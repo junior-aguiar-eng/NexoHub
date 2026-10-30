@@ -3,7 +3,15 @@ import { beforeEach, expect, it, vi } from "vitest";
 const sdk = vi.hoisted(() => ({
   app: vi.fn(() => ({})),
   auth: {
-    currentUser: null as null | { emailVerified: boolean; getIdToken: () => Promise<string> },
+    languageCode: null as string | null,
+    authStateReady: vi.fn(async () => {}),
+    currentUser: null as null | {
+      uid?: string;
+      email?: string;
+      providerData?: { providerId: string }[];
+      emailVerified: boolean;
+      getIdToken: () => Promise<string>;
+    },
   },
   init: vi.fn(),
   popup: vi.fn(),
@@ -11,11 +19,14 @@ const sdk = vi.hoisted(() => ({
   complete: vi.fn(),
   isLink: vi.fn(),
   out: vi.fn(),
+  link: vi.fn(),
+  reauth: vi.fn(),
+  credential: vi.fn(() => ({ kind: "email-link" })),
 }));
 vi.mock("firebase/app", () => ({ initializeApp: sdk.app }));
 vi.mock("firebase/auth", () => ({
   initializeAuth: sdk.init,
-  inMemoryPersistence: "MEMORY",
+  browserSessionPersistence: "SESSION",
   browserPopupRedirectResolver: "POPUP",
   GoogleAuthProvider: class {},
   signInWithPopup: sdk.popup,
@@ -23,6 +34,9 @@ vi.mock("firebase/auth", () => ({
   signInWithEmailLink: sdk.complete,
   isSignInWithEmailLink: sdk.isLink,
   signOut: sdk.out,
+  linkWithCredential: sdk.link,
+  reauthenticateWithCredential: sdk.reauth,
+  EmailAuthProvider: { credentialWithLink: sdk.credential },
 }));
 
 import { createBrowserCloudIdentity } from "./cloud-identity-browser";
@@ -49,15 +63,26 @@ beforeEach(() => {
   sdk.isLink.mockReturnValue(true);
 });
 it("não inicializa nem contata autenticação para uso local sem login", async () => {
-  const identity = createBrowserCloudIdentity(config);
-  expect(await identity.getIdToken()).toBeNull();
+  createBrowserCloudIdentity(config);
   expect(sdk.app).not.toHaveBeenCalled();
 });
-it("usa Google com sessão somente em memória e não publica token em URL", async () => {
+it("aguarda restaurar a sessão antes de consultar a conta", async () => {
+  sdk.auth.authStateReady.mockImplementationOnce(async () => {
+    sdk.auth.currentUser = {
+      emailVerified: true,
+      getIdToken: async () => "restored-synthetic-token",
+    };
+  });
+  const identity = createBrowserCloudIdentity(config);
+  expect(await identity.getIdToken()).toBe("restored-synthetic-token");
+  expect(sdk.auth.authStateReady).toHaveBeenCalledOnce();
+});
+it("usa Google com sessão da aba e não publica token em URL", async () => {
   const identity = createBrowserCloudIdentity(config);
   await identity.signIn("google");
+  expect(sdk.auth.languageCode).toBe("pt-BR");
   expect(sdk.init).toHaveBeenCalledWith(expect.anything(), {
-    persistence: "MEMORY",
+    persistence: "SESSION",
     popupRedirectResolver: "POPUP",
   });
   expect(await identity.getIdToken()).toBe("synthetic-id-token");
@@ -116,4 +141,39 @@ it("link de e-mail preserva o vínculo público da instância Windows", async ()
   expect(target.searchParams.get("state")).toBe(binding.state);
   expect(target.searchParams.get("challenge")).toBe(binding.challenge);
   expect(target.searchParams.has("refreshToken")).toBe(false);
+});
+
+it("vincula e-mail à conta Google autenticada sem trocar seu UID", async () => {
+  const identity = createBrowserCloudIdentity(config);
+  const user = {
+    uid: "shared-uid",
+    email: "person@example.invalid",
+    providerData: [{ providerId: "google.com" }],
+    emailVerified: true,
+    getIdToken: async () => "synthetic-token",
+  };
+  sdk.auth.currentUser = user;
+  sdk.link.mockImplementationOnce(async () => ({ user }));
+  await identity.completeEmailLink(
+    "person@example.invalid",
+    `${config.redirectUrl}?oobCode=synthetic`,
+  );
+  expect(sdk.link).toHaveBeenCalledWith(user, { kind: "email-link" });
+  expect(sdk.complete).not.toHaveBeenCalled();
+  expect(sdk.auth.currentUser?.uid).toBe("shared-uid");
+});
+it("não associa link de outro e-mail à conta já autenticada", async () => {
+  const identity = createBrowserCloudIdentity(config);
+  sdk.auth.currentUser = {
+    uid: "shared-uid",
+    email: "person@example.invalid",
+    providerData: [{ providerId: "google.com" }],
+    emailVerified: true,
+    getIdToken: async () => "synthetic-token",
+  };
+  await expect(
+    identity.completeEmailLink("other@example.invalid", `${config.redirectUrl}?oobCode=synthetic`),
+  ).rejects.toThrow("AUTH_ACCOUNT_MISMATCH");
+  expect(sdk.link).not.toHaveBeenCalled();
+  expect(sdk.complete).not.toHaveBeenCalled();
 });

@@ -65,7 +65,7 @@ it("falhas da API não expõem corpo nem tokens e não provocam fallback", async
 it("bootstrap desligado não importa SDK, não invoca Windows nem consulta servidor", async () => {
   const { createCloudAccountRuntime } = await import("./cloud-bootstrap");
   const fetcher = vi.spyOn(globalThis, "fetch");
-  const account = await createCloudAccountRuntime();
+  const account = await createCloudAccountRuntime({ identityEnabled: false });
   expect(await account.status()).toEqual({ enabled: false, identityAvailable: false });
   expect(fetcher).not.toHaveBeenCalled();
   fetcher.mockRestore();

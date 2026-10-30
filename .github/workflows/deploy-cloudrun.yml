@@ -95,7 +95,8 @@ jobs:
             --project="$PROJECT_ID" --region="$REGION" --platform=managed \
             --image="$IMAGE_URI@${{ steps.image.outputs.digest }}" \
             --port=8080 --memory=1Gi --cpu=1 --min-instances=0 --max-instances=2 \
-            --set-env-vars='HOST=0.0.0.0,STATIC_DIR=/app/dist,RUST_LOG=info' --quiet
+            --service-account='nexohub-identity@project-bbbe1209-c295-4720-867.iam.gserviceaccount.com' \
+            --set-env-vars='HOST=0.0.0.0,STATIC_DIR=/app/dist,RUST_LOG=info,NEXOHUB_IDENTITY_ENABLED=true,NEXOHUB_FIREBASE_PROJECT=nexohub-piloto-300' --quiet
 
       - name: Conferir website, API, raiz e redirecionamentos públicos
         id: public

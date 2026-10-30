@@ -2,10 +2,13 @@ import { initializeApp } from "firebase/app";
 import {
   type Auth,
   browserPopupRedirectResolver,
+  browserSessionPersistence,
+  EmailAuthProvider,
   GoogleAuthProvider,
   initializeAuth,
-  inMemoryPersistence,
   isSignInWithEmailLink,
+  linkWithCredential,
+  reauthenticateWithCredential,
   sendSignInLinkToEmail,
   signInWithEmailLink,
   signInWithPopup,
@@ -43,9 +46,10 @@ export function createBrowserCloudIdentity(config: BrowserCloudIdentityConfig): 
         { name: "nexohub-cloud", automaticDataCollectionEnabled: false },
       );
       auth = initializeAuth(app, {
-        persistence: inMemoryPersistence,
+        persistence: browserSessionPersistence,
         popupRedirectResolver: browserPopupRedirectResolver,
       });
+      auth.languageCode = "pt-BR";
     }
     return auth;
   };
@@ -63,6 +67,11 @@ export function createBrowserCloudIdentity(config: BrowserCloudIdentityConfig): 
   };
   const sanitized = (error: unknown): never => {
     if (error instanceof CloudIdentityError) throw error;
+    // Somente o código padronizado: mensagens e objetos do SDK podem conter dados da conta.
+    const code =
+      typeof error === "object" && error !== null && "code" in error ? error.code : undefined;
+    if (typeof code === "string" && /^auth\/[a-z-]{1,80}$/.test(code))
+      console.warn("NexoHub: falha de autenticação", code);
     throw new CloudIdentityError("AUTH_UNAVAILABLE");
   };
   return {
@@ -100,9 +109,24 @@ export function createBrowserCloudIdentity(config: BrowserCloudIdentityConfig): 
           throw new CloudIdentityError("AUTH_INVALID_CALLBACK");
         const value = checkedEmail(email);
         const current = ready();
+        await current.authStateReady();
         if (!isSignInWithEmailLink(current, url))
           throw new CloudIdentityError("AUTH_INVALID_CALLBACK");
-        await signInWithEmailLink(current, value, url);
+        const previous = current.currentUser;
+        if (previous) {
+          await confirmed(current);
+          if (previous.email?.trim().toLowerCase() !== value.toLowerCase())
+            throw new CloudIdentityError("AUTH_ACCOUNT_MISMATCH");
+          const uid = previous.uid;
+          const credential = EmailAuthProvider.credentialWithLink(value, url);
+          if (previous.providerData.some((provider) => provider.providerId === "password"))
+            await reauthenticateWithCredential(previous, credential);
+          else await linkWithCredential(previous, credential);
+          if (current.currentUser?.uid !== uid) {
+            await signOut(current);
+            throw new CloudIdentityError("AUTH_ACCOUNT_MISMATCH");
+          }
+        } else await signInWithEmailLink(current, value, url);
         await confirmed(current);
       } catch (error) {
         sanitized(error);
@@ -110,7 +134,9 @@ export function createBrowserCloudIdentity(config: BrowserCloudIdentityConfig): 
     },
     async getIdToken() {
       try {
-        return auth?.currentUser?.emailVerified ? await auth.currentUser.getIdToken() : null;
+        const current = ready();
+        await current.authStateReady();
+        return current.currentUser?.emailVerified ? await current.currentUser.getIdToken() : null;
       } catch (error) {
         return sanitized(error);
       }

@@ -100,11 +100,15 @@ async fn me(State(state): State<Runtime>, headers: HeaderMap) -> Result<Response
     let s = runtime(state, &headers)?;
     tokio::task::spawn_blocking(move || {
         let t = (s.clock)()?;
-        let identity = principal(&s, &headers, t)?;
-        let member = s.admission.admit(&identity, t)?;
+        let identity = principal(&s, &headers, t).inspect_err(|error| {
+            tracing::warn!(stage = "identity_verification", code = ?error, "Falha ao carregar conta");
+        })?;
+        let member = s.admission.admit(&identity, t).inspect_err(|error| {
+            tracing::warn!(stage = "account_admission", code = ?error, "Falha ao carregar conta");
+        })?;
         Ok((
             [(header::CACHE_CONTROL, "no-store")],
-            Json(json!({"participantId":member.id,"admitted":true,"emailVerified":true})),
+            Json(json!({"participantId":member.id,"email":identity.email(),"admitted":true,"emailVerified":true})),
         )
             .into_response())
     })

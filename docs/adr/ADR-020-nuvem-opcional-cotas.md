@@ -23,6 +23,18 @@ Mantêm-se proteção contra caminhos arbitrários, minimização de dados, exec
 
 ## Consequências e estado implementado
 
+### Continuação: identidade real
+
+O usuário autorizou configurar o projeto dedicado, homologar a mesma conta Google/link de
+e-mail no Windows e na web e publicar somente após validação. Também autorizou em separado
+vincular faturamento existente para identidade/infraestrutura, necessário ao TTL do Firestore.
+`NEXOHUB_IDENTITY_ENABLED` controla apenas identidade no servidor; o cliente e o core nativo
+usam a configuração pública compartilhada. O perfil de homologação usa revisão sem tráfego
+de produção e origem fixa na compilação nativa. `cloudEnabled=false` permanece obrigatório
+para motores documentais. Ver [registro de identidade real](../evidencias/hybrid/IDENTIDADE-REAL-2026-10-30.md).
+
+O parágrafo abaixo descreve a etapa local anterior, não a configuração remota atual.
+
 Em 30/10/2026: política e contratos, verificador Firebase RS256/revogação, adapter browser e ledger Firestore com CAS atômico implementados. Testes usam tokens sintéticos e emulador local, sem login Google real. `cloudEnabled=false` permanece obrigatório; login Windows por navegador/PKCE, proteção DPAPI, comando IAM e UI/rotas de conta foram preparados/testados, mantendo os gates fechados. Login/IAM reais, orçamentos/upload, workers e homologação continuam pendentes. A [evidência de identidade e reservas](../evidencias/hybrid/AUTH-RESERVAS-2026-10-30.md) distingue implementação de ativação.
 
 Pendências anteriores permanecem: OCR da fotografia investigada, causa dos resets do tradutor, assinatura Authenticode e fidelidade de conversões complexas. Não impedem contratos/política, mas também não serão consideradas resolvidas por adicionar nuvem.

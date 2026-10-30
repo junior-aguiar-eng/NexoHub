@@ -9,6 +9,7 @@ pub mod ledger;
 pub mod policy;
 pub mod pricing;
 pub mod routes;
+pub mod runtime;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CloudError {
@@ -31,17 +32,17 @@ impl std::fmt::Display for CloudError {
         // Nunca incluir token, documento, endereço, URL autenticada ou erro HTTP bruto.
         f.write_str(match self {
             Self::Unauthorized => "Autenticação inválida.",
-            Self::Unverified => "Confirme seu e-mail para acessar a nuvem.",
+            Self::Unverified => "Confirme seu e-mail para acessar sua conta.",
             Self::Revoked => "Sessão revogada. Entre novamente.",
             Self::Disabled => "Conta suspensa.",
-            Self::NotAdmitted => "Participante não admitido no piloto.",
-            Self::InvalidRequest => "Solicitação de nuvem inválida.",
+            Self::NotAdmitted => "Sua conta ainda não tem acesso a este recurso.",
+            Self::InvalidRequest => "Solicitação inválida.",
             Self::QuotaExceeded => "Franquia individual insuficiente.",
             Self::BudgetExceeded => "Orçamento global insuficiente.",
             Self::Busy => "Limite de tarefas simultâneas atingido.",
-            Self::Conflict => "Conflito na operação de nuvem.",
+            Self::Conflict => "Não foi possível concluir a operação. Tente novamente.",
             Self::PriceUnavailable => "Preço indisponível ou desatualizado.",
-            Self::Unavailable => "Serviço de nuvem indisponível.",
+            Self::Unavailable => "Serviço temporariamente indisponível.",
         })
     }
 }

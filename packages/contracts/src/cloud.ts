@@ -60,6 +60,7 @@ export interface CloudJob {
 
 export interface CloudParticipant {
   readonly participantId: string;
+  readonly email?: string;
   readonly admitted: boolean;
   readonly emailVerified: boolean;
 }

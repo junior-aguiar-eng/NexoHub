@@ -86,6 +86,7 @@ impl AdminCommand {
         }
         let access = Arc::new(ImpersonatedToken {
             account: self.account.clone(),
+            project: self.project.clone(),
         });
         let store = Arc::new(FirestoreStore::google(&self.project, access)?);
         apply_action(store, &self.action, &self.account, now)
@@ -93,6 +94,7 @@ impl AdminCommand {
 }
 struct ImpersonatedToken {
     account: String,
+    project: String,
 }
 impl AccessTokenSource for ImpersonatedToken {
     fn token(&self) -> Result<String, CloudError> {
@@ -111,6 +113,8 @@ impl AccessTokenSource for ImpersonatedToken {
                 "auth",
                 "print-access-token",
                 "--quiet",
+                "--billing-project",
+                &self.project,
                 "--impersonate-service-account",
                 &self.account,
             ])

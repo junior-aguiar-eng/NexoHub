@@ -1,8 +1,11 @@
 import type { CloudParticipant, CloudUsage } from "@nexohub/contracts";
+import firebasePublic from "../../../../scripts/cloud/firebase-public.json";
 import type { CloudIdentityPort } from "./cloud-identity";
 import { CloudIdentityError } from "./cloud-identity";
 import type { DesktopBinding } from "./desktop-handoff";
 export interface CloudAccountPort {
+  /** No Windows, signIn aguarda o retorno e a gravação da sessão; na web, só envia o link. */
+  readonly emailLinkCompletesSession?: boolean;
   status(): Promise<{ enabled: boolean; identityAvailable: boolean }>;
   signIn(method: "google" | "emailLink", email?: string, binding?: DesktopBinding): Promise<void>;
   completeEmailLink?(email: string, url: string): Promise<void>;
@@ -30,7 +33,7 @@ export function createCloudAccount(
 ): CloudAccountPort {
   const parsed = new URL(origin);
   if (
-    parsed.origin !== "https://nexojuris.ia.br" ||
+    ![firebasePublic.productionOrigin, firebasePublic.previewOrigin].includes(parsed.origin) ||
     parsed.pathname !== "/" ||
     parsed.username ||
     parsed.password ||
@@ -148,6 +151,7 @@ export function createTauriCloudAccount(invoke: Invoke): CloudAccountPort {
     }
   };
   return {
+    emailLinkCompletesSession: true,
     status: () => request("status"),
     me: () => request("me"),
     usage: () => request("usage"),

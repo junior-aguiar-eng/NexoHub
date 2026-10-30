@@ -1,5 +1,5 @@
-import type { CloudUsage } from "@nexohub/contracts";
-import { Cloud } from "lucide-react";
+import type { CloudParticipant, CloudUsage } from "@nexohub/contracts";
+import { UserRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { translate as t } from "@/i18n";
 import type { CloudAccountPort } from "@/platform/cloud-account";
@@ -9,6 +9,9 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
   const account = provided ?? runtime;
   const [open, setOpen] = useState(false),
     [available, setAvailable] = useState(false),
+    [checking, setChecking] = useState(true),
+    [processingEnabled, setProcessingEnabled] = useState(false),
+    [participant, setParticipant] = useState<CloudParticipant | null>(null),
     [busy, setBusy] = useState(false),
     [email, setEmail] = useState(""),
     [notice, setNotice] = useState(""),
@@ -41,13 +44,29 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
   useEffect(() => {
     if (!open) return;
     let alive = true;
+    setChecking(true);
     void account
       .status()
-      .then((s) => {
+      .then(async (s) => {
         if (alive) setAvailable(s.identityAvailable);
+        if (alive) setProcessingEnabled(s.enabled);
+        if (!s.identityAvailable) return;
+        try {
+          const member = await account.me();
+          if (alive) setParticipant(member);
+          if (s.enabled) {
+            const value = await account.usage();
+            if (alive) setUsage(value);
+          }
+        } catch {
+          // Uma sessão ausente mantém o formulário de entrada disponível.
+        }
       })
       .catch(() => {
         if (alive) setAvailable(false);
+      })
+      .finally(() => {
+        if (alive) setChecking(false);
       });
     return () => {
       alive = false;
@@ -58,14 +77,15 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
     setNotice("");
     try {
       await account.signIn(method, email);
-      if (method === "emailLink") {
-        setNotice(t("cloud.emailSent"));
+      if (method === "emailLink" && !account.emailLinkCompletesSession) {
+        setNotice(t("account.emailSent"));
         return;
       }
-      await account.me();
-      setUsage(await account.usage());
+      setParticipant(await account.me());
+      if (processingEnabled) setUsage(await account.usage());
+      setNotice("");
     } catch {
-      setNotice(t("cloud.failed"));
+      setNotice(t("account.failed"));
     } finally {
       setBusy(false);
     }
@@ -76,41 +96,60 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
         ref={trigger}
         type="button"
         className="cloud-account-trigger"
-        aria-label={t("cloud.optional")}
+        aria-label={t(participant ? "account.mine" : "account.title")}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <Cloud size={18} aria-hidden="true" />
-        <span className="cloud-account-label">{t("cloud.optional")}</span>
+        <UserRound size={18} aria-hidden="true" />
+        <span className="cloud-account-label">
+          {t(participant ? "account.mine" : "account.title")}
+        </span>
       </button>
       {open && (
-        <section aria-label={t("cloud.optional")} className="cloud-account-panel">
-          <p>{t("cloud.localFree")}</p>
-          <p>{t("cloud.disabled")}</p>
-          {usage ? (
+        <section aria-label={t("account.title")} className="cloud-account-panel">
+          <h2>{t(participant ? "account.mine" : "account.signIn")}</h2>
+          {checking && <p role="status">{t("account.loading")}</p>}
+          {!checking && !available && <p role="status">{t("account.unavailable")}</p>}
+          {participant ? (
             <>
-              <h3>{t("cloud.balance")}</h3>
-              <p>{t("cloud.ocrAvailable").replace("{pages}", String(usage.ocrPages.remaining))}</p>
-              <p>
-                {t("cloud.charactersAvailable").replace(
-                  "{characters}",
-                  String(usage.translationCharacters.remaining),
-                )}
-              </p>
-              <p>
-                {t("cloud.filesAvailable").replace("{files}", String(usage.officeFiles.remaining))}
-              </p>
-              <p>
-                {t("cloud.financialBalance")
-                  .replace("{remaining}", (usage.budgetUsdMicros.remaining / 1_000_000).toFixed(3))
-                  .replace("{reserved}", (usage.budgetUsdMicros.reserved / 1_000_000).toFixed(3))}
-              </p>
-              <p>
-                {t("cloud.resetAt").replace(
-                  "{date}",
-                  new Date(usage.resetAt).toLocaleString("pt-BR"),
-                )}
-              </p>
+              {participant.email && <p className="account-email">{participant.email}</p>}
+              {processingEnabled && usage && (
+                <>
+                  <h3>{t("cloud.balance")}</h3>
+                  <p>
+                    {t("cloud.ocrAvailable").replace("{pages}", String(usage.ocrPages.remaining))}
+                  </p>
+                  <p>
+                    {t("cloud.charactersAvailable").replace(
+                      "{characters}",
+                      String(usage.translationCharacters.remaining),
+                    )}
+                  </p>
+                  <p>
+                    {t("cloud.filesAvailable").replace(
+                      "{files}",
+                      String(usage.officeFiles.remaining),
+                    )}
+                  </p>
+                  <p>
+                    {t("cloud.financialBalance")
+                      .replace(
+                        "{remaining}",
+                        (usage.budgetUsdMicros.remaining / 1_000_000).toFixed(3),
+                      )
+                      .replace(
+                        "{reserved}",
+                        (usage.budgetUsdMicros.reserved / 1_000_000).toFixed(3),
+                      )}
+                  </p>
+                  <p>
+                    {t("cloud.resetAt").replace(
+                      "{date}",
+                      new Date(usage.resetAt).toLocaleString("pt-BR"),
+                    )}
+                  </p>
+                </>
+              )}
               <button
                 type="button"
                 disabled={busy}
@@ -118,42 +157,53 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
                   setBusy(true);
                   try {
                     await account.signOut();
+                    setParticipant(null);
                     setUsage(null);
+                    setNotice("");
                   } catch {
-                    setNotice(t("cloud.failed"));
+                    setNotice(t("account.failed"));
                   } finally {
                     setBusy(false);
                   }
                 }}
               >
-                {t("cloud.signOut")}
+                {t("account.signOut")}
               </button>
             </>
           ) : (
             <>
+              <p>{t("account.welcome")}</p>
               <button
                 type="button"
-                disabled={!available || busy}
+                disabled={checking || !available || busy}
                 onClick={() => void login("google")}
               >
-                {t("cloud.google")}
+                {t("account.google")}
               </button>
-              <label>
-                {t("cloud.email")}
-                <input
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  disabled={!available || busy}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </label>
+              <p className="account-divider">{t("account.or")}</p>
+              {!account.emailLinkCompletesSession && (
+                <label>
+                  {t("account.email")}
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    disabled={checking || !available || busy}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </label>
+              )}
               <button
                 type="button"
-                disabled={!available || busy || !email.trim()}
+                disabled={
+                  checking ||
+                  !available ||
+                  busy ||
+                  (!account.emailLinkCompletesSession && !email.trim())
+                }
                 onClick={() => void login("emailLink")}
               >
-                {t("cloud.emailLink")}
+                {t("account.emailLink")}
               </button>
             </>
           )}

@@ -18,6 +18,7 @@ export class CloudIdentityError extends Error {
     readonly code:
       | "CLOUD_DISABLED"
       | "AUTH_REQUIRED"
+      | "AUTH_ACCOUNT_MISMATCH"
       | "AUTH_INVALID_CALLBACK"
       | "AUTH_INVALID_EMAIL"
       | "AUTH_UNAVAILABLE"

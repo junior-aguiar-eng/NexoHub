@@ -19,10 +19,10 @@ it("conclui link web sem exigir vínculo Windows ou redirecionar ao loopback", a
     usage: vi.fn(),
   };
   render(<CloudLoginPage account={account} />);
-  const email = screen.getByRole("textbox", { name: "E-mail confirmado" });
+  const email = screen.getByRole("textbox", { name: "E-mail" });
   await waitFor(() => expect(email).not.toBeDisabled());
   fireEvent.change(email, { target: { value: "person@example.invalid" } });
-  fireEvent.click(screen.getByRole("button", { name: "Concluir entrada por e-mail" }));
+  fireEvent.click(screen.getByRole("button", { name: "Confirmar e-mail e entrar" }));
   await waitFor(() => expect(completeEmailLink).toHaveBeenCalledOnce());
   expect(completeDesktop).not.toHaveBeenCalled();
 });

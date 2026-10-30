@@ -31,7 +31,7 @@ jobs:
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm check
       - run: pnpm test
-      - run: node --test scripts/deploy/*.test.mjs
+      - run: node --test scripts/deploy/*.test.mjs scripts/cloud/*.test.mjs
       - run: python3 -m unittest discover -s scripts/deploy -p '*_test.py'
       - run: pnpm build:web
       - run: pnpm --filter @nexohub/client install:e2e

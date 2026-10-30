@@ -9,6 +9,7 @@ RUN corepack enable && corepack prepare pnpm@11.19.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml biome.json ./
 COPY packages ./packages
 COPY apps/client ./apps/client
+COPY scripts/cloud ./scripts/cloud
 
 RUN pnpm install --frozen-lockfile --ignore-scripts
 ARG NEXOHUB_BASE_PATH=/
@@ -23,6 +24,7 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
 COPY runtime ./runtime
+COPY scripts/cloud ./scripts/cloud
 COPY apps/desktop/src-tauri ./apps/desktop/src-tauri
 
 RUN cargo build --release --locked -p nexohub-server

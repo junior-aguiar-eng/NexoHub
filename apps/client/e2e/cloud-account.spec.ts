@@ -11,13 +11,13 @@ for (const width of [390, 1440])
           request.url(),
         )
       )
-        cloud.push(request.url());
+        if (!request.url().endsWith("/api/v1/cloud/status")) cloud.push(request.url());
     });
     await page.goto(base);
-    const open = page.getByRole("button", { name: "Nuvem opcional", exact: true });
+    const open = page.getByRole("button", { name: "Conta", exact: true });
     await open.click();
-    await expect(page.getByText("O uso local continua gratuito e não exige conta.")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Entrar com Google" })).toBeDisabled();
+    await expect(page.getByText("Entre ou crie sua conta no NexoHub.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeDisabled();
     expect(cloud).toEqual([]);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
@@ -31,14 +31,14 @@ test("abertura offline não solicita conta nem tenta enviar documentos", async (
   context,
 }) => {
   await page.goto(base);
-  await expect(page.getByRole("button", { name: "Nuvem opcional", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Conta", exact: true })).toBeVisible();
   await context.setOffline(true);
-  await page.getByRole("button", { name: "Nuvem opcional", exact: true }).click();
-  await expect(page.getByText("O uso local continua gratuito e não exige conta.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Entrar com Google" })).toBeDisabled();
+  await page.getByRole("button", { name: "Conta", exact: true }).click();
+  await expect(page.getByText("Entre ou crie sua conta no NexoHub.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeDisabled();
 });
 test("retorno de login está disponível como página, mas permanece bloqueado", async ({ page }) => {
   await page.goto(`${base}cloud/login?state=synthetic`);
-  await expect(page.getByRole("heading", { name: "Entrar no NexoHub para Windows" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Continuar no navegador" })).toBeDisabled();
+  await expect(page.getByRole("heading", { name: "Entrar na sua conta" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeDisabled();
 });

@@ -136,6 +136,12 @@ impl FirestoreStore {
             return Err(CloudError::Conflict);
         }
         if !response.status().is_success() {
+            tracing::warn!(
+                stage = "account_store",
+                operation = method,
+                status = response.status().as_u16(),
+                "Falha no armazenamento da conta"
+            );
             let error = limited_json(response)?;
             if method == "commit"
                 && error["error"]["status"].as_str() == Some("FAILED_PRECONDITION")
@@ -243,13 +249,13 @@ impl FirestoreStore {
                 if encoded.len() > 512 * 1024 {
                     return Err(CloudError::InvalidRequest.into());
                 }
-                writes.push(json!({"update":{"name":name,"fields":{"payload":{"stringValue":encoded}}},"currentDocument":condition}));
+                writes.push(json!({"update":{"name":name,"fields":document_fields(path, data, encoded)?},"currentDocument":condition}));
             } else {
                 // API pública: regrava o mesmo payload sob precondição, sem Write.verify privado.
                 if let Some(data) = docs.get(path) {
                     let encoded =
                         serde_json::to_string(data).map_err(|_| CloudError::InvalidRequest)?;
-                    writes.push(json!({"update":{"name":name,"fields":{"payload":{"stringValue":encoded}}},"currentDocument":condition}));
+                    writes.push(json!({"update":{"name":name,"fields":document_fields(path, data, encoded)?},"currentDocument":condition}));
                 } else {
                     writes.push(json!({"delete":name,"currentDocument":condition}));
                 }
@@ -266,6 +272,19 @@ impl FirestoreStore {
 enum AttemptError {
     Retry,
     Failure(CloudError),
+}
+// O TTL físico é independente da recusa lógica após 60 s; não renova a validade do código.
+fn document_fields(path: &str, data: &Value, encoded: String) -> Result<Value, CloudError> {
+    let mut fields = json!({"payload":{"stringValue":encoded}});
+    if path.starts_with("desktopCodes/") {
+        let seconds = data["expiresAt"]
+            .as_u64()
+            .ok_or(CloudError::InvalidRequest)?;
+        let seconds = i64::try_from(seconds).map_err(|_| CloudError::InvalidRequest)?;
+        let at = chrono::DateTime::from_timestamp(seconds, 0).ok_or(CloudError::InvalidRequest)?;
+        fields["expireAt"] = json!({"timestampValue":at.to_rfc3339()});
+    }
+    Ok(fields)
 }
 impl From<CloudError> for AttemptError {
     fn from(error: CloudError) -> Self {

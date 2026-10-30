@@ -13,6 +13,9 @@ use std::{
     net::TcpListener,
     time::{Duration, Instant},
 };
+// Prazo para o usuário escolher a conta e abrir o e-mail. O código emitido pelo servidor
+// continua com TTL independente de 60 s e só pode ser consumido uma vez.
+const LOGIN_INTERACTION_TIMEOUT: Duration = Duration::from_secs(600);
 fn error() -> CoreError {
     CoreError::new(ErrorCode::PermissionDenied, "AUTH_INVALID_CALLBACK")
 }
@@ -88,8 +91,8 @@ impl NativeLogin {
             return Err(error());
         }
         let d = self.descriptor();
-        let mut url =
-            url::Url::parse("https://nexojuris.ia.br/hub/cloud/login").map_err(|_| error())?;
+        let mut url = url::Url::parse(&format!("{}/hub/cloud/login", identity_origin()))
+            .map_err(|_| error())?;
         url.query_pairs_mut().extend_pairs([
             ("state", d.state),
             ("challenge", d.challenge),
@@ -100,7 +103,7 @@ impl NativeLogin {
         Ok(url.into())
     }
     pub fn validate_callback(&self, request: &str) -> CoreResult<String> {
-        if self.started.elapsed() >= Duration::from_secs(60) || request.len() > 4096 {
+        if self.started.elapsed() >= LOGIN_INTERACTION_TIMEOUT || request.len() > 4096 {
             return Err(error());
         }
         let mut lines = request.split("\r\n");
@@ -138,7 +141,7 @@ impl NativeLogin {
         Ok(code)
     }
     pub fn receive(&self) -> CoreResult<String> {
-        while self.started.elapsed() < Duration::from_secs(60) {
+        while self.started.elapsed() < LOGIN_INTERACTION_TIMEOUT {
             match self.listener.accept() {
                 Ok((mut socket, peer)) => {
                     if !peer.ip().is_loopback() {
@@ -152,7 +155,7 @@ impl NativeLogin {
                         .map_err(|_| error())?;
                     let mut buffer = Vec::new();
                     let mut chunk = [0; 512];
-                    while self.started.elapsed() < Duration::from_secs(60)
+                    while self.started.elapsed() < LOGIN_INTERACTION_TIMEOUT
                         && buffer.len() <= 4096
                         && !buffer.windows(4).any(|v| v == b"\r\n\r\n")
                     {
@@ -302,7 +305,7 @@ pub fn unprotect(_: &[u8]) -> CoreResult<Vec<u8>> {
 #[cfg(windows)]
 pub fn open_browser(url: &str) -> CoreResult<()> {
     use windows_sys::Win32::UI::Shell::ShellExecuteW;
-    if !url.starts_with("https://nexojuris.ia.br/hub/cloud/login?") || url.contains('\0') {
+    if !url.starts_with(&format!("{}/hub/cloud/login?", identity_origin())) || url.contains('\0') {
         return Err(error());
     }
     let wide: Vec<u16> = url.encode_utf16().chain(Some(0)).collect();
@@ -324,9 +327,17 @@ pub fn open_browser(url: &str) -> CoreResult<()> {
     Ok(())
 }
 
-/// A ativação exige alterar o gate após homologação, não uma variável recebida pela UI.
-pub const IDENTITY_ENABLED: bool = false;
-const FIREBASE_API_KEY: &str = "";
+/// Identidade opcional; o processamento local nunca depende deste gate.
+pub const IDENTITY_ENABLED: bool = true;
+const FIREBASE_PUBLIC: &str = include_str!("../../../scripts/cloud/firebase-public.json");
+fn identity_origin() -> &'static str {
+    // Perfil de homologação fixado na compilação, nunca recebido por IPC ou documento.
+    if option_env!("NEXOHUB_IDENTITY_PREVIEW") == Some("true") {
+        "https://login-hml---nexohub-hub-r4m4ltvj3a-rj.a.run.app"
+    } else {
+        "https://nexojuris.ia.br"
+    }
+}
 fn transport() -> ureq::Agent {
     ureq::AgentBuilder::new()
         .redirects(0)
@@ -349,7 +360,10 @@ pub fn finish_login(login: NativeLogin) -> CoreResult<SessionSecrets> {
     let code = login.receive()?;
     let value = response_json(
         transport()
-            .post("https://nexojuris.ia.br/hub/api/v1/cloud/auth/desktop/exchange")
+            .post(&format!(
+                "{}/hub/api/v1/cloud/auth/desktop/exchange",
+                identity_origin()
+            ))
             .set("Content-Type", "application/json")
             .send_string(&login.exchange_request(&code).to_string())
             .map_err(|_| error())?,
@@ -367,12 +381,14 @@ pub fn token_needs_refresh(id_token: &str, now: u64) -> bool {
         .is_none_or(|exp| exp <= now.saturating_add(120))
 }
 pub fn refresh_session(session: &SessionSecrets) -> CoreResult<SessionSecrets> {
-    if FIREBASE_API_KEY.is_empty() {
-        return Err(error());
-    }
+    let config: Value = serde_json::from_str(FIREBASE_PUBLIC).map_err(|_| error())?;
+    let api_key = config["apiKey"]
+        .as_str()
+        .filter(|key| !key.is_empty())
+        .ok_or_else(error)?;
     let mut url =
         url::Url::parse("https://securetoken.googleapis.com/v1/token").map_err(|_| error())?;
-    url.query_pairs_mut().append_pair("key", FIREBASE_API_KEY);
+    url.query_pairs_mut().append_pair("key", api_key);
     let body = url::form_urlencoded::Serializer::new(String::new())
         .append_pair("grant_type", "refresh_token")
         .append_pair("refresh_token", &session.refresh_token)
@@ -443,7 +459,7 @@ pub fn account_request(operation: &str, token: Option<&str>) -> CoreResult<Value
             ))
         };
     }
-    let url = format!("https://nexojuris.ia.br/hub/api/v1/cloud/{operation}");
+    let url = format!("{}/hub/api/v1/cloud/{operation}", identity_origin());
     let mut request = transport().get(&url);
     if operation != "status" {
         let token = token
@@ -460,7 +476,7 @@ mod deadline_tests {
     #[test]
     fn expired_login_stops_before_accepting_callback() {
         let mut login = NativeLogin::begin().unwrap();
-        login.started = Instant::now() - Duration::from_secs(61);
+        login.started = Instant::now() - LOGIN_INTERACTION_TIMEOUT - Duration::from_secs(1);
         assert!(login.receive().is_err());
     }
 }

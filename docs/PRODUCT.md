@@ -9,6 +9,10 @@ offline no computador do usuário.
 
 Windows 0.2.4 publicado em 30/10/2026; website em [nexojuris.ia.br/hub/](https://nexojuris.ia.br/hub/). Instalação, atualização e casos de tradução instalada foram conferidos; o [relatório de release](RELEASE-VALIDATION.md) delimita as evidências. OCR, tradução e revisão opcional podem exigir recursos baixados no primeiro uso. A disponibilidade offline depende dos recursos locais.
 
+## Evolução opcional em implementação
+
+O [ADR-020](adr/ADR-020-nuvem-opcional-cotas.md) registra a estrutura híbrida aprovada para 300 participantes, com Google/e-mail confirmado apenas para nuvem e cotas verificadas no servidor. O modo local continua gratuito e sem login. Neste estágio existem contratos/política desativada; não há nova funcionalidade cloud publicada nem ampliação da homologação de OCR/Office.
+
 ## Plataformas
 
 - **Windows desktop:** alvo produtivo principal. O aplicativo usa Tauri v2, Rust e WebView2,

@@ -109,3 +109,26 @@ para produção aguardam a resolução das pendências de homologação.
 
 Não houve ativação de OCR, tradução ou Office remotos. As demais tarefas do plano híbrido
 continuam pendentes e não são declaradas concluídas por esta integração de identidade.
+
+## Restrição da chave de API web (31/10/2026)
+
+A chave em `scripts/cloud/firebase-public.json` é pública por desenho e é usada em dois lugares:
+pelo SDK no navegador e pelo core nativo, que renova a sessão em
+`securetoken.googleapis.com/v1/token`. Como o cliente nativo não tem página de origem, uma chave
+restrita por referrer recusaria a renovação no Windows. O core passou a enviar o cabeçalho
+`Referer` com a origem pública do serviço (`https://nexojuris.ia.br/`, ou a origem de
+homologação quando compilado com `NEXOHUB_IDENTITY_PREVIEW=true`), coberto por teste contra
+servidor local sem rede.
+
+Restrição a aplicar no Console do Google Cloud (APIs e serviços › Credenciais), **sem efeito
+antes da aplicação pelo operador**:
+
+- **Restrição de API:** somente *Identity Toolkit API* e *Token Service API*.
+- **Restrição de aplicativo (referrers HTTP):** `https://nexojuris.ia.br/*`,
+  `https://conta.nexojuris.ia.br/*` e, enquanto a homologação existir,
+  `https://login-hml---nexohub-hub-r4m4ltvj3a-rj.a.run.app/*`.
+
+Validar depois de aplicar: login Google e por e-mail na web, reabertura da sessão web, e no
+Windows o login, o fechamento e a reabertura do aplicativo após a expiração do token de acesso,
+que é quando a renovação ocorre. Se a renovação nativa for recusada, remover primeiro a restrição
+de referrer e manter a de API. Este registro não declara a restrição aplicada nem validada.

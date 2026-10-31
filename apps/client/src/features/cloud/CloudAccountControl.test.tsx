@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { createDisabledCloudAccount } from "@/platform/cloud-account";
+import { CloudIdentityError } from "@/platform/cloud-identity";
 import { CloudAccountControl } from "./CloudAccountControl";
 
 it("conta indisponível mantém formulário claro sem avisos de arquitetura", async () => {
@@ -83,4 +84,41 @@ it("login é explícito; exibe saldo compartilhado e logout local", async () => 
   expect(screen.getByText("person@example.invalid")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Sair" }));
   await waitFor(() => expect(signOut).toHaveBeenCalledOnce());
+});
+
+it("com sessão oferece abrir a página da conta", async () => {
+  render(
+    <CloudAccountControl
+      account={{
+        ...createDisabledCloudAccount(),
+        status: async () => ({ enabled: false, identityAvailable: true }),
+        me: async () => ({
+          participantId: "participant-synthetic",
+          email: "person@example.invalid",
+          admitted: true,
+          emailVerified: true,
+        }),
+      }}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Conta" }));
+  const link = await screen.findByRole("link", { name: "Abrir minha conta" });
+  expect(link.getAttribute("href")).toMatch(/conta$/);
+});
+it("conta sem convite mostra o motivo no lugar do formulário de entrada", async () => {
+  render(
+    <CloudAccountControl
+      account={{
+        ...createDisabledCloudAccount(),
+        status: async () => ({ enabled: false, identityAvailable: true }),
+        me: async () => {
+          throw new CloudIdentityError("PARTICIPANT_NOT_ADMITTED");
+        },
+      }}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Conta" }));
+  expect(await screen.findByText(/ainda não foi liberada/)).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Continuar com Google" })).toBeNull();
+  expect(screen.getByRole("button", { name: "Sair" })).toBeTruthy();
 });

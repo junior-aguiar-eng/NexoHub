@@ -14,6 +14,20 @@ export interface CloudAccountPort {
   me(): Promise<CloudParticipant>;
   usage(): Promise<CloudUsage>;
 }
+/** Só o código estruturado do 403 chega à interface; mensagem e corpo nunca são repassados. */
+async function failureCode(response: Response): Promise<CloudIdentityError["code"]> {
+  if (response.status === 503) return "CLOUD_DISABLED";
+  if (response.status === 401) return "AUTH_REQUIRED";
+  if (response.status === 403) {
+    const code = await response.json().then(
+      (value: { code?: unknown } | null) => value?.code,
+      () => undefined,
+    );
+    if (code === "PARTICIPANT_NOT_ADMITTED" || code === "EMAIL_UNVERIFIED") return code;
+  }
+  return "AUTH_UNAVAILABLE";
+}
+
 export function createDisabledCloudAccount(): CloudAccountPort {
   const disabled = async (): Promise<never> => {
     throw new CloudIdentityError("CLOUD_DISABLED");
@@ -61,14 +75,7 @@ export function createCloudAccount(
     } catch {
       throw new CloudIdentityError("AUTH_UNAVAILABLE");
     }
-    if (!response.ok)
-      throw new CloudIdentityError(
-        response.status === 503
-          ? "CLOUD_DISABLED"
-          : response.status === 401
-            ? "AUTH_REQUIRED"
-            : "AUTH_UNAVAILABLE",
-      );
+    if (!response.ok) throw new CloudIdentityError(await failureCode(response));
     try {
       return (await response.json()) as T;
     } catch {

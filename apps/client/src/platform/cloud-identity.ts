@@ -22,7 +22,8 @@ export class CloudIdentityError extends Error {
       | "AUTH_INVALID_CALLBACK"
       | "AUTH_INVALID_EMAIL"
       | "AUTH_UNAVAILABLE"
-      | "EMAIL_UNVERIFIED",
+      | "EMAIL_UNVERIFIED"
+      | "PARTICIPANT_NOT_ADMITTED",
   ) {
     super(code);
     this.name = "CloudIdentityError";

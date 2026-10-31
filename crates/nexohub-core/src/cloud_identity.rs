@@ -380,14 +380,25 @@ pub fn token_needs_refresh(id_token: &str, now: u64) -> bool {
         .and_then(|v| v["exp"].as_u64())
         .is_none_or(|exp| exp <= now.saturating_add(120))
 }
+const TOKEN_ENDPOINT: &str = "https://securetoken.googleapis.com/v1/token";
+
+/// Chave web restrita por referrer só aceita chamadas que declarem a origem autorizada; o cliente
+/// nativo não tem página de origem, então declara a origem pública do próprio serviço.
+fn refresh_referer() -> String {
+    format!("{}/", identity_origin())
+}
+
 pub fn refresh_session(session: &SessionSecrets) -> CoreResult<SessionSecrets> {
+    refresh_session_at(TOKEN_ENDPOINT, session)
+}
+
+fn refresh_session_at(endpoint: &str, session: &SessionSecrets) -> CoreResult<SessionSecrets> {
     let config: Value = serde_json::from_str(FIREBASE_PUBLIC).map_err(|_| error())?;
     let api_key = config["apiKey"]
         .as_str()
         .filter(|key| !key.is_empty())
         .ok_or_else(error)?;
-    let mut url =
-        url::Url::parse("https://securetoken.googleapis.com/v1/token").map_err(|_| error())?;
+    let mut url = url::Url::parse(endpoint).map_err(|_| error())?;
     url.query_pairs_mut().append_pair("key", api_key);
     let body = url::form_urlencoded::Serializer::new(String::new())
         .append_pair("grant_type", "refresh_token")
@@ -397,6 +408,7 @@ pub fn refresh_session(session: &SessionSecrets) -> CoreResult<SessionSecrets> {
         transport()
             .post(url.as_str())
             .set("Content-Type", "application/x-www-form-urlencoded")
+            .set("Referer", &refresh_referer())
             .send_string(&body)
             .map_err(|_| error())?,
     )?;
@@ -476,6 +488,70 @@ fn account_request_gated(
         request = request.set("Authorization", &format!("Bearer {token}"));
     }
     response_json(request.call().map_err(|_| error())?)
+}
+
+#[cfg(test)]
+mod refresh_tests {
+    use super::*;
+    use std::io::{BufRead, BufReader, Write};
+    use std::net::TcpListener;
+
+    /// Responde uma única requisição e devolve a linha de requisição e os cabeçalhos recebidos.
+    fn serve_once(response_body: &'static str) -> (String, std::thread::JoinHandle<String>) {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let endpoint = format!("http://{}/v1/token", listener.local_addr().unwrap());
+        let handle = std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut reader = BufReader::new(stream.try_clone().unwrap());
+            let mut head = String::new();
+            let mut length = 0usize;
+            loop {
+                let mut line = String::new();
+                reader.read_line(&mut line).unwrap();
+                if let Some(value) = line.to_ascii_lowercase().strip_prefix("content-length:") {
+                    length = value.trim().parse().unwrap();
+                }
+                if line == "\r\n" {
+                    break;
+                }
+                head.push_str(&line);
+            }
+            let mut body = vec![0; length];
+            std::io::Read::read_exact(&mut reader, &mut body).unwrap();
+            write!(
+                stream,
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{response_body}",
+                response_body.len()
+            )
+            .unwrap();
+            head
+        });
+        (endpoint, handle)
+    }
+
+    #[test]
+    fn refresh_declares_the_public_origin_as_referer_and_sends_the_key() {
+        let (endpoint, server) = serve_once(
+            r#"{"id_token":"synthetic-id-new","refresh_token":"synthetic-refresh-new"}"#,
+        );
+        let session = SessionSecrets {
+            id_token: "synthetic-id-token".into(),
+            refresh_token: "synthetic-refresh-token".into(),
+        };
+        let renewed = refresh_session_at(&endpoint, &session).unwrap();
+        assert_eq!(renewed.id_token, "synthetic-id-new");
+        assert_eq!(renewed.refresh_token, "synthetic-refresh-new");
+        let head = server.join().unwrap().to_ascii_lowercase();
+        assert!(head.starts_with("post /v1/token?key="));
+        assert!(head.contains(&format!(
+            "referer: {}",
+            refresh_referer().to_ascii_lowercase()
+        )));
+        assert!(
+            refresh_referer().ends_with("nexojuris.ia.br/")
+                || refresh_referer().ends_with(".run.app/")
+        );
+    }
 }
 
 #[cfg(test)]

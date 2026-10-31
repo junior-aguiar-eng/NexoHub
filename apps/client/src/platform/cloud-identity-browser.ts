@@ -141,6 +141,20 @@ export function createBrowserCloudIdentity(config: BrowserCloudIdentityConfig): 
         return sanitized(error);
       }
     },
+    async profile() {
+      try {
+        const current = ready();
+        await current.authStateReady();
+        const user = current.currentUser;
+        if (!user?.emailVerified) return null;
+        return {
+          ...(user.displayName ? { name: user.displayName } : {}),
+          ...(user.photoURL ? { picture: user.photoURL } : {}),
+        };
+      } catch {
+        return null;
+      }
+    },
     async prepareDesktopHandoff(binding) {
       try {
         const current = ready();

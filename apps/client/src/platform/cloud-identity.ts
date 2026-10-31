@@ -1,3 +1,10 @@
+/** Nome e foto exibidos só neste aparelho; o servidor do NexoHub nunca os recebe. */
+export interface CloudProfile {
+  readonly name?: string;
+  /** URL `https:` (web) ou `data:` pronta (Windows). */
+  readonly picture?: string;
+}
+
 /** Identidade opcional: nunca é consultada pelo processamento local. */
 export interface CloudIdentityPort {
   signIn(
@@ -7,6 +14,7 @@ export interface CloudIdentityPort {
   ): Promise<void>;
   completeEmailLink(email: string, url: string): Promise<void>;
   getIdToken(): Promise<string | null>;
+  profile?(): Promise<CloudProfile | null>;
   signOut(): Promise<void>;
   prepareDesktopHandoff?(
     binding: import("./desktop-handoff").DesktopBinding,

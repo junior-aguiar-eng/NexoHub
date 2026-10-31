@@ -16,7 +16,9 @@ for (const width of [390, 1440])
     await page.goto(base);
     const open = page.getByRole("button", { name: "Conta", exact: true });
     await open.click();
-    await expect(page.getByText("Entre ou crie sua conta no NexoHub.")).toBeVisible();
+    await expect(
+      page.getByText("Entre com sua conta Google ou com um link enviado ao seu e-mail."),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeDisabled();
     expect(cloud).toEqual([]);
     expect(
@@ -34,7 +36,9 @@ test("abertura offline não solicita conta nem tenta enviar documentos", async (
   await expect(page.getByRole("button", { name: "Conta", exact: true })).toBeVisible();
   await context.setOffline(true);
   await page.getByRole("button", { name: "Conta", exact: true }).click();
-  await expect(page.getByText("Entre ou crie sua conta no NexoHub.")).toBeVisible();
+  await expect(
+    page.getByText("Entre com sua conta Google ou com um link enviado ao seu e-mail."),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeDisabled();
 });
 test("retorno de login está disponível como página, mas permanece bloqueado", async ({ page }) => {

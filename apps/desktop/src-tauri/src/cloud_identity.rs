@@ -92,6 +92,28 @@ pub async fn cloud_identity_sign_out(app: tauri::AppHandle) -> Result<(), CoreEr
     .map_err(|_| unavailable())?
 }
 
+/// Nome e foto vêm do token já guardado neste aparelho; nada é enviado ao servidor.
+#[tauri::command]
+pub async fn cloud_identity_profile(
+    app: tauri::AppHandle,
+) -> Result<cloud_identity::AccountProfile, CoreError> {
+    if !cloud_identity::IDENTITY_ENABLED {
+        return Ok(cloud_identity::AccountProfile::default());
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        // O cofre é lido sob o bloqueio; o download da foto acontece depois, sem segurá-lo.
+        let session = {
+            let _lock = VAULT_LOCK.lock().map_err(|_| unavailable())?;
+            cloud_identity::SessionVault::new(vault(&app)?).load()?
+        };
+        Ok(session
+            .map(|session| cloud_identity::account_profile(&session.id_token))
+            .unwrap_or_default())
+    })
+    .await
+    .map_err(|_| unavailable())?
+}
+
 #[tauri::command]
 pub async fn cloud_account_request(
     app: tauri::AppHandle,

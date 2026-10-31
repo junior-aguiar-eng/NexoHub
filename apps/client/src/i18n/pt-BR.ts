@@ -2,7 +2,7 @@ export const ptBR = {
   "account.title": "Conta",
   "account.mine": "Minha conta",
   "account.signIn": "Entrar na sua conta",
-  "account.welcome": "Entre ou crie sua conta no NexoHub.",
+  "account.welcome": "Entre com sua conta Google ou com um link enviado ao seu e-mail.",
   "account.google": "Continuar com Google",
   "account.email": "E-mail",
   "account.emailLink": "Continuar com e-mail",
@@ -35,6 +35,8 @@ export const ptBR = {
   "account.page.privacy": "Privacidade",
   "account.page.privacyLead":
     "Guardamos seu e-mail, um identificador de participante e os contadores de uso do piloto. Seus arquivos não são enviados nem guardados ao usar a conta.",
+  "account.page.profilePrivacy":
+    "Seu nome e sua foto do Google aparecem só neste aparelho. O NexoHub não os guarda.",
   "account.page.localNote":
     "Usar o NexoHub continua gratuito e sem conta. Entrar não envia seus arquivos.",
   "cloud.balance": "Meu uso",

@@ -24,6 +24,16 @@ com validade lógica de 60 segundos e consumo único. A exclusão física no Fir
 que é assíncrono e pode ocorrer depois da expiração lógica. Sair remove a sessão do dispositivo.
 Os dados de identidade e saldo são distintos dos arquivos documentais locais.
 
+**Nome e foto do Google.** Quando a conta Google os informa, o aplicativo os exibe somente neste
+aparelho. O servidor do NexoHub não recebe, não guarda e não registra nome nem foto. Na web, o
+navegador lê os dados do SDK de autenticação e carrega a imagem direto do Google. No Windows, o
+núcleo nativo lê `name` e `picture` do token já protegido por DPAPI e baixa a imagem somente de
+`https://lhN.googleusercontent.com` (N numérico, sem porta nem credenciais), sem redirecionamento,
+com limite de 256 KiB e apenas JPEG, PNG ou WebP, entregando-a como `data:` à interface; a política
+de conteúdo do aplicativo não é ampliada. Baixar a foto contata o Google, que já é o provedor de
+identidade. Se qualquer etapa falhar, a interface mostra a inicial do nome ou do e-mail. A foto não
+é gravada em disco pelo NexoHub.
+
 Em 30/10/2026 o usuário autorizou vincular faturamento existente apenas para identidade e
 infraestrutura. Isso não autoriza chamadas a motores documentais pagos. Configuração,
 homologação real e publicação são etapas distintas, registradas nas evidências do projeto.

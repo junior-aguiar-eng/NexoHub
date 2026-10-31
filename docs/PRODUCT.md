@@ -21,6 +21,9 @@ seu e-mail e oferece **Sair**. A conta não depende da disponibilidade de saldo 
 O login não expõe arquitetura, ambientes de execução, estados de implantação ou avisos sobre
 a obrigatoriedade de entrar. Informações de processamento e consumo pertencem à operação
 documental correspondente, quando disponível, e não à apresentação da conta.
+O nome e a foto do Google, quando existem, aparecem apenas neste aparelho e não são guardados
+pelo NexoHub. O acesso à nuvem continua por convite individual (ADR-020); entrar com uma conta
+Google sem convite identifica a pessoa, mas não libera recursos em nuvem.
 
 ## Plataformas
 

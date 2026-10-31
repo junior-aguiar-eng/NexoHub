@@ -1,6 +1,6 @@
 import type { CloudParticipant, CloudUsage } from "@nexohub/contracts";
 import firebasePublic from "../../../../scripts/cloud/firebase-public.json";
-import type { CloudIdentityPort } from "./cloud-identity";
+import type { CloudIdentityPort, CloudProfile } from "./cloud-identity";
 import { CloudIdentityError } from "./cloud-identity";
 import type { DesktopBinding } from "./desktop-handoff";
 export interface CloudAccountPort {
@@ -13,6 +13,8 @@ export interface CloudAccountPort {
   signOut(): Promise<void>;
   me(): Promise<CloudParticipant>;
   usage(): Promise<CloudUsage>;
+  /** Lido do próprio aparelho; falha ou ausência nunca impede o uso da conta. */
+  profile(): Promise<CloudProfile | null>;
 }
 /** Só o código estruturado do 403 chega à interface; mensagem e corpo nunca são repassados. */
 async function failureCode(response: Response): Promise<CloudIdentityError["code"]> {
@@ -38,6 +40,7 @@ export function createDisabledCloudAccount(): CloudAccountPort {
     signOut: async () => {},
     me: disabled,
     usage: disabled,
+    profile: async () => null,
   };
 }
 export function createCloudAccount(
@@ -106,6 +109,7 @@ export function createCloudAccount(
     signOut: () => identity.signOut(),
     me: () => request<CloudParticipant>("me"),
     usage: () => request<CloudUsage>("usage"),
+    profile: async () => (await identity.profile?.()) ?? null,
     async completeDesktop(binding) {
       if (!identity.prepareDesktopHandoff) throw new CloudIdentityError("AUTH_UNAVAILABLE");
       const envelope = await identity.prepareDesktopHandoff(binding);
@@ -162,6 +166,20 @@ export function createTauriCloudAccount(invoke: Invoke): CloudAccountPort {
     status: () => request("status"),
     me: () => request("me"),
     usage: () => request("usage"),
+    async profile() {
+      try {
+        const value = (await invoke("cloud_identity_profile")) as {
+          name?: string | null;
+          picture?: string | null;
+        } | null;
+        return {
+          ...(value?.name ? { name: value.name } : {}),
+          ...(value?.picture ? { picture: value.picture } : {}),
+        };
+      } catch {
+        return null;
+      }
+    },
     signIn: (method, email) => identity.signIn(method, email),
     signOut: () => identity.signOut(),
   };

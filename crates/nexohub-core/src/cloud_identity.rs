@@ -446,10 +446,18 @@ impl SessionVault {
     }
 }
 pub fn account_request(operation: &str, token: Option<&str>) -> CoreResult<Value> {
+    account_request_gated(IDENTITY_ENABLED, operation, token)
+}
+
+fn account_request_gated(
+    identity_enabled: bool,
+    operation: &str,
+    token: Option<&str>,
+) -> CoreResult<Value> {
     if !matches!(operation, "status" | "me" | "usage") {
         return Err(error());
     }
-    if !IDENTITY_ENABLED {
+    if !identity_enabled {
         return if operation == "status" {
             Ok(serde_json::json!({"enabled":false,"identityAvailable":false}))
         } else {
@@ -468,6 +476,32 @@ pub fn account_request(operation: &str, token: Option<&str>) -> CoreResult<Value
         request = request.set("Authorization", &format!("Bearer {token}"));
     }
     response_json(request.call().map_err(|_| error())?)
+}
+
+#[cfg(test)]
+mod gate_tests {
+    use super::*;
+
+    #[test]
+    fn disabled_identity_answers_status_locally_and_refuses_the_rest() {
+        let status = account_request_gated(false, "status", None).unwrap();
+        assert_eq!(status["identityAvailable"], false);
+        let refused = account_request_gated(false, "usage", Some("token")).unwrap_err();
+        assert_eq!(refused.message, "CLOUD_DISABLED");
+        assert!(account_request_gated(false, "../tools/ocr", Some("token")).is_err());
+    }
+
+    #[test]
+    fn enabled_identity_validates_operation_and_token_before_any_request() {
+        for (operation, token) in [
+            ("../tools/ocr", Some("token")),
+            ("me", None),
+            ("usage", Some("")),
+            ("me", Some(&"a".repeat(16_385)[..])),
+        ] {
+            assert!(account_request_gated(true, operation, token).is_err());
+        }
+    }
 }
 
 #[cfg(test)]

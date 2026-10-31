@@ -83,12 +83,8 @@ fn session_survives_vault_reopen_and_logout_removes_only_its_file() {
 }
 
 #[test]
-fn disabled_native_routes_do_not_connect_or_read_credentials() {
+fn native_routes_reject_unknown_operations_and_missing_tokens_without_network() {
     use nexohub_core::cloud_identity::account_request;
-    assert_eq!(
-        account_request("status", None).unwrap()["identityAvailable"],
-        false
-    );
     assert!(account_request("usage", None).is_err());
     assert!(account_request("../tools/ocr", Some("not-a-token")).is_err());
 }

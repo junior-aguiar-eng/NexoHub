@@ -17,6 +17,7 @@ it("conclui link web sem exigir vínculo Windows ou redirecionar ao loopback", a
     signOut: vi.fn(),
     me: async () => ({ participantId: "p", admitted: true, emailVerified: true }),
     usage: vi.fn(),
+    profile: async () => null,
   };
   render(<CloudLoginPage account={account} />);
   const email = screen.getByRole("textbox", { name: "E-mail" });

@@ -1,7 +1,7 @@
 mod cloud_identity;
 use cloud_identity::{
-    cloud_account_request, cloud_identity_get_token, cloud_identity_sign_in,
-    cloud_identity_sign_out,
+    cloud_account_request, cloud_identity_get_token, cloud_identity_profile,
+    cloud_identity_sign_in, cloud_identity_sign_out,
 };
 use nexohub_core::CoreError;
 use nexohub_core::anchor_tools::{CreateAnchorRequest, ListAnchorsRequest};
@@ -476,6 +476,7 @@ pub fn run() {
             cloud_account_request,
             cloud_identity_sign_in,
             cloud_identity_get_token,
+            cloud_identity_profile,
             cloud_identity_sign_out,
             create_project,
             open_project,

@@ -39,6 +39,7 @@ export async function createCloudAccountRuntime(
     signIn: async (method, email, binding) => (await ready()).signIn(method, email, binding),
     completeEmailLink: async (email, url) => (await ready()).completeEmailLink(email, url),
     getIdToken: async () => (await ready()).getIdToken(),
+    profile: async () => (await ready()).profile?.() ?? null,
     signOut: async () => {
       if (pending) await (await pending).signOut();
     },

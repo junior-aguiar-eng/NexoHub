@@ -99,6 +99,7 @@ Sem sessão, `/conta` mostra o mesmo painel de **Entrar na sua conta**, nunca um
 Cada fase tem seu próprio plano e termina verde antes da seguinte.
 
 1. **Fase 1 — Menu e página de conta. IMPLEMENTADA localmente.** Sem backend novo: `/conta`, link **Abrir minha conta** no menu, estados da §5 e correção do item 2 da §9. O item 1 (texto "crie sua conta") aguarda a decisão D3.
+1b. **Fase 1b — Nome e foto do Google.** Ver §13. Só cliente e núcleo nativo; nenhum endpoint novo.
 2. **Fase 2 — Segurança.** Endpoint de revogação total e teste de isolamento.
 3. **Fase 3 — Privacidade e dados.** Exportação e exclusão, **depois** da decisão D2.
 
@@ -114,11 +115,27 @@ Relação com o plano do Codex (`2026-10-30-nuvem-hibrida-300.md`): esta conta *
 
 ## 12. Decisões abertas
 
-- **D1 — Nome e foto do Google.** Recomendação: **não**. E-mail e inicial no avatar bastam.
+- **D1 — Nome e foto do Google.** **Decidido em 31/10/2026: sim, sem retenção no servidor** (§13).
 - **D2 — Exclusão e franquia.** Reter marcador mínimo e declarar base legal, ou aceitar que recriar a conta reinicia a franquia? Define a fase 3.
-- **D3 — Texto de entrada.** Manter "Entre ou crie…" ou trocar por "Entre na sua conta" com aviso de piloto por convite.
+- **D3 — Texto de entrada.** **Decidido em 31/10/2026:** texto neutro, sem "crie" (§13).
 - **D4 — Saldo na conta.** Recomendação: **estrito** (só na operação), como o `PRODUCT.md`.
 - **D5 — Identificador do participante visível.** Recomendação: sim, com Copiar, por facilitar suporte.
 - **D6 — Rota.** `/conta` com sub-caminhos, ou parâmetro de seção.
 
 Aprovado este desenho, o próximo passo é o plano de implementação da fase 1, em `docs/superpowers/plans/`, antes de qualquer código.
+
+## 13. Decisões de 31/10/2026 e fase 1b
+
+**Acesso por convite mantido.** O Firebase cria a identidade de qualquer conta Google, mas o participante do NexoHub só existe se o e-mail tiver convite (`admission.rs`: convite indexado por hash do e-mail, validade de 7 dias, teto de 300). A conta, portanto, **não** é criada automaticamente. Motivo da manutenção: a conta não prova pessoa única e há orçamento fixo para os motores pagos.
+
+**Texto de entrada (D3).** `account.welcome` passa a "Entre com sua conta Google ou com um link enviado ao seu e-mail." O link por e-mail continua existindo, então um texto só sobre Google seria impreciso, e a palavra "crie" sugeria cadastro aberto.
+
+**Nome e foto do Google (D1), com retenção zero no servidor.**
+- Nenhum endpoint novo e nenhum dado novo no servidor. O servidor nunca recebe nem guarda nome ou foto.
+- **Web:** o adaptador do navegador lê `displayName` e `photoURL` do usuário do SDK, em memória.
+- **Windows (opção B):** o núcleo nativo lê as claims `name` e `picture` do token que já está no cofre protegido (DPAPI). Se `picture` for `https`, sem credenciais nem porta, e o host for `lhN.googleusercontent.com`, baixa a imagem (limite de 256 KiB, tipos JPEG, PNG e WebP, sem redirecionamento, tempo limite de 10 s) e entrega ao cliente como `data:`. A política de conteúdo do aplicativo não é afrouxada. Falha em qualquer etapa cai na inicial do nome ou do e-mail.
+- O cliente só renderiza `https:` ou `data:image/(jpeg|png|webp);base64`, com `referrerpolicy="no-referrer"`.
+- Aparece no painel e na página de conta. No botão do cabeçalho só depois da primeira abertura do painel, porque o cliente não consulta a conta ao abrir o aplicativo (regra de modo local sem rede).
+- Texto de privacidade: nome e foto aparecem só neste aparelho e não são guardados pelo NexoHub. Baixar a foto contata o Google, que já é o provedor de identidade.
+
+**Retenção após exclusão (D2), proposta aguardando revisão jurídica.** Como a franquia é mensal, o marcador que impede a recriação de conta com franquia nova só precisa existir **até a virada do mês** (mais reservas inconclusivas). Depois disso, apagar tudo. Base legal e prazo exato são decisão do mantenedor; isto não é parecer jurídico.

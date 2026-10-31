@@ -4,7 +4,8 @@ import { NexoHubLogoIcon } from "@/components/NexoHubLogoIcon";
 import { translate as t } from "@/i18n";
 import { withAppBase } from "@/platform/app-paths";
 import type { CloudAccountPort } from "@/platform/cloud-account";
-import { CloudIdentityError } from "@/platform/cloud-identity";
+import { CloudIdentityError, type CloudProfile } from "@/platform/cloud-identity";
+import { AccountAvatar } from "./AccountAvatar";
 import { useCloudAccount } from "./CloudAccountContext";
 
 type View =
@@ -24,6 +25,7 @@ export function CloudAccountPage({ account: provided }: { account?: CloudAccount
   const runtime = useCloudAccount();
   const account = provided ?? runtime;
   const [view, setView] = useState<View>({ kind: "loading" });
+  const [profile, setProfile] = useState<CloudProfile | null>(null);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -36,7 +38,14 @@ export function CloudAccountPage({ account: provided }: { account?: CloudAccount
       })
       .catch(failureView)
       .then((next) => {
-        if (alive) setView(next);
+        if (!alive) return;
+        setView(next);
+        if (next.kind === "ready") {
+          void account
+            .profile()
+            .then((value) => alive && setProfile(value))
+            .catch(() => {});
+        }
       });
     return () => {
       alive = false;
@@ -46,6 +55,7 @@ export function CloudAccountPage({ account: provided }: { account?: CloudAccount
     setBusy(true);
     try {
       await account.signOut();
+      setProfile(null);
       setView({ kind: "signedOut" });
     } finally {
       setBusy(false);
@@ -95,6 +105,10 @@ export function CloudAccountPage({ account: provided }: { account?: CloudAccount
         <>
           <section className="cloud-account-card" aria-labelledby="conta-perfil">
             <h2 id="conta-perfil">{t("account.page.profile")}</h2>
+            <div className="account-identity">
+              <AccountAvatar profile={profile} email={view.participant.email} size="lg" />
+              {profile?.name && <strong>{profile.name}</strong>}
+            </div>
             <dl>
               {view.participant.email && (
                 <div>
@@ -134,6 +148,7 @@ export function CloudAccountPage({ account: provided }: { account?: CloudAccount
           <section className="cloud-account-card" aria-labelledby="conta-privacidade">
             <h2 id="conta-privacidade">{t("account.page.privacy")}</h2>
             <p>{t("account.page.privacyLead")}</p>
+            <p>{t("account.page.profilePrivacy")}</p>
           </section>
           <p className="cloud-account-note">{t("account.page.localNote")}</p>
         </>

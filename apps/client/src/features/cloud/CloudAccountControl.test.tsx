@@ -7,7 +7,9 @@ import { CloudAccountControl } from "./CloudAccountControl";
 it("conta indisponível mantém formulário claro sem avisos de arquitetura", async () => {
   render(<CloudAccountControl account={createDisabledCloudAccount()} />);
   fireEvent.click(screen.getByRole("button", { name: "Conta" }));
-  expect(await screen.findByText("Entre ou crie sua conta no NexoHub.")).toBeTruthy();
+  expect(
+    await screen.findByText("Entre com sua conta Google ou com um link enviado ao seu e-mail."),
+  ).toBeTruthy();
   expect(screen.getByRole("button", { name: "Continuar com Google" })).toBeDisabled();
 });
 it("entrada nativa por e-mail não pede o endereço antes de abrir o navegador", async () => {
@@ -72,6 +74,7 @@ it("login é explícito; exibe saldo compartilhado e logout local", async () => 
       budgetUsdMicros: b,
       resetAt: "2026-11-01T00:00:00Z",
     }),
+    profile: async () => null,
   };
   render(<CloudAccountControl account={account} />);
   fireEvent.click(screen.getByRole("button", { name: "Conta" }));
@@ -121,4 +124,25 @@ it("conta sem convite mostra o motivo no lugar do formulário de entrada", async
   expect(await screen.findByText(/ainda não foi liberada/)).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Continuar com Google" })).toBeNull();
   expect(screen.getByRole("button", { name: "Sair" })).toBeTruthy();
+});
+
+it("painel mostra o nome do Google ao lado do e-mail", async () => {
+  render(
+    <CloudAccountControl
+      account={{
+        ...createDisabledCloudAccount(),
+        status: async () => ({ enabled: false, identityAvailable: true }),
+        me: async () => ({
+          participantId: "participant-synthetic",
+          email: "person@example.invalid",
+          admitted: true,
+          emailVerified: true,
+        }),
+        profile: async () => ({ name: "Ana Souza" }),
+      }}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Conta" }));
+  expect(await screen.findByText("Ana Souza")).toBeTruthy();
+  expect(screen.getByText("person@example.invalid")).toBeTruthy();
 });

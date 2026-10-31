@@ -490,6 +490,193 @@ fn account_request_gated(
     response_json(request.call().map_err(|_| error())?)
 }
 
+/// Nome e foto exibidos somente neste aparelho; nunca são enviados ao servidor do NexoHub.
+#[derive(Serialize, Debug, Default, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct AccountProfile {
+    pub name: Option<String>,
+    /// `data:` pronta para `<img>`, para não afrouxar a política de conteúdo do aplicativo.
+    pub picture: Option<String>,
+}
+const MAX_PICTURE_BYTES: usize = 256 * 1024;
+const MAX_NAME_CHARS: usize = 80;
+
+/// Fotos de perfil do Google vêm de `lhN.googleusercontent.com`; qualquer outro destino é recusado.
+fn picture_host_allowed(url: &url::Url) -> bool {
+    url.scheme() == "https"
+        && url.username().is_empty()
+        && url.password().is_none()
+        && url.port().is_none()
+        && url
+            .host_str()
+            .and_then(|host| host.strip_prefix("lh"))
+            .and_then(|rest| rest.strip_suffix(".googleusercontent.com"))
+            .is_some_and(|digits| !digits.is_empty() && digits.bytes().all(|b| b.is_ascii_digit()))
+}
+
+fn clean_name(raw: &str) -> Option<String> {
+    let name: String = raw
+        .chars()
+        .filter(|c| !c.is_control())
+        .take(MAX_NAME_CHARS)
+        .collect();
+    let name = name.trim();
+    (!name.is_empty()).then(|| name.to_owned())
+}
+
+fn fetch_picture(url: &url::Url) -> CoreResult<String> {
+    use base64::{Engine, engine::general_purpose::STANDARD};
+    let response = transport()
+        .get(url.as_str())
+        .set("Accept", "image/jpeg, image/png, image/webp")
+        .call()
+        .map_err(|_| error())?;
+    let kind = response.content_type().to_ascii_lowercase();
+    if !matches!(kind.as_str(), "image/jpeg" | "image/png" | "image/webp") {
+        return Err(error());
+    }
+    let mut bytes = Vec::new();
+    response
+        .into_reader()
+        .take(MAX_PICTURE_BYTES as u64 + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|_| error())?;
+    if bytes.is_empty() || bytes.len() > MAX_PICTURE_BYTES {
+        return Err(error());
+    }
+    Ok(format!("data:{kind};base64,{}", STANDARD.encode(bytes)))
+}
+
+fn account_profile_with(id_token: &str, allowed: fn(&url::Url) -> bool) -> AccountProfile {
+    use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
+    // Somente exibição: a assinatura não é verificada aqui, e nada desta leitura autoriza acesso.
+    let claims = id_token
+        .split('.')
+        .nth(1)
+        .and_then(|part| URL_SAFE_NO_PAD.decode(part).ok())
+        .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok());
+    let Some(claims) = claims else {
+        return AccountProfile::default();
+    };
+    AccountProfile {
+        name: claims["name"].as_str().and_then(clean_name),
+        picture: claims["picture"]
+            .as_str()
+            .and_then(|value| url::Url::parse(value).ok())
+            .filter(allowed)
+            .and_then(|url| fetch_picture(&url).ok()),
+    }
+}
+
+/// Lê nome e foto do token já guardado no cofre local. Falhas nunca impedem o uso da conta.
+pub fn account_profile(id_token: &str) -> AccountProfile {
+    account_profile_with(id_token, picture_host_allowed)
+}
+
+#[cfg(test)]
+mod profile_tests {
+    use super::*;
+    use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
+    use std::io::{Read, Write};
+    use std::net::TcpListener;
+
+    fn token(claims: &Value) -> String {
+        let part = |value: &Value| URL_SAFE_NO_PAD.encode(value.to_string());
+        format!(
+            "{}.{}.sig",
+            part(&serde_json::json!({"alg":"RS256"})),
+            part(claims)
+        )
+    }
+    fn parse(value: &str) -> url::Url {
+        url::Url::parse(value).unwrap()
+    }
+    /// Serve uma resposta HTTP e devolve o endereço local.
+    fn serve(kind: &'static str, body: Vec<u8>) -> String {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = format!("http://{}/foto", listener.local_addr().unwrap());
+        std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut request = [0u8; 1024];
+            let _ = stream.read(&mut request);
+            let head = format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: {kind}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                body.len()
+            );
+            let _ = stream.write_all(head.as_bytes());
+            let _ = stream.write_all(&body);
+        });
+        address
+    }
+
+    #[test]
+    fn only_numbered_google_photo_hosts_over_plain_https_are_allowed() {
+        for ok in [
+            "https://lh3.googleusercontent.com/a/abc=s96-c",
+            "https://lh6.googleusercontent.com/x",
+        ] {
+            assert!(picture_host_allowed(&parse(ok)), "{ok}");
+        }
+        for bad in [
+            "http://lh3.googleusercontent.com/a",
+            "https://lh3.googleusercontent.com:8443/a",
+            "https://user:pass@lh3.googleusercontent.com/a",
+            "https://googleusercontent.com/a",
+            "https://lh.googleusercontent.com/a",
+            "https://lhx.googleusercontent.com/a",
+            "https://lh3.googleusercontent.com.evil.invalid/a",
+            "https://evil.invalid/lh3.googleusercontent.com",
+            "https://drive.google.com/a",
+        ] {
+            assert!(!picture_host_allowed(&parse(bad)), "{bad}");
+        }
+    }
+    #[test]
+    fn name_is_trimmed_stripped_of_control_characters_and_capped() {
+        assert_eq!(clean_name("  Ana\u{7}\n Souza "), Some("Ana Souza".into()));
+        assert_eq!(clean_name(" \t\n "), None);
+        assert_eq!(
+            clean_name(&"a".repeat(500)).unwrap().chars().count(),
+            MAX_NAME_CHARS
+        );
+    }
+    #[test]
+    fn profile_reads_name_and_downloads_an_allowed_picture_as_data_url() {
+        let picture = serve("image/png", vec![137, 80, 78, 71]);
+        let value = token(&serde_json::json!({"name":"Ana Souza","picture":picture}));
+        let profile = account_profile_with(&value, |_| true);
+        assert_eq!(profile.name.as_deref(), Some("Ana Souza"));
+        assert_eq!(
+            profile.picture.as_deref(),
+            Some("data:image/png;base64,iVBORw==")
+        );
+    }
+    #[test]
+    fn disallowed_host_is_never_contacted_and_name_still_shows() {
+        let picture = serve("image/png", vec![1, 2, 3]);
+        let value = token(&serde_json::json!({"name":"Ana","picture":picture}));
+        let profile = account_profile(&value);
+        assert_eq!(profile.name.as_deref(), Some("Ana"));
+        assert_eq!(profile.picture, None);
+    }
+    #[test]
+    fn wrong_type_oversized_or_empty_pictures_fall_back_without_failing() {
+        let html = serve("text/html", b"<html>".to_vec());
+        let big = serve("image/jpeg", vec![0; MAX_PICTURE_BYTES + 1]);
+        let empty = serve("image/jpeg", Vec::new());
+        for picture in [html, big, empty] {
+            let value = token(&serde_json::json!({"name":"Ana","picture":picture}));
+            assert_eq!(account_profile_with(&value, |_| true).picture, None);
+        }
+    }
+    #[test]
+    fn malformed_tokens_yield_an_empty_profile() {
+        for value in ["", "abc", "a.b.c", "a.%%%.c"] {
+            assert_eq!(account_profile(value), AccountProfile::default());
+        }
+    }
+}
+
 #[cfg(test)]
 mod refresh_tests {
     use super::*;

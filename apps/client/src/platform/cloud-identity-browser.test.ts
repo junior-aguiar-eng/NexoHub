@@ -9,6 +9,8 @@ const sdk = vi.hoisted(() => ({
       uid?: string;
       email?: string;
       providerData?: { providerId: string }[];
+      displayName?: string | null;
+      photoURL?: string | null;
       emailVerified: boolean;
       getIdToken: () => Promise<string>;
     },
@@ -176,4 +178,25 @@ it("não associa link de outro e-mail à conta já autenticada", async () => {
   ).rejects.toThrow("AUTH_ACCOUNT_MISMATCH");
   expect(sdk.link).not.toHaveBeenCalled();
   expect(sdk.complete).not.toHaveBeenCalled();
+});
+
+it("perfil traz nome e foto do SDK só com e-mail confirmado, sem rede nem token", async () => {
+  const identity = createBrowserCloudIdentity(config);
+  sdk.auth.currentUser = {
+    emailVerified: true,
+    displayName: "Ana Souza",
+    photoURL: "https://lh3.googleusercontent.com/a/synthetic=s96-c",
+    getIdToken: vi.fn(async () => "synthetic-id-token"),
+  };
+  expect(await identity.profile?.()).toEqual({
+    name: "Ana Souza",
+    picture: "https://lh3.googleusercontent.com/a/synthetic=s96-c",
+  });
+  expect(sdk.auth.currentUser.getIdToken).not.toHaveBeenCalled();
+  sdk.auth.currentUser = { emailVerified: true, getIdToken: async () => "t" };
+  expect(await identity.profile?.()).toEqual({});
+  sdk.auth.currentUser = { emailVerified: false, displayName: "Ana", getIdToken: async () => "t" };
+  expect(await identity.profile?.()).toBeNull();
+  sdk.auth.currentUser = null;
+  expect(await identity.profile?.()).toBeNull();
 });

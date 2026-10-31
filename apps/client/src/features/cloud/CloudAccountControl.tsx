@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { translate as t } from "@/i18n";
 import { withAppBase } from "@/platform/app-paths";
 import type { CloudAccountPort } from "@/platform/cloud-account";
-import { CloudIdentityError } from "@/platform/cloud-identity";
+import { CloudIdentityError, type CloudProfile } from "@/platform/cloud-identity";
+import { AccountAvatar } from "./AccountAvatar";
 import { useCloudAccount } from "./CloudAccountContext";
 
 function deniedOf(error: unknown): "notAdmitted" | "unverified" | null {
@@ -21,6 +22,7 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
     [processingEnabled, setProcessingEnabled] = useState(false),
     [participant, setParticipant] = useState<CloudParticipant | null>(null),
     [denied, setDenied] = useState<"notAdmitted" | "unverified" | null>(null),
+    [profile, setProfile] = useState<CloudProfile | null>(null),
     [busy, setBusy] = useState(false),
     [email, setEmail] = useState(""),
     [notice, setNotice] = useState(""),
@@ -63,6 +65,10 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
         try {
           const member = await account.me();
           if (alive) setParticipant(member);
+          void account
+            .profile()
+            .then((value) => alive && setProfile(value))
+            .catch(() => {});
           if (s.enabled) {
             const value = await account.usage();
             if (alive) setUsage(value);
@@ -92,6 +98,10 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
         return;
       }
       setParticipant(await account.me());
+      void account
+        .profile()
+        .then(setProfile)
+        .catch(() => {});
       if (processingEnabled) setUsage(await account.usage());
       setNotice("");
     } catch (error) {
@@ -107,6 +117,7 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
     try {
       await account.signOut();
       setParticipant(null);
+      setProfile(null);
       setUsage(null);
       setDenied(null);
       setNotice("");
@@ -126,7 +137,11 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <UserRound size={18} aria-hidden="true" />
+        {participant ? (
+          <AccountAvatar profile={profile} email={participant.email} size="sm" />
+        ) : (
+          <UserRound size={18} aria-hidden="true" />
+        )}
         <span className="cloud-account-label">
           {t(participant ? "account.mine" : "account.title")}
         </span>
@@ -138,7 +153,13 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
           {!checking && !available && <p role="status">{t("account.unavailable")}</p>}
           {participant ? (
             <>
-              {participant.email && <p className="account-email">{participant.email}</p>}
+              <div className="account-identity">
+                <AccountAvatar profile={profile} email={participant.email} size="sm" />
+                <div>
+                  {profile?.name && <strong>{profile.name}</strong>}
+                  {participant.email && <p className="account-email">{participant.email}</p>}
+                </div>
+              </div>
               {processingEnabled && usage && (
                 <>
                   <h3>{t("cloud.balance")}</h3>

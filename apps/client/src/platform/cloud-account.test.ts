@@ -120,3 +120,21 @@ it("403 repassa só o código estruturado conhecido e nunca a mensagem do servid
     code: "AUTH_UNAVAILABLE",
   });
 });
+
+it("perfil no Windows usa só o comando nativo e nunca derruba a conta", async () => {
+  const { createTauriCloudAccount } = await import("./cloud-account");
+  const invoke = vi.fn(async (command: string): Promise<unknown> => {
+    if (command !== "cloud_identity_profile") throw new Error("comando inesperado");
+    return { name: "Ana Souza", picture: "data:image/png;base64,iVBORw==" };
+  });
+  const account = createTauriCloudAccount(invoke);
+  expect(await account.profile()).toEqual({
+    name: "Ana Souza",
+    picture: "data:image/png;base64,iVBORw==",
+  });
+  expect(invoke).toHaveBeenCalledWith("cloud_identity_profile");
+  invoke.mockResolvedValueOnce({ name: null, picture: null });
+  expect(await account.profile()).toEqual({});
+  invoke.mockRejectedValueOnce(new Error("falha interna sensível"));
+  expect(await account.profile()).toBeNull();
+});

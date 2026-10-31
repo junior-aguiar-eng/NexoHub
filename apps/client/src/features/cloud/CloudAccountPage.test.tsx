@@ -14,6 +14,7 @@ const account = (overrides: Partial<CloudAccountPort> = {}): CloudAccountPort =>
   ...createDisabledCloudAccount(),
   status: async () => ({ enabled: false, identityAvailable: true }),
   me: async () => participant,
+  profile: async () => null,
   ...overrides,
 });
 
@@ -76,4 +77,33 @@ it("serviço indisponível não expõe detalhes técnicos", async () => {
   render(<CloudAccountPage account={createDisabledCloudAccount()} />);
   expect(await screen.findByText(/Não foi possível acessar sua conta/)).toBeTruthy();
   expect(screen.queryByText(/CLOUD_DISABLED|AUTH_/)).toBeNull();
+});
+
+it("mostra nome e foto do Google só como exibição local e explica que não são guardados", async () => {
+  const { container } = render(
+    <CloudAccountPage
+      account={account({
+        profile: async () => ({
+          name: "Ana Souza",
+          picture: "https://lh3.googleusercontent.com/a/synthetic=s96-c",
+        }),
+      })}
+    />,
+  );
+  expect(await screen.findByText("Ana Souza")).toBeTruthy();
+  await waitFor(() => expect(container.querySelector("img")).not.toBeNull());
+  expect(screen.getByText(/O NexoHub não os guarda/)).toBeTruthy();
+});
+it("falha ao ler o perfil não afeta a conta e usa a inicial do e-mail", async () => {
+  render(
+    <CloudAccountPage
+      account={account({
+        profile: async () => {
+          throw new Error("falha");
+        },
+      })}
+    />,
+  );
+  expect(await screen.findByText("person@example.invalid")).toBeTruthy();
+  expect(screen.getByText("P")).toBeTruthy();
 });

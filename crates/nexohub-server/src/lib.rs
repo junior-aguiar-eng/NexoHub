@@ -1,3 +1,4 @@
+pub mod cloud;
 pub mod error;
 mod sessions;
 
@@ -416,6 +417,13 @@ pub async fn stateless_ocr_handler(
 }
 
 pub fn create_app(static_dir: Option<PathBuf>) -> Router {
+    create_app_with_identity(static_dir, None)
+}
+
+pub fn create_app_with_identity(
+    static_dir: Option<PathBuf>,
+    identity: Option<std::sync::Arc<cloud::routes::CloudIdentityServices>>,
+) -> Router {
     let api_routes = Router::new()
         .route("/health", get(health_handler))
         .route("/invoke/{command}", post(invoke_handler))
@@ -425,6 +433,7 @@ pub fn create_app(static_dir: Option<PathBuf>) -> Router {
 
     let app = Router::new()
         .nest("/api/v1", api_routes)
+        .nest("/api/v1/cloud", cloud::routes::router(identity))
         .layer(DefaultBodyLimit::max(50 * 1024 * 1024))
         .layer(
             CorsLayer::new()
@@ -437,7 +446,9 @@ pub fn create_app(static_dir: Option<PathBuf>) -> Router {
     if let Some(dir) = static_dir.filter(|d| d.exists()) {
         let index_file = dir.join("index.html");
         let serve_dir = ServeDir::new(&dir).fallback(ServeFile::new(index_file));
-        return app.fallback_service(serve_dir);
+        let root = app.fallback_service(serve_dir);
+        // O balanceador público remove /hub; a URL da revisão acessa o mesmo prefixo diretamente.
+        return Router::new().nest("/hub", root.clone()).merge(root);
     }
 
     app.fallback(|| async {

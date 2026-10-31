@@ -24,6 +24,7 @@ try {
         require.resolve("@playwright/test/cli"),
         "test",
         "hub-subpath.spec.ts",
+        "cloud-account.spec.ts",
         "language-image-quality.spec.ts",
         "excel-selection.spec.ts",
         "markdown-reading.spec.ts",

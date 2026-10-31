@@ -31,7 +31,7 @@ jobs:
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm check
       - run: pnpm test
-      - run: node --test scripts/deploy/*.test.mjs
+      - run: node --test scripts/deploy/*.test.mjs scripts/cloud/*.test.mjs
       - run: python3 -m unittest discover -s scripts/deploy -p '*_test.py'
       - run: pnpm build:web
       - run: pnpm --filter @nexohub/client install:e2e
@@ -61,6 +61,35 @@ jobs:
       - run: cargo build --workspace --release --locked
       - shell: powershell
         run: ./scripts/verificar-dependencias-windows.ps1
+
+  hybrid-ledger-emulator:
+    name: Identidade e reservas em emulador local
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          install_components: cloud-firestore-emulator
+      - run: rustup toolchain install stable --profile minimal
+      - name: Provar cotas concorrentes sem credenciais ou serviços reais
+        env:
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8189
+        shell: bash
+        run: |
+          gcloud emulators firestore start --host-port="$FIRESTORE_EMULATOR_HOST" --project=demo-nexohub-hybrid --quiet > "$RUNNER_TEMP/firestore.log" 2>&1 &
+          emulator_pid=$!
+          trap 'kill "$emulator_pid" || true' EXIT
+          for attempt in {1..60}; do
+            if curl --silent --fail "http://$FIRESTORE_EMULATOR_HOST/" > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --silent --fail "http://$FIRESTORE_EMULATOR_HOST/" > /dev/null
+          cargo test -p nexohub-server --test cloud_auth --test cloud_firestore --test cloud_ledger --test cloud_admin --test cloud_desktop --test cloud_identity_routes --locked -- --include-ignored
 
   python:
     name: Python Engine

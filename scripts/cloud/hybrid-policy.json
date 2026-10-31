@@ -1,0 +1,62 @@
+{
+  "version": "2026-10-30.1",
+  "cloudEnabled": false,
+  "maxParticipants": 300,
+  "budget": {
+    "tasksUsdMicros": 60000000,
+    "operationsUsdMicros": 15000000,
+    "safetyUsdMicros": 25000000,
+    "participantUsdMicros": 200000
+  },
+  "ocr": {
+    "monthlyPages": 50,
+    "maxPages": 15,
+    "maxBytes": 20971520,
+    "maxMegapixels": 25,
+    "timeoutSeconds": 120
+  },
+  "translation": {
+    "monthlyCharacters": 5000,
+    "maxCharacters": 5000,
+    "maxTargetLanguages": 1,
+    "timeoutSeconds": 60
+  },
+  "office": {
+    "monthlyFiles": 10,
+    "maxInputBytes": 10485760,
+    "maxOutputPages": 50,
+    "timeoutSeconds": 120
+  },
+  "concurrency": {
+    "globalRunning": 2,
+    "globalQueued": 20,
+    "participantRunning": 1,
+    "participantQueued": 1
+  },
+  "inspection": {
+    "participantDaily": 5,
+    "participantMonthly": 60,
+    "globalMonthly": 6000
+  },
+  "transfer": {
+    "uploadTimeoutSeconds": 120,
+    "maxOutputBytes": 31457280,
+    "maxDownloads": 3,
+    "maxDownloadBytesPerJob": 94371840,
+    "globalStoredBytes": 2147483648
+  },
+  "retention": {
+    "resultSeconds": 3600,
+    "cleanupIntervalSeconds": 900,
+    "lifecycleFallbackSeconds": 86400,
+    "auditDays": 90
+  },
+  "timing": {
+    "quoteSeconds": 300,
+    "queueSeconds": 300,
+    "unknownProviderQuarantineSeconds": 600,
+    "monthGuardSeconds": 900,
+    "maxPriceAgeSeconds": 604800,
+    "billingTimeZone": "America/Los_Angeles"
+  }
+}

@@ -9907,6 +9907,14 @@ body,
   --tool-accent: #5eead4;
   --tool-tint: #042f2e;
 }
+@media (min-width: 1400px) and (max-width: 1499px) {
+  .app-header--zone-img .nav-link-label--full {
+    display: none;
+  }
+  .app-header--zone-img .nav-link-label--compact {
+    display: inline;
+  }
+}
 @media (min-width: 1100px) and (max-width: 1399px) {
   .header-main-nav > .nav-link-btn:nth-child(3) {
     display: none;
@@ -11186,4 +11194,125 @@ html:has(.image-composition-panel) {
   display: flex;
   gap: var(--space-3);
   flex-wrap: wrap;
+}
+
+.cloud-account {
+  position: relative;
+}
+.cloud-account-panel {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 50;
+  width: min(340px, 90vw);
+  padding: 18px;
+  background: var(--bg-card, white);
+  color: var(--text-primary, #17212b);
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px #0002;
+}
+.cloud-account-panel label,
+.cloud-account-panel input {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+}
+.cloud-account-panel button {
+  margin: 6px 0;
+}
+.cloud-login {
+  width: min(420px, calc(100% - 32px));
+  margin: clamp(24px, 8vh, 80px) auto;
+  padding: 32px;
+  background: var(--bg-card, white);
+  color: var(--text-primary, #17212b);
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 16px;
+  box-shadow: 0 8px 30px #0002;
+}
+.cloud-login input,
+.cloud-login button {
+  display: block;
+  margin: 12px 0;
+}
+
+.cloud-account-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.cloud-account-panel p {
+  margin: 0 0 10px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.cloud-account-panel input,
+.cloud-login input {
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid #c9cdd4;
+  border-radius: 6px;
+}
+.cloud-account-panel button,
+.cloud-login button {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #c9cdd4;
+  border-radius: 6px;
+}
+.cloud-account-panel h2,
+.cloud-login h1 {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.cloud-login h1 {
+  text-align: center;
+}
+.cloud-login label,
+.cloud-login input {
+  display: block;
+  width: 100%;
+}
+.account-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 28px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: none;
+}
+.account-divider {
+  text-align: center;
+  color: var(--text-secondary, #667085);
+}
+.account-email {
+  overflow-wrap: anywhere;
+}
+.cloud-account-panel button:disabled,
+.cloud-account-panel input:disabled,
+.cloud-login button:disabled,
+.cloud-login input:disabled {
+  background: #f4f5f7;
+  color: #7b8491;
+  cursor: not-allowed;
+}
+@media (max-width: 1499px) {
+  .cloud-account-label {
+    display: none;
+  }
+  .cloud-account-trigger {
+    padding: 8px;
+  }
 }

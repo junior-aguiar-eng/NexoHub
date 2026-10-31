@@ -1,6 +1,10 @@
 # Roadmap
 
-Estado em 29/10/2026: Windows **0.2.3 publicado e instalado**, com [validação de release](RELEASE-VALIDATION.md). A lista explícita de nomes integra o tradutor e o cache foi exercitado após reiniciar, inclusive offline no WebView2. Continuam abertos a assinatura Authenticode, a leitura da fotografia privada pelo OCR e a causa dos resets intermitentes no download. As fases “Concluída” abaixo descrevem implementação no escopo entregue, não homologação irrestrita de qualidade.
+Estado em 30/10/2026: Windows **0.2.4 publicado e instalado**, com [validação de release](RELEASE-VALIDATION.md). A lista explícita de nomes integra o tradutor e o cache foi exercitado após reiniciar, inclusive offline no WebView2. Continuam abertos a assinatura Authenticode, a leitura da fotografia privada pelo OCR e a causa dos resets intermitentes no download. As fases “Concluída” abaixo descrevem implementação no escopo entregue, não homologação irrestrita de qualidade.
+
+## Evolução híbrida — implementação autorizada em 30/10/2026
+
+O [plano de nuvem opcional](superpowers/plans/2026-10-30-nuvem-hibrida-300.md) e o [ADR-020](adr/ADR-020-nuvem-opcional-cotas.md) preservam uso local gratuito e sem login. Contratos, política, verificação de identidade e ledger persistente implementados e testados localmente; adapter browser ainda sem ligação à interface. Fluxo Windows, comando IAM, interface de conta e rotas de identidade implementados/testados localmente com gates fechados; configuração e login reais aguardam homologação/autorização. Sem provisionamento, publicação ou alteração da versão instalada. Os motores remotos só serão ativados após identidade, ledger persistente, limites, consentimento e homologação. As pendências de OCR/reset/Office anteriores continuam independentes; DOC-C2 permanece fora deste escopo.
 
 | Fase | Entrega | Estado |
 | --- | --- | --- |

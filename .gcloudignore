@@ -1,0 +1,13 @@
+.gcloudignore
+.git
+.github
+#!include:.gitignore
+target/
+node_modules/
+**/node_modules/
+**/.venv/
+**/dist/
+.superpowers/
+test-results*/
+**/test-results*/
+**/playwright-report/

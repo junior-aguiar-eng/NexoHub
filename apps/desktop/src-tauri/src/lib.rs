@@ -1,3 +1,8 @@
+mod cloud_identity;
+use cloud_identity::{
+    cloud_account_request, cloud_identity_get_token, cloud_identity_sign_in,
+    cloud_identity_sign_out,
+};
 use nexohub_core::CoreError;
 use nexohub_core::anchor_tools::{CreateAnchorRequest, ListAnchorsRequest};
 use nexohub_core::commands::{
@@ -468,6 +473,10 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            cloud_account_request,
+            cloud_identity_sign_in,
+            cloud_identity_get_token,
+            cloud_identity_sign_out,
             create_project,
             open_project,
             import_document,

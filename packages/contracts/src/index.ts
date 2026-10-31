@@ -1,3 +1,20 @@
+export type {
+  CloudBalance,
+  CloudError,
+  CloudErrorCode,
+  CloudJob,
+  CloudJobState,
+  CloudParticipant,
+  CloudQuote,
+  CloudQuoteRequest,
+  CloudSubmitRequest,
+  CloudTool,
+  CloudUnits,
+  CloudUsage,
+  ProcessingMode,
+  UsdMicros,
+} from "./cloud";
+
 import type {
   Anchor,
   Artifact,

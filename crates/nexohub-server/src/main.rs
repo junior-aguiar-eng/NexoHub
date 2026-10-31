@@ -1,4 +1,4 @@
-use nexohub_server::create_app;
+use nexohub_server::{cloud::runtime, create_app_with_identity};
 use std::env;
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -44,7 +44,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None
     };
 
-    let app = create_app(static_dir);
+    let identity = tokio::task::spawn_blocking(runtime::from_environment).await??;
+    let app = create_app_with_identity(static_dir, identity);
 
     info!("Iniciando NexoHub Server em http://{}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;

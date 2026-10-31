@@ -9,6 +9,19 @@ offline no computador do usuário.
 
 Windows 0.2.4 publicado em 30/10/2026; website em [nexojuris.ia.br/hub/](https://nexojuris.ia.br/hub/). Instalação, atualização e casos de tradução instalada foram conferidos; o [relatório de release](RELEASE-VALIDATION.md) delimita as evidências. OCR, tradução e revisão opcional podem exigir recursos baixados no primeiro uso. A disponibilidade offline depende dos recursos locais.
 
+## Evolução opcional em implementação
+
+O [ADR-020](adr/ADR-020-nuvem-opcional-cotas.md) registra a estrutura híbrida aprovada para 300 participantes. O uso local continua gratuito e não exige login; entrar é opcional na mesma conta da web e do Windows. Identidade Google/link de e-mail, conta/saldo e cotas persistentes estão integrados ao projeto Firebase dedicado. A [homologação de identidade real](evidencias/hybrid/IDENTIDADE-REAL-2026-10-30.md) distingue configuração, entrada real e publicação. A política de processamento documental remoto permanece desativada; esta integração não homologa OCR/Office nem ativa motores pagos.
+
+## Conta de usuário
+
+O acesso é apresentado como **Conta**, com **Entrar na sua conta**, **Continuar com Google**
+e **Continuar com e-mail**. Após a autenticação, **Minha conta** identifica a pessoa por
+seu e-mail e oferece **Sair**. A conta não depende da disponibilidade de saldo ou de motores.
+O login não expõe arquitetura, ambientes de execução, estados de implantação ou avisos sobre
+a obrigatoriedade de entrar. Informações de processamento e consumo pertencem à operação
+documental correspondente, quando disponível, e não à apresentação da conta.
+
 ## Plataformas
 
 - **Windows desktop:** alvo produtivo principal. O aplicativo usa Tauri v2, Rust e WebView2,

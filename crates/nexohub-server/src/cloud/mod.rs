@@ -1,0 +1,49 @@
+//! Contratos internos da nuvem opcional. Nenhum motor ou rota paga é habilitado aqui.
+
+pub mod admin;
+pub mod admission;
+pub mod auth;
+pub mod desktop;
+pub mod firestore;
+pub mod ledger;
+pub mod policy;
+pub mod pricing;
+pub mod routes;
+pub mod runtime;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CloudError {
+    Unauthorized,
+    Unverified,
+    Revoked,
+    Disabled,
+    NotAdmitted,
+    InvalidRequest,
+    QuotaExceeded,
+    BudgetExceeded,
+    Busy,
+    Conflict,
+    PriceUnavailable,
+    Unavailable,
+}
+
+impl std::fmt::Display for CloudError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Nunca incluir token, documento, endereço, URL autenticada ou erro HTTP bruto.
+        f.write_str(match self {
+            Self::Unauthorized => "Autenticação inválida.",
+            Self::Unverified => "Confirme seu e-mail para acessar sua conta.",
+            Self::Revoked => "Sessão revogada. Entre novamente.",
+            Self::Disabled => "Conta suspensa.",
+            Self::NotAdmitted => "Sua conta ainda não tem acesso a este recurso.",
+            Self::InvalidRequest => "Solicitação inválida.",
+            Self::QuotaExceeded => "Franquia individual insuficiente.",
+            Self::BudgetExceeded => "Orçamento global insuficiente.",
+            Self::Busy => "Limite de tarefas simultâneas atingido.",
+            Self::Conflict => "Não foi possível concluir a operação. Tente novamente.",
+            Self::PriceUnavailable => "Preço indisponível ou desatualizado.",
+            Self::Unavailable => "Serviço temporariamente indisponível.",
+        })
+    }
+}
+impl std::error::Error for CloudError {}

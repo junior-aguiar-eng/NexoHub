@@ -1,5 +1,9 @@
 # Arquitetura
 
+## Evolução híbrida e identidade opcional
+
+O [ADR-020](adr/ADR-020-nuvem-opcional-cotas.md) autoriza implementar nuvem opcional para até 300 participantes, preservando o processamento local gratuito sem login obrigatório. A identidade opcional Google/link de e-mail usa o projeto dedicado `nexohub-piloto-300`; o servidor compõe os serviços reais por configuração explícita, com identidade IAM restrita. Windows usa navegador do sistema/PKCE e DPAPI; web usa sessão da aba e SDK sob demanda. Conta/saldo e ledger Firestore são compartilhados entre plataformas. A [evidência de identidade real](evidencias/hybrid/IDENTIDADE-REAL-2026-10-30.md) registra o estado de homologação/publicação. `cloudEnabled=false` continua obrigatório para processamento documental. Orçamentos/upload, workers, proteção integral das rotas pagas e homologação de motores continuam pendentes. A descrição abaixo continua sendo a arquitetura local padrão, com as exceções delimitadas pelos ADRs 015 e 020.
+
 O NexoHub adota monólito modular, ports and adapters e módulos verticais. O client React/TypeScript
 é compartilhado pela web e pelo shell Tauri; não existe um segundo frontend desktop.
 

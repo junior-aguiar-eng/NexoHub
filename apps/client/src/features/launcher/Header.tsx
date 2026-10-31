@@ -1,6 +1,7 @@
 import { ChevronDown, Search } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { NexoHubLogoIcon } from "@/components/NexoHubLogoIcon";
+import { CloudAccountControl } from "@/features/cloud/CloudAccountControl";
 import { translate } from "@/i18n";
 import { imageSuites, pdfSuites } from "./data";
 import type { LauncherTool, SuiteId } from "./model";
@@ -178,6 +179,7 @@ export function Header({
         >
           <Search size={20} aria-hidden="true" />
         </button>
+        <CloudAccountControl />
       </div>
     </header>
   );

@@ -90,3 +90,33 @@ it("conta Windows usa somente IPC para status e saldo, sem fetch do WebView", as
   expect(fetcher).not.toHaveBeenCalled();
   fetcher.mockRestore();
 });
+
+it("403 repassa só o código estruturado conhecido e nunca a mensagem do servidor", async () => {
+  const identity = {
+    signIn: vi.fn(),
+    completeEmailLink: vi.fn(),
+    getIdToken: vi.fn(async () => "synthetic-token"),
+    signOut: vi.fn(),
+  };
+  const answer = (body: string) =>
+    createCloudAccount(
+      identity,
+      "https://nexojuris.ia.br",
+      vi.fn(async () => new Response(body, { status: 403 })),
+    );
+  await expect(
+    answer('{"code":"PARTICIPANT_NOT_ADMITTED","message":"segredo interno"}').me(),
+  ).rejects.toMatchObject({
+    code: "PARTICIPANT_NOT_ADMITTED",
+    message: "PARTICIPANT_NOT_ADMITTED",
+  });
+  await expect(answer('{"code":"EMAIL_UNVERIFIED"}').me()).rejects.toMatchObject({
+    code: "EMAIL_UNVERIFIED",
+  });
+  await expect(answer('{"code":"OUTRO","message":"x"}').me()).rejects.toMatchObject({
+    code: "AUTH_UNAVAILABLE",
+  });
+  await expect(answer("<html>não é JSON</html>").me()).rejects.toMatchObject({
+    code: "AUTH_UNAVAILABLE",
+  });
+});

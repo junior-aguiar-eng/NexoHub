@@ -2,8 +2,16 @@ import type { CloudParticipant, CloudUsage } from "@nexohub/contracts";
 import { UserRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { translate as t } from "@/i18n";
+import { withAppBase } from "@/platform/app-paths";
 import type { CloudAccountPort } from "@/platform/cloud-account";
+import { CloudIdentityError } from "@/platform/cloud-identity";
 import { useCloudAccount } from "./CloudAccountContext";
+
+function deniedOf(error: unknown): "notAdmitted" | "unverified" | null {
+  const code = error instanceof CloudIdentityError ? error.code : undefined;
+  if (code === "PARTICIPANT_NOT_ADMITTED") return "notAdmitted";
+  return code === "EMAIL_UNVERIFIED" ? "unverified" : null;
+}
 export function CloudAccountControl({ account: provided }: { account?: CloudAccountPort }) {
   const runtime = useCloudAccount();
   const account = provided ?? runtime;
@@ -12,6 +20,7 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
     [checking, setChecking] = useState(true),
     [processingEnabled, setProcessingEnabled] = useState(false),
     [participant, setParticipant] = useState<CloudParticipant | null>(null),
+    [denied, setDenied] = useState<"notAdmitted" | "unverified" | null>(null),
     [busy, setBusy] = useState(false),
     [email, setEmail] = useState(""),
     [notice, setNotice] = useState(""),
@@ -58,8 +67,9 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
             const value = await account.usage();
             if (alive) setUsage(value);
           }
-        } catch {
-          // Uma sessão ausente mantém o formulário de entrada disponível.
+        } catch (error) {
+          // Sessão ausente mantém o formulário; conta sem convite ou sem e-mail confirmado é nomeada.
+          if (alive) setDenied(deniedOf(error));
         }
       })
       .catch(() => {
@@ -83,6 +93,22 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
       }
       setParticipant(await account.me());
       if (processingEnabled) setUsage(await account.usage());
+      setNotice("");
+    } catch (error) {
+      const reason = deniedOf(error);
+      if (reason) setDenied(reason);
+      else setNotice(t("account.failed"));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const signOut = async () => {
+    setBusy(true);
+    try {
+      await account.signOut();
+      setParticipant(null);
+      setUsage(null);
+      setDenied(null);
       setNotice("");
     } catch {
       setNotice(t("account.failed"));
@@ -150,23 +176,21 @@ export function CloudAccountControl({ account: provided }: { account?: CloudAcco
                   </p>
                 </>
               )}
-              <button
-                type="button"
-                disabled={busy}
-                onClick={async () => {
-                  setBusy(true);
-                  try {
-                    await account.signOut();
-                    setParticipant(null);
-                    setUsage(null);
-                    setNotice("");
-                  } catch {
-                    setNotice(t("account.failed"));
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
-              >
+              <a className="cloud-account-link" href={withAppBase("/conta")}>
+                {t("account.page.open")}
+              </a>
+              <button type="button" disabled={busy} onClick={signOut}>
+                {t("account.signOut")}
+              </button>
+            </>
+          ) : denied ? (
+            <>
+              <p role="status">
+                {t(
+                  denied === "notAdmitted" ? "account.page.notAdmitted" : "account.page.unverified",
+                )}
+              </p>
+              <button type="button" disabled={busy} onClick={signOut}>
                 {t("account.signOut")}
               </button>
             </>

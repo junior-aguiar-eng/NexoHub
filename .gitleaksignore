@@ -1,0 +1,28 @@
+# Achados do Gitleaks revisados e aceitos, um por impressão digital exata.
+# Nenhum padrão de caminho ou regra é liberado: novos segredos nesses arquivos continuam bloqueados.
+
+# 17 JWTs sintéticos do fixture de testes do servidor. Gerados por
+# scripts/cloud/generate-auth-fixture.mjs com chave RSA efêmera descartada (o JWKS só tem a parte pública),
+# projeto fictício demo-nexohub-hybrid e e-mails example.invalid. Não são credenciais Google.
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:16
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:17
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:18
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:19
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:20
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:21
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:22
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:23
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:24
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:25
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:26
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:27
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:28
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:29
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:30
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:31
+b967d9a4b586cd2531e33d05b1a0a07ce20edcea:crates/nexohub-server/tests/fixtures/firebase-synthetic.json:jwt:32
+
+# Chave de API web do Firebase (projeto nexohub-piloto-300). É identificador público do aplicativo web,
+# entregue ao navegador e ao cliente nativo por desenho (ver docs/evidencias/hybrid/IDENTIDADE-REAL-2026-10-30.md).
+# Não concede acesso administrativo; a restrição por domínio e por API é feita no console do Google Cloud.
+e61f6c0ee2deb2c5959cb6df24109497127a627d:scripts/cloud/firebase-public.json:gcp-api-key:3

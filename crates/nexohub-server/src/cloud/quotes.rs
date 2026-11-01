@@ -92,6 +92,10 @@ impl QuoteService {
         Self { policy, prices }
     }
 
+    pub fn max_input_bytes(&self, tool: CloudTool) -> u64 {
+        self.max_bytes(tool)
+    }
+
     fn max_bytes(&self, tool: CloudTool) -> u64 {
         match tool {
             CloudTool::Ocr => self.policy.ocr.max_bytes,

@@ -45,6 +45,7 @@ impl IntoResponse for CloudError {
             Self::QuotaExceeded => (StatusCode::TOO_MANY_REQUESTS, "QUOTA_EXCEEDED"),
             Self::BudgetExceeded => (StatusCode::TOO_MANY_REQUESTS, "GLOBAL_BUDGET_EXCEEDED"),
             Self::QuoteExpired => (StatusCode::GONE, "QUOTE_EXPIRED"),
+            Self::ReconciliationRequired => (StatusCode::CONFLICT, "RECONCILIATION_REQUIRED"),
             Self::InputChanged => (StatusCode::CONFLICT, "INPUT_CHANGED"),
             Self::Busy => (StatusCode::TOO_MANY_REQUESTS, "JOB_BUSY"),
             Self::Unavailable | Self::PriceUnavailable => {

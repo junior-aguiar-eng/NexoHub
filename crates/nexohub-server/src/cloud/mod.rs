@@ -5,9 +5,11 @@ pub mod admission;
 pub mod auth;
 pub mod desktop;
 pub mod firestore;
+pub mod jobs;
 pub mod ledger;
 pub mod policy;
 pub mod pricing;
+pub mod providers;
 pub mod quote_api;
 pub mod quotes;
 pub mod routes;
@@ -29,6 +31,7 @@ pub enum CloudError {
     PriceUnavailable,
     QuoteExpired,
     InputChanged,
+    ReconciliationRequired,
     Unavailable,
 }
 
@@ -49,6 +52,7 @@ impl std::fmt::Display for CloudError {
             Self::PriceUnavailable => "Preço indisponível ou desatualizado.",
             Self::QuoteExpired => "Orçamento expirado. Solicite um novo.",
             Self::InputChanged => "O conteúdo mudou desde o orçamento. Confirme novamente.",
+            Self::ReconciliationRequired => "A conclusão da tarefa está em verificação. Aguarde.",
             Self::Unavailable => "Serviço temporariamente indisponível.",
         })
     }

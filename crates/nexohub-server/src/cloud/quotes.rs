@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 /// Razão máxima de expansão aceita na inspeção (proteção contra bombas de descompressão).
 const MAX_EXPANSION_RATIO: u64 = 100;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum CloudTool {
     Ocr,

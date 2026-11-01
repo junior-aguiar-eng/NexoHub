@@ -8,7 +8,11 @@ const sdk = vi.hoisted(() => ({
     currentUser: null as null | {
       uid?: string;
       email?: string;
-      providerData?: { providerId: string }[];
+      providerData?: {
+        providerId: string;
+        displayName?: string | null;
+        photoURL?: string | null;
+      }[];
       displayName?: string | null;
       photoURL?: string | null;
       emailVerified: boolean;
@@ -24,13 +28,16 @@ const sdk = vi.hoisted(() => ({
   link: vi.fn(),
   reauth: vi.fn(),
   credential: vi.fn(() => ({ kind: "email-link" })),
+  params: vi.fn(),
 }));
 vi.mock("firebase/app", () => ({ initializeApp: sdk.app }));
 vi.mock("firebase/auth", () => ({
   initializeAuth: sdk.init,
   browserSessionPersistence: "SESSION",
   browserPopupRedirectResolver: "POPUP",
-  GoogleAuthProvider: class {},
+  GoogleAuthProvider: class {
+    setCustomParameters = sdk.params;
+  },
   signInWithPopup: sdk.popup,
   sendSignInLinkToEmail: sdk.send,
   signInWithEmailLink: sdk.complete,
@@ -82,6 +89,7 @@ it("aguarda restaurar a sessão antes de consultar a conta", async () => {
 it("usa Google com sessão da aba e não publica token em URL", async () => {
   const identity = createBrowserCloudIdentity(config);
   await identity.signIn("google");
+  expect(sdk.params).toHaveBeenCalledWith({ prompt: "select_account" });
   expect(sdk.auth.languageCode).toBe("pt-BR");
   expect(sdk.init).toHaveBeenCalledWith(expect.anything(), {
     persistence: "SESSION",
@@ -91,8 +99,8 @@ it("usa Google com sessão da aba e não publica token em URL", async () => {
   await identity.signOut();
   expect(await identity.getIdToken()).toBeNull();
 });
-it("envia link de confirmação sem salvar o e-mail no localStorage", async () => {
-  const store = vi.spyOn(Storage.prototype, "setItem");
+it("envia o link e lembra o e-mail só neste navegador, sem token nem senha", async () => {
+  localStorage.clear();
   const identity = createBrowserCloudIdentity(config);
   await identity.signIn("emailLink", "person@example.invalid");
   expect(sdk.send).toHaveBeenCalledWith(sdk.auth, "person@example.invalid", {
@@ -100,8 +108,33 @@ it("envia link de confirmação sem salvar o e-mail no localStorage", async () =
     handleCodeInApp: true,
   });
   expect(await identity.getIdToken()).toBeNull();
-  expect(store).not.toHaveBeenCalled();
-  store.mockRestore();
+  const saved = JSON.parse(localStorage.getItem("nexohub.cloud.emailLink") ?? "{}");
+  expect(saved.email).toBe("person@example.invalid");
+  expect(Object.keys(saved).sort()).toEqual(["at", "email"]);
+  await identity.signOut();
+  expect(localStorage.getItem("nexohub.cloud.emailLink")).toBeNull();
+});
+it("conclui o link com o e-mail lembrado, sem digitar de novo, e apaga a lembrança", async () => {
+  localStorage.clear();
+  const identity = createBrowserCloudIdentity(config);
+  await identity.signIn("emailLink", "person@example.invalid");
+  sdk.isLink.mockReturnValue(true);
+  await identity.completeEmailLink("", `${config.redirectUrl}?oobCode=synthetic`);
+  expect(sdk.complete).toHaveBeenCalledWith(
+    sdk.auth,
+    "person@example.invalid",
+    `${config.redirectUrl}?oobCode=synthetic`,
+  );
+  expect(localStorage.getItem("nexohub.cloud.emailLink")).toBeNull();
+});
+it("sem e-mail lembrado nem digitado não conclui o link", async () => {
+  localStorage.clear();
+  const identity = createBrowserCloudIdentity(config);
+  sdk.isLink.mockReturnValue(true);
+  await expect(
+    identity.completeEmailLink("", `${config.redirectUrl}?oobCode=synthetic`),
+  ).rejects.toMatchObject({ code: "AUTH_INVALID_EMAIL" });
+  expect(sdk.complete).not.toHaveBeenCalled();
 });
 it("recusa e-mail não confirmado e callback em outra origem", async () => {
   const identity = createBrowserCloudIdentity(config);
@@ -199,4 +232,26 @@ it("perfil traz nome e foto do SDK só com e-mail confirmado, sem rede nem token
   expect(await identity.profile?.()).toBeNull();
   sdk.auth.currentUser = null;
   expect(await identity.profile?.()).toBeNull();
+});
+
+it("perfil usa nome e foto do Google vinculado quando o login foi por link de e-mail", async () => {
+  const identity = createBrowserCloudIdentity(config);
+  sdk.auth.currentUser = {
+    emailVerified: true,
+    displayName: null,
+    photoURL: null,
+    providerData: [
+      { providerId: "password" },
+      {
+        providerId: "google.com",
+        displayName: "Ana Souza",
+        photoURL: "https://lh3.googleusercontent.com/a/synthetic=s96-c",
+      },
+    ],
+    getIdToken: async () => "synthetic-id-token",
+  };
+  expect(await identity.profile?.()).toEqual({
+    name: "Ana Souza",
+    picture: "https://lh3.googleusercontent.com/a/synthetic=s96-c",
+  });
 });

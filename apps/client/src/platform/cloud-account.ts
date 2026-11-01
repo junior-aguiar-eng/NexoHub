@@ -1,5 +1,6 @@
 import type { CloudParticipant, CloudUsage } from "@nexohub/contracts";
 import firebasePublic from "../../../../scripts/cloud/firebase-public.json";
+import { emailMemory } from "./cloud-email-memory";
 import type { CloudIdentityPort, CloudProfile } from "./cloud-identity";
 import { CloudIdentityError } from "./cloud-identity";
 import type { DesktopBinding } from "./desktop-handoff";
@@ -9,6 +10,8 @@ export interface CloudAccountPort {
   status(): Promise<{ enabled: boolean; identityAvailable: boolean }>;
   signIn(method: "google" | "emailLink", email?: string, binding?: DesktopBinding): Promise<void>;
   completeEmailLink?(email: string, url: string): Promise<void>;
+  /** E-mail pedido há pouco neste navegador; permite concluir o link sem digitar de novo. */
+  rememberedEmail?(): string | null;
   completeDesktop?(binding: DesktopBinding): Promise<void>;
   signOut(): Promise<void>;
   me(): Promise<CloudParticipant>;
@@ -110,6 +113,7 @@ export function createCloudAccount(
     me: () => request<CloudParticipant>("me"),
     usage: () => request<CloudUsage>("usage"),
     profile: async () => (await identity.profile?.()) ?? null,
+    rememberedEmail: () => emailMemory.read(),
     async completeDesktop(binding) {
       if (!identity.prepareDesktopHandoff) throw new CloudIdentityError("AUTH_UNAVAILABLE");
       const envelope = await identity.prepareDesktopHandoff(binding);

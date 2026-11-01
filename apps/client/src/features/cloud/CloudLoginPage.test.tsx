@@ -27,3 +27,25 @@ it("conclui link web sem exigir vínculo Windows ou redirecionar ao loopback", a
   await waitFor(() => expect(completeEmailLink).toHaveBeenCalledOnce());
   expect(completeDesktop).not.toHaveBeenCalled();
 });
+
+it("volta do link no mesmo navegador e conclui sozinho com o e-mail lembrado", async () => {
+  window.history.replaceState({}, "", "/cloud/login?mode=signIn&oobCode=synthetic");
+  const completeEmailLink = vi.fn(async () => {});
+  const account = {
+    status: async () => ({ enabled: false, identityAvailable: true }),
+    signIn: vi.fn(),
+    completeEmailLink,
+    signOut: vi.fn(),
+    me: async () => ({ participantId: "p", admitted: true, emailVerified: true }),
+    usage: vi.fn(),
+    profile: async () => null,
+    rememberedEmail: () => "person@example.invalid",
+  };
+  render(<CloudLoginPage account={account} />);
+  await waitFor(() => expect(completeEmailLink).toHaveBeenCalledOnce());
+  expect(completeEmailLink).toHaveBeenCalledWith(
+    "person@example.invalid",
+    expect.stringContaining("oobCode=synthetic"),
+  );
+  expect(await screen.findByText("Você entrou na sua conta.")).toBeTruthy();
+});

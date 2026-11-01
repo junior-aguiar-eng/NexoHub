@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NexoHubLogoIcon } from "@/components/NexoHubLogoIcon";
 import { translate as t } from "@/i18n";
 import { withAppBase } from "@/platform/app-paths";
@@ -36,7 +36,7 @@ export function CloudLoginPage({
   const params = new URL(window.location.href).searchParams;
   const completingEmail = params.get("mode") === "signIn" && params.has("oobCode");
   const requestedMethod = params.has("state") ? params.get("method") : null;
-  const run = async (method: "google" | "emailLink", complete = false) => {
+  const run = async (method: "google" | "emailLink", complete = false, remembered?: string) => {
     setBusy(true);
     setNotice("");
     try {
@@ -45,7 +45,7 @@ export function CloudLoginPage({
         : undefined;
       if (complete) {
         if (!account.completeEmailLink) throw new Error();
-        await account.completeEmailLink(email, window.location.href);
+        await account.completeEmailLink(remembered ?? email, window.location.href);
       } else await account.signIn(binding?.method ?? method, email, binding);
       if (!complete && (binding?.method ?? method) === "emailLink") {
         setNotice(t("account.emailSent"));
@@ -66,6 +66,21 @@ export function CloudLoginPage({
       setBusy(false);
     }
   };
+  // Voltando do link no mesmo navegador, o e-mail pedido há pouco basta: sem digitar de novo.
+  const autoCompleted = useRef(false);
+  const remembered = completingEmail ? (account.rememberedEmail?.() ?? null) : null;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: roda uma única vez por visita
+  useEffect(() => {
+    if (!remembered || autoCompleted.current) return;
+    autoCompleted.current = true;
+    void run("emailLink", true, remembered);
+  }, [remembered]);
+  // Entrou pela página web: segue ao aplicativo sem exigir outro clique.
+  useEffect(() => {
+    if (!signedIn) return;
+    const timer = setTimeout(() => window.location.assign(withAppBase("/pdf")), 1200);
+    return () => clearTimeout(timer);
+  }, [signedIn]);
   return (
     <main className="cloud-login">
       <a className="account-brand" href={withAppBase("/pdf")} aria-label="NexoHub">

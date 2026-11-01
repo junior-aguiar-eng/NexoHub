@@ -24,6 +24,13 @@ com validade lógica de 60 segundos e consumo único. A exclusão física no Fir
 que é assíncrono e pode ocorrer depois da expiração lógica. Sair remove a sessão do dispositivo.
 Os dados de identidade e saldo são distintos dos arquivos documentais locais.
 
+**E-mail do link de acesso.** Ao pedir o link de acesso por e-mail na web, o navegador lembra o
+endereço digitado (`localStorage`, chave `nexohub.cloud.emailLink`, com a hora do pedido) apenas
+para concluir o login sem pedir o e-mail de novo no mesmo navegador. O registro expira em uma
+hora, é apagado ao concluir o login e ao sair, e nunca é enviado a servidor do NexoHub. Em outro
+aparelho ou navegador ele não existe, e o endereço é pedido, como o provedor exige. Esse registro
+substitui a regra anterior de não guardar o e-mail.
+
 **Nome e foto do Google.** Quando a conta Google os informa, o aplicativo os exibe somente neste
 aparelho. O servidor do NexoHub não recebe, não guarda e não registra nome nem foto. Na web, o
 navegador lê os dados do SDK de autenticação e carrega a imagem direto do Google. No Windows, o

@@ -6,6 +6,7 @@ use axum::{
     Router,
     extract::{DefaultBodyLimit, Path as AxumPath, State},
     http::{HeaderMap, HeaderValue, StatusCode, header},
+    middleware::map_response,
     response::{IntoResponse, Json, Response},
     routing::{get, post},
 };
@@ -35,6 +36,7 @@ use std::path::PathBuf;
 use tower_http::{
     cors::{Any, CorsLayer},
     services::{ServeDir, ServeFile},
+    set_header::SetResponseHeaderLayer,
 };
 
 pub async fn health_handler() -> impl IntoResponse {
@@ -416,6 +418,17 @@ pub async fn stateless_ocr_handler(
     .map(Json)
 }
 
+/// Só respostas bem-sucedidas ganham cache longo; um 404 nunca é guardado por um ano.
+async fn immutable_when_found(mut response: Response) -> Response {
+    if response.status().is_success() {
+        response.headers_mut().insert(
+            header::CACHE_CONTROL,
+            HeaderValue::from_static("public, max-age=31536000, immutable"),
+        );
+    }
+    response
+}
+
 pub fn create_app(static_dir: Option<PathBuf>) -> Router {
     create_app_with_identity(static_dir, None)
 }
@@ -445,8 +458,20 @@ pub fn create_app_with_identity(
 
     if let Some(dir) = static_dir.filter(|d| d.exists()) {
         let index_file = dir.join("index.html");
-        let serve_dir = ServeDir::new(&dir).fallback(ServeFile::new(index_file));
-        let root = app.fallback_service(serve_dir);
+        // Páginas e arquivos sem hash no nome: o navegador sempre revalida (304 se nada mudou),
+        // para que um deploy novo nunca deixe uma página antiga apontando para arquivos removidos.
+        let pages = Router::new()
+            .fallback_service(ServeDir::new(&dir).fallback(ServeFile::new(index_file)))
+            .layer(SetResponseHeaderLayer::if_not_present(
+                header::CACHE_CONTROL,
+                HeaderValue::from_static("no-cache"),
+            ));
+        // /assets/ tem o hash do conteúdo no nome. Arquivo ausente é 404, e não a página inicial,
+        // para nunca guardar HTML como se fosse script.
+        let assets = Router::new()
+            .fallback_service(ServeDir::new(dir.join("assets")))
+            .layer(map_response(immutable_when_found));
+        let root = app.nest_service("/assets", assets).fallback_service(pages);
         // O balanceador público remove /hub; a URL da revisão acessa o mesmo prefixo diretamente.
         return Router::new().nest("/hub", root.clone()).merge(root);
     }

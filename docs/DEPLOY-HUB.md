@@ -254,3 +254,20 @@ A publicação registra a distribuição anterior do tráfego. `verify-hub-publi
 redirects exatos, raiz, PDF, Imagem e API, repetindo apenas a consulta durante a propagação.
 Se a conferência falhar depois do deploy, o workflow restaura a distribuição anterior e
 termina com falha; não declara publicação concluída somente porque o comando de deploy passou.
+
+## Cache dos arquivos do site
+
+O servidor define `Cache-Control` para os arquivos estáticos, para que um deploy novo nunca deixe um
+navegador com a página antiga:
+
+- `/assets/*` (nome com hash do conteúdo): `public, max-age=31536000, immutable`, só em respostas
+  bem-sucedidas. Um arquivo ausente responde 404, e não a página inicial, para que HTML nunca seja
+  guardado como se fosse script.
+- `index.html`, as rotas do aplicativo e os arquivos sem hash (como `dictionaries/`): `no-cache`. O
+  navegador sempre revalida e recebe 304 quando nada mudou.
+- As rotas da API mantêm a política própria (`no-store` nas que a definem).
+
+Antes dessa política, a ausência do cabeçalho permitia cache heurístico do `index.html`: depois de
+um deploy, a página antiga podia continuar aparecendo até o navegador expirar o cache por conta
+própria.
+

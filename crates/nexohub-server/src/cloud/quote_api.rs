@@ -2,11 +2,13 @@
 //! a confirmação em `/jobs` pertence à máquina de estados da Tarefa 5.
 use super::{
     CloudError,
+    ledger::Units,
     policy::CloudPolicy,
     pricing::PriceBook,
     quotes::{Finalized, Inspected, Quote, QuoteRequest, QuoteService},
     storage::{MemoryObjects, Storage},
 };
+use sha2::{Digest, Sha256};
 use std::{
     collections::HashMap,
     io::Cursor,
@@ -20,6 +22,16 @@ enum Stage {
     UploadAuthorized,
     Uploaded(u64),
     Inspected(Finalized),
+    Confirmed(Finalized),
+}
+
+/// Dados para reservar a execução; o custo vem do orçamento definitivo, nunca do cliente.
+#[derive(Debug)]
+pub struct Confirmed {
+    pub key: String,
+    pub input_digest: String,
+    pub units: Units,
+    pub maximum_usd_micros: u64,
 }
 struct Record {
     owner: String,
@@ -37,8 +49,11 @@ pub struct QuoteApi {
 
 impl QuoteApi {
     pub fn new(policy: &CloudPolicy) -> Result<Self, CloudError> {
+        Self::with_prices(policy, PriceBook::pilot()?)
+    }
+    pub fn with_prices(policy: &CloudPolicy, prices: PriceBook) -> Result<Self, CloudError> {
         Ok(Self {
-            service: QuoteService::new(policy.clone(), PriceBook::pilot()?),
+            service: QuoteService::new(policy.clone(), prices),
             storage: Storage::new(Arc::new(MemoryObjects::default()), policy.clone()),
             records: Mutex::default(),
             max_upload: policy.ocr.max_bytes.max(policy.office.max_input_bytes),
@@ -141,5 +156,35 @@ impl QuoteApi {
             Ok(())
         })?;
         Ok(done)
+    }
+
+    /// Confirma o orçamento definitivo. Idempotente: repetir devolve os mesmos dados (mesma chave).
+    pub fn confirm(&self, owner: &str, id: &str, now: u64) -> Result<Confirmed, CloudError> {
+        let (finalized, first) = self.with(owner, id, |r| match &r.stage {
+            Stage::Inspected(f) => {
+                if now >= r.quote.expires_at {
+                    return Err(CloudError::QuoteExpired);
+                }
+                Ok((f.clone(), true))
+            }
+            Stage::Confirmed(f) => Ok((f.clone(), false)),
+            _ => Err(CloudError::Conflict),
+        })?;
+        // O objeto precisa ser exatamente o inspecionado, mesmo se algo o trocou depois.
+        self.storage
+            .check_generation(id, finalized.object_generation)?;
+        let digest = format!("{:x}", Sha256::digest(self.storage.read_input(id)?));
+        if first {
+            self.with(owner, id, |r| {
+                r.stage = Stage::Confirmed(finalized.clone());
+                Ok(())
+            })?;
+        }
+        Ok(Confirmed {
+            key: id.into(),
+            input_digest: digest,
+            units: finalized.units,
+            maximum_usd_micros: finalized.maximum_usd_micros,
+        })
     }
 }

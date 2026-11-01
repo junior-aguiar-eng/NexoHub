@@ -13,6 +13,15 @@ async fn production_cloud_routes_are_registered_but_disabled_without_credentials
         ("POST", "/api/v1/cloud/auth/desktop/code"),
         ("POST", "/api/v1/cloud/auth/desktop/exchange"),
         ("POST", "/api/v1/cloud/quotes"),
+        ("POST", "/api/v1/cloud/jobs"),
+        (
+            "GET",
+            "/api/v1/cloud/jobs/0000000000000000000000000000000000000000000000000000000000000000",
+        ),
+        (
+            "POST",
+            "/api/v1/cloud/jobs/0000000000000000000000000000000000000000000000000000000000000000/cancel",
+        ),
         (
             "POST",
             "/api/v1/cloud/quotes/00000000000000000000000000000000/authorize-upload",

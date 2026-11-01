@@ -295,6 +295,21 @@ impl Ledger {
         }
     }
 
+    /// Estado do job para o próprio participante; de outro dono, responde como inexistente.
+    pub fn job_state(&self, participant: &str, id: &str) -> Result<String, CloudError> {
+        valid_id(id)?;
+        let stored = self
+            .store
+            .get(&format!("reservations/{id}"))?
+            .ok_or(CloudError::InvalidRequest)?;
+        let job: Reservation =
+            serde_json::from_value(stored).map_err(|_| CloudError::Unavailable)?;
+        if job.participant_id != participant {
+            return Err(CloudError::InvalidRequest);
+        }
+        Ok(job.state)
+    }
+
     pub fn cancel_job(&self, participant: &str, id: &str, now: u64) -> Result<(), CloudError> {
         self.service_tx(participant, id, now, false, |job, gh, uh, _, _| {
             match job.state.as_str() {

@@ -122,3 +122,61 @@ fn pdf_inspection_is_unavailable_until_an_inspector_exists() {
         CloudError::Unavailable
     );
 }
+
+fn inspected_quote(a: &QuoteApi, owner: &str) -> String {
+    let (id, _) = a.create(owner, &text(3), NOW).unwrap();
+    a.authorize_upload(owner, &id, NOW).unwrap();
+    a.upload(owner, &id, b"abc", NOW).unwrap();
+    a.inspect(owner, &id, NOW + 3).unwrap();
+    id
+}
+
+#[test]
+fn confirm_requires_inspection_and_is_idempotent() {
+    let a = api();
+    let (early, _) = a.create("p1", &text(3), NOW).unwrap();
+    assert_eq!(
+        a.confirm("p1", &early, NOW).unwrap_err(),
+        CloudError::Conflict
+    );
+    let id = inspected_quote(&a, "p1");
+    let first = a.confirm("p1", &id, NOW + 4).unwrap();
+    let again = a.confirm("p1", &id, NOW + 5).unwrap();
+    assert_eq!(first.key, again.key);
+    assert_eq!(first.input_digest, again.input_digest);
+    assert_eq!(first.input_digest.len(), 64);
+    assert_eq!(first.units.characters, 3);
+    assert!(first.maximum_usd_micros > 0);
+}
+
+#[test]
+fn confirm_digest_follows_the_stored_content() {
+    let a = api();
+    let (one, two) = (inspected_quote(&a, "p1"), inspected_quote(&a, "p1"));
+    assert_eq!(
+        a.confirm("p1", &one, NOW).unwrap().input_digest,
+        a.confirm("p1", &two, NOW).unwrap().input_digest
+    );
+    let (id, _) = a.create("p1", &text(3), NOW).unwrap();
+    a.authorize_upload("p1", &id, NOW).unwrap();
+    a.upload("p1", &id, b"xyz", NOW).unwrap();
+    a.inspect("p1", &id, NOW).unwrap();
+    assert_ne!(
+        a.confirm("p1", &id, NOW).unwrap().input_digest,
+        a.confirm("p1", &one, NOW).unwrap().input_digest
+    );
+}
+
+#[test]
+fn confirm_refuses_expired_quote_and_other_owner() {
+    let a = api();
+    let id = inspected_quote(&a, "p1");
+    assert_eq!(
+        a.confirm("p2", &id, NOW).unwrap_err(),
+        CloudError::InvalidRequest
+    );
+    assert_eq!(
+        a.confirm("p1", &id, NOW + 301).unwrap_err(),
+        CloudError::QuoteExpired
+    );
+}

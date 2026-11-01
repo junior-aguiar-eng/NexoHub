@@ -25,6 +25,12 @@ impl PriceBook {
         ))
         .map_err(|_| CloudError::PriceUnavailable)
     }
+    /// Apenas para testes e simulações: define a data de verificação do preço.
+    #[doc(hidden)]
+    pub fn verified_at(mut self, at: u64) -> Self {
+        self.verified_at = at;
+        self
+    }
     pub fn estimate(
         &self,
         units: &Units,

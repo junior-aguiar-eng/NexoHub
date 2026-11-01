@@ -92,7 +92,10 @@ export function createBrowserCloudIdentity(config: BrowserCloudIdentityConfig): 
           emailMemory.save(value);
         } else {
           const current = ready();
-          await signInWithPopup(current, new GoogleAuthProvider());
+          const provider = new GoogleAuthProvider();
+          // Sempre mostra a escolha de conta, mesmo com uma conta Google já conectada no navegador.
+          provider.setCustomParameters({ prompt: "select_account" });
+          await signInWithPopup(current, provider);
           await confirmed(current);
         }
       } catch (error) {

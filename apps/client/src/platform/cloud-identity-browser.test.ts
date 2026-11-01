@@ -28,13 +28,16 @@ const sdk = vi.hoisted(() => ({
   link: vi.fn(),
   reauth: vi.fn(),
   credential: vi.fn(() => ({ kind: "email-link" })),
+  params: vi.fn(),
 }));
 vi.mock("firebase/app", () => ({ initializeApp: sdk.app }));
 vi.mock("firebase/auth", () => ({
   initializeAuth: sdk.init,
   browserSessionPersistence: "SESSION",
   browserPopupRedirectResolver: "POPUP",
-  GoogleAuthProvider: class {},
+  GoogleAuthProvider: class {
+    setCustomParameters = sdk.params;
+  },
   signInWithPopup: sdk.popup,
   sendSignInLinkToEmail: sdk.send,
   signInWithEmailLink: sdk.complete,
@@ -86,6 +89,7 @@ it("aguarda restaurar a sessão antes de consultar a conta", async () => {
 it("usa Google com sessão da aba e não publica token em URL", async () => {
   const identity = createBrowserCloudIdentity(config);
   await identity.signIn("google");
+  expect(sdk.params).toHaveBeenCalledWith({ prompt: "select_account" });
   expect(sdk.auth.languageCode).toBe("pt-BR");
   expect(sdk.init).toHaveBeenCalledWith(expect.anything(), {
     persistence: "SESSION",

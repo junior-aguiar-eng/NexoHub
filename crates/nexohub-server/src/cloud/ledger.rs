@@ -99,6 +99,16 @@ pub struct Reservation {
     pub dispatch_pending: bool,
     fingerprint: String,
     actual_usd_micros: Option<u64>,
+    #[serde(default)]
+    fence: u64,
+    #[serde(default)]
+    lease_until: u64,
+    #[serde(default)]
+    external_started: bool,
+    #[serde(default)]
+    enqueued_at: u64,
+    #[serde(default)]
+    unknown_since: Option<u64>,
 }
 /// Entrada interna do servidor: o custo é calculado por pricing/quotes, nunca aceito do cliente.
 #[derive(Clone)]
@@ -122,6 +132,9 @@ struct Holds {
     units: Units,
     queued: u64,
     running: u64,
+    /// Entradas `ferramenta:reserva` de motores em quarentena (só no documento global).
+    #[serde(default)]
+    quarantined: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -145,6 +158,8 @@ fn default_doc<T: serde::de::DeserializeOwned + Default>(
         Ok(T::default())
     }
 }
+
+mod service;
 
 pub struct Ledger {
     store: Arc<FirestoreStore>,
@@ -303,6 +318,7 @@ impl Ledger {
                 id: id.clone(), participant_id: member.id.clone(), period: period.id.clone(),
                 units: input.units.clone(), maximum_usd_micros: input.maximum_usd_micros,
                 state: "queued".into(), dispatch_pending: true, fingerprint: fingerprint.clone(), actual_usd_micros: None,
+                fence: 0, lease_until: 0, external_started: false, enqueued_at: now, unknown_since: None,
             };
             write(docs, &p.global, &global)?;
             write(docs, &p.account, &account)?;

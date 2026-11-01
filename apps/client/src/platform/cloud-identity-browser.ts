@@ -14,6 +14,7 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
+import { emailMemory } from "./cloud-email-memory";
 import { CloudIdentityError, type CloudIdentityPort } from "./cloud-identity";
 import { sealDesktopSession } from "./desktop-handoff";
 
@@ -88,6 +89,7 @@ export function createBrowserCloudIdentity(config: BrowserCloudIdentityConfig): 
             url: target.href,
             handleCodeInApp: true,
           });
+          emailMemory.save(value);
         } else {
           const current = ready();
           await signInWithPopup(current, new GoogleAuthProvider());
@@ -107,7 +109,7 @@ export function createBrowserCloudIdentity(config: BrowserCloudIdentityConfig): 
           callback.password
         )
           throw new CloudIdentityError("AUTH_INVALID_CALLBACK");
-        const value = checkedEmail(email);
+        const value = checkedEmail(email || emailMemory.read() || undefined);
         const current = ready();
         await current.authStateReady();
         if (!isSignInWithEmailLink(current, url))
@@ -128,6 +130,7 @@ export function createBrowserCloudIdentity(config: BrowserCloudIdentityConfig): 
           }
         } else await signInWithEmailLink(current, value, url);
         await confirmed(current);
+        emailMemory.clear();
       } catch (error) {
         sanitized(error);
       }
@@ -147,10 +150,12 @@ export function createBrowserCloudIdentity(config: BrowserCloudIdentityConfig): 
         await current.authStateReady();
         const user = current.currentUser;
         if (!user?.emailVerified) return null;
-        return {
-          ...(user.displayName ? { name: user.displayName } : {}),
-          ...(user.photoURL ? { picture: user.photoURL } : {}),
-        };
+        // Quem entrou por link de e-mail não traz nome nem foto no perfil principal; usa os do
+        // Google quando a conta o tem vinculado.
+        const google = user.providerData?.find((provider) => provider.providerId === "google.com");
+        const name = user.displayName || google?.displayName;
+        const picture = user.photoURL || google?.photoURL;
+        return { ...(name ? { name } : {}), ...(picture ? { picture } : {}) };
       } catch {
         return null;
       }
@@ -170,6 +175,7 @@ export function createBrowserCloudIdentity(config: BrowserCloudIdentityConfig): 
       }
     },
     async signOut() {
+      emailMemory.clear();
       try {
         if (auth) await signOut(auth);
       } catch (error) {

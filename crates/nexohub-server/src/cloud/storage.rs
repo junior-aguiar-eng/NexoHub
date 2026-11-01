@@ -161,6 +161,13 @@ impl<B: ObjectBackend> Storage<B> {
         }
     }
 
+    pub fn read_input(&self, name: &str) -> Result<Vec<u8>, CloudError> {
+        if !name_ok(name) {
+            return Err(CloudError::InvalidRequest);
+        }
+        self.backend.get(&format!("in-{name}"))
+    }
+
     /// Libera objetos e bytes reservados de um envio abandonado ou expirado.
     pub fn abandon(&self, name: &str) -> Result<(), CloudError> {
         for key in [format!("in-{name}"), format!("out-{name}")] {

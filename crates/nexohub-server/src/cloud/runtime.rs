@@ -7,6 +7,7 @@ use super::{
     firestore::{FirestoreStore, MetadataAccessToken},
     ledger::Ledger,
     policy::CloudPolicy,
+    quote_api::QuoteApi,
     routes::{CloudIdentityServices, system_clock},
 };
 use std::sync::Arc;
@@ -33,6 +34,7 @@ pub fn from_environment() -> Result<Option<Arc<CloudIdentityServices>>, CloudErr
         admission: AdmissionService::new(store.clone(), policy.clone()),
         ledger: Ledger::new(store.clone(), policy.clone()),
         desktop: DesktopHandoff::new(store),
+        quotes: QuoteApi::new(&policy)?,
         policy,
         origins: vec![
             "https://nexojuris.ia.br".into(),

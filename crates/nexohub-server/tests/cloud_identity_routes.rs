@@ -12,6 +12,19 @@ async fn production_cloud_routes_are_registered_but_disabled_without_credentials
         ("GET", "/api/v1/cloud/usage"),
         ("POST", "/api/v1/cloud/auth/desktop/code"),
         ("POST", "/api/v1/cloud/auth/desktop/exchange"),
+        ("POST", "/api/v1/cloud/quotes"),
+        (
+            "POST",
+            "/api/v1/cloud/quotes/00000000000000000000000000000000/authorize-upload",
+        ),
+        (
+            "PUT",
+            "/api/v1/cloud/quotes/00000000000000000000000000000000/input",
+        ),
+        (
+            "POST",
+            "/api/v1/cloud/quotes/00000000000000000000000000000000/inspect",
+        ),
     ] {
         let response = nexohub_server::create_app(None)
             .oneshot(
@@ -82,6 +95,7 @@ fn identity_routes_validate_token_origin_invitation_and_shared_balance() {
         admission,
         ledger: Ledger::new(store.clone(), policy.clone()),
         desktop: DesktopHandoff::new(store),
+        quotes: nexohub_server::cloud::quote_api::QuoteApi::new(&policy).unwrap(),
         policy,
         origins: vec!["https://nexojuris.ia.br".into()],
         clock: || Ok(common::now()),

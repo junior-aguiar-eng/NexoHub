@@ -8,6 +8,7 @@ pub mod firestore;
 pub mod ledger;
 pub mod policy;
 pub mod pricing;
+pub mod quote_api;
 pub mod quotes;
 pub mod routes;
 pub mod runtime;

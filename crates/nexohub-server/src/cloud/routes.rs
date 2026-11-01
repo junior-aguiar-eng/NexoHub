@@ -6,13 +6,16 @@ use super::{
     desktop::{DesktopCodeRequest, DesktopHandoff},
     ledger::Ledger,
     policy::CloudPolicy,
+    quote_api::QuoteApi,
+    quotes::QuoteRequest,
 };
 use axum::{
     Json, Router,
+    extract::Path,
     extract::{DefaultBodyLimit, State},
     http::{HeaderMap, StatusCode, header},
     response::{IntoResponse, Response},
-    routing::{get, post},
+    routing::{get, post, put},
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -25,6 +28,7 @@ pub struct CloudIdentityServices {
     pub admission: AdmissionService,
     pub ledger: Ledger,
     pub desktop: DesktopHandoff,
+    pub quotes: QuoteApi,
     pub policy: CloudPolicy,
     pub origins: Vec<String>,
     pub clock: fn() -> Result<u64, CloudError>,
@@ -40,6 +44,8 @@ impl IntoResponse for CloudError {
             }
             Self::QuotaExceeded => (StatusCode::TOO_MANY_REQUESTS, "QUOTA_EXCEEDED"),
             Self::BudgetExceeded => (StatusCode::TOO_MANY_REQUESTS, "GLOBAL_BUDGET_EXCEEDED"),
+            Self::QuoteExpired => (StatusCode::GONE, "QUOTE_EXPIRED"),
+            Self::InputChanged => (StatusCode::CONFLICT, "INPUT_CHANGED"),
             Self::Busy => (StatusCode::TOO_MANY_REQUESTS, "JOB_BUSY"),
             Self::Unavailable | Self::PriceUnavailable => {
                 (StatusCode::SERVICE_UNAVAILABLE, "CLOUD_DISABLED")
@@ -167,6 +173,108 @@ async fn exchange(
     .await
     .map_err(|_| CloudError::Unavailable)?
 }
+fn quote_id(id: &str) -> Result<(), CloudError> {
+    if id.len() == 32 && id.bytes().all(|b| b.is_ascii_hexdigit()) {
+        Ok(())
+    } else {
+        Err(CloudError::InvalidRequest)
+    }
+}
+async fn create_quote(
+    State(state): State<Runtime>,
+    headers: HeaderMap,
+    body: axum::body::Bytes,
+) -> Result<Response, CloudError> {
+    let s = runtime(state, &headers)?;
+    let request: QuoteRequest =
+        serde_json::from_slice(&body).map_err(|_| CloudError::InvalidRequest)?;
+    tokio::task::spawn_blocking(move || {
+        let t = (s.clock)()?;
+        let identity = principal(&s, &headers, t)?;
+        let member = s.admission.member(&identity)?;
+        let (id, quote) = s.quotes.create(&member.id, &request, t)?;
+        let mut value = serde_json::to_value(&quote).map_err(|_| CloudError::Unavailable)?;
+        value["quoteId"] = json!(id);
+        Ok(([(header::CACHE_CONTROL, "no-store")], Json(value)).into_response())
+    })
+    .await
+    .map_err(|_| CloudError::Unavailable)?
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Confirmation {
+    confirmed: bool,
+}
+async fn authorize_upload(
+    State(state): State<Runtime>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+    body: axum::body::Bytes,
+) -> Result<Response, CloudError> {
+    quote_id(&id)?;
+    let s = runtime(state, &headers)?;
+    let confirmation: Confirmation =
+        serde_json::from_slice(&body).map_err(|_| CloudError::InvalidRequest)?;
+    if !confirmation.confirmed {
+        return Err(CloudError::InvalidRequest);
+    }
+    tokio::task::spawn_blocking(move || {
+        let t = (s.clock)()?;
+        let identity = principal(&s, &headers, t)?;
+        let member = s.admission.member(&identity)?;
+        s.quotes.authorize_upload(&member.id, &id, t)?;
+        Ok((
+            [(header::CACHE_CONTROL, "no-store")],
+            Json(json!({"uploadAuthorized":true})),
+        )
+            .into_response())
+    })
+    .await
+    .map_err(|_| CloudError::Unavailable)?
+}
+async fn upload_input(
+    State(state): State<Runtime>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+    body: axum::body::Bytes,
+) -> Result<Response, CloudError> {
+    quote_id(&id)?;
+    let s = runtime(state, &headers)?;
+    tokio::task::spawn_blocking(move || {
+        let t = (s.clock)()?;
+        let identity = principal(&s, &headers, t)?;
+        let member = s.admission.member(&identity)?;
+        s.quotes.upload(&member.id, &id, &body, t)?;
+        Ok((
+            [(header::CACHE_CONTROL, "no-store")],
+            Json(json!({"uploaded":true})),
+        )
+            .into_response())
+    })
+    .await
+    .map_err(|_| CloudError::Unavailable)?
+}
+async fn inspect_input(
+    State(state): State<Runtime>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Result<Response, CloudError> {
+    quote_id(&id)?;
+    let s = runtime(state, &headers)?;
+    tokio::task::spawn_blocking(move || {
+        let t = (s.clock)()?;
+        let identity = principal(&s, &headers, t)?;
+        let member = s.admission.member(&identity)?;
+        let done = s.quotes.inspect(&member.id, &id, t)?;
+        Ok((
+            [(header::CACHE_CONTROL, "no-store")],
+            Json(json!({"units":done.units,"maximumUsdMicros":done.maximum_usd_micros})),
+        )
+            .into_response())
+    })
+    .await
+    .map_err(|_| CloudError::Unavailable)?
+}
 pub fn router(runtime: Runtime) -> Router {
     Router::new()
         .route("/status", get(status))
@@ -174,6 +282,14 @@ pub fn router(runtime: Runtime) -> Router {
         .route("/usage", get(usage))
         .route("/auth/desktop/code", post(code))
         .route("/auth/desktop/exchange", post(exchange))
+        .route("/quotes", post(create_quote))
+        .route("/quotes/{id}/authorize-upload", post(authorize_upload))
+        .route("/quotes/{id}/inspect", post(inspect_input))
         .layer(DefaultBodyLimit::max(70 * 1024))
+        // Upload binário: limite próprio, aplicado só a esta rota (adicionada após a camada geral).
+        .route(
+            "/quotes/{id}/input",
+            put(upload_input).layer(DefaultBodyLimit::max(20 * 1024 * 1024 + 1)),
+        )
         .with_state(runtime)
 }

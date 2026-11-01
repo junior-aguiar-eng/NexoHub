@@ -8,6 +8,7 @@ pub mod firestore;
 pub mod ledger;
 pub mod policy;
 pub mod pricing;
+pub mod quotes;
 pub mod routes;
 pub mod runtime;
 
@@ -24,6 +25,8 @@ pub enum CloudError {
     Busy,
     Conflict,
     PriceUnavailable,
+    QuoteExpired,
+    InputChanged,
     Unavailable,
 }
 
@@ -42,6 +45,8 @@ impl std::fmt::Display for CloudError {
             Self::Busy => "Limite de tarefas simultâneas atingido.",
             Self::Conflict => "Não foi possível concluir a operação. Tente novamente.",
             Self::PriceUnavailable => "Preço indisponível ou desatualizado.",
+            Self::QuoteExpired => "Orçamento expirado. Solicite um novo.",
+            Self::InputChanged => "O conteúdo mudou desde o orçamento. Confirme novamente.",
             Self::Unavailable => "Serviço temporariamente indisponível.",
         })
     }

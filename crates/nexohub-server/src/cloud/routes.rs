@@ -4,7 +4,7 @@ use super::{
     admission::AdmissionService,
     auth::{FirebaseVerifier, VerifiedIdentity},
     desktop::{DesktopCodeRequest, DesktopHandoff},
-    ledger::Ledger,
+    ledger::{Ledger, ReservationRequest},
     policy::CloudPolicy,
     quote_api::QuoteApi,
     quotes::QuoteRequest,
@@ -276,6 +276,96 @@ async fn inspect_input(
     .await
     .map_err(|_| CloudError::Unavailable)?
 }
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct JobRequest {
+    quote_id: String,
+}
+fn job_id(id: &str) -> Result<(), CloudError> {
+    if id.len() == 64 && id.bytes().all(|b| b.is_ascii_hexdigit()) {
+        Ok(())
+    } else {
+        Err(CloudError::InvalidRequest)
+    }
+}
+/// Confirma o orçamento definitivo e reserva saldo/vaga. Não executa nem chama provedor.
+async fn create_job(
+    State(state): State<Runtime>,
+    headers: HeaderMap,
+    body: axum::body::Bytes,
+) -> Result<Response, CloudError> {
+    let s = runtime(state, &headers)?;
+    let request: JobRequest =
+        serde_json::from_slice(&body).map_err(|_| CloudError::InvalidRequest)?;
+    quote_id(&request.quote_id)?;
+    tokio::task::spawn_blocking(move || {
+        let t = (s.clock)()?;
+        let identity = principal(&s, &headers, t)?;
+        let member = s.admission.member(&identity)?;
+        let confirmed = s.quotes.confirm(&member.id, &request.quote_id, t)?;
+        let reservation = s.ledger.reserve(
+            &identity,
+            &ReservationRequest {
+                key: confirmed.key,
+                input_digest: confirmed.input_digest,
+                units: confirmed.units,
+                maximum_usd_micros: confirmed.maximum_usd_micros,
+            },
+            t,
+        )?;
+        let state = s.ledger.job_state(&member.id, &reservation.id)?;
+        Ok((
+            [(header::CACHE_CONTROL, "no-store")],
+            Json(json!({"jobId":reservation.id,"state":state})),
+        )
+            .into_response())
+    })
+    .await
+    .map_err(|_| CloudError::Unavailable)?
+}
+async fn job_status(
+    State(state): State<Runtime>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Result<Response, CloudError> {
+    job_id(&id)?;
+    let s = runtime(state, &headers)?;
+    tokio::task::spawn_blocking(move || {
+        let t = (s.clock)()?;
+        let identity = principal(&s, &headers, t)?;
+        let member = s.admission.member(&identity)?;
+        let state = s.ledger.job_state(&member.id, &id)?;
+        Ok((
+            [(header::CACHE_CONTROL, "no-store")],
+            Json(json!({"jobId":id,"state":state})),
+        )
+            .into_response())
+    })
+    .await
+    .map_err(|_| CloudError::Unavailable)?
+}
+async fn cancel_job(
+    State(state): State<Runtime>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Result<Response, CloudError> {
+    job_id(&id)?;
+    let s = runtime(state, &headers)?;
+    tokio::task::spawn_blocking(move || {
+        let t = (s.clock)()?;
+        let identity = principal(&s, &headers, t)?;
+        let member = s.admission.member(&identity)?;
+        s.ledger.cancel_job(&member.id, &id, t)?;
+        let state = s.ledger.job_state(&member.id, &id)?;
+        Ok((
+            [(header::CACHE_CONTROL, "no-store")],
+            Json(json!({"jobId":id,"state":state})),
+        )
+            .into_response())
+    })
+    .await
+    .map_err(|_| CloudError::Unavailable)?
+}
 pub fn router(runtime: Runtime) -> Router {
     Router::new()
         .route("/status", get(status))
@@ -286,6 +376,9 @@ pub fn router(runtime: Runtime) -> Router {
         .route("/quotes", post(create_quote))
         .route("/quotes/{id}/authorize-upload", post(authorize_upload))
         .route("/quotes/{id}/inspect", post(inspect_input))
+        .route("/jobs", post(create_job))
+        .route("/jobs/{id}", get(job_status))
+        .route("/jobs/{id}/cancel", post(cancel_job))
         .layer(DefaultBodyLimit::max(70 * 1024))
         // Upload binário: limite próprio, aplicado só a esta rota (adicionada após a camada geral).
         .route(

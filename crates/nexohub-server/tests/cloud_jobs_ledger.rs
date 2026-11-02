@@ -4,7 +4,7 @@ use nexohub_server::cloud::{
     auth::VerifiedIdentity,
     firestore::FirestoreStore,
     jobs::{Proof, Reconciliation},
-    ledger::{Ledger, Reservation, ReservationRequest, Units},
+    ledger::{Ledger, Reservation, ReservationRequest, SweepReport, Units},
     policy::CloudPolicy,
     providers::{FakeProvider, ProviderDone, ProviderError},
 };
@@ -285,26 +285,206 @@ fn sweeper_releases_only_expired_queued_reservations() {
 
 #[test]
 #[ignore = "Requer FIRESTORE_EMULATOR_HOST local"]
-fn sweeper_cleans_stale_entries_without_touching_running_or_cancelled_jobs() {
+fn sweeper_keeps_running_jobs_indexed_and_cleans_only_finished_ones() {
     let w = world();
     let who = common::identity();
     let pid = member(&w, &who);
     let running = reserve(&w, &who, "a");
     w.ledger.claim_job(&pid, &running.id, w.now).unwrap();
-    let report = w.ledger.sweep_expired(w.now + 400).unwrap();
-    assert_eq!((report.expired, report.cleaned), (0, 1));
+    // Com o lease vigente, o job em execução não é tocado e continua no índice.
+    assert_eq!(
+        w.ledger.sweep_expired(w.now + 10).unwrap(),
+        SweepReport::default()
+    );
     assert_eq!(state(&w, &running.id), "running");
     assert_eq!(
         w.ledger.usage(&who, w.now).unwrap().reserved_usd_micros,
         6_000
     );
-    assert_eq!(queue_len(&w), 0);
+    assert_eq!(queue_len(&w), 1);
 
     let cancelled = reserve(&w, &who, "b");
     w.ledger.cancel_job(&pid, &cancelled.id, w.now).unwrap();
-    let report = w.ledger.sweep_expired(w.now + 400).unwrap();
+    let report = w.ledger.sweep_expired(w.now + 10).unwrap();
     assert_eq!((report.expired, report.cleaned), (0, 1));
     assert_eq!(state(&w, &cancelled.id), "cancelled");
+    assert_eq!(queue_len(&w), 1); // só o job em execução
+
+    // Liquidado: a entrada sai do índice na varredura seguinte.
+    let lease = w
+        .ledger
+        .claim_job(&pid, &running.id, w.now + 1_000)
+        .unwrap();
+    w.ledger
+        .execute(&pid, &lease, &FakeProvider::new(OK), w.now + 1_000)
+        .unwrap();
+    assert_eq!(state(&w, &running.id), "settled");
+    assert_eq!(w.ledger.sweep_expired(w.now + 1_001).unwrap().cleaned, 1);
+    assert_eq!(queue_len(&w), 0);
+}
+
+// Lease do OCR: 30 s de margem + 120 s do motor = 150 s.
+const LEASE: u64 = 150;
+
+#[test]
+#[ignore = "Requer FIRESTORE_EMULATOR_HOST local"]
+fn expired_lease_after_external_start_goes_to_reconciliation_without_resend() {
+    let w = world();
+    let who = common::identity();
+    let pid = member(&w, &who);
+    let job = reserve(&w, &who, "a");
+    let lease = w.ledger.claim_job(&pid, &job.id, w.now).unwrap();
+    w.ledger.begin_external(&pid, &lease, w.now).unwrap(); // o worker morre aqui
+    assert_eq!(
+        w.ledger.sweep_expired(w.now + LEASE - 1).unwrap(),
+        SweepReport::default()
+    );
+    let report = w.ledger.sweep_expired(w.now + LEASE + 1).unwrap();
+    assert_eq!(report.lease_expired, 1);
+    assert_eq!(state(&w, &job.id), "needs_reconciliation");
+    // Dinheiro e vaga continuam presos; nenhum worker consegue reenviar.
+    assert_eq!(
+        w.ledger.usage(&who, w.now).unwrap().reserved_usd_micros,
+        6_000
+    );
+    assert_eq!(
+        w.ledger
+            .claim_job(&pid, &job.id, w.now + LEASE + 2)
+            .unwrap_err(),
+        CloudError::ReconciliationRequired
+    );
+    let p = FakeProvider::new(OK);
+    assert!(
+        w.ledger
+            .execute(&pid, &lease, &p, w.now + LEASE + 2)
+            .is_err()
+    );
+    assert_eq!(p.calls(), 0);
+    // Uma segunda varredura não conta o mesmo job de novo como lease vencido.
+    assert_eq!(
+        w.ledger
+            .sweep_expired(w.now + LEASE + 3)
+            .unwrap()
+            .lease_expired,
+        0
+    );
+}
+
+#[test]
+#[ignore = "Requer FIRESTORE_EMULATOR_HOST local"]
+fn expired_lease_before_any_external_call_returns_to_the_queue() {
+    let w = world();
+    let who = common::identity();
+    let pid = member(&w, &who);
+    let job = reserve(&w, &who, "a");
+    let stale = w.ledger.claim_job(&pid, &job.id, w.now).unwrap(); // worker cai antes de chamar
+    let report = w.ledger.sweep_expired(w.now + LEASE + 1).unwrap();
+    assert_eq!((report.requeued, report.released), (1, 0));
+    assert_eq!(state(&w, &job.id), "queued");
+    // O worker antigo perdeu o direito; o dinheiro segue reservado e a vaga foi liberada.
+    assert_eq!(
+        w.ledger
+            .begin_external(&pid, &stale, w.now + LEASE + 1)
+            .unwrap_err(),
+        CloudError::Conflict
+    );
+    assert_eq!(
+        w.ledger.usage(&who, w.now).unwrap().reserved_usd_micros,
+        6_000
+    );
+    let fresh = w
+        .ledger
+        .claim_job(&pid, &job.id, w.now + LEASE + 2)
+        .unwrap();
+    assert!(fresh.fence > stale.fence);
+    // O job reassumido ainda pode ser cancelado antes de qualquer chamada externa.
+    w.ledger
+        .cancel_job(&pid, &job.id, w.now + LEASE + 3)
+        .unwrap();
+}
+
+#[test]
+#[ignore = "Requer FIRESTORE_EMULATOR_HOST local"]
+fn requeued_job_still_expires_with_the_original_deadline() {
+    let w = world();
+    let who = common::identity();
+    let pid = member(&w, &who);
+    let job = reserve(&w, &who, "a");
+    w.ledger.claim_job(&pid, &job.id, w.now).unwrap();
+    w.ledger.sweep_expired(w.now + LEASE + 1).unwrap();
+    assert_eq!(state(&w, &job.id), "queued");
+    let report = w.ledger.sweep_expired(w.now + 301).unwrap();
+    assert_eq!(report.expired, 1);
+    assert_eq!(state(&w, &job.id), "cancelled");
+    assert_eq!(w.ledger.usage(&who, w.now).unwrap().reserved_usd_micros, 0);
+}
+
+#[test]
+#[ignore = "Requer FIRESTORE_EMULATOR_HOST local"]
+fn expired_lease_without_queue_room_releases_instead_of_requeueing() {
+    let w = world();
+    let who = common::identity();
+    let pid = member(&w, &who);
+    let first = reserve(&w, &who, "a");
+    w.ledger.claim_job(&pid, &first.id, w.now).unwrap(); // abre espaço de fila para o próximo
+    let second = reserve(&w, &who, "b"); // ocupa a única vaga de fila do participante
+    let report = w.ledger.sweep_expired(w.now + LEASE + 1).unwrap();
+    assert_eq!((report.requeued, report.released), (0, 1));
+    assert_eq!(state(&w, &first.id), "cancelled");
+    assert_eq!(state(&w, &second.id), "queued");
+    // Só o segundo continua reservado: nada foi enviado nem cobrado pelo primeiro.
+    assert_eq!(
+        w.ledger.usage(&who, w.now).unwrap().reserved_usd_micros,
+        6_000
+    );
+}
+
+#[test]
+#[ignore = "Requer FIRESTORE_EMULATOR_HOST local"]
+fn sweeper_applies_the_ten_minute_quarantine_rule_to_unresolved_jobs() {
+    let w = world();
+    let who = common::identity();
+    let pid = member(&w, &who);
+    let job = reserve(&w, &who, "a");
+    let lease = w.ledger.claim_job(&pid, &job.id, w.now).unwrap();
+    let p = FakeProvider::new(Err(ProviderError::Unknown));
+    assert!(w.ledger.execute(&pid, &lease, &p, w.now).is_err());
+    assert_eq!(w.ledger.sweep_expired(w.now + 599).unwrap().quarantined, 0);
+    assert_eq!(w.ledger.sweep_expired(w.now + 600).unwrap().quarantined, 1);
+    assert_eq!(state(&w, &job.id), "needs_reconciliation");
+    assert_eq!(
+        w.ledger.usage(&who, w.now).unwrap().reserved_usd_micros,
+        6_000
+    );
+    // Com prova, o job termina e a entrada sai do índice na varredura seguinte.
+    w.ledger
+        .reconcile_job(&pid, &job.id, Some(Proof::NotConsumed), w.now + 700)
+        .unwrap();
+    assert_eq!(w.ledger.sweep_expired(w.now + 701).unwrap().cleaned, 1);
+    assert_eq!(queue_len(&w), 0);
+}
+
+#[test]
+#[ignore = "Requer FIRESTORE_EMULATOR_HOST local"]
+fn concurrent_sweeps_requeue_an_orphaned_job_exactly_once() {
+    let w = world();
+    let who = common::identity();
+    let pid = member(&w, &who);
+    let job = reserve(&w, &who, "a");
+    w.ledger.claim_job(&pid, &job.id, w.now).unwrap();
+    let total: u64 = (0..6)
+        .map(|_| {
+            let (ledger, now) = (w.ledger.clone(), w.now + LEASE + 1);
+            std::thread::spawn(move || ledger.sweep_expired(now).unwrap().requeued)
+        })
+        .collect::<Vec<_>>()
+        .into_iter()
+        .map(|h| h.join().unwrap())
+        .sum();
+    assert_eq!(total, 1);
+    assert_eq!(state(&w, &job.id), "queued");
+    // Contadores consistentes: o job pode ser assumido de novo e a vaga de execução está livre.
+    assert!(w.ledger.claim_job(&pid, &job.id, w.now + LEASE + 2).is_ok());
 }
 
 #[test]

@@ -32,14 +32,31 @@ fn tool_name(tool: CloudTool) -> &'static str {
 pub struct SweepReport {
     /// Reservas que passaram do prazo de fila e foram liberadas.
     pub expired: u64,
-    /// Entradas do índice cujo job já saiu da fila (executando, cancelado, etc.).
+    /// Entradas do índice cujo job já terminou (liquidado, falho ou cancelado).
     pub cleaned: u64,
+    /// Jobs com lease vencido depois de iniciada a chamada externa: foram para reconciliação,
+    /// mantendo vaga e dinheiro, sem reenvio.
+    pub lease_expired: u64,
+    /// Jobs com lease vencido ANTES de qualquer chamada externa: voltaram para a fila.
+    pub requeued: u64,
+    /// Idem, mas sem espaço na fila: cancelados e liberados (nada foi enviado nem cobrado).
+    pub released: u64,
+    /// Jobs que já passaram de 10 min sem prova de término (motor em quarentena). Conta todos os
+    /// vistos na varredura, não só os novos.
+    pub quarantined: u64,
 }
 
 enum Swept {
     Expired,
-    NotQueued,
+    Final,
     Fresh,
+    /// Em reconciliação (agora ou desde antes): precisa da verificação de prova/quarentena.
+    Reconcile {
+        newly: bool,
+    },
+    Requeued,
+    Released,
+    Active,
 }
 
 enum Claimed {
@@ -309,8 +326,15 @@ impl Ledger {
         }
     }
 
-    /// Libera reservas que ficaram na fila além do prazo. Idempotente e seguro com varreduras
-    /// concorrentes: cada liberação é uma transação que reconfere o estado.
+    /// Varredura periódica do índice `pilot/queue`, que lista os jobs ainda não terminados.
+    /// Cada passo é uma transação que reconfere o estado, então varreduras concorrentes são
+    /// seguras. Regras:
+    /// - na fila além do prazo: libera a reserva;
+    /// - em execução com lease vencido **depois** de iniciada a chamada externa: vai para
+    ///   reconciliação, mantendo vaga e dinheiro (nunca reenvia nem libera sem prova);
+    /// - em execução com lease vencido **antes** de qualquer chamada: nada foi enviado nem
+    ///   cobrado, então volta à fila (ou, sem espaço nela, é cancelado e liberado);
+    /// - em reconciliação: aplica a regra de 10 min sem prova (quarentena do motor).
     pub fn sweep_expired(&self, now: u64) -> Result<SweepReport, CloudError> {
         let index: QueueIndex = match self.store.get("pilot/queue")? {
             Some(value) => serde_json::from_value(value).map_err(|_| CloudError::Unavailable)?,
@@ -318,24 +342,57 @@ impl Ledger {
         };
         let mut report = SweepReport::default();
         let mut done = Vec::new();
+        let mut to_reconcile = Vec::new();
         for entry in &index.entries {
             let queue_seconds = self.policy.timing.queue_seconds;
+            let (global_queued, participant_queued) = (
+                self.policy.concurrency.global_queued,
+                self.policy.concurrency.participant_queued,
+            );
             let outcome = self.service_tx(
                 &entry.participant,
                 &entry.id,
                 now,
                 false,
-                |job, gh, uh, _, _| {
-                    if job.state != "queued" {
-                        return Ok(Swept::NotQueued);
+                |job, gh, uh, _, _| match job.state.as_str() {
+                    "queued" => {
+                        if now.saturating_sub(job.enqueued_at) <= queue_seconds {
+                            return Ok(Swept::Fresh);
+                        }
+                        release(job, gh, uh)?;
+                        job.state = "cancelled".into();
+                        job.dispatch_pending = false;
+                        Ok(Swept::Expired)
                     }
-                    if now.saturating_sub(job.enqueued_at) <= queue_seconds {
-                        return Ok(Swept::Fresh);
+                    "running" => {
+                        if now < job.lease_until {
+                            return Ok(Swept::Active);
+                        }
+                        if job.external_started {
+                            job.state = "needs_reconciliation".into();
+                            job.unknown_since.get_or_insert(now);
+                            return Ok(Swept::Reconcile { newly: true });
+                        }
+                        // Worker caiu antes de chamar o provedor: o fence antigo deixa de valer.
+                        job.fence = add(job.fence, 1)?;
+                        if gh.queued < global_queued && uh.queued < participant_queued {
+                            gh.running = sub(gh.running, 1)?;
+                            uh.running = sub(uh.running, 1)?;
+                            gh.queued = add(gh.queued, 1)?;
+                            uh.queued = add(uh.queued, 1)?;
+                            job.state = "queued".into();
+                            job.lease_until = 0;
+                            job.dispatch_pending = true;
+                            Ok(Swept::Requeued)
+                        } else {
+                            release(job, gh, uh)?;
+                            job.state = "cancelled".into();
+                            job.dispatch_pending = false;
+                            Ok(Swept::Released)
+                        }
                     }
-                    release(job, gh, uh)?;
-                    job.state = "cancelled".into();
-                    job.dispatch_pending = false;
-                    Ok(Swept::Expired)
+                    "needs_reconciliation" => Ok(Swept::Reconcile { newly: false }),
+                    _ => Ok(Swept::Final),
                 },
             );
             match outcome {
@@ -343,15 +400,33 @@ impl Ledger {
                     report.expired += 1;
                     done.push(entry.id.clone());
                 }
-                Ok(Swept::NotQueued) => {
+                Ok(Swept::Released) => {
+                    report.released += 1;
+                    done.push(entry.id.clone());
+                }
+                Ok(Swept::Final) => {
                     report.cleaned += 1;
                     done.push(entry.id.clone());
                 }
-                Ok(Swept::Fresh) => {}
+                Ok(Swept::Requeued) => report.requeued += 1,
+                Ok(Swept::Reconcile { newly }) => {
+                    report.lease_expired += u64::from(newly);
+                    to_reconcile.push(entry.clone());
+                }
+                Ok(Swept::Fresh | Swept::Active) => {}
                 // Documento ausente ou corrompido não pode travar o índice para sempre.
                 Err(CloudError::InvalidRequest | CloudError::NotAdmitted) => {
                     done.push(entry.id.clone())
                 }
+                Err(error) => return Err(error),
+            }
+        }
+        for entry in &to_reconcile {
+            match self.reconcile_job(&entry.participant, &entry.id, None, now) {
+                Ok(Reconciliation::Quarantined) => report.quarantined += 1,
+                Ok(_) => {}
+                // Outro processo resolveu no meio do caminho; a próxima varredura limpa.
+                Err(CloudError::Conflict) => {}
                 Err(error) => return Err(error),
             }
         }

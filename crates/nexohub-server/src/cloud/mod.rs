@@ -7,6 +7,7 @@ pub mod desktop;
 pub mod firestore;
 pub mod jobs;
 pub mod ledger;
+pub mod outputs;
 pub mod policy;
 pub mod pricing;
 pub mod providers;

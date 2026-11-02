@@ -15,6 +15,7 @@ pub mod quotes;
 pub mod routes;
 pub mod runtime;
 pub mod storage;
+pub mod sweeper;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CloudError {

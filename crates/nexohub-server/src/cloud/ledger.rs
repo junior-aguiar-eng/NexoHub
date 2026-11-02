@@ -137,6 +137,22 @@ struct Holds {
     quarantined: Vec<String>,
 }
 
+/// Índice das reservas em fila (no máximo `global_queued` ativas), para o varredor de expiração.
+#[derive(Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct QueueIndex {
+    entries: Vec<QueueEntry>,
+}
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct QueueEntry {
+    id: String,
+    participant: String,
+    enqueued_at: u64,
+}
+/// Limite do índice: falha fechada em vez de crescer sem fim se o varredor parar.
+const MAX_QUEUE_INDEX: usize = 2_000;
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Usage {
@@ -160,6 +176,7 @@ fn default_doc<T: serde::de::DeserializeOwned + Default>(
 }
 
 mod service;
+pub use service::SweepReport;
 
 pub struct Ledger {
     store: Arc<FirestoreStore>,
@@ -281,6 +298,7 @@ impl Ledger {
         let mut paths = p.all();
         paths.push(reservation_path.clone());
         paths.push(format!("audit/{id}"));
+        paths.push("pilot/queue".into());
         self.store.transact(&paths, |docs| {
             p.authorize(docs, identity, &member.id)?;
             if docs.contains_key(&reservation_path) {
@@ -314,6 +332,16 @@ impl Ledger {
             uh.reserved_usd_micros = add(uh.reserved_usd_micros, input.maximum_usd_micros)?;
             gh.units = gh.units.add(&input.units)?;
             uh.units = uh.units.add(&input.units)?;
+            let mut queue: QueueIndex = default_doc(docs, "pilot/queue")?;
+            if queue.entries.len() >= MAX_QUEUE_INDEX {
+                return Err(CloudError::Busy);
+            }
+            queue.entries.push(QueueEntry {
+                id: id.clone(),
+                participant: member.id.clone(),
+                enqueued_at: now,
+            });
+            write(docs, "pilot/queue", &queue)?;
             let reservation = Reservation {
                 id: id.clone(), participant_id: member.id.clone(), period: period.id.clone(),
                 units: input.units.clone(), maximum_usd_micros: input.maximum_usd_micros,

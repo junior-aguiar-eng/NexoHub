@@ -249,3 +249,81 @@ fn queue_wait_is_capped_and_releases_the_reservation() {
     assert_eq!(state(&w, &job.id), "cancelled");
     assert_eq!(w.ledger.usage(&who, w.now).unwrap().reserved_usd_micros, 0);
 }
+
+fn queue_len(w: &World) -> usize {
+    w.store
+        .get("pilot/queue")
+        .unwrap()
+        .map(|v| v["entries"].as_array().map(|e| e.len()).unwrap_or(0))
+        .unwrap_or(0)
+}
+
+#[test]
+#[ignore = "Requer FIRESTORE_EMULATOR_HOST local"]
+fn sweeper_releases_only_expired_queued_reservations() {
+    let w = world();
+    let who = common::identity();
+    member(&w, &who); // admite a conta antes de reservar
+    let job = reserve(&w, &who, "a");
+    assert_eq!(queue_len(&w), 1);
+    reserve(&w, &who, "a"); // reenvio idempotente não duplica o índice
+    assert_eq!(queue_len(&w), 1);
+
+    let early = w.ledger.sweep_expired(w.now + 100).unwrap();
+    assert_eq!((early.expired, early.cleaned), (0, 0));
+    assert_eq!(state(&w, &job.id), "queued");
+    assert_eq!(queue_len(&w), 1);
+
+    let late = w.ledger.sweep_expired(w.now + 301).unwrap();
+    assert_eq!((late.expired, late.cleaned), (1, 0));
+    assert_eq!(state(&w, &job.id), "cancelled");
+    assert_eq!(w.ledger.usage(&who, w.now).unwrap().reserved_usd_micros, 0);
+    assert_eq!(queue_len(&w), 0);
+    let again = w.ledger.sweep_expired(w.now + 400).unwrap();
+    assert_eq!((again.expired, again.cleaned), (0, 0));
+}
+
+#[test]
+#[ignore = "Requer FIRESTORE_EMULATOR_HOST local"]
+fn sweeper_cleans_stale_entries_without_touching_running_or_cancelled_jobs() {
+    let w = world();
+    let who = common::identity();
+    let pid = member(&w, &who);
+    let running = reserve(&w, &who, "a");
+    w.ledger.claim_job(&pid, &running.id, w.now).unwrap();
+    let report = w.ledger.sweep_expired(w.now + 400).unwrap();
+    assert_eq!((report.expired, report.cleaned), (0, 1));
+    assert_eq!(state(&w, &running.id), "running");
+    assert_eq!(
+        w.ledger.usage(&who, w.now).unwrap().reserved_usd_micros,
+        6_000
+    );
+    assert_eq!(queue_len(&w), 0);
+
+    let cancelled = reserve(&w, &who, "b");
+    w.ledger.cancel_job(&pid, &cancelled.id, w.now).unwrap();
+    let report = w.ledger.sweep_expired(w.now + 400).unwrap();
+    assert_eq!((report.expired, report.cleaned), (0, 1));
+    assert_eq!(state(&w, &cancelled.id), "cancelled");
+}
+
+#[test]
+#[ignore = "Requer FIRESTORE_EMULATOR_HOST local"]
+fn concurrent_sweeps_release_a_reservation_exactly_once() {
+    let w = world();
+    let who = common::identity();
+    member(&w, &who); // admite a conta antes de reservar
+    let job = reserve(&w, &who, "a");
+    let total: u64 = (0..6)
+        .map(|_| {
+            let (ledger, now) = (w.ledger.clone(), w.now + 301);
+            std::thread::spawn(move || ledger.sweep_expired(now).unwrap().expired)
+        })
+        .collect::<Vec<_>>()
+        .into_iter()
+        .map(|h| h.join().unwrap())
+        .sum();
+    assert_eq!(total, 1);
+    assert_eq!(state(&w, &job.id), "cancelled");
+    assert_eq!(w.ledger.usage(&who, w.now).unwrap().reserved_usd_micros, 0);
+}

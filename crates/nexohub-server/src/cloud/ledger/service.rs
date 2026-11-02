@@ -1,8 +1,8 @@
 //! Transições de execução feitas pelo serviço (workers), sem token de participante. Cada operação é
 //! uma única transação sobre reserva + contadores, então vaga, saldo e fence nunca divergem.
 use super::{
-    Account, BillingPeriod, CloudError, Holds, Ledger, Reservation, Units, add, default_doc, read,
-    sub, write,
+    Account, BillingPeriod, CloudError, Holds, Ledger, QueueIndex, Reservation, Units, add,
+    default_doc, read, sub, write,
 };
 use crate::cloud::{
     jobs::{Lease, Proof, Reconciliation},
@@ -26,6 +26,20 @@ fn tool_name(tool: CloudTool) -> &'static str {
         CloudTool::TranslateText => "translate-text",
         CloudTool::OfficeToPdf => "office-to-pdf",
     }
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct SweepReport {
+    /// Reservas que passaram do prazo de fila e foram liberadas.
+    pub expired: u64,
+    /// Entradas do índice cujo job já saiu da fila (executando, cancelado, etc.).
+    pub cleaned: u64,
+}
+
+enum Swept {
+    Expired,
+    NotQueued,
+    Fresh,
 }
 
 enum Claimed {
@@ -293,6 +307,62 @@ impl Ledger {
             Finished::Failed => Err(CloudError::Unavailable),
             Finished::Reconcile => Err(CloudError::ReconciliationRequired),
         }
+    }
+
+    /// Libera reservas que ficaram na fila além do prazo. Idempotente e seguro com varreduras
+    /// concorrentes: cada liberação é uma transação que reconfere o estado.
+    pub fn sweep_expired(&self, now: u64) -> Result<SweepReport, CloudError> {
+        let index: QueueIndex = match self.store.get("pilot/queue")? {
+            Some(value) => serde_json::from_value(value).map_err(|_| CloudError::Unavailable)?,
+            None => return Ok(SweepReport::default()),
+        };
+        let mut report = SweepReport::default();
+        let mut done = Vec::new();
+        for entry in &index.entries {
+            let queue_seconds = self.policy.timing.queue_seconds;
+            let outcome = self.service_tx(
+                &entry.participant,
+                &entry.id,
+                now,
+                false,
+                |job, gh, uh, _, _| {
+                    if job.state != "queued" {
+                        return Ok(Swept::NotQueued);
+                    }
+                    if now.saturating_sub(job.enqueued_at) <= queue_seconds {
+                        return Ok(Swept::Fresh);
+                    }
+                    release(job, gh, uh)?;
+                    job.state = "cancelled".into();
+                    job.dispatch_pending = false;
+                    Ok(Swept::Expired)
+                },
+            );
+            match outcome {
+                Ok(Swept::Expired) => {
+                    report.expired += 1;
+                    done.push(entry.id.clone());
+                }
+                Ok(Swept::NotQueued) => {
+                    report.cleaned += 1;
+                    done.push(entry.id.clone());
+                }
+                Ok(Swept::Fresh) => {}
+                // Documento ausente ou corrompido não pode travar o índice para sempre.
+                Err(CloudError::InvalidRequest | CloudError::NotAdmitted) => {
+                    done.push(entry.id.clone())
+                }
+                Err(error) => return Err(error),
+            }
+        }
+        if !done.is_empty() {
+            self.store.transact(&["pilot/queue".to_owned()], |docs| {
+                let mut current: QueueIndex = default_doc(docs, "pilot/queue")?;
+                current.entries.retain(|e| !done.contains(&e.id));
+                write(docs, "pilot/queue", &current)
+            })?;
+        }
+        Ok(report)
     }
 
     /// Estado do job para o próprio participante; de outro dono, responde como inexistente.

@@ -437,6 +437,9 @@ pub fn create_app_with_identity(
     static_dir: Option<PathBuf>,
     identity: Option<std::sync::Arc<cloud::routes::CloudIdentityServices>>,
 ) -> Router {
+    if let Some(services) = &identity {
+        cloud::sweeper::spawn(services.clone());
+    }
     let api_routes = Router::new()
         .route("/health", get(health_handler))
         .route("/invoke/{command}", post(invoke_handler))

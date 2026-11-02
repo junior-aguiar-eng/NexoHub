@@ -117,6 +117,11 @@ test("imagem com alpha, ordem, exclusão e modo rápido preservado", async ({ pa
   await page
     .locator("#composition-image")
     .setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: await png(page, true) });
+  // Os campos de posição pertencem ao objeto selecionado: sem esperar o logotipo entrar na
+  // composição, os valores iriam para o retângulo e a prévia sairia sem a imagem.
+  await expect(
+    page.getByRole("list", { name: "Objetos da composição" }).getByRole("button"),
+  ).toHaveCount(2);
   for (const [key, v] of [
     ["x", "100"],
     ["y", "100"],

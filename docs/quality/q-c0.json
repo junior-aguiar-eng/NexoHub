@@ -48,7 +48,7 @@
         {
           "path": "apps/client/e2e/image-composition.spec.ts",
           "kind": "generator",
-          "sha256": "2e8c6ebc0fef05283ad6a4f92d026e37c737ac1a7250a7325d36f8ded88a26ff"
+          "sha256": "a2bccb9dcfd9bb728aa525087afb037d4cea0bf8278c72710fd42c4915ef6c8d"
         }
       ]
     },

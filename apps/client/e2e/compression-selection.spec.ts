@@ -27,10 +27,12 @@ test("seleção da compressão mantém círculo e check sem deformação", async
       const circle = await selected.locator(".ilovepdf-level-check").boundingBox();
       const check = await selected.locator(".ilovepdf-level-check svg").boundingBox();
       const text = await selected.locator(".ilovepdf-level-info").boundingBox();
-      expect(circle?.width).toBe(22);
-      expect(circle?.height).toBe(22);
-      expect(check?.width).toBe(14);
-      expect(check?.height).toBe(14);
+      // O layout fracionário do navegador pode somar frações de subpixel (22,00003 px em um
+      // runner da CI). A deformação que importa é de pixels inteiros, então compara com 0,05 px.
+      expect(circle?.width).toBeCloseTo(22, 1);
+      expect(circle?.height).toBeCloseTo(22, 1);
+      expect(check?.width).toBeCloseTo(14, 1);
+      expect(check?.height).toBeCloseTo(14, 1);
       expect(text && circle && text.x + text.width + 8).toBeLessThanOrEqual(circle?.x ?? 0);
     }
   }

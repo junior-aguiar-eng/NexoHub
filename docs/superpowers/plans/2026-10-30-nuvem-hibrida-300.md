@@ -178,7 +178,7 @@ Arquivos novos abaixo são propostas; os caminhos existentes foram examinados ne
 - [ ] Primeiro executar tudo em emuladores/provedores falsos. Teste real posterior exige autorização de nuvem com suborçamento US$ 5 retirado do pool mensal, sem teto independente que permita gastar US$ 105.
 - [ ] OCR: medir CER/WER e marcadores no corpus, confrontar com local; não presumir aprovação da fotografia privada. Tradução: preservar nomes, números e negação, revisão humana de saídas novas.
 - [ ] Office: comparar páginas/texto/tabelas/fontes do PDF com referência e revisar isolamento de macros/links/credenciais. Se falhar, manter motor indisponível; pedir decisão antes de trocar runtime.
-- [ ] Simular 300 participantes em duas instâncias/emulador: saldo perto de zero, filas cheias, virada mensal e repetição de jobs. Testar limites sem gerar 300 usuários pagos ou gasto real de US$ 100.
+- [x] Simular 300 participantes em duas instâncias/emulador: saldo perto de zero, filas cheias, virada mensal e repetição de jobs. Testar limites sem gerar 300 usuários pagos ou gasto real de US$ 100. Concluído em 03/11/2026 no emulador, 7 cenários: [evidência](../../evidencias/hybrid/CARGA-300-2026-11-03.md). Não cobre o limite de escrita por documento do Firestore real nem a qualidade dos motores.
 - [ ] Atualizar preços conservadores e, se necessário, diminuir cotas ou desabilitar motor. Não elevar pool ou margem sem decisão do usuário.
 
 ## Tarefa 9 — piloto e entrega verificável

@@ -44,4 +44,4 @@ const output = {
 };
 const dir = resolve("crates/nexohub-server/tests/fixtures");
 mkdirSync(dir, { recursive: true });
-writeFileSync(resolve(dir, "firebase-load.json"), `${JSON.stringify(output)}\n`);
+writeFileSync(resolve(dir, "firebase-load.json"), `${JSON.stringify(output, null, 2)}\n`);

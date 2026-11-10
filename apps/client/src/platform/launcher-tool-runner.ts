@@ -85,6 +85,7 @@ export interface LauncherInterval {
 export interface LauncherToolInput {
   readonly repairSignal?: AbortSignal;
   readonly onRepairProgress?: (percent: number) => void;
+  readonly processingMode?: "local" | "cloud";
   readonly editorSnapshot?: EditorSnapshot;
   readonly editorPage?: number;
   readonly editorPreviewOnly?: boolean;

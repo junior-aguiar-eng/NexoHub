@@ -26,7 +26,7 @@ O [plano de nuvem opcional](superpowers/plans/2026-10-30-nuvem-hibrida-300.md) e
 | 15 | Hardening orientado a falhas, limites de segurança e mitigação de vulnerabilidades | Concluída |
 | 16 | Release engineering (instalador Windows, CI multi-job e deploy Cloud Run) | Cloud Run ativo em produção; instalador Windows gerado; assinatura Authenticode do instalador ainda pendente |
 | 17 | Recuperação Estrutural de PDF (`pdf-repair` local-first para reconstrução de xref e trailers corrompidos) | Motor web usado no desktop; perfis e limites em [R-C1](R-C1-VALIDACAO.md), sem homologação universal |
-| 18 | Motor de Documentos Office e Nuvem Híbrida (ADR-020, cotas mensais, OCR/Tradução/Office opcionais na nuvem) | Contratos, ledger e rotas no backend prontos; integração da UI da conta e cotas em andamento |
+| 18 | Motor de Documentos Office e Nuvem Híbrida (ADR-020, cotas mensais, OCR/Tradução/Office opcionais na nuvem) | Contratos, ledger, rotas de backend, dashboard de cotas na conta, feedback granular WASM e ponte de execução com consentimento integrados |
 | 19 | Arquivamento Padronizado PDF/A (Conversão com conformidade ISO 19005-1/2 e validação estrita) | Planejada |
 | 20 | PDF Intelligence Local (Resumo documental via modelos neurais estritamente locais em WebGPU/ONNX) | Planejada |
 

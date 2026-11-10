@@ -1,3 +1,4 @@
+import type { CloudUsage, ProcessingMode } from "@nexohub/contracts";
 import { applyReviewFindings, type ReviewFinding, reviewText } from "@nexohub/domain";
 import { ToolRunError } from "@nexohub/tool-sdk";
 import {
@@ -23,6 +24,8 @@ import {
   useState,
 } from "react";
 import { Button } from "@/components/ui/button";
+import { useCloudAccount } from "@/features/cloud/CloudAccountContext";
+import { getProcessingPreference } from "@/features/cloud/processing-preference";
 import { translate } from "@/i18n";
 import type { OcrPageReport } from "@/platform/browser-ocr";
 import type { TranslationProgressInfo } from "@/platform/browser-translator";
@@ -65,6 +68,7 @@ import type { PdfToWordReport } from "@/platform/pdf-to-word-converter";
 import type { ScannedPageItem } from "@/platform/scan-to-pdf-engine";
 import { registerToolNavigationGuard } from "@/platform/tool-navigation-guard";
 import { addCustomWord, ignoreWordInSession } from "@/platform/user-vocabulary";
+import { CloudProcessingChoice } from "./CloudProcessingChoice";
 import { CompressPdfPanel } from "./CompressPdfPanel";
 import { CropPdfPanel } from "./CropPdfPanel";
 import { DocumentComparePanel } from "./DocumentComparePanel";
@@ -222,6 +226,28 @@ export function DedicatedToolView({
   const [splitSelectedPages, setSplitSelectedPages] = useState<number[]>([1]);
 
   // Parâmetros de Ferramentas
+  const cloudAccount = useCloudAccount();
+  const [processingMode, setProcessingMode] = useState<ProcessingMode>(() =>
+    getProcessingPreference() === "hybrid" ? "cloud" : "local",
+  );
+  const [cloudUsage, setCloudUsage] = useState<CloudUsage | null>(null);
+  const [isCloudAuthed, setIsCloudAuthed] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    void cloudAccount.me().then(
+      () => isMounted && setIsCloudAuthed(true),
+      () => isMounted && setIsCloudAuthed(false),
+    );
+    void cloudAccount.usage().then(
+      (u) => isMounted && setCloudUsage(u),
+      () => isMounted && setCloudUsage(null),
+    );
+    return () => {
+      isMounted = false;
+    };
+  }, [cloudAccount]);
+
   const [compressionLevel, setCompressionLevel] = useState<"less" | "recommended" | "extreme">(
     "recommended",
   );
@@ -1534,6 +1560,7 @@ export function DedicatedToolView({
           if (total > 0) setProgress(Math.round((completed / total) * 100));
         },
         files: files.length > 0 ? files : [primaryFile],
+        processingMode,
         splitMode,
         splitIntervals,
         mergeIntervals: splitMergeIntervals,
@@ -1881,6 +1908,10 @@ export function DedicatedToolView({
 
   // Título do Botão Principal estilo iLovePDF
   function getActionLabel() {
+    const isCloudEligible = tool.id === "pdf-ocr" || tool.id === "text-translate";
+    if (isCloudEligible && processingMode === "cloud") {
+      return translate("cloudProcessing.actionCloud");
+    }
     if (tool.id === "pdf-split") return translate("dedicated.actionSplit");
     if (tool.id === "pdf-compress") return translate("dedicated.actionCompress");
     if (tool.id === "pdf-repair") return translate("dedicated.actionRepair");
@@ -2432,34 +2463,45 @@ export function DedicatedToolView({
 
     if (tool.id === "pdf-ocr") {
       return (
-        <OcrScannerPanel
-          isScanning={status === "running"}
-          progress={progress}
-          progressStatus={ocrProgressStatus}
-          recognizedText={recognizedOcrText}
-          onTextChange={(text) => {
-            setRecognizedOcrText(text);
-            setDownloadUrl(null);
-            setOutputBlob(null);
-          }}
-          fileName={files[0]?.name || "documento_ocr.pdf"}
-          language={ocrLanguage}
-          onLanguageChange={setOcrLanguage}
-          outputMode={ocrOutputMode}
-          onOutputModeChange={setOcrOutputMode}
-          enhanceContrast={ocrEnhanceContrast}
-          onEnhanceContrastChange={setOcrEnhanceContrast}
-          pageReports={ocrPageReports}
-          downloadUrl={downloadUrl}
-          outputFileName={outputFileName}
-          onCancel={() => {
-            ocrController.current?.abort();
-            ocrController.current = null;
-            setStatus("idle");
-            setProgress(0);
-            setOcrProgressStatus(translate("workspace.ocr.cancelled"));
-          }}
-        />
+        <>
+          <CloudProcessingChoice
+            toolId="pdf-ocr"
+            mode={processingMode}
+            onChangeMode={setProcessingMode}
+            quotaRemaining={cloudUsage?.ocrPages?.remaining}
+            quotaUnitLabel={translate("cloudProcessing.pagesUnit")}
+            isAuthenticated={isCloudAuthed}
+            disabled={status === "running"}
+          />
+          <OcrScannerPanel
+            isScanning={status === "running"}
+            progress={progress}
+            progressStatus={ocrProgressStatus}
+            recognizedText={recognizedOcrText}
+            onTextChange={(text) => {
+              setRecognizedOcrText(text);
+              setDownloadUrl(null);
+              setOutputBlob(null);
+            }}
+            fileName={files[0]?.name || "documento_ocr.pdf"}
+            language={ocrLanguage}
+            onLanguageChange={setOcrLanguage}
+            outputMode={ocrOutputMode}
+            onOutputModeChange={setOcrOutputMode}
+            enhanceContrast={ocrEnhanceContrast}
+            onEnhanceContrastChange={setOcrEnhanceContrast}
+            pageReports={ocrPageReports}
+            downloadUrl={downloadUrl}
+            outputFileName={outputFileName}
+            onCancel={() => {
+              ocrController.current?.abort();
+              ocrController.current = null;
+              setStatus("idle");
+              setProgress(0);
+              setOcrProgressStatus(translate("workspace.ocr.cancelled"));
+            }}
+          />
+        </>
       );
     }
 
@@ -2514,43 +2556,54 @@ export function DedicatedToolView({
     if (tool.id === "text-translate") {
       const baseOutName = files[0]?.name?.replace(/\.[^/.]+$/, "") || "documento";
       return (
-        <TranslateDocumentPanel
-          browserModel={documentCore.translationEngine === "browser" || !documentCore.invoke}
-          sourceLang={translationSourceLang as "en" | "pt" | "es"}
-          targetLang={translationTargetLang as "en" | "pt" | "es"}
-          onSourceLangChange={(l) => {
-            cancelTranslation();
-            clearTranslationResult();
-            setTranslationSourceLang(l);
-          }}
-          onTargetLangChange={(l) => {
-            cancelTranslation();
-            clearTranslationResult();
-            setTranslationTargetLang(l);
-          }}
-          preservedNames={translationPreservedNames}
-          onPreservedNamesChange={(value) => {
-            cancelTranslation();
-            clearTranslationResult();
-            setTranslationPreservedNames(value);
-          }}
-          onSwapLanguages={handleSwapLanguages}
-          translatedText={translatedText}
-          onTranslatedTextChange={setTranslatedText}
-          isRunning={status === "running"}
-          progressPercent={progress}
-          progressStatusMessage={translationProgressStatus}
-          progressPhase={translationProgress?.status}
-          loadedBytes={translationProgress?.loadedBytes}
-          totalBytes={translationProgress?.totalBytes}
-          onCancel={cancelTranslation}
-          accentColor={accent}
-          outputFileName={
-            outputFileName ||
-            `${baseOutName}_${translationSourceLang}_para_${translationTargetLang}.txt`
-          }
-          outputBlob={outputBlob ?? undefined}
-        />
+        <>
+          <CloudProcessingChoice
+            toolId="text-translate"
+            mode={processingMode}
+            onChangeMode={setProcessingMode}
+            quotaRemaining={cloudUsage?.translationCharacters?.remaining}
+            quotaUnitLabel={translate("cloudProcessing.charactersUnit")}
+            isAuthenticated={isCloudAuthed}
+            disabled={status === "running"}
+          />
+          <TranslateDocumentPanel
+            browserModel={documentCore.translationEngine === "browser" || !documentCore.invoke}
+            sourceLang={translationSourceLang as "en" | "pt" | "es"}
+            targetLang={translationTargetLang as "en" | "pt" | "es"}
+            onSourceLangChange={(l) => {
+              cancelTranslation();
+              clearTranslationResult();
+              setTranslationSourceLang(l);
+            }}
+            onTargetLangChange={(l) => {
+              cancelTranslation();
+              clearTranslationResult();
+              setTranslationTargetLang(l);
+            }}
+            preservedNames={translationPreservedNames}
+            onPreservedNamesChange={(value) => {
+              cancelTranslation();
+              clearTranslationResult();
+              setTranslationPreservedNames(value);
+            }}
+            onSwapLanguages={handleSwapLanguages}
+            translatedText={translatedText}
+            onTranslatedTextChange={setTranslatedText}
+            isRunning={status === "running"}
+            progressPercent={progress}
+            progressStatusMessage={translationProgressStatus}
+            progressPhase={translationProgress?.status}
+            loadedBytes={translationProgress?.loadedBytes}
+            totalBytes={translationProgress?.totalBytes}
+            onCancel={cancelTranslation}
+            accentColor={accent}
+            outputFileName={
+              outputFileName ||
+              `${baseOutName}_${translationSourceLang}_para_${translationTargetLang}.txt`
+            }
+            outputBlob={outputBlob ?? undefined}
+          />
+        </>
       );
     }
 

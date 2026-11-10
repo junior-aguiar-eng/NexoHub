@@ -4,6 +4,14 @@
 
 ### Adicionado e Modernizado
 
+- **Área da Conta & Gestão de Cotas**: Dashboard visual em tempo real para cotas gratuitas mensais de OCR, Tradução e Office (`CloudQuotaDashboard.tsx`), indicador de renovação e seletor persistente de preferência de processamento (*Estritamente Local* vs *Híbrido Inteligente*) em `CloudAccountPage.tsx`.
+- **Aprimoramento de Ferramentas WebAssembly (WASM)**:
+  - Feedback de progresso percentual real e estágios em Web Workers (`image-processing.worker.ts`), refletido dinamicamente no botão de ação da área de trabalho (`DedicatedToolView.tsx`).
+  - Prévia dinâmica em tempo real do tamanho estimado de arquivos comprimidos em `ImageCompressPanel.tsx` e `CompressPdfPanel.tsx`.
+  - Placeholder fluido com animação shimmer para carregamento assíncrono de miniaturas de páginas via PDFium (`LazyPageThumbnail.tsx`).
+- **Ponte de Execução em Nuvem Híbrida (ADR-020)**:
+  - Port de processamento remoto (`cloud-processing.ts`) integrando cotações prévias (`/quotes`), autorização explícita de upload (`authorize-upload`), transmissão efêmera de arquivos e acompanhamento de jobs sob cotas gratuitas.
+  - Seletor tátil de modo de execução e consentimento (`CloudProcessingChoice.tsx`) em ferramentas pesadas (`pdf-ocr` e `text-translate`), com garantia formal de privacidade e descarte imediato em memória (retenção zero).
 - **Runtime e Toolchain**: Atualização para Node.js 26 LTS e pnpm 11.19.0 em todos os workflows de CI/CD (`ci.yml`, `main.yml`, `release.yml`, `security.yml`), Dockerfile de produção e `package.json`.
 - **Deploy em Produção**: Pipeline do Google Cloud Run automatizado e validado em produção (`https://nexojuris.ia.br/hub/`).
 

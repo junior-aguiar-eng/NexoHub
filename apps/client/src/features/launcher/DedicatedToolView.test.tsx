@@ -356,6 +356,30 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     expect(screen.getByRole("button", { name: /Iniciar Reconhecimento OCR/i })).toBeInTheDocument();
   });
 
+  it("alterna para modo nuvem no OCR atualizando o rótulo da ação principal", async () => {
+    const mockOcrTool = launcherTools.find((t) => t.id === "pdf-ocr") ?? mockPdfCompressTool;
+    const pdf = await PDFDocument.create();
+    pdf.addPage([100, 100]);
+    const file = new File([(await pdf.save()) as unknown as BlobPart], "documento.pdf", {
+      type: "application/pdf",
+    });
+    render(
+      <DedicatedToolView
+        tool={mockOcrTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[file]}
+      />,
+    );
+
+    const cloudRadio = screen.getByRole("radio", { name: /Nuvem \(Acelerado\)/i });
+    fireEvent.click(cloudRadio);
+
+    expect(
+      screen.getByRole("button", { name: /Enviar e processar na nuvem/i }),
+    ).toBeInTheDocument();
+  });
+
   it("renderiza o painel de tradução com seletores de idioma e aviso de download", async () => {
     const mockTranslateTool =
       launcherTools.find((t) => t.id === "text-translate") ?? mockPdfCompressTool;

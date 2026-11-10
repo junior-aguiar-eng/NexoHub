@@ -11698,3 +11698,175 @@ html:has(.image-composition-panel) {
   color: var(--color-ink-muted);
   line-height: 1.5;
 }
+
+/* Seletor Tátil de Modo de Processamento (Local vs Nuvem) */
+.cloud-choice-card {
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-shadow: var(--shadow-sm);
+}
+
+.cloud-choice-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cloud-choice-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.cloud-choice-subtitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-ink-muted);
+}
+
+.cloud-choice-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-3);
+}
+
+.cloud-choice-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.cloud-choice-option:hover {
+  border-color: var(--color-ink-muted);
+}
+
+.cloud-choice-option:has(.cloud-choice-radio:focus-visible) {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.cloud-choice-radio {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  clip: rect(0, 0, 0, 0);
+  pointer-events: none;
+}
+
+.cloud-choice-option--active {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary), transparent 94%);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.cloud-choice-option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.cloud-choice-option-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cloud-choice-icon {
+  flex-shrink: 0;
+}
+
+.cloud-choice-icon--local {
+  color: #10b981;
+}
+
+.cloud-choice-icon--cloud {
+  color: #3b82f6;
+}
+
+.cloud-choice-option-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.cloud-choice-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, #3b82f6, transparent 86%);
+  color: #2563eb;
+}
+
+.cloud-choice-option-desc {
+  margin: 0;
+  font-size: 0.775rem;
+  color: var(--color-ink-muted);
+  line-height: 1.4;
+}
+
+.cloud-choice-footer {
+  margin-top: 2px;
+}
+
+.cloud-choice-privacy {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, #10b981, transparent 92%);
+  border: 1px solid color-mix(in srgb, #10b981, transparent 80%);
+  font-size: 0.75rem;
+  color: #065f46;
+  line-height: 1.4;
+}
+
+.cloud-choice-privacy-icon {
+  flex-shrink: 0;
+  color: #10b981;
+}
+
+.cloud-choice-login {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, #f59e0b, transparent 92%);
+  border: 1px solid color-mix(in srgb, #f59e0b, transparent 75%);
+  font-size: 0.75rem;
+  color: #92400e;
+  line-height: 1.4;
+}
+
+.cloud-choice-login-icon {
+  flex-shrink: 0;
+  color: #d97706;
+}
+
+.cloud-choice-login-link {
+  font-weight: 700;
+  color: #b45309;
+  text-decoration: underline;
+  cursor: pointer;
+}

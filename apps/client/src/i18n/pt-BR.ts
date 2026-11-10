@@ -66,6 +66,32 @@ export const ptBR = {
   "cloud.filesAvailable": "Office: {files} arquivos disponíveis",
   "cloud.financialBalance": "Saldo disponível: US$ {remaining}; reservado: US$ {reserved}.",
   "cloud.resetAt": "Renovação do saldo: {date}",
+  "cloudProcessing.choiceTitle": "Modo de Processamento",
+  "cloudProcessing.choiceSubtitle":
+    "Escolha entre privacidade estritamente local ou velocidade acelerada na nuvem.",
+  "cloudProcessing.modeLocal": "Navegador (Local)",
+  "cloudProcessing.modeLocalDesc":
+    "Processa no seu computador via WebAssembly. Privacidade total sem transmissão de dados.",
+  "cloudProcessing.modeCloud": "Nuvem (Acelerado)",
+  "cloudProcessing.modeCloudDesc":
+    "Aceleração em servidores dedicados sob sua cota mensal gratuita.",
+  "cloudProcessing.quotaAvailable": "{count} {unit} restantes este mês",
+  "cloudProcessing.pagesUnit": "páginas",
+  "cloudProcessing.charactersUnit": "caracteres",
+  "cloudProcessing.filesUnit": "arquivos",
+  "cloudProcessing.loginRequired": "Acesse sua conta para utilizar sua cota gratuita mensal.",
+  "cloudProcessing.loginAction": "Entrar na conta",
+  "cloudProcessing.privacyGuarantee":
+    "Garantia de Privacidade: O arquivo é processado em memória efêmera com descarte imediato (retenção zero).",
+  "cloudProcessing.actionCloud": "Enviar e processar na nuvem",
+  "cloudProcessing.quoting": "Calculando cotação...",
+  "cloudProcessing.uploading": "Enviando arquivo ({percent}%)...",
+  "cloudProcessing.processing": "Processando na nuvem...",
+  "cloudProcessing.fallbackToLocal": "Alternar para processamento local",
+  "cloudProcessing.errorQuota":
+    "Cota mensal esgotada. Processe localmente no navegador ou aguarde a renovação.",
+  "cloudProcessing.errorGeneric":
+    "Falha no processamento remoto. Você pode alternar para o modo local.",
   "installer.desktopIcon": "Criar atalho na Área de Trabalho",
   "installer.launchApp": "Abrir NexoHub",
   "installer.webviewFailed":

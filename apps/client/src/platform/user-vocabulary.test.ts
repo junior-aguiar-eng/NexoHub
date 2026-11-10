@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   addCustomWord,
+  clearCustomVocabularyCache,
   clearSessionIgnored,
   getCustomVocabulary,
   ignoreWordInSession,
@@ -10,11 +11,20 @@ import {
 
 describe("UserVocabularyStore", () => {
   beforeEach(() => {
-    localStorage.clear();
+    localStorage?.clear?.();
     clearSessionIgnored();
+    clearCustomVocabularyCache?.();
     for (const word of Array.from(getCustomVocabulary())) {
       removeCustomWord(word);
     }
+  });
+
+  it("limpa o cache em memória ao invocar clearCustomVocabularyCache", () => {
+    addCustomWord("palavranova");
+    expect(getCustomVocabulary().has("palavranova")).toBe(true);
+    localStorage.clear();
+    clearCustomVocabularyCache();
+    expect(getCustomVocabulary().has("palavranova")).toBe(false);
   });
 
   it("permite adicionar e persistir palavras customizadas", () => {

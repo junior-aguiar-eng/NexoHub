@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.11/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -9,6 +9,9 @@
   "files": {
     "includes": [
       "**",
+      "!**/*.md",
+      "!**/*.yml",
+      "!**/*.yaml",
       "!**/dist",
       "!**/target",
       "!**/.venv",
@@ -26,7 +29,16 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended"
+      "preset": "recommended",
+      "correctness": {
+        "noComponentHookFactories": "off"
+      },
+      "style": {
+        "noDescendingSpecificity": "off"
+      },
+      "suspicious": {
+        "noTemplateCurlyInString": "off"
+      }
     }
   },
   "javascript": {

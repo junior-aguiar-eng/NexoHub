@@ -22,17 +22,27 @@ export interface RecentOperation {
 
 const STORAGE_KEY = "nexohub:recent-operations:v2";
 
+function getLocalStorage(): Storage | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function useRecentOperations() {
   const [operations, setOperations] = useState<RecentOperation[]>(() => {
-    if (typeof window === "undefined") return [];
+    const storage = getLocalStorage();
+    if (!storage) return [];
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = storage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
           const clean = parsed.filter((item) => item?.id && item?.documentName);
           if (clean.length !== parsed.length) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
+            storage.setItem(STORAGE_KEY, JSON.stringify(clean));
           }
           return clean;
         }
@@ -44,8 +54,10 @@ export function useRecentOperations() {
   });
 
   useEffect(() => {
+    const storage = getLocalStorage();
+    if (!storage) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(operations));
+      storage.setItem(STORAGE_KEY, JSON.stringify(operations));
     } catch (e) {
       console.warn("Falha ao salvar histórico de operações:", e);
     }
@@ -63,8 +75,10 @@ export function useRecentOperations() {
 
   const clearOperations = useCallback(() => {
     setOperations([]);
+    const storage = getLocalStorage();
+    if (!storage) return;
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      storage.removeItem(STORAGE_KEY);
     } catch {
       // Ignorar falha de storage
     }

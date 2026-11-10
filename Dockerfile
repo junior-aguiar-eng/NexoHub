@@ -1,7 +1,7 @@
 # ==========================================
 # Estágio 1: Build do Frontend (Vite + React)
 # ==========================================
-FROM node:22-bookworm-slim AS frontend-builder
+FROM node:26-bookworm-slim AS frontend-builder
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@11.19.0 --activate

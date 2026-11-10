@@ -26,7 +26,7 @@ describe("TauriDocumentCorePort", () => {
 
     expect(saved).toBe(true);
     expect(invoke).toHaveBeenCalledWith("save_launcher_output", {
-      request: { fileName: "resultado.pdf", bytes: [1, 2, 3] },
+      request: { fileName: "resultado.pdf", bytes: new Uint8Array([1, 2, 3]) },
     });
   });
 
@@ -113,7 +113,7 @@ describe("TauriDocumentCorePort", () => {
       documentId: "document-1",
       inputArtifactIds: ["original-1", "original-2"],
       toolId: "pdf-merge",
-      bytes: [4, 5, 6],
+      bytes: new Uint8Array([4, 5, 6]),
     });
   });
 });

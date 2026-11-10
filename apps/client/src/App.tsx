@@ -167,7 +167,7 @@ export function App() {
         if (found?.manifest.category === "image") return "img";
       }
       try {
-        const saved = localStorage.getItem("nexohub_work_zone");
+        const saved = window.localStorage ? window.localStorage.getItem("nexohub_work_zone") : null;
         if (saved === "img" && (pathname === "" || pathname === "/")) {
           return "img";
         }
@@ -192,7 +192,7 @@ export function App() {
   const [initialFilesForTool, setInitialFilesForTool] = useState<File[]>([]);
   const [activeSuite, setActiveSuite] = useState<SuiteId>("overview");
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const activePath = useRef(window.location.pathname);
+  const activePath = useRef(typeof window !== "undefined" ? window.location.pathname : "/");
 
   useEffect(() => {
     const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');

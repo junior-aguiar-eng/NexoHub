@@ -28,7 +28,7 @@ export class TauriDocumentCorePort implements DocumentCorePort {
     }
     const path = await this.invoke("save_launcher_output", {
       fileName: request.fileName,
-      bytes: Array.from(new Uint8Array(await request.blob.arrayBuffer())),
+      bytes: new Uint8Array(await request.blob.arrayBuffer()),
     });
     return path !== null;
   }
@@ -94,7 +94,7 @@ export class TauriDocumentCorePort implements DocumentCorePort {
           projectPath,
           title: file.name,
           mimeType,
-          bytes: Array.from(new Uint8Array(await file.arrayBuffer())),
+          bytes: new Uint8Array(await file.arrayBuffer()),
         }),
       );
     }
@@ -114,7 +114,7 @@ export class TauriDocumentCorePort implements DocumentCorePort {
       inputArtifactIds: imported.map((item) => item.artifact.id),
       toolId: request.toolId,
       mimeType,
-      bytes: Array.from(new Uint8Array(await request.output.arrayBuffer())),
+      bytes: new Uint8Array(await request.output.arrayBuffer()),
       parameters: request.parameters,
     });
     const bytes = await this.invoke("read_artifact_bytes", {

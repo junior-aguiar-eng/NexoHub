@@ -1,6 +1,6 @@
 /**
  * Polyfills essenciais para compatibilidade de ambientes de execução
- * (Node.js < 23 em CI e navegadores ligeiramente anteriores aos padrões 2025/2026).
+ * (Node.js 26 LTS e navegadores alinhados aos padrões 2025/2026).
  */
 
 // Polyfill de Promise.try (exigido pelo despachante de mensagens do pdfjs-dist)

@@ -77,3 +77,7 @@ export function isWordIgnoredOrCustom(word: string): boolean {
 export function clearSessionIgnored(): void {
   sessionIgnoredWords.clear();
 }
+
+export function clearCustomVocabularyCache(): void {
+  customWordsCache = null;
+}

@@ -51,9 +51,12 @@ export function LazyPageThumbnail({ src, pageNumber, onRequest, alt, ...props }:
         aria-busy={!src && Boolean(onRequest)}
       />
       {!src && onRequest && (
-        <span className="page-thumbnail-loading" role="status">
-          {translate("workspace.pageGrid.loadingPreview")}
-        </span>
+        <div className="page-thumbnail-skeleton">
+          <div className="page-thumbnail-skeleton__shimmer" aria-hidden="true" />
+          <span className="page-thumbnail-loading" role="status">
+            {translate("workspace.pageGrid.loadingPreview")}
+          </span>
+        </div>
       )}
     </>
   );

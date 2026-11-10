@@ -76,7 +76,7 @@ O servidor HTTP não é necessário para o processamento padrão das ferramentas
 
 ## Desenvolvimento local
 
-Requisitos: Node.js 22 (usado na CI) ou 24 (ambiente local validado), **pnpm 11.19.0**, Rust stable e uv. O manifesto declara Rust 1.88 como mínimo; a CI usa o toolchain stable. Para compilar o desktop Windows, são necessários o target MSVC, as ferramentas de compilação e WebView2. O instalador é gerado com Inno Setup pelo script do projeto.
+Requisitos: Node.js 26 LTS (usado na CI e no contêiner Docker), **pnpm 11.19.0**, Rust stable e uv. O manifesto declara Rust 1.88 como mínimo; a CI usa o toolchain stable. Para compilar o desktop Windows, são necessários o target MSVC, as ferramentas de compilação e WebView2. O instalador é gerado com Inno Setup pelo script do projeto.
 
 ```powershell
 git clone https://github.com/junior-aguiar-eng/NexoHub.git

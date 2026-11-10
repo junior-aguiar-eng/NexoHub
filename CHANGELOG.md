@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.5] - 2026-11-10
+
+### Adicionado e Modernizado
+
+- **Runtime e Toolchain**: Atualização para Node.js 26 LTS e pnpm 11.19.0 em todos os workflows de CI/CD (`ci.yml`, `main.yml`, `release.yml`, `security.yml`), Dockerfile de produção e `package.json`.
+- **Deploy em Produção**: Pipeline do Google Cloud Run automatizado e validado em produção (`https://nexojuris.ia.br/hub/`).
+
+### Corrigido e Otimizado
+
+- **Segurança e Navegação Anônima**: Tratamento robusto contra `SecurityError` em `localStorage` e `sessionStorage` para janelas anônimas ou restritas (`App.tsx`, `useRecentOperations.ts`, `test-setup.ts`).
+- **IPC Desktop Binário**: Otimização no adaptador Tauri (`tauri-document-core.ts`) para despachar `Uint8Array` nativamente, acelerando o throughput e reduzindo o consumo de memória ao trafegar documentos.
+- **Eliminação de Vazamento de Memória**: Ciclo de vida com descarte imediato e preventivo de `blob:` Object URLs via `useRef` e cleanup no `DedicatedToolView.tsx`, impedindo retenção indevida de memória em lotes de imagens e prévias de PDF.
+- **Manutenibilidade**: Remoção de código morto de rotas de tradução do launcher em `launcher-tool-runner.ts` com cobertura de testes dedicada (`launcher-translation-routing.test.ts`), mantendo a integridade dos artefatos certificados Q-C0.
+
 ## [0.2.4] - 2026-10-30
 
 ### Corrigido

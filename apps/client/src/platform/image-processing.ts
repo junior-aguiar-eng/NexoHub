@@ -17,7 +17,19 @@ export type ImageJob = { blob: Blob } & (
   | { kind: "watermark"; options: ImageWatermarkOptions }
   | { kind: "composition"; options: ImageCompositionSnapshot }
 );
-export function processImage(job: ImageJob, signal?: AbortSignal): Promise<Blob> {
+
+export interface ImageProgressInfo {
+  readonly percent: number;
+  readonly stage?: string;
+}
+
+export type ImageProgressCallback = (progress: ImageProgressInfo) => void;
+
+export function processImage(
+  job: ImageJob,
+  signal?: AbortSignal,
+  onProgress?: ImageProgressCallback,
+): Promise<Blob> {
   if (signal?.aborted) return Promise.reject(new Error("OPERACAO_CANCELADA"));
   if (typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined")
     return executeImageJob(job, signal);
@@ -41,10 +53,26 @@ export function processImage(job: ImageJob, signal?: AbortSignal): Promise<Blob>
         type: "module",
       });
       signal?.addEventListener("abort", abort, { once: true });
-      worker.onmessage = ({ data }: MessageEvent<{ blob?: Blob; error?: string }>) => {
+      worker.onmessage = ({
+        data,
+      }: MessageEvent<
+        | { blob?: Blob; error?: string }
+        | { type: "progress"; percent: number; stage?: string }
+        | { type: "success"; blob: Blob }
+        | { type: "error"; error: string }
+      >) => {
+        if ("type" in data && data.type === "progress") {
+          onProgress?.({ percent: data.percent, stage: data.stage });
+          return;
+        }
         cleanup();
-        if (data.blob) resolve(data.blob);
-        else reject(new Error(data.error || "FALHA_EXPORTAR_IMAGEM"));
+        if ("type" in data) {
+          if (data.type === "success") resolve(data.blob);
+          else reject(new Error(data.error || "FALHA_EXPORTAR_IMAGEM"));
+        } else {
+          if (data.blob) resolve(data.blob);
+          else reject(new Error(data.error || "FALHA_EXPORTAR_IMAGEM"));
+        }
       };
       worker.onerror = worker.onmessageerror = () => {
         cleanup();

@@ -107,3 +107,36 @@ it("falha ao ler o perfil não afeta a conta e usa a inicial do e-mail", async (
   expect(await screen.findByText("person@example.invalid")).toBeTruthy();
   expect(screen.getByText("P")).toBeTruthy();
 });
+
+it("quando o participante possui cotas, exibe o painel de cotas gratuitas mensais", async () => {
+  render(
+    <CloudAccountPage
+      account={account({
+        usage: async () => ({
+          ocrPages: { used: 12, reserved: 0, remaining: 38 },
+          translationCharacters: { used: 15000, reserved: 0, remaining: 85000 },
+          officeFiles: { used: 4, reserved: 0, remaining: 16 },
+          budgetUsdMicros: { used: 0, reserved: 0, remaining: 0 },
+          resetAt: "2026-12-01T00:00:00Z",
+        }),
+        status: async () => ({ enabled: true, identityAvailable: true }),
+      })}
+    />,
+  );
+
+  expect(await screen.findByText("Cotas mensais gratuitas")).toBeTruthy();
+  expect(screen.getByText("OCR na nuvem")).toBeTruthy();
+  expect(screen.getByText(/38 páginas restantes/)).toBeTruthy();
+  expect(screen.getByText(/12 de 50 usados/)).toBeTruthy();
+  expect(screen.getByText("Tradução de documentos")).toBeTruthy();
+  expect(screen.getByText("Conversão Office")).toBeTruthy();
+});
+
+it("exibe o seletor de preferência de processamento e permite alternar para híbrido", async () => {
+  render(<CloudAccountPage account={account()} />);
+
+  expect(await screen.findByText("Preferência de processamento")).toBeTruthy();
+  const hybridRadio = screen.getByRole("radio", { name: /Híbrido Inteligente/i });
+  fireEvent.click(hybridRadio);
+  expect((hybridRadio as HTMLInputElement).checked).toBe(true);
+});

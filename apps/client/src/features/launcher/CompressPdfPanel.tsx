@@ -10,6 +10,18 @@ type CompressPdfPanelProps = {
   onAddMoreFiles?: () => void;
 };
 
+function estimatePdfCompressedSize(
+  fileSizeBytes: number,
+  level: "extreme" | "recommended" | "less",
+): {
+  readonly estimatedBytes: number;
+  readonly percentReduction: number;
+} {
+  const ratio = level === "extreme" ? 0.4 : level === "less" ? 0.85 : 0.6;
+  const estimated = Math.round(fileSizeBytes * ratio);
+  return { estimatedBytes: estimated, percentReduction: Math.round((1 - ratio) * 100) };
+}
+
 export function CompressPdfPanel({
   fileName,
   fileSizeBytes,
@@ -23,6 +35,11 @@ export function CompressPdfPanel({
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   }
+
+  const { estimatedBytes, percentReduction } = estimatePdfCompressedSize(
+    fileSizeBytes,
+    compressionLevel,
+  );
 
   return (
     <div className="ilovepdf-compress-container" data-workspace-panel>
@@ -83,6 +100,16 @@ export function CompressPdfPanel({
                     `dedicated.compression${level === "extreme" ? "Extreme" : level === "less" ? "Less" : "Recommended"}`,
                   )}
                 </strong>
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: "0.75rem",
+                    color: "var(--color-ink-muted, #64748b)",
+                    marginTop: "2px",
+                  }}
+                >
+                  ~{level === "extreme" ? "60%" : level === "less" ? "15%" : "40%"} menor
+                </span>
               </div>
               {compressionLevel === level && (
                 <div className="ilovepdf-level-check">
@@ -91,6 +118,24 @@ export function CompressPdfPanel({
               )}
             </button>
           ))}
+        </div>
+        <div
+          style={{
+            marginTop: "16px",
+            padding: "12px",
+            borderRadius: "10px",
+            background: "var(--color-surface-raised, #f8fafc)",
+            border: "1px solid var(--color-border, #e2e8f0)",
+            fontSize: "0.8125rem",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span style={{ color: "var(--color-ink-muted, #64748b)" }}>Tamanho estimado:</span>
+          <strong style={{ color: "var(--color-ink, #0f172a)" }}>
+            ~{formatSize(estimatedBytes)} (~{percentReduction}% menor)
+          </strong>
         </div>
       </aside>
     </div>

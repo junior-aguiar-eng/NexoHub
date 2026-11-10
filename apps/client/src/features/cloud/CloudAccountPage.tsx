@@ -1,4 +1,4 @@
-import type { CloudParticipant } from "@nexohub/contracts";
+import type { CloudParticipant, CloudUsage } from "@nexohub/contracts";
 import { useEffect, useState } from "react";
 import { NexoHubLogoIcon } from "@/components/NexoHubLogoIcon";
 import { translate as t } from "@/i18n";
@@ -7,6 +7,8 @@ import type { CloudAccountPort } from "@/platform/cloud-account";
 import { CloudIdentityError, type CloudProfile } from "@/platform/cloud-identity";
 import { AccountAvatar } from "./AccountAvatar";
 import { useCloudAccount } from "./CloudAccountContext";
+import { CloudQuotaDashboard } from "./CloudQuotaDashboard";
+import { ProcessingPreferenceControl } from "./ProcessingPreferenceControl";
 
 type View =
   | { kind: "loading" }
@@ -26,6 +28,8 @@ export function CloudAccountPage({ account: provided }: { account?: CloudAccount
   const account = provided ?? runtime;
   const [view, setView] = useState<View>({ kind: "loading" });
   const [profile, setProfile] = useState<CloudProfile | null>(null);
+  const [usage, setUsage] = useState<CloudUsage | null>(null);
+  const [processingEnabled, setProcessingEnabled] = useState(false);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -33,6 +37,7 @@ export function CloudAccountPage({ account: provided }: { account?: CloudAccount
     void account
       .status()
       .then(async (status) => {
+        if (alive) setProcessingEnabled(status.enabled);
         if (!status.identityAvailable) return { kind: "unavailable" } as View;
         return { kind: "ready", participant: await account.me() } as View;
       })
@@ -45,6 +50,10 @@ export function CloudAccountPage({ account: provided }: { account?: CloudAccount
             .profile()
             .then((value) => alive && setProfile(value))
             .catch(() => {});
+          void account
+            .usage()
+            .then((value) => alive && setUsage(value))
+            .catch(() => {});
         }
       });
     return () => {
@@ -56,6 +65,7 @@ export function CloudAccountPage({ account: provided }: { account?: CloudAccount
     try {
       await account.signOut();
       setProfile(null);
+      setUsage(null);
       setView({ kind: "signedOut" });
     } finally {
       setBusy(false);
@@ -136,6 +146,8 @@ export function CloudAccountPage({ account: provided }: { account?: CloudAccount
               </div>
             </dl>
           </section>
+          <CloudQuotaDashboard usage={usage} processingEnabled={processingEnabled} />
+          <ProcessingPreferenceControl />
           <section className="cloud-account-card" aria-labelledby="conta-metodos">
             <h2 id="conta-metodos">{t("account.page.methods")}</h2>
             <p>{t("account.page.methodsLead")}</p>

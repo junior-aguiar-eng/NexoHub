@@ -1529,7 +1529,10 @@ export function DedicatedToolView({
             setProgress(percent);
         },
         imageSignal: currentImageRun?.signal,
-        onImageProgress: (completed, total) => setImageBatchProgress(`${completed} / ${total}`),
+        onImageProgress: (completed, total) => {
+          setImageBatchProgress(`${completed} / ${total}`);
+          if (total > 0) setProgress(Math.round((completed / total) * 100));
+        },
         files: files.length > 0 ? files : [primaryFile],
         splitMode,
         splitIntervals,
@@ -3152,7 +3155,9 @@ export function DedicatedToolView({
           {status === "running" ? (
             <>
               <Loader2 size={18} className="animate-spin" />
-              <span>Processando...</span>
+              <span>
+                {progress > 0 ? `Processando... ${Math.round(progress)}%` : "Processando..."}
+              </span>
             </>
           ) : (
             <>

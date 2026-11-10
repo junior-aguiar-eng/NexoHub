@@ -18,6 +18,24 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+function estimateCompressedSize(
+  fileSizeBytes: number,
+  level: ImageCompressionLevel,
+  losslessOnly: boolean,
+): {
+  readonly estimatedBytes: number;
+  readonly percentReduction: number;
+} {
+  if (losslessOnly) {
+    const ratio = level === "extreme" ? 0.78 : level === "less" ? 0.88 : 0.84;
+    const estimated = Math.round(fileSizeBytes * ratio);
+    return { estimatedBytes: estimated, percentReduction: Math.round((1 - ratio) * 100) };
+  }
+  const ratio = level === "extreme" ? 0.35 : level === "less" ? 0.8 : 0.55;
+  const estimated = Math.round(fileSizeBytes * ratio);
+  return { estimatedBytes: estimated, percentReduction: Math.round((1 - ratio) * 100) };
+}
+
 export function ImageCompressPanel({
   fileName,
   fileSizeBytes,
@@ -58,6 +76,12 @@ export function ImageCompressPanel({
       icon: FileArchive,
     },
   ];
+
+  const { estimatedBytes, percentReduction } = estimateCompressedSize(
+    fileSizeBytes,
+    level,
+    losslessOnly,
+  );
 
   return (
     <div className="image-tool-panel" data-workspace-panel>
@@ -103,6 +127,7 @@ export function ImageCompressPanel({
               {options.map((opt) => {
                 const isSelected = level === opt.id;
                 const Icon = opt.icon;
+
                 return (
                   <button
                     key={opt.id}
@@ -139,6 +164,13 @@ export function ImageCompressPanel({
               })}
             </div>
           )}
+          <div className="bg-surface-raised border border-border rounded-xl p-3 flex items-center justify-between text-xs text-text-secondary mt-1">
+            <span className="flex items-center gap-1.5 font-medium">
+              <Sparkles className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              Redução estimada: ~{percentReduction}%
+            </span>
+            <span className="font-bold text-text-primary">~{formatBytes(estimatedBytes)}</span>
+          </div>
         </div>
         <p className="image-processing-limits">{translate("imageCompress.pngHint")}</p>
       </div>

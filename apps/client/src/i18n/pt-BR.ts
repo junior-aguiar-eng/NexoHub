@@ -39,6 +39,27 @@ export const ptBR = {
     "Seu nome e sua foto do Google aparecem só neste aparelho. O NexoHub não os guarda.",
   "account.page.localNote":
     "Usar o NexoHub continua gratuito e sem conta. Entrar não envia seus arquivos.",
+  "account.page.quotasTitle": "Cotas mensais gratuitas",
+  "account.page.quotasSubtitle":
+    "Saldo disponibilizado mensalmente para tarefas opcionais em nuvem.",
+  "account.page.ocrQuota": "OCR na nuvem",
+  "account.page.translationQuota": "Tradução de documentos",
+  "account.page.officeQuota": "Conversão Office",
+  "account.page.budgetQuota": "Orçamento do participante",
+  "account.page.quotasUnavailable": "Informações de cotas temporariamente indisponíveis.",
+  "account.page.quotasPilot": "Processamento em nuvem em preparação para o piloto fechado.",
+  "account.page.renewsOn": "Renovação em: {date}",
+  "account.page.usedOfTotal": "{used} de {total} usados",
+  "account.page.remaining": "{count} restantes",
+  "account.page.preferencesTitle": "Preferência de processamento",
+  "account.page.preferencesSubtitle":
+    "Defina como o NexoHub gerencia tarefas entre o motor local e os recursos em nuvem.",
+  "account.page.prefLocal": "Estritamente Local (Recomendado)",
+  "account.page.prefLocalDesc":
+    "Todo processamento ocorre no seu computador via WebAssembly. Seus documentos nunca saem do dispositivo.",
+  "account.page.prefHybrid": "Híbrido Inteligente",
+  "account.page.prefHybridDesc":
+    "Oferece aceleração opcional na nuvem para arquivos pesados, sempre solicitando sua confirmação prévia.",
   "cloud.balance": "Meu uso",
   "cloud.ocrAvailable": "OCR: {pages} páginas disponíveis",
   "cloud.charactersAvailable": "Tradução: {characters} caracteres disponíveis",

@@ -1,6 +1,6 @@
 # Roadmap
 
-Estado em 30/10/2026: Windows **0.2.4 publicado e instalado**, com [validação de release](RELEASE-VALIDATION.md). A lista explícita de nomes integra o tradutor e o cache foi exercitado após reiniciar, inclusive offline no WebView2. Continuam abertos a assinatura Authenticode, a leitura da fotografia privada pelo OCR e a causa dos resets intermitentes no download. As fases “Concluída” abaixo descrevem implementação no escopo entregue, não homologação irrestrita de qualidade.
+Estado em 10/11/2026: Versão **0.2.5** consolidada com Node.js 26 LTS, deploy contínuo em produção no Google Cloud Run (`https://nexojuris.ia.br/hub/`), IPC binário de alta performance (`Uint8Array`), resiliência contra restrições de `localStorage` em modo anônimo e eliminação de vazamento de memória em Object URLs. Próximo marco ativo: Evolução Híbrida (ADR-020), Painel Profissional de Cotas na Área da Conta e Modernização Tátil dos Motores WASM. As fases “Concluída” abaixo descrevem implementação no escopo entregue, não homologação irrestrita de qualidade.
 
 ## Evolução híbrida — implementação autorizada em 30/10/2026
 
@@ -24,9 +24,9 @@ O [plano de nuvem opcional](superpowers/plans/2026-10-30-nuvem-hibrida-300.md) e
 | 13 | Revisão (Corretor contextual e morfológico integrado com achados estruturados) | Concluída |
 | 14 | Receitas NexoFlow (DAG visual, presets e runner topológico integrados) | Concluída |
 | 15 | Hardening orientado a falhas, limites de segurança e mitigação de vulnerabilidades | Concluída |
-| 16 | Release engineering (instalador Windows, CI multi-job e deploy Cloud Run) | Pipeline existente; assinatura Authenticode do instalador ainda pendente |
+| 16 | Release engineering (instalador Windows, CI multi-job e deploy Cloud Run) | Cloud Run ativo em produção; instalador Windows gerado; assinatura Authenticode do instalador ainda pendente |
 | 17 | Recuperação Estrutural de PDF (`pdf-repair` local-first para reconstrução de xref e trailers corrompidos) | Motor web usado no desktop; perfis e limites em [R-C1](R-C1-VALIDACAO.md), sem homologação universal |
-| 18 | Motor de Documentos Office (ADR e sidecar para conversão fiel bidirecional Word, PowerPoint e Excel) | Planejada |
+| 18 | Motor de Documentos Office e Nuvem Híbrida (ADR-020, cotas mensais, OCR/Tradução/Office opcionais na nuvem) | Contratos, ledger e rotas no backend prontos; integração da UI da conta e cotas em andamento |
 | 19 | Arquivamento Padronizado PDF/A (Conversão com conformidade ISO 19005-1/2 e validação estrita) | Planejada |
 | 20 | PDF Intelligence Local (Resumo documental via modelos neurais estritamente locais em WebGPU/ONNX) | Planejada |
 

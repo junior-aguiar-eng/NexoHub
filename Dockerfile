@@ -4,7 +4,7 @@
 FROM node:26-bookworm-slim AS frontend-builder
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@11.19.0 --activate
+RUN npm install -g pnpm@11.19.0
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml biome.json ./
 COPY packages ./packages

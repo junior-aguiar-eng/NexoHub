@@ -1614,12 +1614,6 @@ export async function runLauncherTool(
           ocrOutputMode: input.ocrOutputMode,
         }
       : {}),
-    ...(toolId === "text-translate"
-      ? {
-          sourceLanguage: input.translationSourceLang,
-          targetLanguage: input.translationTargetLang,
-        }
-      : {}),
   };
   const blob = await documentCore.persistLauncherResult({
     toolId: toolId as
@@ -1631,8 +1625,7 @@ export async function runLauncherTool(
       | "pdf-to-jpg"
       | "pdf-watermark"
       | "pdf-page-numbers"
-      | "pdf-ocr"
-      | "text-translate",
+      | "pdf-ocr",
     files,
     output: output.blob,
     parameters,

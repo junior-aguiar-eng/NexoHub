@@ -48,4 +48,20 @@ describe("tradução local no website", () => {
     ).rejects.toMatchObject({ code: "CANCELLED" });
     expect(local).toHaveBeenCalledOnce();
   });
+  it("retorna o output diretamente sem tentar invocar persistLauncherResult", async () => {
+    const port = new HttpDocumentCorePort();
+    const persistSpy = vi.fn();
+    (port as unknown as { persistLauncherResult: typeof persistSpy }).persistLauncherResult =
+      persistSpy;
+    vi.spyOn(translator, "performBrowserTranslation").mockResolvedValue({
+      translatedText: "Texto traduzido",
+      sourceLang: "en",
+      targetLang: "pt",
+      engine: "transformers.js-m2m100",
+    });
+
+    const result = await runLauncherTool(port, "text-translate", input);
+    expect(result.fileName).toBe("texto_en_para_pt.txt");
+    expect(persistSpy).not.toHaveBeenCalled();
+  });
 });

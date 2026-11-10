@@ -195,6 +195,22 @@ export function DedicatedToolView({
   const [firstPageThumb, setFirstPageThumb] = useState<string>("");
   const [lastPageThumb, setLastPageThumb] = useState<string>("");
   const [fileThumbnails, setFileThumbnails] = useState<ReadonlyMap<File, string>>(new Map());
+  const fileThumbnailsRef = useRef<ReadonlyMap<File, string>>(fileThumbnails);
+  useEffect(() => {
+    fileThumbnailsRef.current = fileThumbnails;
+  }, [fileThumbnails]);
+
+  useEffect(() => {
+    return () => {
+      for (const url of fileThumbnailsRef.current.values()) {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {
+          // Ignora caso já tenha sido revogado
+        }
+      }
+    };
+  }, []);
   const [allPageThumbnails, setAllPageThumbnails] = useState<string[]>([]);
 
   // Estados de Dividir PDF estilo iLovePDF
@@ -1085,11 +1101,25 @@ export function DedicatedToolView({
     }
   }, [files, tool.id, extractImageScope, extractImagePagesText, ignoreSmallImages]);
 
-  // Se a ferramenta for Imagem para PDF, cria miniaturas a partir dos arquivos de imagem
+  // Se a ferramenta for Imagem para PDF, cria miniaturas e revoga URLs removidas
   useEffect(() => {
     if (tool.id === "images-to-pdf") {
       setFileThumbnails((prev) => {
-        const next = new Map(prev);
+        const activeFiles = new Set(files);
+        const next = new Map<File, string>();
+
+        for (const [file, url] of prev) {
+          if (activeFiles.has(file)) {
+            next.set(file, url);
+          } else {
+            try {
+              URL.revokeObjectURL(url);
+            } catch {
+              // Fallback
+            }
+          }
+        }
+
         for (const file of files) {
           if (!next.has(file)) {
             try {
@@ -1100,6 +1130,20 @@ export function DedicatedToolView({
           }
         }
         return next;
+      });
+    } else {
+      setFileThumbnails((prev) => {
+        if (prev.size > 0) {
+          for (const url of prev.values()) {
+            try {
+              URL.revokeObjectURL(url);
+            } catch {
+              // Fallback
+            }
+          }
+          return new Map();
+        }
+        return prev;
       });
     }
   }, [files, tool.id]);

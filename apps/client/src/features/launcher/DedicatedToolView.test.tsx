@@ -476,6 +476,54 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     expect(screen.getByTestId("scan-to-pdf-panel")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Gerar PDF Digitalizado/i })).toBeInTheDocument();
   });
+
+  it("revoga URLs de miniaturas ao remover imagens e ao desmontar a ferramenta Imagens para PDF", async () => {
+    const imagesToPdfTool = launcherTools.find((t) => t.id === "images-to-pdf");
+    if (!imagesToPdfTool) throw new Error("Ferramenta images-to-pdf ausente");
+
+    let counter = 0;
+    const createObjectURL = vi
+      .spyOn(URL, "createObjectURL")
+      .mockImplementation(() => `blob:mock-image-${++counter}`);
+    const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+
+    const img1 = new File(["bytes1"], "foto1.jpg", { type: "image/jpeg" });
+    const img2 = new File(["bytes2"], "foto2.jpg", { type: "image/jpeg" });
+
+    const { container, unmount } = render(
+      <DedicatedToolView
+        tool={imagesToPdfTool}
+        documentCore={documentCore}
+        onBack={vi.fn()}
+        initialFiles={[img1, img2]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(createObjectURL).toHaveBeenCalledWith(img1);
+      expect(createObjectURL).toHaveBeenCalledWith(img2);
+    });
+
+    const url1 = createObjectURL.mock.results[0]?.value;
+    const url2 = createObjectURL.mock.results[1]?.value;
+
+    // Clica no botão de deletar o primeiro arquivo
+    const deleteButtons = container.querySelectorAll(".ilovepdf-merge-card-delete");
+    expect(deleteButtons.length).toBe(2);
+    fireEvent.click(deleteButtons[0] as HTMLButtonElement);
+
+    // Deve revogar a URL do arquivo removido (img1)
+    await waitFor(() => {
+      expect(revokeObjectURL).toHaveBeenCalledWith(url1);
+    });
+
+    // Ao desmontar o componente, deve revogar a miniatura restante (img2)
+    unmount();
+    expect(revokeObjectURL).toHaveBeenCalledWith(url2);
+
+    createObjectURL.mockRestore();
+    revokeObjectURL.mockRestore();
+  });
 });
 
 it("formulário recebido por navegação recusa entrada incompatível sem carregamento permanente", async () => {

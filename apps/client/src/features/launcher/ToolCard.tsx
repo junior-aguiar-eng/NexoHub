@@ -14,6 +14,7 @@ type ToolCardProps = {
 export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
   const reduceMotion = useReducedMotion();
   const [isDragOver, setIsDragOver] = useState(false);
+  const descId = `tool-desc-${tool.id}`;
   const zone = tool.manifest.category === "image" ? "img" : "pdf";
   const tone =
     zone === "img"
@@ -79,6 +80,8 @@ export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
       }}
       tabIndex={isAvailable ? 0 : -1}
       role="button"
+      aria-label={translate(tool.titleKey)}
+      aria-describedby={descId}
       style={
         {
           cursor: isAvailable ? "pointer" : "default",
@@ -110,7 +113,9 @@ export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
 
       <div className="tool-card__content">
         <h3 className="tool-card__title">{translate(tool.titleKey)}</h3>
-        <p className="tool-card__desc">{translate(tool.descriptionKey)}</p>
+        <p id={descId} className="tool-card__desc" aria-hidden="true">
+          {translate(tool.descriptionKey)}
+        </p>
       </div>
 
       <div className="tool-card__hover-arrow" aria-hidden="true">

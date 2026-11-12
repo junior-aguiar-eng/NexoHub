@@ -108,4 +108,58 @@ describe("PdfPageGridPanel - Painel Visual de Páginas (iLovePDF style)", () => 
 
     expect(onSelectedIndicesChange).toHaveBeenCalledWith([2, 3]);
   });
+
+  it("aciona onRotatePage e onDeletePage pelas ações rápidas sobre a miniatura", () => {
+    const onRotatePage = vi.fn();
+    const onDeletePage = vi.fn();
+
+    render(
+      <PdfPageGridPanel
+        mode="organize"
+        totalPages={3}
+        pages={samplePages}
+        selectedIndices={[1, 2, 3]}
+        onRotatePage={onRotatePage}
+        onDeletePage={onDeletePage}
+      />,
+    );
+
+    const quickRotateBtn = screen.getByLabelText(/Girar página 1 em 90 graus/i);
+    fireEvent.click(quickRotateBtn);
+    expect(onRotatePage).toHaveBeenCalledWith(0);
+
+    const quickDeleteBtn = screen.getByLabelText(/Excluir página 1/i);
+    fireEvent.click(quickDeleteBtn);
+    expect(onDeletePage).toHaveBeenCalledWith(0);
+  });
+
+  it("aciona onPagesChange quando callbacks específicos de rotação e exclusão não forem passados", () => {
+    const onPagesChange = vi.fn();
+
+    render(
+      <PdfPageGridPanel
+        mode="organize"
+        totalPages={3}
+        pages={samplePages}
+        selectedIndices={[1, 2, 3]}
+        onPagesChange={onPagesChange}
+      />,
+    );
+
+    const quickRotateBtn = screen.getByLabelText(/Girar página 2 em 90 graus/i);
+    fireEvent.click(quickRotateBtn);
+    expect(onPagesChange).toHaveBeenCalledWith([
+      { id: "page-1", originalIndex: 1, rotation: 0 },
+      { id: "page-2", originalIndex: 2, rotation: 90 },
+      { id: "page-3", originalIndex: 3, rotation: 0 },
+    ]);
+
+    const quickDeleteBtn = screen.getByLabelText(/Excluir página 2/i);
+    fireEvent.click(quickDeleteBtn);
+    expect(onPagesChange).toHaveBeenCalledWith([
+      { id: "page-1", originalIndex: 1, rotation: 0 },
+      { id: "page-2", originalIndex: 2, rotation: 0, deleted: true },
+      { id: "page-3", originalIndex: 3, rotation: 0 },
+    ]);
+  });
 });

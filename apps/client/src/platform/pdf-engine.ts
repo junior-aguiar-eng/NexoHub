@@ -1000,6 +1000,8 @@ export async function addWatermarkToPdfDocument(
   return await doc.save({ useObjectStreams: true });
 }
 
+export type PageNumberFormat = "pageXofY" | "xSlashY" | "onlyX" | "flsXofY" | "flsX";
+
 export interface PdfPageNumbersOptions {
   position?:
     | "bottom-center"
@@ -1008,10 +1010,11 @@ export interface PdfPageNumbersOptions {
     | "top-center"
     | "top-right"
     | "top-left";
-  format?: "pageXofY" | "xSlashY" | "onlyX";
+  format?: PageNumberFormat;
   startPage?: number;
   fontSize?: number;
   margin?: number;
+  customPrefix?: string;
 }
 
 /**
@@ -1040,8 +1043,17 @@ export async function addPageNumbersToPdfDocument(
       label = `${pageNum} / ${total}`;
     } else if (format === "onlyX") {
       label = `${pageNum}`;
+    } else if (format === "flsXofY") {
+      label = `Fls. ${pageNum} de ${total}`;
+    } else if (format === "flsX") {
+      label = `Fls. ${pageNum}`;
     } else {
       label = `Página ${pageNum} de ${total}`;
+    }
+
+    const trimmedPrefix = options.customPrefix?.trim();
+    if (trimmedPrefix) {
+      label = `${trimmedPrefix} - ${label}`;
     }
 
     const page = pages[i];

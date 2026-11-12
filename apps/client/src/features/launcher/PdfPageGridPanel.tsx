@@ -31,6 +31,8 @@ type PdfPageGridPanelProps = {
   onRotateAll?: () => void;
   allowRotation?: boolean;
   onResetOrder?: () => void;
+  onRotatePage?: (pageIndex: number) => void;
+  onDeletePage?: (pageIndex: number) => void;
 };
 
 export function PdfPageGridPanel({
@@ -45,6 +47,8 @@ export function PdfPageGridPanel({
   onRotateAll,
   allowRotation = true,
   onResetOrder,
+  onRotatePage,
+  onDeletePage,
 }: PdfPageGridPanelProps) {
   const [rangeInput, setRangeInput] = useState<string>("");
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -78,6 +82,10 @@ export function PdfPageGridPanel({
   }
 
   function handleRotate(index: number) {
+    if (onRotatePage) {
+      onRotatePage(index);
+      return;
+    }
     const newPages = pages.map((page, i) => {
       if (i === index) {
         const nextRotation = (page.rotation + 90) % 360;
@@ -89,6 +97,10 @@ export function PdfPageGridPanel({
   }
 
   function handleToggleDelete(index: number) {
+    if (onDeletePage) {
+      onDeletePage(index);
+      return;
+    }
     const newPages = pages.map((page, i) => {
       if (i === index) {
         return { ...page, deleted: !page.deleted };
@@ -290,6 +302,37 @@ export function PdfPageGridPanel({
                     opacity: isDeleted ? 0.35 : 1,
                   }}
                 />
+
+                {!isDeleted && (
+                  <div className="pdf-page-preview-quick-actions">
+                    {allowRotation && (
+                      <button
+                        type="button"
+                        className="pdf-page-quick-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRotate(index);
+                        }}
+                        title="Girar 90°"
+                        aria-label={`Girar página ${page.originalIndex} em 90 graus`}
+                      >
+                        <RotateCw size={13} />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="pdf-page-quick-btn pdf-page-quick-btn--danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleDelete(index);
+                      }}
+                      title="Excluir página"
+                      aria-label={`Excluir página ${page.originalIndex}`}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                )}
 
                 {isDeleted && (
                   <div className="pdf-page-deleted-overlay">

@@ -1,6 +1,6 @@
 # Roadmap
 
-Estado em 10/11/2026: Versão **0.2.5** consolidada com Node.js 26 LTS, deploy contínuo em produção no Google Cloud Run (`https://nexojuris.ia.br/hub/`), IPC binário de alta performance (`Uint8Array`), resiliência contra restrições de `localStorage` em modo anônimo e eliminação de vazamento de memória em Object URLs. Próximo marco ativo: Evolução Híbrida (ADR-020), Painel Profissional de Cotas na Área da Conta e Modernização Tátil dos Motores WASM. As fases “Concluída” abaixo descrevem implementação no escopo entregue, não homologação irrestrita de qualidade.
+Estado em 11/11/2026: Versão **0.2.6** consolidada com Dropzone Global Fullscreen, Encadeamento Contínuo de Ferramentas (Tool Chaining em memória RAM), Ações Rápidas em Miniaturas Visuais de Páginas e Presets de Numeração Forense PJe/Tribunais. Node.js 26 LTS, deploy contínuo em produção no Google Cloud Run (`https://nexojuris.ia.br/hub/`). Próximo marco ativo: Arquivamento Padronizado PDF/A e consolidação dos motores Office. As fases “Concluída” abaixo descrevem implementação no escopo entregue, não homologação irrestrita de qualidade.
 
 ## Evolução híbrida — implementação autorizada em 30/10/2026
 

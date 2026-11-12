@@ -53,6 +53,7 @@ import {
   type FormFieldValue,
   fillPdfForm,
   mergePdfDocuments,
+  type PageNumberFormat,
   protectPdfDocument,
   type RedactionArea,
   redactPdfDocument,
@@ -120,8 +121,9 @@ export interface LauncherToolInput {
     | "top-center"
     | "top-right"
     | "top-left";
-  readonly pageNumbersFormat?: "pageXofY" | "xSlashY" | "onlyX";
+  readonly pageNumbersFormat?: PageNumberFormat;
   readonly pageNumbersStartPage?: number;
+  readonly pageNumbersCustomPrefix?: string;
   readonly ocrLanguage?: "por" | "eng" | "spa";
   readonly ocrEnhanceContrast?: boolean;
   readonly ocrSignal?: AbortSignal;
@@ -1033,6 +1035,7 @@ async function executeTool(
         position: input.pageNumbersPosition,
         format: input.pageNumbersFormat,
         startPage: input.pageNumbersStartPage,
+        customPrefix: input.pageNumbersCustomPrefix,
       });
       return {
         blob: pdfBlob(numberedBytes),
@@ -1606,6 +1609,7 @@ export async function runLauncherTool(
           pageNumbersPosition: input.pageNumbersPosition,
           pageNumbersFormat: input.pageNumbersFormat,
           pageNumbersStartPage: input.pageNumbersStartPage,
+          pageNumbersCustomPrefix: input.pageNumbersCustomPrefix,
         }
       : {}),
     ...(toolId === "pdf-ocr"

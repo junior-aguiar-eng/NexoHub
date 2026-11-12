@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { translate } from "@/i18n";
+import type { PageNumberFormat } from "@/platform/pdf-engine";
 import { PdfViewport } from "./PdfViewport";
+
+export type { PageNumberFormat };
 
 export type PageNumbersPdfPanelProps = {
   fileName: string;
@@ -16,7 +19,8 @@ export type PageNumbersPdfPanelProps = {
     | "top-center"
     | "top-right"
     | "top-left";
-  format: "pageXofY" | "xSlashY" | "onlyX";
+  format: PageNumberFormat;
+  customPrefix?: string;
   startPage: number;
   onPositionChange: (
     position:
@@ -27,8 +31,9 @@ export type PageNumbersPdfPanelProps = {
       | "top-right"
       | "top-left",
   ) => void;
-  onFormatChange: (format: "pageXofY" | "xSlashY" | "onlyX") => void;
+  onFormatChange: (format: PageNumberFormat) => void;
   onStartPageChange: (startPage: number) => void;
+  onCustomPrefixChange?: (prefix: string) => void;
 };
 
 export function PageNumbersPdfPanel({
@@ -40,10 +45,12 @@ export function PageNumbersPdfPanel({
   onPreviewPageChange,
   position,
   format,
+  customPrefix,
   startPage,
   onPositionChange,
   onFormatChange,
   onStartPageChange,
+  onCustomPrefixChange,
 }: PageNumbersPdfPanelProps) {
   function formatSize(bytes: number) {
     if (bytes < 1024) return `${bytes} B`;
@@ -62,9 +69,21 @@ export function PageNumbersPdfPanel({
     onPreviewPageChange?.(previewPage);
   }, [onPreviewPageChange, previewPage]);
   function getPreviewLabel(): string {
-    if (format === "xSlashY") return `${previewPage} / ${totalPages}`;
-    if (format === "onlyX") return `${previewPage}`;
-    return `Página ${previewPage} de ${totalPages}`;
+    let baseLabel: string;
+    if (format === "xSlashY") {
+      baseLabel = `${previewPage} / ${totalPages}`;
+    } else if (format === "onlyX") {
+      baseLabel = `${previewPage}`;
+    } else if (format === "flsXofY") {
+      baseLabel = `Fls. ${previewPage} de ${totalPages}`;
+    } else if (format === "flsX") {
+      baseLabel = `Fls. ${previewPage}`;
+    } else {
+      baseLabel = `Página ${previewPage} de ${totalPages}`;
+    }
+
+    const trimmedPrefix = customPrefix?.trim();
+    return trimmedPrefix ? `${trimmedPrefix} - ${baseLabel}` : baseLabel;
   }
 
   // Coordenadas CSS para exibição da numeração na pré-visualização
@@ -248,6 +267,8 @@ export function PageNumbersPdfPanel({
                 { fmt: "pageXofY", key: "workspace.pageNumbers.formatPageXofY" },
                 { fmt: "xSlashY", key: "workspace.pageNumbers.formatXslashY" },
                 { fmt: "onlyX", key: "workspace.pageNumbers.formatOnlyX" },
+                { fmt: "flsXofY", key: "workspace.pageNumbers.formatFlsXofY" },
+                { fmt: "flsX", key: "workspace.pageNumbers.formatFlsX" },
               ] as const
             ).map((f) => (
               <button
@@ -261,6 +282,31 @@ export function PageNumbersPdfPanel({
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Prefixo de processo ou numeração personalizada */}
+        <div style={{ marginTop: "0.5rem" }}>
+          <label
+            htmlFor="page-numbers-prefix-input"
+            style={{
+              display: "block",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              color: "#334155",
+              marginBottom: "0.4rem",
+            }}
+          >
+            {translate("workspace.pageNumbers.customPrefixLabel")}
+          </label>
+          <input
+            id="page-numbers-prefix-input"
+            type="text"
+            className="pdf-page-range-input"
+            style={{ width: "100%", padding: "0.45rem 0.6rem", fontSize: "0.85rem" }}
+            placeholder={translate("workspace.pageNumbers.customPrefixPlaceholder")}
+            value={customPrefix ?? ""}
+            onChange={(e) => onCustomPrefixChange?.(e.target.value)}
+          />
         </div>
 
         {/* Iniciar a partir da página */}

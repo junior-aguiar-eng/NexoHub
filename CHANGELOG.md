@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.6] - 2026-11-11
+
+### Adicionado e Modernizado
+
+- **Dropzone Global em Tela Cheia (`GlobalDropzone.tsx`)**:
+  - Detecção imediata de arrasto de arquivos sobre qualquer ponto da interface com overlay animado tátil e responsivo.
+  - Reconhecimento automático de tipo de arquivo (PDF único ou múltiplo, imagens ou misto) oferecendo atalhos contextuais diretos de 1 clique (*Unir PDF, Comprimir, OCR, Converter em PDF*).
+  - Suporte a cancelamento tátil e tecla `Esc`.
+- **Encadeamento Contínuo de Ferramentas / Tool Chaining (`ToolChainingBar.tsx`)**:
+  - Sugestões contextuais na tela de sucesso, permitindo encadear tarefas sucessivas de processamento (ex: Comprimir ou Numerar após Unir; Converter em PDF após Comprimir Imagem).
+  - Transição de arquivos direta em memória RAM (*zero re-upload*, *zero latência de rede* e garantia estrita de privacidade/retenção zero).
+- **Ações Rápidas em Miniaturas Visuais (`PdfPageGridPanel.tsx`)**:
+  - Controles flutuantes sobre as miniaturas de páginas no hover e navegação por teclado para girar 90° e excluir páginas individualmente com agilidade.
+- **Presets de Numeração Forense PJe e Tribunais (`PageNumbersPdfPanel.tsx` e `pdf-engine.ts`)**:
+  - Novos formatos jurídicos brasileiros: `Fls. X de Y (Forense)` e `Fls. X (PJe / Tribunais)`.
+  - Suporte a prefixo de peticionamento eletrônico e número de processo (ex.: `Processo 0001234-56.2026.8.26.0100 - Fls. 1`) com estampa vetorial precisa e pré-visualização sincronizada.
+
 ## [0.2.5] - 2026-11-10
 
 ### Adicionado e Modernizado

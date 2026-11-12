@@ -132,6 +132,21 @@ describe("operações PDF no navegador", () => {
     expect(numberedBytes.length).toBeGreaterThan(source.length);
   });
 
+  it("insere numeração forense (flsXofY) com prefixo customizado de processo judicial", async () => {
+    const { addPageNumbersToPdfDocument } = await import("./pdf-engine");
+    const source = await makePdf(2);
+    const numberedBytes = await addPageNumbersToPdfDocument(source, {
+      position: "top-right",
+      format: "flsXofY",
+      customPrefix: "Processo 0001234-56.2026",
+      startPage: 1,
+    });
+
+    const doc = await PDFDocument.load(numberedBytes);
+    expect(doc.getPageCount()).toBe(2);
+    expect(numberedBytes.length).toBeGreaterThan(source.length);
+  });
+
   it("gera PDF pesquisável injetando camada de texto sobre o documento original", async () => {
     const fontFetch = vi
       .spyOn(globalThis, "fetch")

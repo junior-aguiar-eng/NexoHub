@@ -4,6 +4,7 @@ import { NexoHubLogoIcon } from "@/components/NexoHubLogoIcon";
 import { CommandPalette } from "@/features/launcher/CommandPalette";
 import { DedicatedToolView } from "@/features/launcher/DedicatedToolView";
 import { imageSuites, pdfSuites, resolveLauncherTools } from "@/features/launcher/data";
+import { GlobalDropzone } from "@/features/launcher/GlobalDropzone";
 import { Header } from "@/features/launcher/Header";
 import { Hero } from "@/features/launcher/Hero";
 import type { LauncherTool, SuiteId } from "@/features/launcher/model";
@@ -314,6 +315,13 @@ export function App() {
     activePath.current = window.location.pathname;
   };
 
+  const handleGlobalDropTool = (toolId: string, droppedFiles: File[]) => {
+    const targetTool = dynamicTools.find((t) => t.id === toolId);
+    if (targetTool) {
+      selectToolWithUrl(targetTool, droppedFiles);
+    }
+  };
+
   useEffect(() => {
     function handleShortcut(event: KeyboardEvent) {
       if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === "k") {
@@ -360,6 +368,7 @@ export function App() {
       data-zone={workZone}
       className={`app-shell ${activeDedicatedTool ? "app-shell--workspace" : "app-shell--catalog"} app-shell--zone-${workZone}`}
     >
+      <GlobalDropzone onSelectToolWithFiles={handleGlobalDropTool} />
       <a className="skip-link" href="#main-content">
         {translate("app.skip")}
       </a>

@@ -88,7 +88,7 @@ import { ImageWatermarkPanel } from "./ImageWatermarkPanel";
 import { MergePdfPanel } from "./MergePdfPanel";
 import type { LauncherTool } from "./model";
 import { OcrScannerPanel } from "./OcrScannerPanel";
-import { PageNumbersPdfPanel } from "./PageNumbersPdfPanel";
+import { type PageNumberFormat, PageNumbersPdfPanel } from "./PageNumbersPdfPanel";
 import { PdfComparePanel } from "./PdfComparePanel";
 import { PdfEditorPanel } from "./PdfEditorPanel";
 import { PdfPageGridPanel, type PdfPageItem } from "./PdfPageGridPanel";
@@ -106,6 +106,7 @@ import { RotatePdfPanel } from "./RotatePdfPanel";
 import { ScanToPdfPanel } from "./ScanToPdfPanel";
 import { SignPdfPanel } from "./SignPdfPanel";
 import { type SplitInterval, SplitPdfPanel } from "./SplitPdfPanel";
+import { ToolChainingBar } from "./ToolChainingBar";
 import { WorkspaceTabs, type WorkspaceView } from "./ToolWorkspace";
 import { TranslateDocumentPanel } from "./TranslateDocumentPanel";
 import { UnlockPdfPanel } from "./UnlockPdfPanel";
@@ -287,10 +288,9 @@ export function DedicatedToolView({
   const [pageNumbersPosition, setPageNumbersPosition] = useState<
     "bottom-center" | "bottom-right" | "bottom-left" | "top-center" | "top-right" | "top-left"
   >("bottom-center");
-  const [pageNumbersFormat, setPageNumbersFormat] = useState<"pageXofY" | "xSlashY" | "onlyX">(
-    "pageXofY",
-  );
+  const [pageNumbersFormat, setPageNumbersFormat] = useState<PageNumberFormat>("pageXofY");
   const [pageNumbersStartPage, setPageNumbersStartPage] = useState<number>(1);
+  const [pageNumbersCustomPrefix, setPageNumbersCustomPrefix] = useState<string>("");
   const [ocrLanguage, setOcrLanguage] = useState<"por" | "eng" | "spa">("por");
   const [ocrOutputMode, setOcrOutputMode] = useState<"searchable-pdf" | "text">("searchable-pdf");
   const [ocrEnhanceContrast, setOcrEnhanceContrast] = useState<boolean>(true);
@@ -1604,6 +1604,7 @@ export function DedicatedToolView({
         pageNumbersPosition,
         pageNumbersFormat,
         pageNumbersStartPage,
+        pageNumbersCustomPrefix,
         ocrLanguage,
         ocrSignal: ocrRun?.signal,
         ocrEnhanceContrast,
@@ -2453,10 +2454,12 @@ export function DedicatedToolView({
           onPreviewPageChange={handlePreviewPageChange}
           position={pageNumbersPosition}
           format={pageNumbersFormat}
+          customPrefix={pageNumbersCustomPrefix}
           startPage={pageNumbersStartPage}
           onPositionChange={setPageNumbersPosition}
           onFormatChange={setPageNumbersFormat}
           onStartPageChange={setPageNumbersStartPage}
+          onCustomPrefixChange={setPageNumbersCustomPrefix}
         />
       );
     }
@@ -2848,6 +2851,17 @@ export function DedicatedToolView({
           )}
 
           {errorMessage && <p role="alert">{errorMessage}</p>}
+
+          {outputBlob && (
+            <ToolChainingBar
+              currentToolId={tool.id}
+              outputBlob={outputBlob}
+              outputFileName={outputFileName}
+              onChainToTool={(targetToolId, file) => {
+                onOpenTool?.(targetToolId, [file]);
+              }}
+            />
+          )}
         </div>
         <div className="dedicated-tool-success-footer">
           {documentCore.saveOutputFile && outputBlob ? (

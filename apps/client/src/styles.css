@@ -6655,6 +6655,7 @@ button.capability-btn-danger:hover {
 }
 
 .pdf-page-card-preview {
+  position: relative;
   width: 100%;
   height: 140px;
   display: flex;
@@ -6663,6 +6664,57 @@ button.capability-btn-danger:hover {
   overflow: hidden;
   border-radius: var(--radius-sm);
   background: #ffffff;
+}
+
+.pdf-page-preview-quick-actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-in-out;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(6px);
+  padding: 3px 5px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  z-index: 5;
+}
+
+.pdf-page-card:hover .pdf-page-preview-quick-actions,
+.pdf-page-card:focus-within .pdf-page-preview-quick-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pdf-page-quick-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-xs, 4px);
+  background: transparent;
+  color: #f8fafc;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.pdf-page-quick-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.pdf-page-quick-btn--danger:hover {
+  background: #ef4444;
+  color: #ffffff;
 }
 
 .pdf-page-thumbnail-img {
@@ -11869,4 +11921,279 @@ html:has(.image-composition-panel) {
   color: #b45309;
   text-decoration: underline;
   cursor: pointer;
+}
+
+/* Dropzone Global Fullscreen & Menu Rápido */
+.global-dropzone-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: color-mix(in srgb, var(--color-surface), transparent 15%);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px dashed var(--color-primary);
+  margin: var(--space-4);
+  border-radius: var(--radius-xl);
+  pointer-events: none;
+  animation: global-drop-pulse 2s infinite ease-in-out;
+}
+
+@keyframes global-drop-pulse {
+  0%,
+  100% {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary), transparent 80%);
+  }
+  50% {
+    border-color: color-mix(in srgb, var(--color-primary), white 20%);
+    box-shadow: 0 0 30px 4px color-mix(in srgb, var(--color-primary), transparent 70%);
+  }
+}
+
+.global-dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  max-width: 500px;
+}
+
+.global-dropzone-icon {
+  color: var(--color-primary);
+  animation: global-drop-bounce 1.5s infinite ease-in-out;
+}
+
+@keyframes global-drop-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.global-dropzone-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-ink);
+  letter-spacing: -0.02em;
+}
+
+.global-dropzone-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-ink-muted);
+}
+
+.global-dropzone-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.global-dropzone-modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(
+    --shadow-xl,
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04)
+  );
+  width: 100%;
+  max-width: 620px;
+  overflow: hidden;
+  animation: global-modal-appear 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes global-modal-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.global-dropzone-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.global-dropzone-modal__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.global-dropzone-modal__subtitle {
+  margin: var(--space-1) 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-ink-muted);
+}
+
+.global-dropzone-modal__close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-ink-muted);
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: color 0.15s ease;
+}
+
+.global-dropzone-modal__close:hover {
+  color: var(--color-ink);
+}
+
+.global-dropzone-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6);
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.global-dropzone-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-3);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  text-align: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.global-dropzone-action-btn:hover {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary), transparent 94%);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+}
+
+.global-dropzone-action-btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.global-dropzone-action-icon {
+  flex-shrink: 0;
+}
+
+.global-dropzone-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-3) var(--space-6) var(--space-4);
+  background: var(--color-surface-raised);
+  border-top: 1px solid var(--color-border);
+}
+
+.global-dropzone-cancel-btn {
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.global-dropzone-cancel-btn:hover {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+/* Encadeamento Fluido de Ferramentas (Tool Chaining) */
+.tool-chaining-bar {
+  margin-top: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 640px;
+}
+
+.tool-chaining-bar__title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tool-chaining-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.tool-chaining-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-sm);
+}
+
+.tool-chaining-btn:hover {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary), transparent 94%);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.tool-chaining-btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.tool-chaining-btn__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

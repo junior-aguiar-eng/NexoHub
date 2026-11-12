@@ -79,7 +79,6 @@ export function ToolCard({ tool, index, onRunTool }: ToolCardProps) {
       }}
       tabIndex={isAvailable ? 0 : -1}
       role="button"
-      aria-label={translate(tool.titleKey)}
       style={
         {
           cursor: isAvailable ? "pointer" : "default",

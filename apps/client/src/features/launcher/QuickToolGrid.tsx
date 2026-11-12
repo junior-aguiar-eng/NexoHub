@@ -11,8 +11,11 @@ export function QuickToolGrid({ tools, onRunTool }: QuickToolGridProps) {
   return (
     <section
       className="section-block quick-tools-section quick-tools-section--clean"
-      aria-label="Ferramentas"
+      aria-labelledby="tools-catalog-heading"
     >
+      <h2 id="tools-catalog-heading" className="sr-only">
+        {translate("tools.title")}
+      </h2>
       {tools.length > 0 ? (
         <div className="tool-grid">
           {tools.map((tool, index) => (

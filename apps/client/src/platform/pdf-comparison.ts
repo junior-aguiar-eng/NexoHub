@@ -226,22 +226,25 @@ export async function comparePdfDocuments(
     abortIfNeeded(signal);
   };
   async function open(bytes: Uint8Array) {
-    const inWorker = typeof document === "undefined" && typeof OffscreenCanvas !== "undefined";
+    const isNode = typeof process !== "undefined" && Boolean(process.versions?.node);
+    const inWorker =
+      !isNode && typeof document === "undefined" && typeof OffscreenCanvas !== "undefined";
+    const standardFontDataUrl =
+      typeof location !== "undefined"
+        ? new URL(`${import.meta.env.BASE_URL}standard_fonts/`, location.origin).href
+        : isNode
+          ? decodeURIComponent(
+              new URL("../../public/standard_fonts/", import.meta.url).pathname,
+            ).replace(/^\/([A-Za-z]:\/)/, "$1")
+          : undefined;
     const task = pdfjs.getDocument({
       data: bytes.slice(),
-      useSystemFonts: !inWorker,
-      disableFontFace: inWorker,
+      useSystemFonts: !inWorker && !isNode,
+      disableFontFace: inWorker || isNode,
       useWorkerFetch: inWorker,
       stopAtErrors: true,
       // Laços de renderização/chamadas continuam locais; PDFs não podem pedir fontes externas.
-      ...(typeof location !== "undefined"
-        ? {
-            standardFontDataUrl: new URL(
-              `${import.meta.env.BASE_URL}standard_fonts/`,
-              location.origin,
-            ).href,
-          }
-        : {}),
+      ...(standardFontDataUrl ? { standardFontDataUrl } : {}),
       ...(inWorker ? { CanvasFactory: WorkerCanvasFactory } : {}),
     });
     tasks.push(task);

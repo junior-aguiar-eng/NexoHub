@@ -232,7 +232,7 @@ export const ptBR = {
   "editor.description":
     "Adicione textos, imagens e formas e altere o texto existente com edição local.",
   "editor.tagline": "Suas ideias, no lugar certo. Edite seu PDF com controle.",
-  "editor.back": "Voltar às ferramentas",
+  "editor.back": "Todas as ferramentas",
   "editor.privacy": "Processamento local · seus arquivos ficam neste dispositivo",
   "editor.upload": "Selecionar PDF",
   "editor.drop": "ou arraste seu PDF aqui",
@@ -324,7 +324,7 @@ export const ptBR = {
   "pdfCompare.geometryChanged": "O tamanho ou a orientação das páginas é diferente.",
   "pdfCompare.title": "Comparar PDF",
   "pdfCompare.subtitle": "Compare texto e aparência de dois PDFs no seu navegador.",
-  "pdfCompare.back": "Voltar às ferramentas",
+  "pdfCompare.back": "Todas as ferramentas",
   "pdfCompare.local": "Processamento local · nenhum arquivo é enviado",
   "pdfCompare.original": "PDF original",
   "pdfCompare.revised": "PDF revisado",

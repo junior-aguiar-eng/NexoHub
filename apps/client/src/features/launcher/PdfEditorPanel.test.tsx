@@ -323,3 +323,8 @@ it("desfazer até a revisão salva continua reconhecendo estado sem alterações
   expect(allowToolNavigation()).toBe(false);
   confirm.mockRestore();
 });
+
+it("utiliza o rotulo padrao de navegacao para retorno", () => {
+  render(<PdfEditorPanel documentCore={new UnavailableDocumentCorePort()} onBack={vi.fn()} />);
+  expect(screen.getByRole("button", { name: /Todas as ferramentas/i })).toBeInTheDocument();
+});

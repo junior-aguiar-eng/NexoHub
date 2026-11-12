@@ -564,3 +564,22 @@ it("formulário recebido por navegação recusa entrada incompatível sem carreg
   expect(await screen.findByRole("alert")).toHaveTextContent(/PDF|documento/i);
   expect(screen.queryByText("Carregando campos...", { exact: true })).not.toBeInTheDocument();
 });
+
+it("renderiza a barra de acao inferior com a classe dedicated-tool-bottom-bar", async () => {
+  const tool = launcherTools.find((item) => item.id === "pdf-split");
+  if (!tool) throw new Error("Ferramenta ausente");
+  const { container } = render(
+    <DedicatedToolView
+      tool={tool}
+      documentCore={new BrowserDocumentCorePort()}
+      onBack={vi.fn()}
+      initialFiles={[
+        new File(["%PDF-1.4 mock content"], "documento.pdf", { type: "application/pdf" }),
+      ]}
+    />,
+  );
+  const bottomBar = container.querySelector(".dedicated-tool-bottom-bar");
+  expect(bottomBar).not.toBeNull();
+  const actionButton = bottomBar?.querySelector(".ilovepdf-action-red-btn");
+  expect(actionButton).not.toBeNull();
+});

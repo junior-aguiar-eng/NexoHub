@@ -210,7 +210,7 @@ export function ScanToPdfPanel({
     <div
       data-workspace-panel
       data-workspace-layout="toolbar"
-      className="flex flex-col gap-6 w-full max-w-6xl mx-auto p-4 sm:p-6"
+      className="flex flex-col gap-6 w-full max-w-7xl mx-auto py-2 sm:py-4 px-1 sm:px-2"
       data-testid="scan-to-pdf-panel"
     >
       {/* Top Header Card */}

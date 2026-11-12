@@ -30,4 +30,5 @@ runtime/tessdata/*
 !runtime/tessdata/.gitkeep
 *.log
 *.nexojuris-checkpoint/
+.superpowers/
 images/

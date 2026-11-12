@@ -2,6 +2,7 @@ import type { CloudUsage, ProcessingMode } from "@nexohub/contracts";
 import { applyReviewFindings, type ReviewFinding, reviewText } from "@nexohub/domain";
 import { ToolRunError } from "@nexohub/tool-sdk";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
@@ -2850,7 +2851,15 @@ export function DedicatedToolView({
             />
           )}
 
-          {errorMessage && <p role="alert">{errorMessage}</p>}
+          {errorMessage && (
+            <p
+              role="alert"
+              className="dedicated-tool-error-alert text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 px-3 py-1.5 rounded-lg flex items-center gap-1.5 mr-auto"
+            >
+              <AlertCircle size={15} className="shrink-0" />
+              <span>{errorMessage}</span>
+            </p>
+          )}
 
           {outputBlob && (
             <ToolChainingBar
@@ -3190,7 +3199,15 @@ export function DedicatedToolView({
             {translate("excel.cancel")}
           </Button>
         )}
-        {errorMessage && <p role="alert">{errorMessage}</p>}
+        {errorMessage && (
+          <p
+            role="alert"
+            className="dedicated-tool-error-alert text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 px-3 py-1.5 rounded-lg flex items-center gap-1.5 mr-auto"
+          >
+            <AlertCircle size={15} className="shrink-0" />
+            <span>{errorMessage}</span>
+          </p>
+        )}
         <button
           type="button"
           className="ilovepdf-action-red-btn"

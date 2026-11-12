@@ -712,17 +712,31 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
       aria-labelledby={`${id}-title`}
       data-workspace-view={workspaceView}
     >
-      <div className="pdf-editor-topline">
+      <div className="pdf-editor-topline ilovepdf-tool-nav">
         <button
           type="button"
+          className="dedicated-tool-back-btn"
           onClick={() => {
             onBack();
           }}
+          aria-label={t("back")}
         >
-          <ArrowLeft size={18} />
-          {t("back")}
+          <ArrowLeft size={16} />
+          <span>{t("back")}</span>
         </button>
-        <h1 id={`${id}-title`}>{t("title")}</h1>
+        <div className="dedicated-tool-badge" style={{ borderColor: "var(--color-brand)" }}>
+          <span
+            className="dedicated-tool-badge__dot"
+            style={{ backgroundColor: "var(--color-brand)" }}
+            aria-hidden="true"
+          />
+          <h1
+            id={`${id}-title`}
+            style={{ fontSize: "0.95rem", fontWeight: 700, margin: 0, display: "inline" }}
+          >
+            {t("title")}
+          </h1>
+        </div>
         {file && (
           <span className="pdf-editor-filename" title={file.name}>
             {file.name}

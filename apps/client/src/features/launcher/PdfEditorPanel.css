@@ -1,10 +1,10 @@
 .pdf-editor {
-  --editor-accent: #df614b;
-  --editor-border: #dde1e8;
-  color: #252b37;
-  width: min(1920px, 100%);
+  --editor-accent: var(--color-brand, #e11d48);
+  --editor-border: var(--color-border, #e2e8f0);
+  color: var(--color-ink, #0f172a);
+  width: min(1440px, 100%);
   margin: auto;
-  padding: 0;
+  padding: 0 var(--space-4, 1rem) var(--space-6, 1.5rem);
 }
 .pdf-editor *,
 .pdf-editor *::before,
@@ -20,7 +20,7 @@
   padding: 10px 14px;
   border: 1px solid var(--editor-border);
   border-radius: 10px;
-  background: white;
+  background: var(--color-surface, #ffffff);
   color: inherit;
   font: inherit;
   font-size: 13px;
@@ -31,8 +31,8 @@
     border-color 0.15s;
 }
 .pdf-editor button:hover:not(:disabled) {
-  background: #fff4ef;
-  border-color: #e99d8c;
+  background: var(--color-brand-soft, #fff1f2);
+  border-color: var(--color-brand, #e11d48);
 }
 .pdf-editor button:disabled {
   opacity: 0.45;
@@ -40,7 +40,7 @@
 }
 .pdf-editor :is(button, input, textarea, select):focus-visible,
 .pdf-editor-scroll:focus-visible {
-  outline: 3px solid #bd4330;
+  outline: 3px solid var(--color-brand, #e11d48);
   outline-offset: 3px;
 }
 .pdf-editor-topline {

@@ -34,6 +34,13 @@ describe("PdfToWordPanel", () => {
     expect(onRunConversion).toHaveBeenCalledTimes(1);
   });
 
+  it("oculta o botão inline quando hideInlineAction está ativo", () => {
+    render(<PdfToWordPanel {...defaultProps} hideInlineAction />);
+
+    expect(screen.getByTestId("pdf-word-idle")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /converter para word/i })).toBeNull();
+  });
+
   it("exibe a barra de progresso durante o processamento", () => {
     render(<PdfToWordPanel {...defaultProps} isRunning={true} progressPercent={45} />);
 
@@ -53,6 +60,9 @@ describe("PdfToWordPanel", () => {
         "Primeiro parágrafo do relatório financeiro.",
         "Segundo parágrafo detalhando despesas.",
       ],
+      tableCount: 2,
+      imageCount: 1,
+      usedOcr: false,
     };
 
     render(
@@ -68,6 +78,8 @@ describe("PdfToWordPanel", () => {
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getByText("120")).toBeInTheDocument();
     expect(screen.getByText("8")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
     expect(screen.getByText("Primeiro parágrafo do relatório financeiro.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /baixar documento word/i })).toBeInTheDocument();
   });
@@ -81,6 +93,9 @@ describe("PdfToWordPanel", () => {
       convertedBytes: 9000,
       isScannedWarning: true,
       sampleText: [],
+      tableCount: 0,
+      imageCount: 0,
+      usedOcr: false,
     };
 
     const onNavigateToOcr = vi.fn();
@@ -118,5 +133,44 @@ describe("PdfToWordPanel", () => {
     const resetButton = screen.getByRole("button", { name: /converter outro arquivo/i });
     fireEvent.click(resetButton);
     expect(onReset).toHaveBeenCalledTimes(1);
+  });
+
+  it("permite alternar a opção de OCR automático em páginas sem texto", () => {
+    const onRunOcrIfScannedChange = vi.fn();
+    render(
+      <PdfToWordPanel
+        {...defaultProps}
+        runOcrIfScanned={true}
+        onRunOcrIfScannedChange={onRunOcrIfScannedChange}
+      />,
+    );
+
+    const checkbox = screen.getByLabelText(/executar ocr automático em páginas sem texto/i);
+    expect(checkbox).toBeChecked();
+    fireEvent.click(checkbox);
+    expect(onRunOcrIfScannedChange).toHaveBeenCalledWith(false);
+  });
+
+  it("exibe selo indicando quando o OCR local foi aplicado", () => {
+    render(
+      <PdfToWordPanel
+        {...defaultProps}
+        report={{
+          pageCount: 1,
+          wordCount: 42,
+          paragraphCount: 3,
+          originalBytes: 51200,
+          convertedBytes: 12000,
+          isScannedWarning: false,
+          sampleText: ["Texto reconhecido via OCR."],
+          tableCount: 0,
+          imageCount: 0,
+          usedOcr: true,
+        }}
+        downloadUrl="blob:http://localhost/mock-word"
+      />,
+    );
+
+    expect(screen.getByTestId("pdf-word-ocr-badge")).toBeInTheDocument();
   });
 });

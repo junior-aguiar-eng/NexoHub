@@ -233,7 +233,6 @@ test("o aplicativo Windows executa comparação, reparo, editor e ferramentas de
         });
       }
       await page.goto("http://tauri.localhost/traduzir-texto");
-      await page.getByRole("button", { name: "Digitar Texto" }).click();
       await page.locator("#dedicated-tool-direct-textarea").fill("{{TESTE}}");
       await page.getByRole("button", { name: "Executar agora", exact: true }).click();
       await expect

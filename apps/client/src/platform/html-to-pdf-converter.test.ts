@@ -1,7 +1,9 @@
-import { PDFDocument } from "pdf-lib";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { PDFDict, PDFDocument, PDFName, PDFRawStream } from "pdf-lib";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
-import { describe, expect, it } from "vitest";
-import { convertHtmlToPdfDocument } from "./html-to-pdf-converter";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { convertHtmlToPdfDocument, sanitizeHtmlForPdf } from "./html-to-pdf-converter";
 
 async function outputPages(html: string) {
   const result = await convertHtmlToPdfDocument(html);
@@ -193,5 +195,422 @@ describe("html-to-pdf-converter", () => {
   it("rejeita conteúdo vazio ou somente com espaços", async () => {
     await expect(convertHtmlToPdfDocument("")).rejects.toThrow("HTML_CONTENT_EMPTY");
     await expect(convertHtmlToPdfDocument("   \n\t ")).rejects.toThrow("HTML_CONTENT_EMPTY");
+  });
+
+  describe("sanitização, renderização fiel CSS/imagem e camada de texto pesquisável", () => {
+    const MINIMAL_PNG_BYTES = new Uint8Array([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+      0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f,
+      0x15, 0xc4, 0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00,
+      0x01, 0x00, 0x00, 0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
+      0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+    ]);
+    const MINIMAL_PNG_DATA_URL = `data:image/png;base64,${Buffer.from(MINIMAL_PNG_BYTES).toString("base64")}`;
+
+    const originalGetClientRects = Object.getOwnPropertyDescriptor(
+      Range.prototype,
+      "getClientRects",
+    );
+
+    function mockRangeGetClientRects(fn: () => DOMRectList) {
+      Object.defineProperty(Range.prototype, "getClientRects", {
+        configurable: true,
+        writable: true,
+        value: fn,
+      });
+    }
+
+    afterEach(() => {
+      if (originalGetClientRects) {
+        Object.defineProperty(Range.prototype, "getClientRects", originalGetClientRects);
+      } else {
+        Reflect.deleteProperty(Range.prototype, "getClientRects");
+      }
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+    });
+
+    it("remove tags perigosas, handlers inline, javascript: e URLs externas mantendo CSS e data:image/*", () => {
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Relatório Seguro</title>
+            <link rel="stylesheet" href="https://evil.invalid/style.css" />
+            <style>
+              @import "https://evil.invalid/imported.css";
+              .card {
+                display: flex;
+                background-color: #f8fafc;
+                border: 2px solid #0284c7;
+                background-image: url("https://evil.invalid/bg.png");
+              }
+            </style>
+          </head>
+          <body>
+            <script>window.__hacked = true;</script>
+            <noscript>Sem script</noscript>
+            <iframe src="https://evil.invalid/frame"></iframe>
+            <object data="https://evil.invalid/obj"></object>
+            <embed src="https://evil.invalid/emb" />
+            <div class="card" onclick="alert(1)" style="color:#0f172a">
+              <a href="javascript:alert(2)">Link malicioso</a>
+              <img id="ext" src="https://evil.invalid/tracker.png" alt="Externo" />
+              <img id="local" src="${MINIMAL_PNG_DATA_URL}" alt="Local" />
+              <svg width="24" height="24" onload="alert(3)">
+                <rect width="24" height="24" fill="#0284c7" />
+              </svg>
+            </div>
+          </body>
+        </html>
+      `;
+
+      const sanitized = sanitizeHtmlForPdf(html);
+      expect(sanitized.title).toBe("Relatório Seguro");
+      expect(sanitized.styleCss).toContain("display: flex");
+      expect(sanitized.styleCss).toContain("background-color: #f8fafc");
+      expect(sanitized.styleCss).toContain("border: 2px solid #0284c7");
+      expect(sanitized.styleCss).not.toContain("evil.invalid");
+      expect(sanitized.styleCss).not.toContain("@import");
+
+      expect(sanitized.bodyHtml).not.toContain("<script");
+      expect(sanitized.bodyHtml).not.toContain("<noscript");
+      expect(sanitized.bodyHtml).not.toContain("<iframe");
+      expect(sanitized.bodyHtml).not.toContain("<object");
+      expect(sanitized.bodyHtml).not.toContain("<embed");
+      expect(sanitized.bodyHtml).not.toContain("onclick");
+      expect(sanitized.bodyHtml).not.toContain("onload");
+      expect(sanitized.bodyHtml).not.toContain("javascript:");
+      expect(sanitized.bodyHtml).not.toContain("https://evil.invalid");
+      expect(sanitized.bodyHtml).toContain(MINIMAL_PNG_DATA_URL);
+      expect(sanitized.bodyHtml).toContain("<svg");
+      expect(sanitized.bodyHtml).toContain("<rect");
+    });
+
+    it("rasteriza página com CSS e imagem embutida (XObject /Image) e preserva camada de texto pesquisável", async () => {
+      const capturedSvgSources: string[] = [];
+      const drawImage = vi.fn();
+      const fillRect = vi.fn();
+      const mockCtx = {
+        fillStyle: "#ffffff",
+        fillRect,
+        drawImage,
+      } as unknown as CanvasRenderingContext2D;
+
+      vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(() => mockCtx);
+      vi.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockReturnValue(MINIMAL_PNG_DATA_URL);
+
+      class MockImage {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        complete = true;
+        private _src = "";
+        get src() {
+          return this._src;
+        }
+        set src(value: string) {
+          this._src = value;
+          capturedSvgSources.push(value);
+          queueMicrotask(() => {
+            this.onload?.();
+          });
+        }
+        decode() {
+          return Promise.resolve();
+        }
+      }
+      vi.stubGlobal("Image", MockImage);
+
+      let lineOffset = 0;
+      mockRangeGetClientRects(() => {
+        const top = 20 + lineOffset * 28;
+        lineOffset += 1;
+        return [
+          {
+            left: 16,
+            top,
+            right: 320,
+            bottom: top + 18,
+            width: 304,
+            height: 18,
+            x: 16,
+            y: top,
+            toJSON: () => ({}),
+          } as DOMRect,
+        ] as unknown as DOMRectList;
+      });
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Cartão Fiel</title>
+            <style>
+              .box {
+                display: flex;
+                background-color: #e0f2fe;
+                border: 1px solid #0284c7;
+                font-family: Georgia, serif;
+              }
+            </style>
+          </head>
+          <body>
+            <script>evil()</script>
+            <div class="box">
+              <h1>Relatório Visual Fiel</h1>
+              <p>Texto pesquisável com CSS Flexbox e imagem local.</p>
+              <img src="${MINIMAL_PNG_DATA_URL}" alt="Logo" />
+              <img src="https://evil.invalid/leak.png" alt="Bloqueado" />
+            </div>
+          </body>
+        </html>
+      `;
+
+      const result = await convertHtmlToPdfDocument(html, {
+        pageSize: "A4",
+        orientation: "portrait",
+        margin: "normal",
+      });
+
+      expect(drawImage).toHaveBeenCalled();
+      expect(capturedSvgSources.length).toBeGreaterThanOrEqual(1);
+      const decodedSvg = decodeURIComponent(capturedSvgSources[0]);
+      expect(decodedSvg).toContain("<foreignObject");
+      expect(decodedSvg).toContain("background-color: #e0f2fe");
+      expect(decodedSvg).toContain("display: flex");
+      expect(decodedSvg).toContain(MINIMAL_PNG_DATA_URL);
+      expect(decodedSvg).not.toContain("evil.invalid");
+      expect(decodedSvg).not.toContain("<script");
+
+      // Verifica que o PDF possui objeto de imagem (/Subtype /Image)
+      const pdfDoc = await PDFDocument.load(result.bytes);
+      const page = pdfDoc.getPage(0);
+      const xObjects = page.node.Resources()?.lookup(PDFName.of("XObject"), PDFDict);
+      expect(xObjects).toBeDefined();
+      const hasImageXObject = xObjects?.keys().some((key) => {
+        const obj = pdfDoc.context.lookup(xObjects.get(key));
+        return (
+          obj instanceof PDFRawStream &&
+          obj.dict.get(PDFName.of("Subtype"))?.toString() === "/Image"
+        );
+      });
+      expect(hasImageXObject).toBe(true);
+
+      // Verifica camada de texto pesquisável extraída pelo pdfjs-dist
+      const task = getDocument({ data: result.bytes.slice(), useSystemFonts: true });
+      try {
+        const parsed = await task.promise;
+        const firstPage = await parsed.getPage(1);
+        const content = await firstPage.getTextContent();
+        const extracted = content.items.map((item) => ("str" in item ? item.str : "")).join(" ");
+        expect(extracted).toContain("Relatório Visual Fiel");
+        expect(extracted).toContain("Texto pesquisável com CSS Flexbox e imagem local.");
+      } finally {
+        await task.destroy();
+      }
+    });
+
+    it("lida graciosamente quando getClientRects retorna vazio no jsdom mantendo imagem e texto", async () => {
+      const mockCtx = {
+        fillStyle: "#ffffff",
+        fillRect: vi.fn(),
+        drawImage: vi.fn(),
+      } as unknown as CanvasRenderingContext2D;
+
+      vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(() => mockCtx);
+      vi.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockReturnValue(MINIMAL_PNG_DATA_URL);
+
+      class MockImage {
+        onload: (() => void) | null = null;
+        complete = true;
+        set src(_value: string) {
+          queueMicrotask(() => {
+            this.onload?.();
+          });
+        }
+      }
+      vi.stubGlobal("Image", MockImage);
+      mockRangeGetClientRects(() => [] as unknown as DOMRectList);
+
+      const result = await convertHtmlToPdfDocument(
+        `<p>Texto preservado sem retângulos de layout</p><img src="${MINIMAL_PNG_DATA_URL}" />`,
+      );
+      expect(result.pageCount).toBe(1);
+
+      const pdfDoc = await PDFDocument.load(result.bytes);
+      const xObjects = pdfDoc.getPage(0).node.Resources()?.lookup(PDFName.of("XObject"), PDFDict);
+      const hasImageXObject = xObjects?.keys().some((key) => {
+        const obj = pdfDoc.context.lookup(xObjects.get(key));
+        return (
+          obj instanceof PDFRawStream &&
+          obj.dict.get(PDFName.of("Subtype"))?.toString() === "/Image"
+        );
+      });
+      expect(hasImageXObject).toBe(true);
+
+      const task = getDocument({ data: result.bytes.slice(), useSystemFonts: true });
+      try {
+        const parsed = await task.promise;
+        const firstPage = await parsed.getPage(1);
+        const content = await firstPage.getTextContent();
+        const extracted = content.items.map((item) => ("str" in item ? item.str : "")).join(" ");
+        expect(extracted).toContain("Texto preservado sem retângulos de layout");
+      } finally {
+        await task.destroy();
+      }
+    });
+
+    it("pagina conteúdo longo e quebras CSS no modo navegador preservando texto em cada página", async () => {
+      const mockCtx = {
+        fillStyle: "#ffffff",
+        fillRect: vi.fn(),
+        drawImage: vi.fn(),
+      } as unknown as CanvasRenderingContext2D;
+
+      vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(() => mockCtx);
+      vi.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockReturnValue(MINIMAL_PNG_DATA_URL);
+
+      class MockImage {
+        onload: (() => void) | null = null;
+        complete = true;
+        set src(_value: string) {
+          queueMicrotask(() => {
+            this.onload?.();
+          });
+        }
+      }
+      vi.stubGlobal("Image", MockImage);
+
+      let index = 0;
+      mockRangeGetClientRects(() => {
+        // Página A4 normal tem ~994px de altura útil; colocamos uma linha em y=40 e outra em y=1200
+        const top = index === 0 ? 40 : 1200;
+        index += 1;
+        return [
+          {
+            left: 10,
+            top,
+            right: 260,
+            bottom: top + 18,
+            width: 250,
+            height: 18,
+            x: 10,
+            y: top,
+            toJSON: () => ({}),
+          } as DOMRect,
+        ] as unknown as DOMRectList;
+      });
+
+      const result = await convertHtmlToPdfDocument(
+        "<p>Linha Página Um</p><p>Linha Página Dois</p>",
+        { pageSize: "A4", margin: "normal" },
+      );
+      expect(result.pageCount).toBe(2);
+
+      const task = getDocument({ data: result.bytes.slice(), useSystemFonts: true });
+      try {
+        const parsed = await task.promise;
+        const p1 = (await (await parsed.getPage(1)).getTextContent()).items
+          .map((item) => ("str" in item ? item.str : ""))
+          .join(" ");
+        const p2 = (await (await parsed.getPage(2)).getTextContent()).items
+          .map((item) => ("str" in item ? item.str : ""))
+          .join(" ");
+        expect(p1).toContain("Linha Página Um");
+        expect(p2).toContain("Linha Página Dois");
+      } finally {
+        await task.destroy();
+      }
+    });
+
+    it("incorpora camada Unicode via addOcrTextLayer quando a fonte padrão está acessível", async () => {
+      const fontPath = [
+        path.resolve(process.cwd(), "public/standard_fonts/LiberationSans-Regular.ttf"),
+        path.resolve(process.cwd(), "apps/client/public/standard_fonts/LiberationSans-Regular.ttf"),
+      ].find((candidate) => existsSync(candidate));
+      if (!fontPath) throw new Error("LiberationSans-Regular.ttf não encontrado");
+      const fontBytes = readFileSync(fontPath);
+
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => new Response(fontBytes, { status: 200 })),
+      );
+      const mockCtx = {
+        fillStyle: "#ffffff",
+        fillRect: vi.fn(),
+        drawImage: vi.fn(),
+      } as unknown as CanvasRenderingContext2D;
+      vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(() => mockCtx);
+      vi.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockReturnValue(MINIMAL_PNG_DATA_URL);
+
+      class MockImage {
+        onload: (() => void) | null = null;
+        complete = true;
+        set src(_value: string) {
+          queueMicrotask(() => {
+            this.onload?.();
+          });
+        }
+      }
+      vi.stubGlobal("Image", MockImage);
+      mockRangeGetClientRects(() => {
+        return [
+          {
+            left: 12,
+            top: 24,
+            right: 240,
+            bottom: 42,
+            width: 228,
+            height: 18,
+            x: 12,
+            y: 24,
+            toJSON: () => ({}),
+          } as DOMRect,
+        ] as unknown as DOMRectList;
+      });
+
+      const result = await convertHtmlToPdfDocument("<p>Camada Unicode NexoHub №1</p>");
+      const task = getDocument({ data: result.bytes.slice(), disableFontFace: true });
+      try {
+        const parsed = await task.promise;
+        const firstPage = await parsed.getPage(1);
+        const content = await firstPage.getTextContent({ disableNormalization: true });
+        const extracted = content.items
+          .map((item) => ("str" in item ? item.str : ""))
+          .join(" ")
+          .replace(/\s+/g, " ");
+        expect(extracted).toContain("Camada Unicode NexoHub №1");
+      } finally {
+        await task.destroy();
+      }
+    });
+
+    it("executa fallback estrutural multipágina quando document não está disponível (Node puro)", async () => {
+      vi.stubGlobal("document", undefined);
+      vi.stubGlobal("DOMParser", undefined);
+
+      const paragraphs = Array.from(
+        { length: 45 },
+        (_, i) =>
+          `<p>Parágrafo fallback ${i + 1}: conteúdo textual extenso sem DOM para testar paginação determinística.</p>`,
+      ).join("\n");
+      const result = await convertHtmlToPdfDocument(
+        `<script>alert(1)</script><h1>Título Fallback</h1>${paragraphs}`,
+      );
+
+      expect(result.pageCount).toBeGreaterThan(1);
+      const task = getDocument({ data: result.bytes.slice(), useSystemFonts: true });
+      try {
+        const parsed = await task.promise;
+        const page1Text = (await (await parsed.getPage(1)).getTextContent()).items
+          .map((item) => ("str" in item ? item.str : ""))
+          .join(" ");
+        expect(page1Text).toContain("Título Fallback");
+        expect(page1Text).toContain("Parágrafo fallback 1");
+        expect(page1Text).not.toContain("alert(1)");
+      } finally {
+        await task.destroy();
+      }
+    });
   });
 });

@@ -200,3 +200,48 @@ it("oculta linhas antigas durante a análise de novas opções", () => {
     screen.getAllByText("Analisando estrutura tabular do documento...").length,
   ).toBeGreaterThan(0);
 });
+
+it("sobrepõe guias visuais interativas de separadores de coluna e permite adicionar e remover ao clicar", () => {
+  const onSeparatorsTextChange = vi.fn();
+  render(
+    <PdfToExcelPanel
+      fileName="tabela.pdf"
+      fileSizeBytes={1024}
+      totalPages={1}
+      thumbnailUrl="data:image/png;base64,iVBORw0KGgo="
+      outputFormat="xlsx"
+      onOutputFormatChange={vi.fn()}
+      sheetMode="per-page"
+      onSheetModeChange={vi.fn()}
+      csvDelimiter=";"
+      onCsvDelimiterChange={vi.fn()}
+      detectTablesOnly={false}
+      onDetectTablesOnlyChange={vi.fn()}
+      separatorsText="30; 62"
+      onSeparatorsTextChange={onSeparatorsTextChange}
+      onRegionChange={vi.fn()}
+    />,
+  );
+
+  const preview = screen.getByTestId("pdf-excel-visual-preview");
+  expect(screen.getAllByTestId("column-separator-guide")).toHaveLength(2);
+
+  vi.spyOn(preview, "getBoundingClientRect").mockReturnValue({
+    left: 100,
+    top: 0,
+    width: 500,
+    height: 700,
+    right: 600,
+    bottom: 700,
+    x: 100,
+    y: 0,
+    toJSON: () => ({}),
+  });
+
+  fireEvent.click(preview, { clientX: 325, clientY: 200 });
+  expect(onSeparatorsTextChange).toHaveBeenCalledWith("30; 45; 62");
+
+  const removeButtons = screen.getAllByTestId("remove-separator-btn");
+  fireEvent.click(removeButtons[0]);
+  expect(onSeparatorsTextChange).toHaveBeenLastCalledWith("62");
+});

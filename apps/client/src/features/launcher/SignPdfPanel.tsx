@@ -301,10 +301,7 @@ export function SignPdfPanel({
     <div className="ilovepdf-compress-container" data-workspace-panel>
       {/* Área Central: Pré-visualização com Selo Arrastável */}
       <div className="ilovepdf-compress-preview-area" data-workspace-part="document">
-        <div
-          className="ilovepdf-file-card-center"
-          style={{ width: "100%", maxWidth: "var(--workspace-page-width, 860px)" }}
-        >
+        <div className="ilovepdf-file-card-center">
           {/* Folha do Documento com o Selo de Assinatura */}
           <PdfViewport page={currentPage} pageCount={totalPages} onPageChange={setCurrentPage}>
             <div
@@ -318,8 +315,6 @@ export function SignPdfPanel({
                   "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
                 backgroundColor: "#ffffff",
                 border: "1px solid #e2e8f0",
-                width: "100%",
-                maxWidth: "100%",
                 marginInline: "auto",
                 display: "flex",
                 alignItems: "center",
@@ -335,12 +330,6 @@ export function SignPdfPanel({
                     .replace("{name}", fileName)}
                   className="ilovepdf-file-thumb-img"
                   style={{
-                    maxHeight: "none",
-                    maxWidth: "100%",
-                    height: "auto",
-                    width: "100%",
-                    objectFit: "contain",
-                    display: "block",
                     pointerEvents: "none",
                   }}
                 />
@@ -469,23 +458,25 @@ export function SignPdfPanel({
             </div>
           </PdfViewport>
 
-          <div style={{ marginTop: "0.6rem", textAlign: "center" }}>
+          <div
+            style={{
+              marginTop: "0.25rem",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.25rem 0.5rem",
+              fontSize: "0.75rem",
+            }}
+          >
             <span className="ilovepdf-file-card-name" title={fileName}>
               {fileName}
             </span>
+            <span aria-hidden="true">•</span>
             <span className="ilovepdf-file-card-size">{formatSize(fileSizeBytes)}</span>
+            <span aria-hidden="true">•</span>
+            <span style={{ color: "#64748b" }}>{translate("sign.dragHint")}</span>
           </div>
-
-          <p
-            style={{
-              fontSize: "0.75rem",
-              color: "#64748b",
-              marginTop: "0.35rem",
-              textAlign: "center",
-            }}
-          >
-            {translate("sign.dragHint")}
-          </p>
         </div>
       </div>
 

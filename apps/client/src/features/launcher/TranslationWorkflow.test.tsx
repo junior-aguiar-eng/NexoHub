@@ -33,7 +33,6 @@ function open() {
       onOperationComplete={complete}
     />,
   );
-  fireEvent.click(screen.getByRole("button", { name: "Digitar Texto" }));
   const input = view.container.querySelector("#dedicated-tool-direct-textarea");
   if (!input) throw new Error("Entrada de texto ausente");
   fireEvent.change(input, {

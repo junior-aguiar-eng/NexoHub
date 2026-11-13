@@ -28,7 +28,7 @@ describe("HtmlToPdfPanel", () => {
     expect(screen.getByText("pagina.html")).toBeInTheDocument();
     expect(screen.getByTestId("html-code-input")).toBeInTheDocument();
     expect(screen.getByText(/Pré-visualização do Documento/i)).toBeInTheDocument();
-    expect(screen.getByText(/Imagens não são incluídas/)).toBeInTheDocument();
+    expect(screen.getByText(/camada de texto selecionável e pesquisável/i)).toBeInTheDocument();
     expect(screen.getByTitle("Pré-visualização HTML")).toHaveAttribute("sandbox", "");
   });
 

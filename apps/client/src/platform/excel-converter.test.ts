@@ -1,6 +1,10 @@
 import { degrees, PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { describe, expect, it } from "vitest";
-import { convertPdfToExcelDocument, getExcelColumnLetter } from "./excel-converter";
+import {
+  convertPdfToExcelDocument,
+  extractPdfSpreadsheetData,
+  getExcelColumnLetter,
+} from "./excel-converter";
 
 async function createSyntheticTablePdf(): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
@@ -242,4 +246,94 @@ it("mantém valores alinhados à direita e células ausentes em suas colunas", a
   const result = await convertPdfToExcelDocument(await doc.save());
   expect(result.previewRows[1]).toEqual(["Teclado", "12345.67"]);
   expect(result.previewRows[2]).toEqual(["", "99999.99"]);
+});
+
+it("separa colunas próximas (12pt) por projeção X recorrente sem colapsar células", async () => {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([600, 800]);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const rows = [
+    ["Servico A", "2"],
+    ["Servico B", "14"],
+    ["Servico C", "7"],
+  ] as const;
+  const maxWidth = Math.max(...rows.map(([label]) => font.widthOfTextAtSize(label, 11)));
+  const col2X = 50 + maxWidth + 12;
+  rows.forEach(([label, qty], idx) => {
+    const y = 720 - idx * 24;
+    page.drawText(label, { x: 50, y, size: 11, font });
+    page.drawText(qty, { x: col2X, y, size: 11, font });
+  });
+  const result = await extractPdfSpreadsheetData(await doc.save());
+  expect(result.previewRows).toEqual([
+    ["Servico A", "2"],
+    ["Servico B", "14"],
+    ["Servico C", "7"],
+  ]);
+});
+
+it("detecta linhas vetoriais verticais para separar colunas muito próximas (< 10pt)", async () => {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([600, 800]);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const rows = [
+    ["Item 1", "9"],
+    ["Item 2", "15"],
+  ] as const;
+  const maxWidth = Math.max(...rows.map(([label]) => font.widthOfTextAtSize(label, 11)));
+  const borderX = 50 + maxWidth + 3.5;
+  const col2X = 50 + maxWidth + 7;
+  rows.forEach(([label, qty], idx) => {
+    const y = 720 - idx * 24;
+    page.drawText(label, { x: 50, y, size: 11, font });
+    page.drawText(qty, { x: col2X, y, size: 11, font });
+  });
+  page.drawLine({
+    start: { x: borderX, y: 685 },
+    end: { x: borderX, y: 740 },
+    thickness: 0.8,
+  });
+  const result = await extractPdfSpreadsheetData(await doc.save());
+  expect(result.previewRows).toEqual([
+    ["Item 1", "9"],
+    ["Item 2", "15"],
+  ]);
+});
+
+it("emite células numéricas, moeda BRL, porcentagem, data, larguras de coluna e cabeçalho no XLSX", async () => {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([600, 800]);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const rows = [
+    ["Produto", "Qtd", "Valor", "Taxa", "Data"],
+    ["Teclado", "150", "R$ 1.250,50", "12,5%", "13/11/2026"],
+  ];
+  const xs = [40, 150, 230, 350, 450];
+  rows.forEach((row, r) => {
+    row.forEach((value, c) => {
+      page.drawText(value, { x: xs[c], y: 740 - r * 30, size: 11, font });
+    });
+  });
+  const result = await convertPdfToExcelDocument(await doc.save(), {
+    outputFormat: "xlsx",
+    preserveText: false,
+  });
+  const { unzipSync, strFromU8 } = await import("fflate");
+  const archive = unzipSync(result.data);
+  const sheetXml = strFromU8(archive["xl/worksheets/sheet1.xml"]);
+  const stylesXml = strFromU8(archive["xl/styles.xml"]);
+
+  expect(sheetXml).toContain("<cols>");
+  expect(sheetXml).toContain("<col ");
+  expect(sheetXml).toContain('<c r="A1" s="1" t="inlineStr"><is><t>Produto</t></is></c>');
+  expect(sheetXml).toContain('<c r="B2" t="n"');
+  expect(sheetXml).toContain("<v>150</v>");
+  expect(sheetXml).toContain('<c r="C2" t="n"');
+  expect(sheetXml).toContain("<v>1250.5</v>");
+  expect(sheetXml).toContain('<c r="D2" t="n"');
+  expect(sheetXml).toContain("<v>0.125</v>");
+  expect(sheetXml).toContain('<c r="E2" t="n"');
+  expect(sheetXml).toContain("<v>46339</v>");
+  expect(stylesXml).toContain("R$");
+  expect(stylesXml).toContain("dd/mm/yyyy");
 });

@@ -566,11 +566,12 @@ export function UnlockPdfPanel({
         .unlock-preview-pane {
           display: flex;
           flex-direction: column;
+          min-height: 0;
           background: var(--color-surface-raised);
           border: 1px solid var(--color-border);
           border-radius: 12px;
-          padding: 1.25rem;
-          gap: 1rem;
+          padding: 0.75rem 1rem;
+          gap: 0.6rem;
         }
 
         .unlock-preview-header {
@@ -632,16 +633,21 @@ export function UnlockPdfPanel({
           background: var(--color-surface-muted);
           border: 1px solid var(--color-border);
           border-radius: 8px;
-          padding: 1rem;
-          min-height: 380px;
+          padding: 0.5rem;
+          min-height: 0;
+          container-type: size;
         }
 
         .unlock-preview-image {
-          max-width: 100%;
-          max-height: 480px;
+          display: block;
+          width: auto;
+          max-width: min(100%, var(--workspace-page-width, 860px));
+          height: auto;
+          max-height: calc(100cqh - 12px);
           object-fit: contain;
           border-radius: 4px;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+          border: 1px solid var(--color-border);
+          box-shadow: 0 4px 16px rgba(15, 23, 42, 0.14);
         }
 
         .unlock-preview-placeholder {

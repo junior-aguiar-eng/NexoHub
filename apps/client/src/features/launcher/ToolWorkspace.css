@@ -161,9 +161,9 @@
 }
 .app-shell--workspace .dedicated-tool-page--workspace > .ilovepdf-tool-nav {
   flex: 0 0 auto;
-  min-height: 52px;
+  min-height: 44px;
   margin: 0;
-  padding: 6px 16px;
+  padding: 4px 16px;
   border-bottom: 1px solid var(--color-border);
 }
 .app-shell--workspace .dedicated-tool-workspace-main {
@@ -178,17 +178,16 @@
 .app-shell--workspace .dedicated-tool-workspace-panels {
   min-height: 0;
   min-width: 0;
-  overflow: auto;
+  overflow: hidden;
   grid-column: 1;
   grid-row: 1;
-}
-.app-shell--workspace .dedicated-tool-workspace-panels {
   display: flex;
   flex-direction: column;
 }
 .app-shell--workspace .dedicated-tool-workspace-panels > [data-workspace-panel] {
-  flex: 1;
+  flex: 1 1 0%;
   height: auto;
+  min-height: 0;
 }
 .app-shell--workspace
   .dedicated-tool-workspace-panels
@@ -243,7 +242,8 @@
   flex-direction: column;
 }
 .app-shell--workspace .dedicated-tool-workspace-panels > [data-workspace-panel] {
-  height: 100%;
+  flex: 1 1 0%;
+  height: auto;
   min-height: 0;
 }
 .app-shell--workspace .dedicated-tool-workspace-panels [data-workspace-panel] {
@@ -289,7 +289,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 12px;
+  padding: 0 12px;
 }
 .app-shell--workspace
   .dedicated-tool-workspace-panels
@@ -756,14 +756,20 @@
   .app-shell--workspace
     .dedicated-tool-page--workspace:has([data-workspace-part="options"])
     [data-workspace-part="options"] {
-    max-height: calc(100% - var(--workspace-action-height, 80px));
-    align-self: start;
+    height: calc(100% - var(--workspace-action-height, 88px));
+    max-height: calc(100% - var(--workspace-action-height, 88px));
+    align-self: stretch;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--color-surface-raised);
+    border-left: 1px solid var(--color-border);
   }
 }
 .app-shell.app-shell--workspace > .app-header {
-  min-height: 64px;
+  min-height: 52px;
   height: auto;
-  padding-block: 6px;
+  padding-block: 4px;
 }
 @media (max-height: 600px) {
   .app-shell.app-shell--workspace > .app-header {

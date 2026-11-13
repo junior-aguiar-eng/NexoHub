@@ -24,6 +24,13 @@ interface PdfToWordPanelProps {
   readonly downloadUrl: string | null;
   readonly outputFileName: string;
   readonly thumbnail?: string;
+  readonly hideInlineAction?: boolean;
+  readonly preserveTables?: boolean;
+  readonly extractImages?: boolean;
+  readonly runOcrIfScanned?: boolean;
+  readonly onPreserveTablesChange?: (value: boolean) => void;
+  readonly onExtractImagesChange?: (value: boolean) => void;
+  readonly onRunOcrIfScannedChange?: (value: boolean) => void;
   readonly onRunConversion: () => void;
   readonly onReset: () => void;
   readonly onNavigateToOcr?: () => void;
@@ -45,6 +52,13 @@ export function PdfToWordPanel({
   downloadUrl,
   outputFileName,
   thumbnail,
+  hideInlineAction = false,
+  preserveTables = true,
+  extractImages = true,
+  runOcrIfScanned = true,
+  onPreserveTablesChange,
+  onExtractImagesChange,
+  onRunOcrIfScannedChange,
   onRunConversion,
   onReset,
   onNavigateToOcr,
@@ -134,13 +148,15 @@ export function PdfToWordPanel({
               {thumbnail ? (
                 <img
                   src={thumbnail}
-                  alt={`Prévia da página 1 de ${outputFileName}`}
+                  alt={translate("pdfToWord.pagePreviewAlt").replace("{fileName}", outputFileName)}
                   className="pdf-word-thumbnail-img"
                 />
               ) : (
                 <div className="pdf-word-thumbnail-fallback">
                   <FileCheck2 size={54} className="text-[#2B579A]" aria-hidden="true" />
-                  <span className="text-xs text-muted-foreground mt-2">Documento Word</span>
+                  <span className="text-xs text-muted-foreground mt-2">
+                    {translate("pdfToWord.wordDocument")}
+                  </span>
                 </div>
               )}
               <span className="pdf-word-file-badge">{outputFileName}</span>
@@ -153,6 +169,16 @@ export function PdfToWordPanel({
               <CheckCircle2 size={20} className="text-emerald-500" aria-hidden="true" />
               <span>{translate("pdfToWord.ready")}</span>
             </div>
+
+            {report.usedOcr && (
+              <div
+                className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-[#2B579A] dark:bg-blue-950/50 dark:text-blue-300"
+                data-testid="pdf-word-ocr-badge"
+              >
+                <FileScan size={14} aria-hidden="true" />
+                <span>{translate("pdfToWord.ocrAppliedBadge")}</span>
+              </div>
+            )}
 
             <h2 className="pdf-word-main-heading">{translate("pdfToWord.statsCard")}</h2>
 
@@ -184,6 +210,28 @@ export function PdfToWordPanel({
                   )}
                 </span>
               </div>
+              {report.tableCount > 0 && (
+                <div className="pdf-word-stat-box">
+                  <span className="pdf-word-stat-value">{report.tableCount}</span>
+                  <span className="pdf-word-stat-label">
+                    {translate("pdfToWord.tablesDetected").replace(
+                      "{count}",
+                      String(report.tableCount),
+                    )}
+                  </span>
+                </div>
+              )}
+              {report.imageCount > 0 && (
+                <div className="pdf-word-stat-box">
+                  <span className="pdf-word-stat-value">{report.imageCount}</span>
+                  <span className="pdf-word-stat-label">
+                    {translate("pdfToWord.imagesEmbedded").replace(
+                      "{count}",
+                      String(report.imageCount),
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="pdf-word-size-comparison mt-3">
@@ -244,9 +292,17 @@ export function PdfToWordPanel({
   return (
     <div className="pdf-word-container" data-testid="pdf-word-idle">
       <div className="pdf-word-card">
-        <div className="pdf-word-icon-wrapper">
-          <FileText size={48} className="text-[#2B579A]" aria-hidden="true" />
-        </div>
+        {thumbnail ? (
+          <img
+            src={thumbnail}
+            alt={translate("pdfToWord.pagePreviewAlt").replace("{fileName}", fileName)}
+            className="pdf-word-idle-thumb"
+          />
+        ) : (
+          <div className="pdf-word-icon-wrapper">
+            <FileText size={44} className="text-[#2B579A]" aria-hidden="true" />
+          </div>
+        )}
         <h2 className="pdf-word-title">{translate("tool.pdfToWord.title")}</h2>
         <p className="pdf-word-description">{translate("tool.pdfToWord.description")}</p>
 
@@ -255,17 +311,52 @@ export function PdfToWordPanel({
           <span className="text-xs text-muted-foreground ml-2">({formatBytes(fileSizeBytes)})</span>
         </div>
 
-        <div className="pdf-word-actions mt-6">
-          <Button
-            type="button"
-            className="ilovepdf-action-red-btn text-white font-semibold px-8 py-3 rounded-xl shadow-md hover:shadow-lg transition-all"
-            style={{ backgroundColor: "#2B579A" }}
-            onClick={onRunConversion}
-          >
-            {translate("dedicated.actionPdfToWord")}
-            <ArrowRight size={18} className="ml-2" aria-hidden="true" />
-          </Button>
+        <div className="mt-5 w-full max-w-md text-left space-y-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-subtle)] p-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            {translate("pdfToWord.optionsTitle")}
+          </p>
+          <label className="flex items-center gap-2.5 text-sm text-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={runOcrIfScanned}
+              onChange={(event) => onRunOcrIfScannedChange?.(event.target.checked)}
+              className="h-4 w-4 rounded border-border accent-[#2B579A]"
+            />
+            <span>{translate("pdfToWord.runOcrIfScanned")}</span>
+          </label>
+          <label className="flex items-center gap-2.5 text-sm text-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={preserveTables}
+              onChange={(event) => onPreserveTablesChange?.(event.target.checked)}
+              className="h-4 w-4 rounded border-border accent-[#2B579A]"
+            />
+            <span>{translate("pdfToWord.preserveTables")}</span>
+          </label>
+          <label className="flex items-center gap-2.5 text-sm text-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={extractImages}
+              onChange={(event) => onExtractImagesChange?.(event.target.checked)}
+              className="h-4 w-4 rounded border-border accent-[#2B579A]"
+            />
+            <span>{translate("pdfToWord.extractImages")}</span>
+          </label>
         </div>
+
+        {!hideInlineAction && (
+          <div className="pdf-word-actions mt-6">
+            <Button
+              type="button"
+              className="ilovepdf-action-red-btn text-white font-semibold px-8 py-3 rounded-xl shadow-md hover:shadow-lg transition-all"
+              style={{ backgroundColor: "#2B579A" }}
+              onClick={onRunConversion}
+            >
+              {translate("dedicated.actionPdfToWord")}
+              <ArrowRight size={18} className="ml-2" aria-hidden="true" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

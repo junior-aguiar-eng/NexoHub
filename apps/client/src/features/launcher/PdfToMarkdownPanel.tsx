@@ -399,7 +399,6 @@ export function PdfToMarkdownPanel({
                       src={activeThumbnail}
                       alt={`Miniatura de ${fileName}`}
                       className="ilovepdf-file-thumb-img"
-                      style={{ height: "auto", width: "100%", objectFit: "contain" }}
                     />
                   ) : (
                     <div className="ilovepdf-file-thumb-placeholder">PDF</div>

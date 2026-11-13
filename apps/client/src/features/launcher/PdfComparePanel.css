@@ -25,7 +25,7 @@
 }
 .pdf-compare :is(button, input):focus-visible,
 .pdf-compare-scroll:focus-visible {
-  outline: 3px solid #df614b;
+  outline: 3px solid var(--color-brand);
   outline-offset: 3px;
 }
 .pdf-compare .pdf-compare-back {
@@ -51,8 +51,8 @@
   display: inline-flex;
   padding: 14px;
   border-radius: 18px;
-  background: #fff0eb;
-  color: #df614b;
+  background: var(--color-brand-soft, #fff1f2);
+  color: var(--color-brand);
 }
 .pdf-compare-local {
   display: inline-flex;
@@ -78,7 +78,7 @@
   overflow: hidden;
 }
 .pdf-compare-slot:focus-within {
-  outline: 3px solid #df614b;
+  outline: 3px solid var(--color-brand);
   outline-offset: 3px;
 }
 .pdf-compare-slot label {
@@ -92,7 +92,7 @@
   cursor: pointer;
 }
 .pdf-compare-slot svg {
-  color: #df614b;
+  color: var(--color-brand);
 }
 .pdf-compare-slot strong {
   max-width: 100%;
@@ -258,7 +258,7 @@
   margin-top: 10px;
 }
 .pdf-compare-pair-label:focus-visible {
-  outline: 3px solid #df614b;
+  outline: 3px solid var(--color-brand);
   outline-offset: 3px;
 }
 .pdf-compare-pager span {
@@ -277,7 +277,7 @@
 }
 .pdf-compare input[type="checkbox"],
 .pdf-compare input[type="range"] {
-  accent-color: #e86750;
+  accent-color: var(--color-brand);
 }
 .pdf-compare-visual-tools input[type="range"] {
   width: 100px;

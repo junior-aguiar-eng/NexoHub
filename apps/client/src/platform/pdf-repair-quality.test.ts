@@ -52,13 +52,17 @@ it("recusa expansão de stream acima de 8 MiB sem produzir saída parcial", asyn
   );
 });
 
-it("recusa divergência entre árvore declarada e páginas recuperadas", async () => {
+it("repara divergência entre /Pages /Count e páginas recuperadas com aviso transparente", async () => {
   const doc = await PDFDocument.create();
   doc.addPage();
   doc.catalog.Pages().set(PDFName.of("Count"), doc.context.obj(2));
-  await expect(repairPdfDocument(await doc.save({ useObjectStreams: false }))).rejects.toThrow(
-    "CORRUPTED_DOCUMENT",
-  );
+  const result = await repairPdfDocument(await doc.save({ useObjectStreams: false }));
+  expect(result.report.fixedXref).toBe(true);
+  expect(result.report.recoveredPages).toBe(1);
+  expect(result.report.totalDetectedPages).toBe(1);
+  expect(result.report.warnings.length).toBeGreaterThan(0);
+  const loaded = await PDFDocument.load(result.pdfBytes, { updateMetadata: false });
+  expect(loaded.getPageCount()).toBe(1);
 });
 
 it("recusa perder metadados cuja associação foi destruída junto com o trailer", async () => {

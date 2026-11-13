@@ -506,7 +506,6 @@ test("Windows: PDF para Word exporta texto em DOCX", async () => {
 test("Windows: revisão aplica correção ao texto", async () => {
   test.setTimeout(120000);
   await navigate("revisar-texto");
-  await page.getByRole("button", { name: "Digitar Texto", exact: true }).click();
   await page.locator("#dedicated-tool-direct-textarea").fill("Eu fasso isso.");
   await page.getByRole("button", { name: "Revisar Texto", exact: true }).click();
   await expect(page.locator(".text-review-findings-list")).toContainText("faço", {
@@ -686,7 +685,6 @@ test("Windows: medir tradução real de frase autoral", async () => {
   test.setTimeout(720000);
   test.skip(process.env.NEXOHUB_TRANSLATION_REAL !== "1", "Defina NEXOHUB_TRANSLATION_REAL=1");
   await navigate("traduzir-texto");
-  await page.getByRole("button", { name: "Digitar Texto" }).click();
   await page
     .locator("#dedicated-tool-direct-textarea")
     .fill("Maria Silva did not authorize the payment of 125 euros on 14/03/2026.");
@@ -725,7 +723,6 @@ test("Windows: medir tradução real de frase autoral", async () => {
     else await route.continue();
   });
   await page.reload();
-  await page.getByRole("button", { name: "Digitar Texto" }).click();
   await page.locator("#dedicated-tool-direct-textarea").fill("The payment was not authorized.");
   await page.getByRole("button", { name: "Executar agora", exact: true }).click();
   await expect
@@ -758,7 +755,6 @@ test("Windows: tradução persiste após fechar e reabrir online e offline", asy
     });
     if (offline) await browser.contexts()[0].setOffline(true);
     await navigate("traduzir-texto");
-    await page.getByRole("button", { name: "Digitar Texto" }).click();
     await page
       .locator("#dedicated-tool-direct-textarea")
       .fill("The payment of 125 euros was not authorized.");

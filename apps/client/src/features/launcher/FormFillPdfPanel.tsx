@@ -407,6 +407,30 @@ export function FormFillPdfPanel({
             <FileCheck2 size={16} color="#3b82f6" />
             <span>{translate("formFill.previewTitle")}</span>
           </div>
+          {!revisionPreview?.error && (
+            <div
+              className="form-fill-preview-footer-hint"
+              role="status"
+              aria-label={translate("formFill.previewStatus")}
+            >
+              <Info size={13} />
+              <span>
+                {translate(
+                  revisionPreview?.pending || isLoadingFields
+                    ? revisionPreview?.isOriginal
+                      ? "formFill.previewOriginalLoading"
+                      : "formFill.previewUpdating"
+                    : revisionPreview
+                      ? revisionPreview.isOriginal
+                        ? "formFill.previewOriginal"
+                        : revisionPreview.previewUrl
+                          ? "formFill.previewReady"
+                          : "formFill.previewWaiting"
+                      : "formFill.previewHint",
+                )}
+              </span>
+            </div>
+          )}
         </div>
 
         <PdfViewport page={previewPage} pageCount={totalPages} onPageChange={navigateToPage}>
@@ -428,7 +452,7 @@ export function FormFillPdfPanel({
           </div>
         </PdfViewport>
 
-        {revisionPreview?.error ? (
+        {revisionPreview?.error && (
           <div className="form-fill-preview-error">
             <p role="alert">{revisionPreview.error}</p>
             {onRetryPreview && (
@@ -436,29 +460,6 @@ export function FormFillPdfPanel({
                 {translate("formFill.previewRetry")}
               </button>
             )}
-          </div>
-        ) : (
-          <div
-            className="form-fill-preview-footer-hint"
-            role="status"
-            aria-label={translate("formFill.previewStatus")}
-          >
-            <Info size={14} />
-            <span>
-              {translate(
-                revisionPreview?.pending || isLoadingFields
-                  ? revisionPreview?.isOriginal
-                    ? "formFill.previewOriginalLoading"
-                    : "formFill.previewUpdating"
-                  : revisionPreview
-                    ? revisionPreview.isOriginal
-                      ? "formFill.previewOriginal"
-                      : revisionPreview.previewUrl
-                        ? "formFill.previewReady"
-                        : "formFill.previewWaiting"
-                    : "formFill.previewHint",
-              )}
-            </span>
           </div>
         )}
       </div>
@@ -791,11 +792,17 @@ export function FormFillPdfPanel({
         .form-fill-preview-pane {
           display: flex;
           flex-direction: column;
+          min-height: 0;
+          overflow: hidden;
           background: var(--color-surface-raised);
           border: 1px solid var(--color-border);
           border-radius: 12px;
-          padding: 1.25rem;
-          gap: 1rem;
+          padding: 0.6rem 0.85rem;
+          gap: 0.45rem;
+        }
+        .form-fill-preview-pane > .pdf-viewport {
+          flex: 1;
+          min-height: 0;
         }
 
         .form-fill-preview-header {
@@ -850,23 +857,21 @@ export function FormFillPdfPanel({
         }
 
         .form-fill-preview-canvas-box {
-          flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--color-surface-muted);
-          border: 1px solid var(--color-border);
+          background: transparent;
+          border: 0;
           border-radius: 8px;
-          padding: 1rem;
-          min-height: 420px;
+          padding: 0;
+          min-height: 0;
         }
 
         .form-fill-preview-image {
-          max-width: 100%;
-          max-height: 520px;
           object-fit: contain;
           border-radius: 4px;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+          border: 1px solid var(--color-border);
+          box-shadow: 0 4px 16px rgba(15, 23, 42, 0.14);
         }
 
         .form-fill-preview-placeholder {

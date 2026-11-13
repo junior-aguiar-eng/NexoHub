@@ -31,7 +31,6 @@ test("mantém ferramentas locais e sugestões quando o website usa o adapter HTT
     }),
   );
   await page.goto("/revisar-texto");
-  await page.getByRole("button", { name: "Digitar Texto" }).click();
   await page.locator("#dedicated-tool-direct-textarea").fill("Eu fasso isso.");
   await page.getByRole("button", { name: "Revisar Texto", exact: true }).click();
   await page
@@ -66,7 +65,6 @@ test("revisa sem alterar o texto antes da confirmação e permite edição poste
   page,
 }) => {
   await page.goto("/revisar-texto");
-  await page.getByRole("button", { name: "Digitar Texto" }).click();
   await page.locator("#dedicated-tool-direct-textarea").fill("Eu fasso e fasso.");
   await page.getByRole("button", { name: "Revisar Texto", exact: true }).click();
   await expect(page.getByRole("button", { name: "Revisar Texto", exact: true })).toBeEnabled();

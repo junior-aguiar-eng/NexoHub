@@ -7,8 +7,9 @@ import {
   Layers,
   Sparkles,
   Table as TableIcon,
+  X,
 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { translate } from "@/i18n";
 import { getExcelColumnLetter, type SpreadsheetRegion } from "@/platform/excel-converter";
 
@@ -47,6 +48,32 @@ function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function parseSeparatorFractions(text: string): number[] {
+  if (!text.trim()) return [];
+  const values: number[] = [];
+  for (const part of text.split(";")) {
+    const trimmed = part.trim();
+    if (!/^\d+(?:[.,]\d+)?$/.test(trimmed)) continue;
+    const fraction = Number(trimmed.replace(",", ".")) / 100;
+    if (Number.isFinite(fraction) && fraction > 0 && fraction < 1) {
+      values.push(fraction);
+    }
+  }
+  return values.sort((a, b) => a - b);
+}
+
+function formatSeparatorPercent(fraction: number): string {
+  const pct = Math.round(fraction * 1000) / 10;
+  return Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
+}
+
+function serializeSeparatorFractions(fractions: readonly number[]): string {
+  return [...fractions]
+    .sort((a, b) => a - b)
+    .map(formatSeparatorPercent)
+    .join("; ");
 }
 
 export function PdfToExcelPanel({
@@ -97,6 +124,91 @@ export function PdfToExcelPanel({
 
   const activeThumbnail =
     pageThumbnails?.[activePageIndex] ?? (activePageIndex === 0 ? thumbnailUrl : undefined);
+
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const suppressNextClickRef = useRef(false);
+
+  const parsedSeparators = useMemo(() => parseSeparatorFractions(separatorsText), [separatorsText]);
+
+  const minAllowedFraction = Math.max(0.05, region.left + 0.01);
+  const maxAllowedFraction = Math.min(0.95, region.left + region.width - 0.01);
+
+  const updateSeparatorAt = (index: number, rawFraction: number) => {
+    if (!onSeparatorsTextChange || isRunning) return;
+    const prevBound = index > 0 ? parsedSeparators[index - 1] + 0.01 : minAllowedFraction;
+    const nextBound =
+      index < parsedSeparators.length - 1 ? parsedSeparators[index + 1] - 0.01 : maxAllowedFraction;
+    if (prevBound >= nextBound) return;
+    const clamped = Math.min(nextBound, Math.max(prevBound, rawFraction));
+    const rounded = Math.round(clamped * 1000) / 1000;
+    const next = parsedSeparators.map((value, idx) => (idx === index ? rounded : value));
+    onSeparatorsTextChange(serializeSeparatorFractions(next));
+  };
+
+  const removeSeparatorAt = (index: number) => {
+    if (!onSeparatorsTextChange || isRunning) return;
+    const next = parsedSeparators.filter((_, idx) => idx !== index);
+    onSeparatorsTextChange(serializeSeparatorFractions(next));
+  };
+
+  const handleStageClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (isRunning || !onSeparatorsTextChange) return;
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false;
+      return;
+    }
+    if ((event.target as HTMLElement).closest("[data-separator-control]")) return;
+    const stage = stageRef.current;
+    if (!stage) return;
+    const rect = stage.getBoundingClientRect();
+    if (rect.width <= 0 || minAllowedFraction >= maxAllowedFraction) return;
+    const rawFraction = (event.clientX - rect.left) / rect.width;
+    const clamped = Math.min(maxAllowedFraction, Math.max(minAllowedFraction, rawFraction));
+    const rounded = Math.round(clamped * 1000) / 1000;
+    if (parsedSeparators.some((existing) => Math.abs(existing - rounded) < 0.005)) return;
+    onSeparatorsTextChange(serializeSeparatorFractions([...parsedSeparators, rounded]));
+  };
+
+  const handleHandlePointerDown = (index: number, event: React.PointerEvent<HTMLButtonElement>) => {
+    if (isRunning || !onSeparatorsTextChange || event.button !== 0) return;
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setDraggingIndex(index);
+  };
+
+  const handleHandlePointerMove = (index: number, event: React.PointerEvent<HTMLButtonElement>) => {
+    if (draggingIndex !== index || isRunning || !onSeparatorsTextChange) return;
+    const stage = stageRef.current;
+    if (!stage) return;
+    const rect = stage.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    suppressNextClickRef.current = true;
+    updateSeparatorAt(index, (event.clientX - rect.left) / rect.width);
+  };
+
+  const handleHandlePointerEnd = (index: number) => {
+    if (draggingIndex === index) {
+      setDraggingIndex(null);
+    }
+  };
+
+  const handleHandleKeyDown = (index: number, event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (isRunning || !onSeparatorsTextChange) return;
+    if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+      event.preventDefault();
+      updateSeparatorAt(index, parsedSeparators[index] - 0.01);
+    } else if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+      event.preventDefault();
+      updateSeparatorAt(index, parsedSeparators[index] + 0.01);
+    } else if (event.key === "Delete" || event.key === "Backspace") {
+      event.preventDefault();
+      removeSeparatorAt(index);
+    }
+  };
+
+  const hasCustomRegion =
+    region.left > 0.001 || region.top > 0.001 || region.width < 0.999 || region.height < 0.999;
 
   const displayRows = previewRows ?? [];
 
@@ -182,7 +294,7 @@ export function PdfToExcelPanel({
                 disabled={isRunning}
               >
                 <div className="format-btn-header">
-                  <FileSpreadsheet size={18} className="text-emerald-400" />
+                  <FileSpreadsheet size={18} className="text-emerald-600 dark:text-emerald-400" />
                   <span className="format-title">{translate("excel.formatXlsx")}</span>
                 </div>
                 <span className="format-desc">{translate("excel.formatXlsxHint")}</span>
@@ -197,7 +309,7 @@ export function PdfToExcelPanel({
                 disabled={isRunning}
               >
                 <div className="format-btn-header">
-                  <TableIcon size={18} className="text-amber-400" />
+                  <TableIcon size={18} className="text-amber-600 dark:text-amber-400" />
                   <span className="format-title">{translate("excel.formatCsv")}</span>
                 </div>
                 <span className="format-desc">{translate("excel.formatCsvHint")}</span>
@@ -298,7 +410,7 @@ export function PdfToExcelPanel({
           {/* Informativo de Tecnologia */}
           <div className="pdf-excel-info-card">
             <div className="info-card-header">
-              <Sparkles size={16} className="text-emerald-400" />
+              <Sparkles size={16} className="text-emerald-600 dark:text-emerald-400" />
               <span>{translate("excel.infoTitle")}</span>
             </div>
             <p className="info-card-text">{translate("excel.infoDescription")}</p>
@@ -319,7 +431,7 @@ export function PdfToExcelPanel({
                   style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "6px" }}
                 />
               ) : (
-                <FileSpreadsheet size={28} className="text-emerald-400" />
+                <FileSpreadsheet size={28} className="text-emerald-600 dark:text-emerald-400" />
               )}
             </div>
             <div className="file-card-meta">
@@ -373,11 +485,123 @@ export function PdfToExcelPanel({
           )}
         </div>
 
+        {/* Prévia Visual com Guias de Colunas */}
+        {activeThumbnail && (
+          <div className="pdf-excel-visual-card">
+            <div className="preview-card-header">
+              <div className="preview-title-block">
+                <Layers size={18} className="text-emerald-600 dark:text-emerald-400" />
+                <h3>{translate("excel.visualGuidesTitle")}</h3>
+              </div>
+              {parsedSeparators.length > 0 && onSeparatorsTextChange && (
+                <button
+                  type="button"
+                  className="visual-clear-btn"
+                  disabled={isRunning}
+                  onClick={() => onSeparatorsTextChange("")}
+                >
+                  {translate("excel.clearSeparators")}
+                </button>
+              )}
+            </div>
+            <p className="info-card-text visual-guides-hint">
+              {translate("excel.visualGuidesHint")}
+            </p>
+            <div className="visual-stage-wrapper">
+              {/* biome-ignore lint/a11y/useKeyWithClickEvents: os controles individuais dos separadores fornecem navegação por teclado e atalho de remoção */}
+              {/* biome-ignore lint/a11y/noStaticElementInteractions: área de canvas interativa para posicionar separadores sobre a página */}
+              <div
+                ref={stageRef}
+                className={`visual-stage-frame ${onSeparatorsTextChange && !isRunning ? "interactive" : ""}`}
+                data-testid="pdf-excel-visual-preview"
+                onClick={handleStageClick}
+              >
+                <img
+                  src={activeThumbnail}
+                  alt={translate("excel.visualPageAlt")
+                    .replace("{page}", String(activePageIndex + 1))
+                    .replace("{file}", fileName)}
+                  className="visual-stage-image"
+                  draggable={false}
+                />
+                {hasCustomRegion && (
+                  <div
+                    className="visual-region-box"
+                    aria-hidden="true"
+                    style={{
+                      left: `${region.left * 100}%`,
+                      top: `${region.top * 100}%`,
+                      width: `${region.width * 100}%`,
+                      height: `${region.height * 100}%`,
+                    }}
+                  />
+                )}
+                {parsedSeparators.map((sep, idx) => {
+                  const percentLabel = formatSeparatorPercent(sep);
+                  return (
+                    <div
+                      // biome-ignore lint/suspicious/noArrayIndexKey: posição ordenada dos separadores
+                      key={`sep-${idx}`}
+                      className={`visual-separator-guide ${draggingIndex === idx ? "dragging" : ""}`}
+                      style={{ left: `${sep * 100}%` }}
+                      data-testid="column-separator-guide"
+                      data-separator-control
+                    >
+                      <button
+                        type="button"
+                        role="slider"
+                        className="visual-separator-handle"
+                        aria-label={translate("excel.separatorHandleLabel").replace(
+                          "{percent}",
+                          percentLabel,
+                        )}
+                        aria-valuemin={Math.round(minAllowedFraction * 100)}
+                        aria-valuemax={Math.round(maxAllowedFraction * 100)}
+                        aria-valuenow={Math.round(sep * 100)}
+                        disabled={isRunning || !onSeparatorsTextChange}
+                        onPointerDown={(e) => handleHandlePointerDown(idx, e)}
+                        onPointerMove={(e) => handleHandlePointerMove(idx, e)}
+                        onPointerUp={() => handleHandlePointerEnd(idx)}
+                        onPointerCancel={() => handleHandlePointerEnd(idx)}
+                        onKeyDown={(e) => handleHandleKeyDown(idx, e)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          suppressNextClickRef.current = false;
+                        }}
+                      >
+                        <span>{percentLabel}%</span>
+                      </button>
+                      {onSeparatorsTextChange && (
+                        <button
+                          type="button"
+                          className="visual-separator-remove"
+                          data-testid="remove-separator-btn"
+                          aria-label={translate("excel.removeSeparator").replace(
+                            "{percent}",
+                            percentLabel,
+                          )}
+                          disabled={isRunning}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeSeparatorAt(idx);
+                          }}
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Prévia da Tabela Extraída */}
         <div className="pdf-excel-preview-card">
           <div className="preview-card-header">
             <div className="preview-title-block">
-              <TableIcon size={18} className="text-emerald-400" />
+              <TableIcon size={18} className="text-emerald-600 dark:text-emerald-400" />
               <h3>{translate("excel.tablePreviewTitle")}</h3>
             </div>
             <span className="preview-status-badge">
@@ -464,35 +688,35 @@ export function PdfToExcelPanel({
         .file-name { overflow-wrap: anywhere; }
         .file-badges { flex-wrap: wrap; }
         .pdf-excel-file-card { flex-wrap: wrap; gap: 12px; }
-        .pdf-excel-container button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+        .pdf-excel-container button:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
         .pdf-excel-sidebar {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 14px;
         }
 
         .pdf-excel-card {
-          background: #0f172a;
-          border: 1px solid #1e293b;
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
-          padding: 20px;
+          padding: 16px;
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 14px;
         }
 
         .pdf-excel-header {
           display: flex;
           align-items: center;
           gap: 10px;
-          border-bottom: 1px solid #1e293b;
-          padding-bottom: 12px;
+          border-bottom: 1px solid var(--color-border);
+          padding-bottom: 10px;
         }
 
         .pdf-excel-header h2 {
           font-size: 15px;
-          font-weight: 600;
-          color: #f8fafc;
+          font-weight: 700;
+          color: var(--color-ink);
           margin: 0;
         }
 
@@ -503,9 +727,9 @@ export function PdfToExcelPanel({
         }
 
         .pdf-excel-label {
-          font-size: 12px;
-          font-weight: 600;
-          color: #94a3b8;
+          font-size: 11px;
+          font-weight: 700;
+          color: var(--color-ink-muted);
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
@@ -513,7 +737,7 @@ export function PdfToExcelPanel({
         .pdf-excel-format-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 10px;
+          gap: 8px;
         }
 
         .pdf-excel-format-btn {
@@ -521,9 +745,9 @@ export function PdfToExcelPanel({
           flex-direction: column;
           align-items: flex-start;
           gap: 4px;
-          padding: 12px;
-          background: #1e293b;
-          border: 1px solid #334155;
+          padding: 10px 12px;
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
           border-radius: 8px;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -531,12 +755,12 @@ export function PdfToExcelPanel({
         }
 
         .pdf-excel-format-btn:hover {
-          background: #334155;
-          border-color: #475569;
+          background: var(--color-surface-subtle);
+          border-color: var(--color-border-strong);
         }
 
         .pdf-excel-format-btn.active {
-          background: rgba(16, 124, 65, 0.15);
+          background: rgba(16, 124, 65, 0.1);
           border-color: #107c41;
           box-shadow: 0 0 0 1px #107c41;
         }
@@ -548,14 +772,14 @@ export function PdfToExcelPanel({
         }
 
         .format-title {
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 600;
-          color: #f8fafc;
+          color: var(--color-ink);
         }
 
         .format-desc {
           font-size: 11px;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
         }
 
         .pdf-excel-mode-buttons {
@@ -569,12 +793,12 @@ export function PdfToExcelPanel({
           align-items: center;
           justify-content: center;
           gap: 6px;
-          padding: 10px 8px;
+          padding: 9px 8px;
           font-size: 12px;
-          font-weight: 500;
-          color: #cbd5e1;
-          background: #1e293b;
-          border: 1px solid #334155;
+          font-weight: 600;
+          color: var(--color-ink);
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
           border-radius: 6px;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -582,7 +806,8 @@ export function PdfToExcelPanel({
         }
 
         .pdf-excel-mode-btn:hover {
-          background: #334155;
+          background: var(--color-surface-subtle);
+          border-color: var(--color-border-strong);
         }
 
         .pdf-excel-mode-btn.active {
@@ -602,8 +827,8 @@ export function PdfToExcelPanel({
           flex-direction: column;
           align-items: center;
           padding: 8px 4px;
-          background: #1e293b;
-          border: 1px solid #334155;
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
           border-radius: 6px;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -612,21 +837,21 @@ export function PdfToExcelPanel({
         .delimiter-btn span {
           font-size: 15px;
           font-weight: 700;
-          color: #f8fafc;
+          color: var(--color-ink);
         }
 
         .delimiter-btn small {
           font-size: 10px;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
         }
 
         .delimiter-btn.active {
-          background: rgba(16, 124, 65, 0.2);
+          background: rgba(16, 124, 65, 0.12);
           border-color: #107c41;
         }
 
         .delimiter-btn.active span {
-          color: #34d399;
+          color: #059669;
         }
 
         .pdf-excel-checkbox-label {
@@ -634,10 +859,10 @@ export function PdfToExcelPanel({
           align-items: flex-start;
           gap: 10px;
           cursor: pointer;
-          background: #1e293b;
-          padding: 12px;
+          background: var(--color-surface);
+          padding: 10px 12px;
           border-radius: 8px;
-          border: 1px solid #334155;
+          border: 1px solid var(--color-border);
         }
 
         .pdf-excel-checkbox {
@@ -655,23 +880,23 @@ export function PdfToExcelPanel({
         .checkbox-title {
           font-size: 13px;
           font-weight: 600;
-          color: #f1f5f9;
+          color: var(--color-ink);
         }
 
         .checkbox-hint {
           font-size: 11px;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           line-height: 1.4;
         }
 
         .pdf-excel-info-card {
           background: rgba(16, 124, 65, 0.08);
-          border: 1px solid rgba(16, 124, 65, 0.2);
+          border: 1px solid rgba(16, 124, 65, 0.22);
           border-radius: 8px;
-          padding: 12px;
+          padding: 10px 12px;
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 4px;
         }
 
         .info-card-header {
@@ -680,12 +905,18 @@ export function PdfToExcelPanel({
           gap: 6px;
           font-size: 12px;
           font-weight: 600;
+          color: #047857;
+        }
+
+        [data-theme="dark"] .info-card-header,
+        [data-theme="dark"] .delimiter-btn.active span,
+        [data-theme="dark"] .col-letter {
           color: #34d399;
         }
 
         .info-card-text {
           font-size: 11px;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           line-height: 1.4;
           margin: 0;
         }
@@ -693,67 +924,76 @@ export function PdfToExcelPanel({
         .pdf-excel-main {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 12px;
+          min-height: 0;
+          flex: 1;
         }
 
         .pdf-excel-file-card {
-          background: #0f172a;
-          border: 1px solid #1e293b;
-          border-radius: 12px;
-          padding: 16px;
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: 10px;
+          padding: 10px 14px;
           display: flex;
           align-items: center;
           justify-content: space-between;
+          flex: 0 0 auto;
         }
 
         .file-card-details {
           display: flex;
           align-items: center;
-          gap: 14px;
+          gap: 12px;
         }
 
         .file-card-icon {
-          width: 44px;
-          height: 44px;
-          background: rgba(16, 124, 65, 0.15);
-          border: 1px solid rgba(16, 124, 65, 0.3);
+          width: 40px;
+          height: 40px;
+          background: rgba(16, 124, 65, 0.1);
+          border: 1px solid rgba(16, 124, 65, 0.25);
           border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
+          flex-shrink: 0;
         }
 
         .file-card-meta {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 3px;
         }
 
         .file-name {
           font-size: 14px;
           font-weight: 600;
-          color: #f8fafc;
+          color: var(--color-ink);
         }
 
         .file-badges {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
         }
 
         .file-badge {
           font-size: 11px;
-          background: #1e293b;
-          color: #94a3b8;
+          background: var(--color-surface-subtle);
+          color: var(--color-ink-muted);
           padding: 2px 8px;
           border-radius: 4px;
-          border: 1px solid #334155;
+          border: 1px solid var(--color-border);
         }
 
         .file-badge-emerald {
-          background: rgba(16, 124, 65, 0.2);
+          background: rgba(16, 124, 65, 0.12);
+          color: #047857;
+          border-color: rgba(16, 124, 65, 0.3);
+          font-weight: 600;
+        }
+
+        [data-theme="dark"] .file-badge-emerald {
           color: #34d399;
-          border-color: rgba(16, 124, 65, 0.4);
         }
 
         .file-pagination {
@@ -763,16 +1003,21 @@ export function PdfToExcelPanel({
         }
 
         .page-nav-btn {
-          width: 28px;
-          height: 28px;
+          width: 32px;
+          height: 32px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #1e293b;
-          border: 1px solid #334155;
+          background: var(--color-surface-subtle);
+          border: 1px solid var(--color-border);
           border-radius: 6px;
-          color: #94a3b8;
+          color: var(--color-ink-muted);
           cursor: pointer;
+        }
+
+        .page-nav-btn:hover:not(:disabled) {
+          border-color: var(--color-border-strong);
+          color: var(--color-ink);
         }
 
         .page-nav-btn:disabled {
@@ -782,26 +1027,29 @@ export function PdfToExcelPanel({
 
         .page-counter {
           font-size: 12px;
-          color: #cbd5e1;
+          color: var(--color-ink-muted);
+          font-weight: 600;
         }
 
         .pdf-excel-preview-card {
-          background: #0f172a;
-          border: 1px solid #1e293b;
-          border-radius: 12px;
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: 10px;
           overflow: hidden;
           display: flex;
           flex-direction: column;
-          min-height: 400px;
+          flex: 1 1 0%;
+          min-height: 220px;
+          box-shadow: var(--shadow-sm);
         }
 
         .preview-card-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 14px 18px;
-          background: #1e293b;
-          border-bottom: 1px solid #334155;
+          padding: 10px 14px;
+          background: var(--color-surface-subtle);
+          border-bottom: 1px solid var(--color-border);
         }
 
         .preview-title-block {
@@ -813,23 +1061,23 @@ export function PdfToExcelPanel({
         .preview-title-block h3 {
           font-size: 13px;
           font-weight: 600;
-          color: #f8fafc;
+          color: var(--color-ink);
           margin: 0;
         }
 
         .preview-status-badge {
           font-size: 11px;
-          color: #94a3b8;
-          background: #0f172a;
+          color: var(--color-ink-muted);
+          background: var(--color-surface);
           padding: 2px 8px;
           border-radius: 4px;
-          border: 1px solid #334155;
+          border: 1px solid var(--color-border);
         }
 
         .preview-table-wrapper {
           overflow: auto;
-          flex: 1;
-          max-height: 520px;
+          flex: 1 1 0%;
+          min-height: 0;
         }
 
         .preview-empty-state {
@@ -837,9 +1085,10 @@ export function PdfToExcelPanel({
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 12px;
-          padding: 60px 20px;
-          color: #64748b;
+          gap: 10px;
+          padding: 40px 20px;
+          color: var(--color-ink-muted);
+          text-align: center;
         }
 
         .excel-preview-table {
@@ -850,12 +1099,12 @@ export function PdfToExcelPanel({
         }
 
         .excel-preview-table th {
-          background: #1e293b;
-          color: #e2e8f0;
+          background: var(--color-surface-subtle);
+          color: var(--color-ink);
           font-weight: 600;
-          padding: 8px 12px;
-          border-bottom: 1px solid #334155;
-          border-right: 1px solid #334155;
+          padding: 7px 11px;
+          border-bottom: 1px solid var(--color-border);
+          border-right: 1px solid var(--color-border);
           text-align: left;
           white-space: nowrap;
           position: sticky;
@@ -871,25 +1120,25 @@ export function PdfToExcelPanel({
 
         .col-letter {
           font-size: 10px;
-          color: #34d399;
+          color: #059669;
           font-weight: 700;
         }
 
         .col-text {
           font-size: 12px;
-          color: #f8fafc;
+          color: var(--color-ink);
         }
 
         .excel-preview-table td {
-          padding: 8px 12px;
-          border-bottom: 1px solid #1e293b;
-          border-right: 1px solid #1e293b;
-          color: #cbd5e1;
+          padding: 7px 11px;
+          border-bottom: 1px solid var(--color-border);
+          border-right: 1px solid var(--color-border);
+          color: var(--color-ink);
           white-space: nowrap;
         }
 
         .excel-preview-table tbody tr:nth-child(even) {
-          background: rgba(30, 41, 59, 0.4);
+          background: var(--color-surface-subtle);
         }
 
         .excel-preview-table tbody tr:hover {
@@ -897,14 +1146,144 @@ export function PdfToExcelPanel({
         }
 
         .excel-row-num {
-          background: #1e293b;
-          color: #64748b;
+          background: var(--color-surface-subtle);
+          color: var(--color-ink-muted);
           text-align: center;
           font-weight: 600;
           font-size: 11px;
           width: 40px;
-          border-right: 1px solid #334155 !important;
+          border-right: 1px solid var(--color-border) !important;
           user-select: none;
+        }
+
+        .pdf-excel-visual-card {
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: 10px;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          flex: 0 0 auto;
+        }
+
+        .visual-guides-hint {
+          padding: 8px 14px;
+          border-bottom: 1px solid var(--color-border);
+        }
+
+        .visual-clear-btn {
+          font-size: 11px;
+          font-weight: 600;
+          padding: 4px 10px;
+          border-radius: 6px;
+          border: 1px solid var(--color-border);
+          background: var(--color-surface);
+          color: var(--color-ink);
+          cursor: pointer;
+        }
+
+        .visual-clear-btn:hover:not(:disabled) {
+          border-color: var(--color-border-strong);
+          background: var(--color-surface-subtle);
+        }
+
+        .visual-stage-wrapper {
+          padding: 12px;
+          background: var(--color-surface-subtle);
+          display: flex;
+          justify-content: center;
+          overflow: auto;
+          max-height: 320px;
+        }
+
+        .visual-stage-frame {
+          position: relative;
+          display: inline-block;
+          max-width: 100%;
+          border: 1px solid var(--color-border);
+          border-radius: 6px;
+          overflow: visible;
+          user-select: none;
+          background: #ffffff;
+        }
+
+        .visual-stage-frame.interactive {
+          cursor: crosshair;
+        }
+
+        .visual-stage-image {
+          display: block;
+          max-width: 100%;
+          max-height: 290px;
+          height: auto;
+          width: auto;
+          border-radius: 6px;
+        }
+
+        .visual-region-box {
+          position: absolute;
+          border: 2px solid rgba(16, 124, 65, 0.7);
+          background: rgba(16, 124, 65, 0.06);
+          pointer-events: none;
+          box-sizing: border-box;
+        }
+
+        .visual-separator-guide {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 2px;
+          transform: translateX(-50%);
+          border-left: 2px dashed #059669;
+          pointer-events: auto;
+          z-index: 5;
+        }
+
+        .visual-separator-guide.dragging {
+          border-left-style: solid;
+          border-left-color: #10b981;
+        }
+
+        .visual-separator-handle {
+          position: absolute;
+          top: 4px;
+          left: 50%;
+          transform: translateX(-50%);
+          padding: 2px 6px;
+          font-size: 10px;
+          font-weight: 700;
+          line-height: 1.2;
+          border-radius: 4px;
+          border: 1px solid #047857;
+          background: #107c41;
+          color: #ffffff;
+          cursor: ew-resize;
+          white-space: nowrap;
+        }
+
+        .visual-separator-remove {
+          position: absolute;
+          bottom: 4px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 22px;
+          height: 22px;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          border: 1px solid var(--color-border);
+          background: var(--color-surface);
+          color: var(--color-ink);
+          cursor: pointer;
+          box-shadow: var(--shadow-sm);
+        }
+
+        .visual-separator-remove:hover:not(:disabled) {
+          background: #fee2e2;
+          border-color: #ef4444;
+          color: #b91c1c;
         }
 
         @media (max-width: 900px) {

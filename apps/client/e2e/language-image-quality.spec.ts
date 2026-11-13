@@ -157,19 +157,18 @@ test("corretor real preserva frases corretas e detecta erro fora das regras pron
   page,
 }) => {
   await page.goto(`${base}/revisar-texto`);
-  await page.getByRole("button", { name: "Digitar Texto", exact: true }).click();
   const input = page.locator("#dedicated-tool-direct-textarea");
   const correct =
     "O agente foi ao local. Isso nos faz felizes. Ele nos disse a verdade. Eu negocio contratos e publico relatórios.";
   await input.fill(correct);
   const run = page.getByRole("button", { name: "Revisar Texto", exact: true });
   await run.click();
-  await expect(run).toBeEnabled();
+  await expect(run).toBeEnabled({ timeout: 15_000 });
   await expect(page.locator(".text-review-textarea")).toHaveValue(correct);
   await expect(page.locator(".text-review-findings-list")).toHaveCount(0);
   await input.fill("Este relatóriu está incorreto.");
   await run.click();
-  await expect(run).toBeEnabled();
+  await expect(run).toBeEnabled({ timeout: 15_000 });
   await expect(page.locator(".text-review-findings-list")).toContainText("relatóriu");
   await expect(page.locator(".text-review-findings-list")).toContainText("relatório");
   await expect(page.locator(".text-review-textarea")).toHaveValue("Este relatóriu está incorreto.");

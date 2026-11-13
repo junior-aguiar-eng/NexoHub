@@ -310,3 +310,56 @@ test("comparador ocupa a janela e mantém a ação acessível após carregar PDF
   await page.getByRole("button", { name: "Documento", exact: true }).click();
   await expect(page.getByText("Par 1 de 1", { exact: true })).toBeVisible();
 });
+
+test("página cabe no palco em 1366x768 e barra lateral preenche até a ação sem recorte", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  for (const [route, imgSelector] of [
+    ["comprimir-pdf", ".ilovepdf-file-thumb-img"],
+    ["rotacionar-pdf", ".ilovepdf-rotate-thumb-img"],
+    ["proteger-pdf", ".protect-thumb-img"],
+    ["ocultar-pdf", ".redact-thumb-image"],
+  ] as const) {
+    const pdf = await PDFDocument.create();
+    pdf.addPage([500, 700]).drawText("Ajuste ao palco", { x: 40, y: 600, size: 18 });
+    await page.goto(`${process.env.NEXOHUB_BASE_PATH ?? "/"}${route}`);
+    await page
+      .locator('input[type="file"]')
+      .first()
+      .setInputFiles({
+        name: "amostra.pdf",
+        mimeType: "application/pdf",
+        buffer: Buffer.from(await pdf.save()),
+      });
+    const image = page.locator(imgSelector).first();
+    await expect(image).toBeVisible({ timeout: 30000 });
+    const metrics = await page.evaluate((sel) => {
+      const doc = document
+        .querySelector('[data-workspace-part="document"]')
+        ?.getBoundingClientRect();
+      const img = document.querySelector(sel)?.getBoundingClientRect();
+      const opts = document
+        .querySelector('[data-workspace-part="options"]')
+        ?.getBoundingClientRect();
+      const bar = document.querySelector(".dedicated-tool-bottom-bar")?.getBoundingClientRect();
+      return {
+        scrollW: document.documentElement.scrollWidth,
+        vw: window.innerWidth,
+        docHeight: doc?.height ?? 0,
+        docBottom: doc?.bottom ?? 0,
+        imgHeight: img?.height ?? 0,
+        imgBottom: img?.bottom ?? 0,
+        optsBottom: opts?.bottom ?? 0,
+        barTop: bar?.top ?? 0,
+        optsHeight: opts?.height ?? 0,
+        availHeight: (bar?.top ?? 0) - (opts?.top ?? 0),
+      };
+    }, imgSelector);
+    expect(metrics.scrollW).toBeLessThanOrEqual(metrics.vw);
+    expect(metrics.imgHeight).toBeGreaterThan(200);
+    expect(metrics.imgBottom).toBeLessThanOrEqual(metrics.docBottom + 4);
+    expect(metrics.optsBottom).toBeLessThanOrEqual(metrics.barTop + 2);
+    expect(metrics.optsHeight).toBeGreaterThanOrEqual(metrics.availHeight - 4);
+  }
+});

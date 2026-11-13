@@ -83,7 +83,8 @@ export function ImageWatermarkPanel({
             className="image-watermark-preview rounded-xl bg-surface-muted border border-border"
             style={{
               aspectRatio: `${originalDimensions?.width ?? 800} / ${originalDimensions?.height ?? 600}`,
-              maxWidth: `${((originalDimensions?.width ?? 800) / (originalDimensions?.height ?? 600)) * 680}px`,
+              maxWidth: "100%",
+              maxHeight: "100%",
             }}
           >
             {thumbnailUrl ? (
@@ -268,7 +269,7 @@ export function ImageWatermarkPanel({
           <span className="text-xs font-bold text-text-secondary">
             {translate("imageWatermark.position")}
           </span>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
             {positions.map((pos) => {
               const isSelected = position === pos.id;
               return (
@@ -277,7 +278,7 @@ export function ImageWatermarkPanel({
                   type="button"
                   onClick={() => onPositionChange(pos.id)}
                   aria-pressed={isSelected}
-                  className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                  className={`min-h-[40px] py-1.5 px-2 rounded-xl border text-[11px] leading-tight font-bold text-center whitespace-normal break-words transition-all cursor-pointer ${
                     isSelected
                       ? "bg-blue-600 text-white border-blue-600 shadow-xs"
                       : "bg-surface-raised border-border text-text-secondary hover:border-blue-500/40 hover:text-text-primary"

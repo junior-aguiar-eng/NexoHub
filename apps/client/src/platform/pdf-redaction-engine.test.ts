@@ -15,6 +15,7 @@ import {
 } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import { beforeAll, expect, it } from "vitest";
+import { findTextRedactionRects, redactPdfDocument } from "./pdf-engine";
 import { redactPreservingWithPdfium } from "./pdf-redaction-engine";
 
 let api: WrappedPdfiumModule;
@@ -602,3 +603,97 @@ it.each(["Border", "ProcSet", "FirstChar", "Parent", "DA"])(
     ).rejects.toThrow("PDF_OCULTACAO_PERFIL_NAO_SUPORTADO");
   },
 );
+
+it("reconstroi apenas páginas tarjadas e preserva texto selecionável nas páginas sem tarja", async () => {
+  const doc = await PDFDocument.create();
+  doc.setTitle("TITULO_SIGILOSO");
+  doc.catalog.set(PDFName.of("PieceInfo"), doc.context.obj({ App: "Secret" }));
+  doc.catalog.set(PDFName.of("OpenAction"), doc.context.obj({ S: "JavaScript" }));
+  const p1 = doc.addPage([500, 700]);
+  p1.drawText("SEGREDO_PAG1", { x: 70, y: 500, size: 16 });
+  const p2 = doc.addPage([500, 700]);
+  p2.drawText("TEXTO_INTACTO_PAG2", { x: 70, y: 500, size: 16 });
+
+  const input = await doc.save();
+  const out = await redactPdfDocument(input, {
+    redactions: [
+      { id: "r-p1", pageIndex: 0, xPercent: 0, yPercent: 0, widthPercent: 100, heightPercent: 100 },
+    ],
+  });
+
+  const parsed = await PDFDocument.load(out);
+  expect(parsed.getTitle()).toBeUndefined();
+  expect(parsed.catalog.has(PDFName.of("PieceInfo"))).toBe(false);
+  expect(parsed.catalog.has(PDFName.of("OpenAction"))).toBe(false);
+
+  const task = pdfjs.getDocument({ data: out.slice() });
+  try {
+    const pdf = await task.promise;
+    expect(pdf.numPages).toBe(2);
+    const p1Text = (await (await pdf.getPage(1)).getTextContent()).items;
+    expect(p1Text).toHaveLength(0);
+    const p2Text = (await (await pdf.getPage(2)).getTextContent()).items
+      .flatMap((i) => ("str" in i ? [i.str] : []))
+      .join(" ");
+    expect(p2Text).toContain("TEXTO_INTACTO_PAG2");
+  } finally {
+    await task.destroy();
+  }
+});
+
+it("findTextRedactionRects localiza palavras-chave, CPF, CNPJ, e-mail, telefone e páginas rotacionadas", async () => {
+  const doc = await PDFDocument.create();
+  const p1 = doc.addPage([500, 700]);
+  p1.drawText("CONTRATO_CONFIDENCIAL CPF: 123.456.789-00", { x: 60, y: 600, size: 14 });
+  p1.drawText("CNPJ: 12.345.678/0001-99 Email: contato@nexohub.com.br", {
+    x: 60,
+    y: 520,
+    size: 14,
+  });
+  p1.drawText("Tel: (11) 98765-4321", { x: 60, y: 440, size: 14 });
+
+  const p2 = doc.addPage([400, 600]);
+  p2.setRotation(degrees(90));
+  p2.drawText("ALVO_ROTACIONADO", { x: 80, y: 300, size: 16 });
+
+  const bytes = await doc.save();
+
+  const keywordRects = await findTextRedactionRects(bytes, "CONTRATO_CONFIDENCIAL", {
+    color: "gray",
+    label: "[SIGILO]",
+  });
+  expect(keywordRects).toHaveLength(1);
+  expect(keywordRects[0].pageIndex).toBe(0);
+  expect(keywordRects[0].color).toBe("gray");
+  expect(keywordRects[0].label).toBe("[SIGILO]");
+  expect(keywordRects[0].widthPercent).toBeGreaterThan(5);
+
+  const cpfRects = await findTextRedactionRects(bytes, "cpf");
+  expect(cpfRects).toHaveLength(1);
+  expect(cpfRects[0].pageIndex).toBe(0);
+
+  const cnpjRects = await findTextRedactionRects(bytes, "cnpj");
+  expect(cnpjRects).toHaveLength(1);
+
+  const emailRects = await findTextRedactionRects(bytes, "email");
+  expect(emailRects).toHaveLength(1);
+
+  const phoneRects = await findTextRedactionRects(bytes, "phone");
+  expect(phoneRects).toHaveLength(1);
+
+  const rotatedRects = await findTextRedactionRects(bytes, "ALVO_ROTACIONADO");
+  expect(rotatedRects).toHaveLength(1);
+  expect(rotatedRects[0].pageIndex).toBe(1);
+
+  const redacted = await redactPdfDocument(bytes, {
+    redactions: [...keywordRects, ...cpfRects, ...rotatedRects],
+  });
+  const task = pdfjs.getDocument({ data: redacted.slice() });
+  try {
+    const pdf = await task.promise;
+    expect((await (await pdf.getPage(1)).getTextContent()).items).toHaveLength(0);
+    expect((await (await pdf.getPage(2)).getTextContent()).items).toHaveLength(0);
+  } finally {
+    await task.destroy();
+  }
+});

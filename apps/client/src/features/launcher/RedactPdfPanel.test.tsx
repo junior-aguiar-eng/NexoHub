@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { RedactPdfPanel } from "./RedactPdfPanel";
 
@@ -272,4 +272,57 @@ it("identifica a prévia como marcações e exige escolha explícita de preserva
   expect(screen.getByText(/Marcações sobre o original/)).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText("Modo de ocultação"), { target: { value: "preserve" } });
   expect(onPreserveChange).toHaveBeenCalledWith(true);
+});
+
+it("executa busca por palavra-chave e padrões LGPD adicionando tarjas editáveis com feedback", async () => {
+  const onRedactionsChange = vi.fn();
+  const onSearchTextRedactions = vi.fn(async (query: string) => [
+    {
+      id: `found-${query}`,
+      pageIndex: 0,
+      xPercent: 12,
+      yPercent: 25,
+      widthPercent: 28,
+      heightPercent: 4,
+      color: "black",
+      label: "[CONFIDENCIAL]",
+    },
+  ]);
+
+  render(
+    <RedactPdfPanel
+      fileName="contrato.pdf"
+      fileSizeBytes={2048}
+      totalPages={2}
+      redactions={[]}
+      onRedactionsChange={onRedactionsChange}
+      onSearchTextRedactions={onSearchTextRedactions}
+    />,
+  );
+
+  fireEvent.change(screen.getByPlaceholderText(/Palavra-chave ou termo confidencial/i), {
+    target: { value: "SALARIO" },
+  });
+  fireEvent.click(screen.getByTestId("redact-search-submit"));
+
+  await waitFor(() => {
+    expect(onSearchTextRedactions).toHaveBeenCalledWith("SALARIO", {
+      color: "black",
+      label: "[CONFIDENCIAL]",
+    });
+    expect(onRedactionsChange).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "found-SALARIO", pageIndex: 0 }),
+    ]);
+    expect(screen.getByTestId("redact-search-feedback")).toHaveTextContent(
+      /1 ocorrência\(s\) encontrada\(s\)/i,
+    );
+  });
+
+  fireEvent.click(screen.getByTestId("redact-preset-cpf"));
+  await waitFor(() => {
+    expect(onSearchTextRedactions).toHaveBeenLastCalledWith("cpf", {
+      color: "black",
+      label: "[CONFIDENCIAL]",
+    });
+  });
 });

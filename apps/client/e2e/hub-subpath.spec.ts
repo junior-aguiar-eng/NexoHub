@@ -51,7 +51,6 @@ test("revisão carrega os dicionários reais dentro de /hub/", async ({ page }) 
     response.url().endsWith("/hub/dictionaries/pt-BR/pt_BR.dic"),
   );
   await page.goto("/hub/revisar-texto");
-  await page.getByRole("button", { name: "Digitar Texto" }).click();
   await page.locator("#dedicated-tool-direct-textarea").fill("Eu fasso e fasso.");
   await page.getByRole("button", { name: "Revisar Texto", exact: true }).click();
   expect((await aff).ok()).toBe(true);

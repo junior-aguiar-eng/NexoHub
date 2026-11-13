@@ -1,5 +1,5 @@
 import { RotateCcw, RotateCw } from "lucide-react";
-import { useState } from "react";
+import { type CSSProperties, useState } from "react";
 import { translate } from "@/i18n";
 
 type RotatePdfPanelProps = {
@@ -25,7 +25,14 @@ export function RotatePdfPanel({
     <div className="ilovepdf-rotate-container" data-workspace-panel>
       {/* Centro: Visualização da Página Rotacionada */}
       <div className="ilovepdf-rotate-preview-area" data-workspace-part="document">
-        <div className="ilovepdf-rotate-card-center">
+        <div
+          className="ilovepdf-rotate-card-center"
+          style={
+            {
+              "--stage-aspect": String(quarterTurn ? 1 / aspect : aspect),
+            } as CSSProperties
+          }
+        >
           <div
             className="ilovepdf-rotate-rotation-stage"
             style={{ aspectRatio: String(quarterTurn ? 1 / aspect : aspect) }}

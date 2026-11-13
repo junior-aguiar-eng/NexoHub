@@ -81,18 +81,15 @@ export function RemovePagesPanel({
   }
 
   return (
-    <div
-      className="flex flex-col gap-6 w-full max-w-6xl mx-auto p-4 sm:p-6"
-      data-testid="remove-pages-panel"
-    >
+    <div className="flex flex-col gap-3 w-full mx-auto p-3 sm:p-4" data-testid="remove-pages-panel">
       {/* Top Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-surface border border-border shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-            <FileX2 className="w-6 h-6" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-surface border border-border shadow-xs">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-lg bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+            <FileX2 className="w-5 h-5" />
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-text-primary">{fileName}</h2>
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-text-primary truncate">{fileName}</h2>
             {!rangeValid && (
               <p id="page-range-error" role="alert">
                 {translate("pages.invalidRange")}
@@ -106,9 +103,9 @@ export function RemovePagesPanel({
         </div>
 
         {/* Status badges */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
           <span
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border ${
+            className={`px-3 py-1 rounded-full text-xs font-medium border ${
               isAllSelected
                 ? "bg-red-500/10 text-red-600 border-red-500/30 dark:bg-red-950/40 dark:text-red-300"
                 : removeSet.size > 0
@@ -118,21 +115,21 @@ export function RemovePagesPanel({
           >
             {translate("removePages.selectedCount").replace("{count}", String(removeSet.size))}
           </span>
-          <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-surface-secondary text-text-tertiary border border-border">
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-surface-secondary text-text-tertiary border border-border">
             {translate("removePages.remainingCount").replace("{count}", String(remainingCount))}
           </span>
         </div>
       </div>
 
       {isAllSelected && (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-300 text-sm">
+        <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-300 text-sm">
           <AlertTriangle className="w-5 h-5 shrink-0" />
           <span>{translate("removePages.cannotRemoveAll")}</span>
         </div>
       )}
 
       {/* Toolbar Controls */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 p-4 rounded-xl bg-surface-secondary/50 border border-border">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-surface-secondary/50 border border-border">
         {/* Quick range input */}
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <label

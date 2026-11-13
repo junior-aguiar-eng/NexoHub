@@ -114,17 +114,17 @@
   line-height: 1.6;
 }
 .pdf-editor .pdf-editor-primary {
-  background: #c34c38;
-  border-color: #c34c38;
+  background: var(--color-brand);
+  border-color: var(--color-brand);
   color: white;
   font-size: 16px;
   padding: 15px 22px;
   min-height: 52px;
-  box-shadow: 0 5px 14px #df614b24;
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--color-brand), transparent 82%);
 }
 .pdf-editor .pdf-editor-primary:hover:not(:disabled) {
-  background: #ad3d2a;
-  border-color: #ad3d2a;
+  background: var(--color-brand-strong);
+  border-color: var(--color-brand-strong);
 }
 .pdf-editor-upload .pdf-editor-privacy {
   font-size: 12px;
@@ -178,9 +178,9 @@
   background: transparent;
 }
 .pdf-editor-toolbar button[aria-pressed="true"] {
-  background: #fff0eb;
-  border-color: #f1c4b9;
-  color: #ac3f2c;
+  background: var(--color-brand-soft, #fff1f2);
+  border-color: color-mix(in srgb, var(--color-brand), transparent 65%);
+  color: var(--color-brand-strong, #be123c);
 }
 .pdf-editor-toolbar-divider {
   height: 30px;
@@ -227,9 +227,9 @@
   border-color: transparent;
 }
 .pdf-editor-pages button[aria-current="page"] {
-  background: #fff0eb;
-  border-color: #e48771;
-  color: #9d3c29;
+  background: var(--color-brand-soft, #fff1f2);
+  border-color: var(--color-brand);
+  color: var(--color-brand-strong, #be123c);
 }
 .pdf-editor-pages img {
   display: block;
@@ -319,8 +319,8 @@
 }
 .pdf-editor button.pdf-editor-object.original:hover,
 .pdf-editor button.pdf-editor-object.original.selected {
-  background: #e76b5315;
-  border-color: #d55940;
+  background: color-mix(in srgb, var(--color-brand), transparent 90%);
+  border-color: var(--color-brand);
 }
 .pdf-editor-object.added {
   pointer-events: none;
@@ -342,11 +342,11 @@
   cursor: move;
 }
 .pdf-editor-object.added > button:hover {
-  background: #e76b530a;
-  outline: 1px dashed #df614b;
+  background: color-mix(in srgb, var(--color-brand), transparent 94%);
+  outline: 1px dashed var(--color-brand);
 }
 .pdf-editor-object.selected {
-  outline: 2px solid #df614b;
+  outline: 2px solid var(--color-brand);
   outline-offset: 2px;
 }
 .pdf-editor-object.added .pdf-editor-resize {
@@ -355,7 +355,7 @@
   height: 24px;
   min-height: 24px;
   background: white;
-  border: 2px solid #df614b;
+  border: 2px solid var(--color-brand);
   border-radius: 7px;
   cursor: nwse-resize;
   z-index: 2;
@@ -658,7 +658,7 @@
   content: "";
   position: absolute;
   inset: 14px;
-  border: 2px solid #df614b;
+  border: 2px solid var(--color-brand);
   border-radius: 4px;
   background: white;
   pointer-events: none;
@@ -718,13 +718,14 @@
   grid-row: 1 / span 2;
   display: flex;
   flex-direction: column;
-  padding: 8px;
+  padding: 6px 10px;
   min-height: 0;
 }
 .app-shell--workspace .pdf-editor-scroll {
   flex: 1;
   min-height: 0;
   max-height: none;
+  padding: 6px;
 }
 .app-shell--workspace .pdf-editor-viewbar {
   flex: 0 0 auto;
@@ -732,7 +733,9 @@
 .app-shell--workspace .pdf-editor-hint {
   flex: 0 0 auto;
   min-height: 0;
-  margin: 4px 0;
+  margin: 3px 0;
+  font-size: 11px;
+  line-height: 1.3;
 }
 .app-shell--workspace .pdf-editor-properties {
   grid-column: 3;

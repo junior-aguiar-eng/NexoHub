@@ -110,7 +110,7 @@ test("Excel mostra dados reais e exporta células vazias e códigos intactos", a
   const xml = strFromU8(unzipSync(bytes)["xl/worksheets/sheet1.xml"]);
   expect(xml).toContain('<c r="A2" t="inlineStr"><is><t>00123</t>');
   expect(xml).toContain('<c r="B2" t="inlineStr"><is><t></t>');
-  expect(xml).toContain('<c r="C2"><v>15.50</v>');
+  expect(xml).toContain('<c r="C2" t="n" s="3"><v>15.5</v>');
 });
 
 test("Excel não anuncia sucesso quando o PDF precisa de OCR", async ({ page }) => {

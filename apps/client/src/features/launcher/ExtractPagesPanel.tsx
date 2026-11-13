@@ -81,17 +81,17 @@ export function ExtractPagesPanel({
 
   return (
     <div
-      className="flex flex-col gap-6 w-full max-w-6xl mx-auto p-4 sm:p-6"
+      className="flex flex-col gap-3 w-full mx-auto p-3 sm:p-4"
       data-testid="extract-pages-panel"
     >
       {/* Top Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-surface border border-border shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0">
-            <FileOutput className="w-6 h-6" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-surface border border-border shadow-xs">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-lg bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0">
+            <FileOutput className="w-5 h-5" />
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-text-primary">{fileName}</h2>
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-text-primary truncate">{fileName}</h2>
             {!rangeValid && (
               <p id="page-range-error" role="alert">
                 {translate("pages.invalidRange")}
@@ -105,7 +105,7 @@ export function ExtractPagesPanel({
         </div>
 
         <span
-          className={`px-3 py-1.5 rounded-full text-xs font-medium border ${
+          className={`px-3 py-1 rounded-full text-xs font-medium border shrink-0 ${
             selectedSet.size > 0
               ? "bg-orange-500/10 text-orange-600 border-orange-500/30 dark:bg-orange-950/40 dark:text-orange-300"
               : "bg-surface-secondary text-text-secondary border-border"
@@ -116,24 +116,24 @@ export function ExtractPagesPanel({
       </div>
 
       {/* Mode Selector */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <button
           type="button"
           onClick={() => onModeChange("single-pdf")}
-          className={`flex items-start gap-4 p-4 rounded-2xl border text-left transition-all ${
+          className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${
             mode === "single-pdf"
               ? "bg-orange-500/10 border-orange-500/60 shadow-xs dark:bg-orange-950/30"
               : "bg-surface border-border hover:border-orange-500/40"
           }`}
         >
           <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+            className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
               mode === "single-pdf"
                 ? "bg-orange-500 text-white"
                 : "bg-surface-secondary text-text-secondary"
             }`}
           >
-            <Layers className="w-5 h-5" />
+            <Layers className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ export function ExtractPagesPanel({
                 <Check className="w-4 h-4 text-orange-600 dark:text-orange-400" />
               )}
             </div>
-            <p className="text-xs text-text-tertiary mt-1">
+            <p className="text-xs text-text-tertiary mt-0.5">
               Junta todas as páginas selecionadas em um novo arquivo PDF consolidado.
             </p>
           </div>
@@ -153,20 +153,20 @@ export function ExtractPagesPanel({
         <button
           type="button"
           onClick={() => onModeChange("zip-split")}
-          className={`flex items-start gap-4 p-4 rounded-2xl border text-left transition-all ${
+          className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${
             mode === "zip-split"
               ? "bg-orange-500/10 border-orange-500/60 shadow-xs dark:bg-orange-950/30"
               : "bg-surface border-border hover:border-orange-500/40"
           }`}
         >
           <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+            className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
               mode === "zip-split"
                 ? "bg-orange-500 text-white"
                 : "bg-surface-secondary text-text-secondary"
             }`}
           >
-            <Archive className="w-5 h-5" />
+            <Archive className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -177,7 +177,7 @@ export function ExtractPagesPanel({
                 <Check className="w-4 h-4 text-orange-600 dark:text-orange-400" />
               )}
             </div>
-            <p className="text-xs text-text-tertiary mt-1">
+            <p className="text-xs text-text-tertiary mt-0.5">
               Exporta cada página selecionada como um PDF individual agrupado em um arquivo ZIP.
             </p>
           </div>
@@ -185,7 +185,7 @@ export function ExtractPagesPanel({
       </div>
 
       {/* Toolbar Controls */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 p-4 rounded-xl bg-surface-secondary/50 border border-border">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-surface-secondary/50 border border-border">
         {/* Quick range input */}
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <label

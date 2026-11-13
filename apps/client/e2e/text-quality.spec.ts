@@ -82,7 +82,6 @@ test("comparador recusa excesso de linhas e recupera após edição", async ({ p
 test("dicionário indisponível não gera relatório de revisão bem-sucedida", async ({ page }) => {
   await page.route("**/dictionaries/**", (route) => route.abort());
   await page.goto(`${base}/revisar-texto`);
-  await page.getByRole("button", { name: "Digitar Texto", exact: true }).click();
   await page.locator("#dedicated-tool-direct-textarea").fill("Este relatóriu está incorreto.");
   await page.getByRole("button", { name: "Revisar Texto", exact: true }).click();
   await expect(page.getByText(/Não foi possível carregar o corretor de português/i)).toBeVisible();
@@ -98,7 +97,6 @@ test("revisor real aguarda aplicação e baixa texto corrigido preservando ident
   page,
 }) => {
   await page.goto(`${base}/revisar-texto`);
-  await page.getByRole("button", { name: "Digitar Texto", exact: true }).click();
   await page.locator("#dedicated-tool-direct-textarea").fill(reviewReference.original);
   const run = page.getByRole("button", { name: "Revisar Texto", exact: true });
   await run.click();

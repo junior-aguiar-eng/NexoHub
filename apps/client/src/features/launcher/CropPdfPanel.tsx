@@ -69,10 +69,7 @@ export function CropPdfPanel({
     <div className="ilovepdf-compress-container" data-workspace-panel>
       {/* Centro: Pré-visualização com Retângulo Interativo de Recorte */}
       <div className="ilovepdf-compress-preview-area" data-workspace-part="document">
-        <div
-          className="ilovepdf-file-card-center"
-          style={{ width: "100%", maxWidth: "var(--workspace-page-width, 860px)" }}
-        >
+        <div className="ilovepdf-file-card-center">
           {/* Área da folha com as margens de recorte visuais */}
           <PdfViewport page={currentPage} pageCount={totalPages} onPageChange={setCurrentPage}>
             <div
@@ -85,8 +82,6 @@ export function CropPdfPanel({
                   "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
                 backgroundColor: "#ffffff",
                 border: "1px solid #e2e8f0",
-                width: "100%",
-                maxWidth: "100%",
                 marginInline: "auto",
                 display: "flex",
                 alignItems: "center",
@@ -100,14 +95,6 @@ export function CropPdfPanel({
                     .replace("{page}", String(currentPage))
                     .replace("{name}", fileName)}
                   className="ilovepdf-file-thumb-img"
-                  style={{
-                    maxHeight: "none",
-                    height: "auto",
-                    maxWidth: "100%",
-                    width: "100%",
-                    objectFit: "contain",
-                    display: "block",
-                  }}
                 />
               ) : (
                 <div className="ilovepdf-file-thumb-placeholder" style={{ minHeight: "360px" }}>
@@ -210,10 +197,20 @@ export function CropPdfPanel({
             </div>
           </PdfViewport>
 
-          <div style={{ marginTop: "0.75rem", textAlign: "center" }}>
+          <div
+            style={{
+              marginTop: "0.25rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.45rem",
+              fontSize: "0.76rem",
+            }}
+          >
             <span className="ilovepdf-file-card-name" title={fileName}>
               {fileName}
             </span>
+            <span aria-hidden="true">•</span>
             <span className="ilovepdf-file-card-size">{formatSize(fileSizeBytes)}</span>
           </div>
         </div>

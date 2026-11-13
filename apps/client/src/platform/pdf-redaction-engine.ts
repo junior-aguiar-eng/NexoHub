@@ -21,7 +21,8 @@ import {
   rgb,
   StandardFonts,
 } from "pdf-lib";
-import type { RedactPdfOptions } from "./pdf-engine";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import type { RedactionArea, RedactPdfOptions } from "./pdf-engine";
 import { getVisiblePageGeometry } from "./pdf-page-geometry";
 
 function unsupported(): never {
@@ -843,4 +844,255 @@ export async function redactPreservingWithPdfium(
     page.pushOperators(popGraphicsState());
   }
   return freshCopy(result);
+}
+
+export type RedactionPresetKind = "cpf" | "cnpj" | "email" | "phone";
+
+export interface FindTextRedactionOptions {
+  readonly caseSensitive?: boolean;
+  readonly color?: "black" | "white" | "gray";
+  readonly label?: string;
+}
+
+const PRESET_PATTERNS: Record<RedactionPresetKind, string> = {
+  cpf: "(?<!\\d)\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}(?!\\d)",
+  cnpj: "(?<!\\d)\\d{2}\\.?\\d{3}\\.?\\d{3}\\/?\\d{4}-?\\d{2}(?!\\d)",
+  email: "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
+  phone: "(?:\\+?55\\s?)?(?:\\(?\\d{2}\\)?\\s?)(?:9?\\d{4}[-.\\s]?\\d{4})(?!\\d)",
+};
+
+function buildTextSearchRegex(
+  queryOrRegex: string | RegExp | RedactionPresetKind,
+  caseSensitive?: boolean,
+): RegExp | null {
+  if (queryOrRegex instanceof RegExp) {
+    let flags = queryOrRegex.flags.replace(/g/g, "");
+    if (caseSensitive === true) flags = flags.replace(/i/g, "");
+    else if (caseSensitive === false && !flags.includes("i")) flags += "i";
+    return new RegExp(queryOrRegex.source, `${flags}g`);
+  }
+  const trimmed = queryOrRegex.trim();
+  if (!trimmed) return null;
+  if (trimmed in PRESET_PATTERNS) {
+    return new RegExp(PRESET_PATTERNS[trimmed as RedactionPresetKind], "g");
+  }
+  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(escaped, caseSensitive ? "g" : "gi");
+}
+
+interface TextSlice {
+  readonly str: string;
+  readonly width: number;
+  readonly hasEOL: boolean;
+  readonly strStart: number;
+  readonly strEnd: number;
+  readonly baselineX: number;
+  readonly baselineY: number;
+  readonly ux: number;
+  readonly uy: number;
+  readonly vx: number;
+  readonly vy: number;
+  readonly fontHeight: number;
+}
+
+function clampPercent(value: number, min = 0, max = 100): number {
+  if (!Number.isFinite(value)) return min;
+  return Math.max(min, Math.min(max, value));
+}
+
+/**
+ * Localiza ocorrências de texto ou padrões (CPF, CNPJ, e-mail, telefone ou regex)
+ * usando PDF.js `getTextContent()` e converte para porcentagens visuais do viewport.
+ */
+export async function findTextRedactionRects(
+  pdfBytes: Uint8Array,
+  queryOrRegex: string | RegExp | RedactionPresetKind,
+  options: FindTextRedactionOptions = {},
+): Promise<RedactionArea[]> {
+  if (pdfBytes.byteLength === 0) return [];
+  const regex = buildTextSearchRegex(queryOrRegex, options.caseSensitive);
+  if (!regex) return [];
+
+  const loadingTask = pdfjsLib.getDocument({
+    data: pdfBytes.slice(),
+    useSystemFonts: true,
+    stopAtErrors: false,
+  });
+
+  try {
+    const doc = await loadingTask.promise;
+    const results: RedactionArea[] = [];
+    const color = options.color ?? "black";
+    const label = options.label?.trim() || undefined;
+
+    for (let pageIndex = 0; pageIndex < doc.numPages; pageIndex++) {
+      const page = await doc.getPage(pageIndex + 1);
+      try {
+        const viewport = page.getViewport({ scale: 1 });
+        if (viewport.width <= 0 || viewport.height <= 0) continue;
+
+        const textContent = await page.getTextContent();
+        const slices: TextSlice[] = [];
+        let pageText = "";
+
+        for (const rawItem of textContent.items) {
+          if (!("str" in rawItem) || !rawItem.str) continue;
+          const tx = pdfjsLib.Util.transform(viewport.transform, rawItem.transform);
+          const advanceLen = Math.hypot(tx[0], tx[1]);
+          const upLen = Math.hypot(tx[2], tx[3]);
+          const fontHeight = rawItem.height > 0 ? rawItem.height : upLen || advanceLen || 10;
+          const ux = advanceLen > 0 ? tx[0] / advanceLen : 1;
+          const uy = advanceLen > 0 ? tx[1] / advanceLen : 0;
+          const vx = upLen > 0 ? tx[2] / upLen : 0;
+          const vy = upLen > 0 ? tx[3] / upLen : -1;
+
+          const prev = slices[slices.length - 1];
+          if (prev) {
+            const prevEndX = prev.baselineX + prev.ux * prev.width;
+            const prevEndY = prev.baselineY + prev.uy * prev.width;
+            const dx = tx[4] - prevEndX;
+            const dy = tx[5] - prevEndY;
+            const parallelGap = dx * prev.ux + dy * prev.uy;
+            const perpGap = Math.abs(-dx * prev.uy + dy * prev.ux);
+            const boundaryHasSpace = /\s$/.test(prev.str) || /^\s/.test(rawItem.str);
+            if (
+              !boundaryHasSpace &&
+              (prev.hasEOL || perpGap > fontHeight * 0.5 || parallelGap > fontHeight * 0.2)
+            ) {
+              pageText += " ";
+            }
+          }
+
+          const strStart = pageText.length;
+          pageText += rawItem.str;
+          const strEnd = pageText.length;
+
+          slices.push({
+            str: rawItem.str,
+            width: rawItem.width,
+            hasEOL: rawItem.hasEOL,
+            strStart,
+            strEnd,
+            baselineX: tx[4],
+            baselineY: tx[5],
+            ux,
+            uy,
+            vx,
+            vy,
+            fontHeight,
+          });
+        }
+
+        regex.lastIndex = 0;
+        for (;;) {
+          const match = regex.exec(pageText);
+          if (!match) break;
+          if (match[0].length === 0) {
+            regex.lastIndex++;
+            continue;
+          }
+          const matchStart = match.index;
+          const matchEnd = matchStart + match[0].length;
+          const overlapping = slices.filter(
+            (slice) => slice.strEnd > matchStart && slice.strStart < matchEnd,
+          );
+          if (overlapping.length === 0) continue;
+
+          // Agrupa fatias na mesma linha visual para gerar caixas contínuas e precisas
+          const boxes: Array<{
+            minX: number;
+            maxX: number;
+            minY: number;
+            maxY: number;
+            fontHeight: number;
+          }> = [];
+
+          for (const slice of overlapping) {
+            const localStart = Math.max(0, matchStart - slice.strStart);
+            const localEnd = Math.min(slice.str.length, matchEnd - slice.strStart);
+            const len = slice.str.length;
+            const startFrac = len > 0 ? localStart / len : 0;
+            const endFrac = len > 0 ? localEnd / len : 1;
+            const padW = Math.min(1.5, slice.fontHeight * 0.12);
+            const w = slice.width > 0 ? slice.width : Math.max(slice.fontHeight * 0.5, 4);
+            const d0 = Math.max(0, startFrac * w - padW);
+            const d1 = Math.min(w, endFrac * w + padW);
+
+            const ax = slice.baselineX + slice.ux * d0;
+            const ay = slice.baselineY + slice.uy * d0;
+            const bx = slice.baselineX + slice.ux * d1;
+            const by = slice.baselineY + slice.uy * d1;
+            const ascent = slice.fontHeight * 0.92;
+            const descent = slice.fontHeight * 0.25;
+
+            const xs = [
+              ax + slice.vx * ascent,
+              bx + slice.vx * ascent,
+              ax - slice.vx * descent,
+              bx - slice.vx * descent,
+            ];
+            const ys = [
+              ay + slice.vy * ascent,
+              by + slice.vy * ascent,
+              ay - slice.vy * descent,
+              by - slice.vy * descent,
+            ];
+
+            const minX = Math.min(...xs);
+            const maxX = Math.max(...xs);
+            const minY = Math.min(...ys);
+            const maxY = Math.max(...ys);
+
+            const lastBox = boxes[boxes.length - 1];
+            if (
+              lastBox &&
+              Math.abs(lastBox.minY - minY) <= Math.max(lastBox.fontHeight, slice.fontHeight) * 0.6
+            ) {
+              lastBox.minX = Math.min(lastBox.minX, minX);
+              lastBox.maxX = Math.max(lastBox.maxX, maxX);
+              lastBox.minY = Math.min(lastBox.minY, minY);
+              lastBox.maxY = Math.max(lastBox.maxY, maxY);
+            } else {
+              boxes.push({ minX, maxX, minY, maxY, fontHeight: slice.fontHeight });
+            }
+          }
+
+          for (const box of boxes) {
+            const rawLeft = clampPercent((box.minX / viewport.width) * 100, 0, 99.9);
+            const rawTop = clampPercent((box.minY / viewport.height) * 100, 0, 99.9);
+            const rawRight = clampPercent((box.maxX / viewport.width) * 100, rawLeft + 0.1, 100);
+            const rawBottom = clampPercent((box.maxY / viewport.height) * 100, rawTop + 0.1, 100);
+
+            const xPercent = Math.round(rawLeft * 100) / 100;
+            const yPercent = Math.round(rawTop * 100) / 100;
+            const widthPercent = Math.max(
+              0.1,
+              Math.min(100 - xPercent, Math.round((rawRight - xPercent) * 100) / 100),
+            );
+            const heightPercent = Math.max(
+              0.1,
+              Math.min(100 - yPercent, Math.round((rawBottom - yPercent) * 100) / 100),
+            );
+
+            results.push({
+              id: `auto-redact-${pageIndex}-${results.length}-${Date.now()}`,
+              pageIndex,
+              xPercent,
+              yPercent,
+              widthPercent,
+              heightPercent,
+              color,
+              ...(label ? { label } : {}),
+            });
+          }
+        }
+      } finally {
+        page.cleanup();
+      }
+    }
+
+    return results;
+  } finally {
+    await loadingTask.destroy();
+  }
 }

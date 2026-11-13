@@ -2,6 +2,14 @@
   height: 100%;
   min-height: 0;
   min-width: 0;
+  background: var(--color-surface-subtle);
+}
+.pdf-repair-workspace .tool-workspace-document {
+  background: var(--color-surface-subtle);
+}
+.pdf-repair-workspace .tool-workspace-sidebar {
+  background: var(--color-surface-raised);
+  border-left: 1px solid var(--color-border);
 }
 .pdf-repair-original {
   height: 100%;
@@ -9,20 +17,25 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 .pdf-repair-original figcaption {
   flex: 0 0 auto;
   color: var(--color-ink-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
 }
 .pdf-repair-original h2,
 .pdf-repair-diagnostics h2 {
-  margin: 0 0 8px;
-  font-size: 16px;
+  margin: 0 0 6px;
+  font-size: 15px;
   color: var(--color-ink);
 }
 .pdf-repair-original p {
-  margin: 4px 0;
+  margin: 2px 0;
+  font-size: 13px;
 }
 .pdf-repair-file-name {
   overflow-wrap: anywhere;
@@ -45,6 +58,8 @@
   max-height: 100%;
   object-fit: contain;
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
   background: white;
 }
 .pdf-repair-preview-unavailable {

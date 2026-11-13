@@ -536,7 +536,8 @@ export function ProtectPdfPanel({
         }
         .protect-input {
           width: 100%;
-          padding: 0.65rem 2.5rem 0.65rem 0.85rem;
+          box-sizing: border-box;
+          padding: 0.65rem 2.85rem 0.65rem 0.85rem;
           background: var(--color-surface-raised);
           border: 1px solid var(--color-border);
           border-radius: 8px;
@@ -554,15 +555,17 @@ export function ProtectPdfPanel({
         }
         .protect-toggle-eye {
           position: absolute;
-          right: 0.75rem;
+          right: 0.5rem;
+          width: 2rem;
+          height: 2rem;
           background: transparent;
           border: none;
           color: var(--color-ink-muted);
           cursor: pointer;
-          display: flex;
+          display: inline-flex;
           align-items: center;
           justify-content: center;
-          padding: 4px;
+          padding: 0;
         }
         .protect-toggle-eye:hover {
           color: var(--color-ink);
@@ -646,17 +649,20 @@ export function ProtectPdfPanel({
           cursor: pointer;
         }
         .protect-preview-pane {
-          position: sticky;
-          top: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
         }
         .protect-preview-card {
-          padding: 1.25rem;
+          padding: 0.5rem 0.75rem;
           background: var(--color-surface-raised);
           border: 1px solid var(--color-border);
           border-radius: 12px;
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          flex: 1;
+          min-height: 0;
+          gap: 0.4rem;
         }
         .protect-preview-header {
           display: flex;
@@ -698,47 +704,55 @@ export function ProtectPdfPanel({
         .protect-thumbnail-canvas {
           background: var(--color-surface-muted);
           border-radius: 8px;
-          padding: 1rem;
+          padding: 0.5rem;
           display: flex;
           justify-content: center;
           align-items: center;
-          min-height: 380px;
+          flex: 1;
+          min-height: 0;
+          container-type: size;
           position: relative;
         }
         .protect-thumb-wrapper {
           position: relative;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+          width: fit-content;
+          max-width: 100%;
+          box-shadow: 0 4px 16px rgba(15, 23, 42, 0.14);
+          border: 1px solid var(--color-border);
           border-radius: 4px;
           overflow: hidden;
-          max-height: 480px;
         }
         .protect-thumb-img {
           display: block;
-          max-width: 100%;
-          max-height: 480px;
+          width: auto;
+          max-width: min(100%, var(--workspace-page-width, 860px));
+          height: auto;
+          max-height: calc(100cqh - 12px);
           object-fit: contain;
         }
         .protect-watermark-overlay {
           position: absolute;
           inset: 0;
           display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(15, 23, 42, 0.25);
+          align-items: flex-start;
+          justify-content: flex-end;
+          padding: 0.75rem;
+          background: transparent;
+          pointer-events: none;
         }
         .protect-badge-overlay {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          padding: 0.5rem 0.85rem;
+          padding: 0.4rem 0.75rem;
           background: var(--color-surface-raised);
           backdrop-filter: blur(8px);
-          border: 1px solid rgba(56, 189, 248, 0.4);
+          border: 1px solid rgba(56, 189, 248, 0.45);
           border-radius: 20px;
           color: #0369a1;
-          font-size: 0.8rem;
+          font-size: 0.78rem;
           font-weight: 600;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.16);
         }
         .protect-no-thumb {
           display: flex;
@@ -749,9 +763,10 @@ export function ProtectPdfPanel({
           font-size: 0.85rem;
         }
         .protect-preview-footer {
-          padding-top: 0.5rem;
+          padding-top: 0.25rem;
           border-top: 1px solid var(--color-border);
           text-align: center;
+          font-size: 0.75rem;
         }
         .protect-footer-hint {
           font-size: 0.75rem;

@@ -2,7 +2,6 @@ import { expect, type Page, test } from "@playwright/test";
 
 async function openTranslator(page: Page) {
   await page.goto(`${process.env.NEXOHUB_BASE_PATH ?? "/"}traduzir-texto`);
-  await page.getByRole("button", { name: "Digitar Texto" }).click();
   await page.locator("#dedicated-tool-direct-textarea").fill("Hello, how are you?");
   await expect(
     page.getByText("Para traduzir, é necessário fazer um download no primeiro uso."),

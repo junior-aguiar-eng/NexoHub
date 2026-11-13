@@ -1,8 +1,21 @@
-import { AlertCircle, EyeOff, Plus, ShieldAlert, Trash2 } from "lucide-react";
+import {
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  EyeOff,
+  Plus,
+  Search,
+  ShieldAlert,
+  Trash2,
+} from "lucide-react";
 import type React from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { translate } from "@/i18n";
-import type { RedactionArea } from "@/platform/pdf-engine";
+import {
+  findTextRedactionRects,
+  type RedactionArea,
+  type RedactionPresetKind,
+} from "@/platform/pdf-engine";
 import { PdfViewport } from "./PdfViewport";
 
 export interface RedactPdfPanelProps {
@@ -16,6 +29,11 @@ export interface RedactPdfPanelProps {
   readonly onPreviewPageChange?: (page: number) => void;
   readonly redactions: readonly RedactionArea[];
   readonly onRedactionsChange: (redactions: readonly RedactionArea[]) => void;
+  readonly file?: File;
+  readonly onSearchTextRedactions?: (
+    query: string | RedactionPresetKind,
+    options: { color: "black" | "white" | "gray"; label?: string },
+  ) => Promise<RedactionArea[]>;
 }
 
 export function RedactPdfPanel({
@@ -29,15 +47,22 @@ export function RedactPdfPanel({
   onPreviewPageChange,
   redactions,
   onRedactionsChange,
+  file,
+  onSearchTextRedactions,
 }: RedactPdfPanelProps) {
   const labelInputId = useId();
   const modeInputId = useId();
+  const searchInputId = useId();
   const [previewPage, setPreviewPage] = useState<number>(1);
   const [selectedColor, setSelectedColor] = useState<"black" | "white" | "gray">("black");
   const [defaultLabel, setDefaultLabel] = useState<string>(() => translate("redact.defaultLabel"));
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
   const [currentPoint, setCurrentPoint] = useState<{ x: number; y: number } | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [searchFeedback, setSearchFeedback] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -150,6 +175,65 @@ export function RedactPdfPanel({
 
   const handleUpdateRedactionLabel = (id: string, label: string) => {
     onRedactionsChange(redactions.map((r) => (r.id === id ? { ...r, label } : r)));
+  };
+
+  const runAutoSearch = async (query: string | RedactionPresetKind, isPreset = false) => {
+    const trimmed = query.trim();
+    if (!trimmed || isSearching) return;
+    if (!onSearchTextRedactions && !file) return;
+
+    setIsSearching(true);
+    setSearchFeedback(null);
+    const searchOptions = {
+      color: selectedColor,
+      label: defaultLabel.trim() || undefined,
+    };
+
+    try {
+      let found: RedactionArea[];
+      if (onSearchTextRedactions) {
+        found = await onSearchTextRedactions(trimmed, searchOptions);
+      } else if (file) {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const matcher = isPreset
+          ? (trimmed as RedactionPresetKind)
+          : new RegExp(trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+        found = await findTextRedactionRects(bytes, matcher, searchOptions);
+      } else {
+        found = [];
+      }
+
+      if (found.length === 0) {
+        setSearchFeedback(translate("redact.searchNotFound"));
+        return;
+      }
+
+      const uniqueNew = found.filter(
+        (candidate) =>
+          !redactions.some(
+            (existing) =>
+              existing.pageIndex === candidate.pageIndex &&
+              Math.abs(existing.xPercent - candidate.xPercent) < 0.2 &&
+              Math.abs(existing.yPercent - candidate.yPercent) < 0.2 &&
+              Math.abs(existing.widthPercent - candidate.widthPercent) < 0.2 &&
+              Math.abs(existing.heightPercent - candidate.heightPercent) < 0.2,
+          ),
+      );
+
+      if (uniqueNew.length > 0) {
+        onRedactionsChange([...redactions, ...uniqueNew]);
+        const hasCurrentPage = uniqueNew.some((item) => item.pageIndex === currentPageIndex);
+        if (!hasCurrentPage) {
+          setPreviewPage(uniqueNew[0].pageIndex + 1);
+        }
+      }
+
+      setSearchFeedback(translate("redact.searchFound").replace("{count}", String(found.length)));
+    } catch {
+      setSearchFeedback(translate("redact.searchError"));
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   // Caixa sendo desenhada no momento
@@ -270,6 +354,91 @@ export function RedactPdfPanel({
             <Plus size={16} />
             <span>{translate("redact.addArea")}</span>
           </button>
+        </div>
+
+        {/* Busca e Tarja Automática */}
+        <div className="redact-section-card" data-testid="redact-auto-search-card">
+          <button
+            type="button"
+            className="redact-search-toggle"
+            aria-expanded={isSearchOpen}
+            onClick={() => setIsSearchOpen((open) => !open)}
+          >
+            <span className="redact-section-title">
+              <Search size={16} />
+              <span>{translate("redact.autoSearchTitle")}</span>
+            </span>
+            {isSearchOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+
+          {isSearchOpen && (
+            <div className="redact-search-body">
+              <div className="redact-search-row">
+                <input
+                  id={searchInputId}
+                  type="text"
+                  className="redact-text-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void runAutoSearch(searchQuery, false);
+                    }
+                  }}
+                  placeholder={translate("redact.searchPlaceholder")}
+                  aria-label={translate("redact.autoSearchTitle")}
+                  disabled={isSearching}
+                />
+                <button
+                  type="button"
+                  className="redact-search-submit-btn"
+                  disabled={
+                    isSearching || !searchQuery.trim() || (!file && !onSearchTextRedactions)
+                  }
+                  onClick={() => void runAutoSearch(searchQuery, false)}
+                  data-testid="redact-search-submit"
+                >
+                  {isSearching ? translate("redact.searching") : translate("redact.searchButton")}
+                </button>
+              </div>
+
+              <div className="redact-field-group">
+                <span className="redact-field-label">{translate("redact.presetsLabel")}</span>
+                <div className="redact-presets-grid">
+                  {(
+                    [
+                      { id: "cpf", labelKey: "redact.presetCpf" },
+                      { id: "cnpj", labelKey: "redact.presetCnpj" },
+                      { id: "email", labelKey: "redact.presetEmail" },
+                      { id: "phone", labelKey: "redact.presetPhone" },
+                    ] as const
+                  ).map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      className="redact-preset-btn"
+                      disabled={isSearching || (!file && !onSearchTextRedactions)}
+                      onClick={() => void runAutoSearch(preset.id, true)}
+                      data-testid={`redact-preset-${preset.id}`}
+                    >
+                      {translate(preset.labelKey)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {searchFeedback && (
+                <div
+                  role="status"
+                  className="redact-search-feedback"
+                  data-testid="redact-search-feedback"
+                >
+                  {searchFeedback}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Lista de Tarjas Cadastradas */}
@@ -424,10 +593,10 @@ export function RedactPdfPanel({
             <span className="redact-preview-title">
               {translate("redact.page").replace("{page}", String(previewPage))} de {totalPages}
             </span>
+            <span className="redact-draw-hint" title={translate("redact.drawHint")}>
+              {translate("redact.originalPreview")}
+            </span>
           </div>
-
-          <p className="redact-draw-hint">{translate("redact.originalPreview")}</p>
-          <div className="redact-draw-hint">{translate("redact.drawHint")}</div>
 
           <PdfViewport page={previewPage} pageCount={totalPages} onPageChange={setPreviewPage}>
             <div className="redact-preview-area">
@@ -781,25 +950,36 @@ export function RedactPdfPanel({
           color: var(--color-ink);
         }
         .redact-preview-pane {
-          position: sticky;
-          top: 1.5rem;
-        }
-        .redact-preview-card {
-          padding: 1.25rem;
-          background: var(--color-surface-raised);
-          border: 1px solid var(--color-border);
-          border-radius: 12px;
           display: flex;
           flex-direction: column;
-          gap: 0.85rem;
+          min-height: 0;
+          overflow: hidden;
+        }
+        .redact-preview-card {
+          padding: 0;
+          background: transparent;
+          border: 0;
+          border-radius: 0;
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-height: 0;
+          gap: 2px;
+        }
+        .redact-preview-card > .pdf-viewport {
+          flex: 1;
+          min-height: 0;
         }
         .redact-preview-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 0.5rem;
+          min-height: 20px;
+          line-height: 1.15;
         }
         .redact-preview-title {
-          font-size: 0.85rem;
+          font-size: 0.75rem;
           font-weight: 600;
           color: var(--color-ink);
         }
@@ -831,37 +1011,39 @@ export function RedactPdfPanel({
           text-align: center;
         }
         .redact-draw-hint {
-          font-size: 0.75rem;
+          font-size: 0.7rem;
           color: #0369a1;
           background: rgba(56, 189, 248, 0.08);
           border: 1px solid rgba(56, 189, 248, 0.2);
-          padding: 0.45rem 0.75rem;
+          padding: 1px 6px;
           border-radius: 6px;
+          line-height: 1.15;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 72%;
         }
         .redact-preview-area {
-          background: var(--color-surface-muted);
+          background: transparent;
           border-radius: 8px;
-          padding: 1rem;
+          padding: 0;
           display: flex;
           justify-content: center;
           align-items: center;
-          min-height: 420px;
+          min-height: 0;
         }
         .redact-preview-canvas-wrapper {
           position: relative;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 4px 16px rgba(15, 23, 42, 0.14);
+          border: 1px solid var(--color-border);
           border-radius: 4px;
           overflow: hidden;
           cursor: crosshair;
           user-select: none;
-          max-height: 520px;
           touch-action: none;
-          max-width: 100%;
         }
         .redact-thumb-image {
           display: block;
-          max-width: 100%;
-          max-height: 520px;
           object-fit: contain;
           pointer-events: none;
         }
@@ -930,6 +1112,75 @@ export function RedactPdfPanel({
           font-size: 0.75rem;
           color: var(--color-ink-muted);
           line-height: 1.4;
+        }
+        .redact-search-toggle {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: transparent;
+          border: none;
+          padding: 0;
+          color: var(--color-ink);
+          cursor: pointer;
+        }
+        .redact-search-body {
+          display: flex;
+          flex-direction: column;
+          gap: 0.65rem;
+          margin-top: 0.35rem;
+        }
+        .redact-search-row {
+          display: flex;
+          gap: 0.5rem;
+          align-items: center;
+        }
+        .redact-search-submit-btn {
+          padding: 0.55rem 0.85rem;
+          border-radius: 6px;
+          border: 1px solid #0284c7;
+          background: #0284c7;
+          color: #ffffff;
+          font-size: 0.8rem;
+          font-weight: 600;
+          white-space: nowrap;
+          cursor: pointer;
+        }
+        .redact-search-submit-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        .redact-presets-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 0.45rem;
+        }
+        .redact-preset-btn {
+          padding: 0.45rem 0.65rem;
+          border-radius: 6px;
+          border: 1px solid var(--color-border);
+          background: var(--color-surface-raised);
+          color: var(--color-ink);
+          font-size: 0.78rem;
+          font-weight: 500;
+          cursor: pointer;
+          text-align: center;
+        }
+        .redact-preset-btn:hover:not(:disabled) {
+          background: var(--color-surface-muted);
+          border-color: #38bdf8;
+        }
+        .redact-preset-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        .redact-search-feedback {
+          font-size: 0.78rem;
+          padding: 0.5rem 0.65rem;
+          border-radius: 6px;
+          background: rgba(56, 189, 248, 0.08);
+          border: 1px solid rgba(56, 189, 248, 0.25);
+          color: var(--color-ink);
         }
       `}</style>
     </div>

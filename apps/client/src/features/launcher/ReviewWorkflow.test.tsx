@@ -30,7 +30,6 @@ function openReview(text: string, upload = false) {
     />,
   );
   if (!upload) {
-    fireEvent.click(screen.getByRole("button", { name: "Digitar Texto" }));
     const input = view.container.querySelector("#dedicated-tool-direct-textarea");
     if (!input) throw new Error("Entrada ausente");
     fireEvent.change(input, { target: { value: text } });

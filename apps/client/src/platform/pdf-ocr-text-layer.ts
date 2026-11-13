@@ -58,7 +58,7 @@ function utf16Hex(text: string): string {
 export async function addOcrTextLayer(
   doc: PDFDocument,
   pagesData: readonly OcrPageData[],
-  options: { preserveDrawingOrder?: boolean; signal?: AbortSignal } = {},
+  options: { preserveDrawingOrder?: boolean; signal?: AbortSignal; fontBytes?: Uint8Array } = {},
 ): Promise<void> {
   options.signal?.throwIfAborted();
   const populatedPages = pagesData.filter((data) => data.lines.some((line) => line.text.trim()));
@@ -66,12 +66,15 @@ export async function addOcrTextLayer(
 
   let descriptor = fontDescriptors.get(doc);
   if (!descriptor) {
-    const response = await fetch(
-      `${import.meta.env.BASE_URL}standard_fonts/LiberationSans-Regular.ttf`,
-      { signal: options.signal },
-    );
-    if (!response.ok) throw new Error("OCR_FONT_UNAVAILABLE");
-    const fontBytes = new Uint8Array(await response.arrayBuffer());
+    let fontBytes = options.fontBytes;
+    if (!fontBytes) {
+      const response = await fetch(
+        `${import.meta.env.BASE_URL}standard_fonts/LiberationSans-Regular.ttf`,
+        { signal: options.signal },
+      );
+      if (!response.ok) throw new Error("OCR_FONT_UNAVAILABLE");
+      fontBytes = new Uint8Array(await response.arrayBuffer());
+    }
     options.signal?.throwIfAborted();
     if (!fontBytes.length) throw new Error("OCR_FONT_UNAVAILABLE");
     const fontFile = doc.context.register(

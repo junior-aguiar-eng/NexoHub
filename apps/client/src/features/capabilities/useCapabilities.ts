@@ -49,6 +49,18 @@ export const DEFAULT_CAPABILITIES: readonly CapabilityItem[] = [
     status: "not_installed",
     isOptional: true,
   },
+  {
+    id: "office.suite",
+    title: "Suíte Office NexoHub (Word, Excel e PowerPoint)",
+    summary:
+      "Motor documental portátil para converter Word, Excel e PowerPoint em PDF e exportar PDF para PowerPoint 100% offline.",
+    benefit:
+      "Preserva tabelas, fontes, gráficos e slides complexos no seu computador sem depender de servidores externos.",
+    category: "office",
+    diskSizeBytes: 293601280, // ~280 MB
+    status: "not_installed",
+    isOptional: true,
+  },
 ];
 
 export function useCapabilities(documentCore?: DocumentCorePort) {

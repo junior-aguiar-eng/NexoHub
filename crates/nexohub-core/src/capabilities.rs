@@ -12,6 +12,7 @@ pub enum CapabilityCategory {
     Vision,
     Review,
     Compression,
+    Office,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -88,7 +89,7 @@ pub struct UninstallCapabilityResult {
     pub freed_bytes: u64,
 }
 
-fn runtime_root() -> PathBuf {
+pub(crate) fn runtime_root() -> PathBuf {
     if let Some(dir) = env::var_os("NEXOHUB_RUNTIME_DIR") {
         return PathBuf::from(dir);
     }
@@ -140,6 +141,10 @@ fn is_compress_installed(root: &Path) -> bool {
     dir.exists()
 }
 
+fn is_office_installed(root: &Path) -> bool {
+    crate::office_engine::resolve_office_executable(root).is_some()
+}
+
 /// Lista todas as capacidades com suas informações amigáveis e status em tempo real.
 pub fn list_capabilities(_request: ListCapabilitiesRequest) -> CoreResult<ListCapabilitiesResult> {
     let root = runtime_root();
@@ -163,6 +168,12 @@ pub fn list_capabilities(_request: ListCapabilitiesRequest) -> CoreResult<ListCa
     };
 
     let compress_status = if is_compress_installed(&root) {
+        CapabilityStatus::Installed
+    } else {
+        CapabilityStatus::NotInstalled
+    };
+
+    let office_status = if is_office_installed(&root) {
         CapabilityStatus::Installed
     } else {
         CapabilityStatus::NotInstalled
@@ -210,6 +221,17 @@ pub fn list_capabilities(_request: ListCapabilitiesRequest) -> CoreResult<ListCa
             category: CapabilityCategory::Compression,
             disk_size_bytes: 41_943_040, // ~40 MB
             status: compress_status,
+            progress_percent: None,
+            is_optional: true,
+        },
+        CapabilityItem {
+            id: "office.suite".to_string(),
+            title: "Conversor Profissional Office (Word, Excel, PowerPoint)".to_string(),
+            summary: "Converte documentos Word, planilhas Excel e apresentações PowerPoint mantendo diagramação e fontes locais.".to_string(),
+            benefit: "Garante conversão de alta fidelidade no seu computador, sem enviar arquivos sigilosos pela internet.".to_string(),
+            category: CapabilityCategory::Office,
+            disk_size_bytes: 293_601_280, // ~280 MB
+            status: office_status,
             progress_percent: None,
             is_optional: true,
         },
@@ -380,6 +402,39 @@ pub fn install_capability(
                 )),
             })
         }
+        "office.suite" => {
+            if is_office_installed(&root) {
+                return Ok(InstallCapabilityResult {
+                    success: true,
+                    message: Some(
+                        "O Superpoder Office já está instalado e pronto para uso.".to_string(),
+                    ),
+                });
+            }
+            if let Ok(archive_url) = env::var("NEXOHUB_OFFICE_DOWNLOAD_URL") {
+                let expected_sha = env::var("NEXOHUB_OFFICE_ARCHIVE_SHA256").ok();
+                let office_dir = env::var_os("NEXOHUB_OFFICE_DIR")
+                    .map(PathBuf::from)
+                    .unwrap_or_else(|| root.join("office"));
+                let staging_archive = office_dir.with_extension("download.zip");
+                download_file_with_sha256(
+                    &archive_url,
+                    &staging_archive,
+                    expected_sha.as_deref(),
+                )?;
+                return Ok(InstallCapabilityResult {
+                    success: true,
+                    message: Some(
+                        "Pacote Office verificado com SHA-256 e baixado para preparação."
+                            .to_string(),
+                    ),
+                });
+            }
+            Err(CoreError::new(
+                ErrorCode::CapabilityInstallationFailed,
+                "Execute o instalador do Superpoder Office (scripts/install-office-runtime.ps1) ou configure NEXOHUB_OFFICE_DIR com um LibreOffice portátil.",
+            ))
+        }
         _ => Err(CoreError::new(
             ErrorCode::CapabilityNotFound,
             format!("Superpoder desconhecido: {}", request.capability_id),
@@ -414,6 +469,12 @@ pub fn uninstall_capability(
         }
         "pdf.super_compress" => (root.join("compression"), 41_943_040u64),
         "ocr.vision" => (root.join("ocr"), 157_286_400u64),
+        "office.suite" => (
+            env::var_os("NEXOHUB_OFFICE_DIR")
+                .map(PathBuf::from)
+                .unwrap_or_else(|| root.join("office")),
+            293_601_280u64,
+        ),
         _ => {
             return Err(CoreError::new(
                 ErrorCode::CapabilityNotFound,
@@ -443,13 +504,14 @@ mod tests {
     #[test]
     fn lists_expected_superpowers_without_technical_jargon() {
         let res = list_capabilities(ListCapabilitiesRequest::default()).expect("list deve suceder");
-        assert_eq!(res.capabilities.len(), 4);
+        assert_eq!(res.capabilities.len(), 5);
 
         let titles: Vec<_> = res.capabilities.iter().map(|c| c.title.as_str()).collect();
         assert!(titles.contains(&"Tradutor de Documentos com Inteligência Privada"));
         assert!(titles.contains(&"Leitor de Documentos Digitalizados (OCR)"));
         assert!(titles.contains(&"Revisor Gramatical Profundo"));
         assert!(titles.contains(&"Super-Compactador de PDFs"));
+        assert!(titles.contains(&"Conversor Profissional Office (Word, Excel, PowerPoint)"));
 
         // Garante que não há jargões técnicos em títulos ou resumos
         for cap in &res.capabilities {

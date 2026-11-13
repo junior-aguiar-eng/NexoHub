@@ -593,6 +593,10 @@ export class BrowserDocumentCorePort implements DocumentCorePort {
         throw new Error("CAPABILITY_NOT_FOUND");
       }
 
+      case "convert_office_document": {
+        throw new Error("CAPABILITY_NOT_FOUND");
+      }
+
       case "create_pdf_overlay": {
         const req = request as CreatePdfOverlayRequest;
         const data = this.getData(req.projectPath);

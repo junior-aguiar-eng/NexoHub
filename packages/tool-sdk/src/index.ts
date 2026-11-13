@@ -1,5 +1,6 @@
 export type ToolSurface = "quick" | "studio";
 export type ToolExecutorKind = "browser" | "native" | "python";
+export type ToolPlatformAvailability = "universal" | "desktop-superpower" | "hybrid-cloud";
 
 export interface ToolManifest {
   readonly id: string;
@@ -11,6 +12,9 @@ export interface ToolManifest {
   readonly produces: readonly string[];
   readonly capabilities: readonly string[];
   readonly executor: ToolExecutorKind;
+  readonly availability?: ToolPlatformAvailability;
+  readonly requiredCapability?: string;
+  readonly optionalCloudTool?: string;
 }
 
 export type CapabilityState = { readonly available: boolean; readonly reason?: string };
@@ -304,6 +308,14 @@ function validateManifest(manifest: ToolManifest): void {
   if (manifest.name.trim() === "" || manifest.category.trim() === "")
     throw new Error("Nome e categoria são obrigatórios.");
   if (manifest.surfaces.length === 0) throw new Error("A ferramenta deve declarar uma superfície.");
+  if (
+    manifest.availability !== undefined &&
+    manifest.availability !== "universal" &&
+    manifest.availability !== "desktop-superpower" &&
+    manifest.availability !== "hybrid-cloud"
+  ) {
+    throw new Error(`Disponibilidade de plataforma inválida: ${String(manifest.availability)}`);
+  }
 }
 
 function freezeManifest(manifest: ToolManifest): ToolManifest {

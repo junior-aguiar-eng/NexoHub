@@ -12,6 +12,7 @@ pub mod grant_broker;
 pub mod hardening;
 pub mod language_tool;
 mod migrations;
+pub mod office_engine;
 pub mod overlay_tools;
 pub mod pdf_tools;
 pub mod python_engine;

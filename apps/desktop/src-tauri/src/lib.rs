@@ -74,6 +74,7 @@ fn validate_export_name(name: &str) -> Result<&'static str, CoreError> {
         Some("md") => Ok("md"),
         Some("docx") => Ok("docx"),
         Some("xlsx") => Ok("xlsx"),
+        Some("pptx") => Ok("pptx"),
         Some("csv") => Ok("csv"),
         Some("json") => Ok("json"),
         _ => Err(CoreError::new(
@@ -249,6 +250,22 @@ fn get_document_lineage(
 }
 
 #[tauri::command]
+async fn convert_office_document(
+    request: nexohub_core::office_engine::ConvertOfficeRequest,
+) -> Result<nexohub_core::office_engine::ConvertOfficeResult, CoreError> {
+    tauri::async_runtime::spawn_blocking(move || {
+        nexohub_core::commands::convert_office_document(request)
+    })
+    .await
+    .map_err(|_| {
+        CoreError::new(
+            nexohub_core::ErrorCode::PdfProcessing,
+            "Falha interna ao aguardar a conversão Office.",
+        )
+    })?
+}
+
+#[tauri::command]
 fn list_capabilities(
     request: nexohub_core::capabilities::ListCapabilitiesRequest,
 ) -> Result<nexohub_core::capabilities::ListCapabilitiesResult, CoreError> {
@@ -371,6 +388,15 @@ async fn pick_document_file(
         let mime_type = match ext.as_str() {
             "pdf" => "application/pdf",
             "docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "doc" => "application/msword",
+            "odt" => "application/vnd.oasis.opendocument.text",
+            "rtf" => "application/rtf",
+            "xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "xls" => "application/vnd.ms-excel",
+            "ods" => "application/vnd.oasis.opendocument.spreadsheet",
+            "pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "ppt" => "application/vnd.ms-powerpoint",
+            "odp" => "application/vnd.oasis.opendocument.presentation",
             "txt" => "text/plain",
             "md" => "text/markdown",
             "png" => "image/png",
@@ -462,6 +488,43 @@ fn auto_configure_local_runtimes(app: &tauri::App) {
             }
         }
     }
+
+    // 4. Runtime Office (LibreOffice portátil / Superpoder office.suite)
+    if std::env::var_os("NEXOHUB_OFFICE_DIR").is_none() {
+        let mut office_root = app
+            .path()
+            .resolve("runtime/office", BaseDirectory::Resource)
+            .ok()
+            .filter(|p| {
+                p.join("program").join("soffice.exe").is_file()
+                    || p.join("program").join("soffice").is_file()
+                    || p.join("soffice.exe").is_file()
+                    || p.join("soffice").is_file()
+            });
+
+        if office_root.is_none() {
+            let candidates = [
+                std::path::Path::new("runtime/office"),
+                std::path::Path::new("../../../runtime/office"),
+                std::path::Path::new("../../runtime/office"),
+            ];
+            for candidate in candidates {
+                if candidate.join("program").join("soffice.exe").is_file()
+                    || candidate.join("program").join("soffice").is_file()
+                    || candidate.join("soffice.exe").is_file()
+                    || candidate.join("soffice").is_file()
+                {
+                    office_root = Some(normalize_path(candidate));
+                    break;
+                }
+            }
+        }
+        if let Some(root) = office_root {
+            unsafe {
+                std::env::set_var("NEXOHUB_OFFICE_DIR", root);
+            }
+        }
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -507,6 +570,7 @@ pub fn run() {
             extract_pdf_images,
             audit_project,
             get_document_lineage,
+            convert_office_document,
             list_capabilities,
             install_capability,
             cancel_capability_download,
@@ -526,7 +590,7 @@ mod export_tests {
         assert_eq!(validate_export_name("partes.zip").unwrap(), "zip");
         assert_eq!(validate_export_name("comparacao.diff.txt").unwrap(), "txt");
         for extension in [
-            "png", "jpg", "jpeg", "webp", "md", "docx", "xlsx", "csv", "json",
+            "png", "jpg", "jpeg", "webp", "md", "docx", "xlsx", "pptx", "csv", "json",
         ] {
             let name = format!("resultado.{extension}");
             assert_eq!(validate_export_name(&name).unwrap(), extension);

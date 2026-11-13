@@ -343,3 +343,12 @@ pub fn get_document_lineage(
     let project_path = crate::grant_broker::require_granted(&request.project_path)?;
     ProjectStore::open(project_path)?.get_document_lineage(&request.document_id)
 }
+
+pub fn convert_office_document(
+    request: crate::office_engine::ConvertOfficeRequest,
+) -> CoreResult<crate::office_engine::ConvertOfficeResult> {
+    if let Some(ref project_path) = request.project_path {
+        let _ = crate::grant_broker::require_granted(project_path)?;
+    }
+    crate::office_engine::convert_office_bytes(&request)
+}

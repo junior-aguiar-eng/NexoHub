@@ -448,7 +448,8 @@ export type CapabilityId =
   | "translation.neural"
   | "ocr.vision"
   | "text.deep_review"
-  | "pdf.super_compress";
+  | "pdf.super_compress"
+  | "office.suite";
 
 export type CapabilityStatus = "not_installed" | "downloading" | "installed" | "error";
 
@@ -457,7 +458,7 @@ export interface CapabilityItem {
   readonly title: string;
   readonly summary: string;
   readonly benefit: string;
-  readonly category: "translation" | "vision" | "review" | "compression";
+  readonly category: "translation" | "vision" | "review" | "compression" | "office";
   readonly diskSizeBytes: number;
   readonly status: CapabilityStatus;
   readonly progressPercent?: number;
@@ -636,6 +637,31 @@ export interface DocumentCoreCommands {
     readonly request: UninstallCapabilityRequest;
     readonly response: UninstallCapabilityResult;
   };
+  readonly convert_office_document: {
+    readonly request: ConvertOfficeRequest;
+    readonly response: ConvertOfficeResult;
+  };
+}
+
+export type OfficeConversionKind =
+  | "word-to-pdf"
+  | "excel-to-pdf"
+  | "powerpoint-to-pdf"
+  | "pdf-to-powerpoint";
+
+export interface ConvertOfficeRequest {
+  readonly projectPath?: string;
+  readonly kind: OfficeConversionKind;
+  readonly fileName: string;
+  readonly bytes: readonly number[];
+}
+
+export interface ConvertOfficeResult {
+  readonly fileName: string;
+  readonly mimeType: string;
+  readonly bytes: readonly number[];
+  readonly outputBytesLen: number;
+  readonly durationMs: number;
 }
 
 export type DocumentCoreCommand = keyof DocumentCoreCommands;

@@ -1,0 +1,172 @@
+.office-panel {
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  background: var(--color-surface-subtle);
+}
+
+.office-workspace .tool-workspace-document {
+  background: var(--color-surface-subtle);
+}
+
+.office-workspace .tool-workspace-sidebar {
+  background: var(--color-surface-raised);
+  border-left: 1px solid var(--color-border);
+}
+
+.office-stage {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.office-card {
+  width: 100%;
+  max-width: 34rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.office-card--notice {
+  border-color: var(--color-border);
+}
+
+.office-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.office-badge-box {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+}
+
+.office-card-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+.office-card-meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+}
+
+.office-preview-frame {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  max-height: 360px;
+  overflow: hidden;
+}
+
+.office-preview-frame img {
+  max-width: 100%;
+  max-height: 336px;
+  object-fit: contain;
+}
+
+.office-options {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.office-status-box {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.office-status-box--ready {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.office-status-box--warning {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.office-status-heading {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-ink);
+}
+
+.office-status-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+}
+
+.office-report-box {
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-ink);
+}
+
+.office-error-box {
+  border: 1px solid rgba(225, 29, 72, 0.45);
+  background: rgba(225, 29, 72, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  color: var(--color-ink);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.office-scope-notice {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-ink-muted);
+}
+
+.office-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+}

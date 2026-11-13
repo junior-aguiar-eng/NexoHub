@@ -1,0 +1,243 @@
+.pdfa-panel {
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  background: var(--color-surface-subtle);
+}
+.pdfa-workspace .tool-workspace-document {
+  background: var(--color-surface-subtle);
+}
+.pdfa-workspace .tool-workspace-sidebar {
+  background: var(--color-surface-raised);
+  border-left: 1px solid var(--color-border);
+}
+.pdfa-original {
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pdfa-original figcaption {
+  flex: 0 0 auto;
+  color: var(--color-ink-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+.pdfa-original h2,
+.pdfa-diagnostics h2 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: var(--color-ink);
+}
+.pdfa-original p {
+  margin: 2px 0;
+  font-size: 13px;
+}
+.pdfa-file-name {
+  overflow-wrap: anywhere;
+}
+.pdfa-original .pdfa-file-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pdfa-original-sheet {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pdfa-original-sheet img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  background: white;
+}
+.pdfa-preview-unavailable {
+  color: var(--color-ink-muted);
+  text-align: center;
+  max-width: 32rem;
+}
+.pdfa-options {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.pdfa-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pdfa-fieldset legend {
+  font-weight: 600;
+  color: var(--color-ink);
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.pdfa-choice-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+.pdfa-choice-card.is-selected {
+  border-color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 6%, var(--color-surface));
+}
+.pdfa-choice-card span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pdfa-choice-card small {
+  color: var(--color-ink-muted);
+  font-size: 12px;
+}
+.pdfa-radio-line,
+.pdfa-checkbox-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.pdfa-diagnostics {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-subtle);
+  overflow-wrap: anywhere;
+}
+.pdfa-diagnostics p {
+  margin: 4px 0;
+  font-size: 13px;
+}
+.pdfa-report-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pdfa-report-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 13px;
+}
+.pdfa-report-list svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #16a34a;
+}
+.pdfa-warnings {
+  margin: 8px 0 0;
+  padding-inline-start: 18px;
+  font-size: 12px;
+  color: var(--color-ink-muted);
+}
+.pdfa-signature-box {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, #d97706 40%, var(--color-border));
+  background: color-mix(in srgb, #f59e0b 10%, var(--color-surface));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pdfa-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: #b45309;
+  font-weight: 500;
+}
+.pdfa-alert svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.pdfa-progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+}
+.pdfa-progress span {
+  display: block;
+  height: 100%;
+  background: var(--color-brand);
+}
+.pdfa-scope-notice {
+  color: var(--color-ink-muted);
+  font-size: 12px;
+  margin: 0;
+}
+.pdfa-workspace .tool-workspace-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 8px;
+  align-items: stretch;
+}
+.pdfa-workspace .tool-workspace-actions :is(button, a) {
+  min-width: 0;
+  width: auto;
+  min-height: 44px;
+  font-size: 14px;
+  padding: 8px 10px;
+  white-space: normal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.pdfa-workspace .tool-workspace-actions svg {
+  flex-shrink: 0;
+}
+.pdfa-operation-message {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  line-height: 1.3;
+  margin: 0;
+}
+.pdfa-operation-message[role="alert"] {
+  font-weight: 600;
+}
+@media (min-width: 901px) {
+  .pdfa-workspace .tool-workspace-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-height: 600px) {
+  .pdfa-original figcaption {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pdfa-original .pdfa-file-name {
+    flex: 1;
+  }
+  .pdfa-original {
+    gap: 4px;
+  }
+}

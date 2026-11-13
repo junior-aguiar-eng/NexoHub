@@ -284,6 +284,29 @@ describe("Tool Runner do Launcher", () => {
     expect(archiveText).toContain("contrato_pagina_2.jpg");
   });
 
+  it("respeita pdfToJpgSelectedPages e pdfToJpgDpi no pdf-to-jpg", async () => {
+    const pdfEngine = await import("./pdf-engine");
+    const spy = vi.spyOn(pdfEngine, "convertPdfPagesToJpgImages");
+    try {
+      const result = await runLauncherTool(new BrowserDocumentCorePort(), "pdf-to-jpg", {
+        ...input([await fixture()]),
+        pdfToJpgDpi: 300,
+        pdfToJpgSelectedPages: [2],
+      });
+      expect(spy).toHaveBeenCalledWith(
+        expect.any(Uint8Array),
+        expect.objectContaining({
+          scale: 300 / 72,
+          selectedPages: [2],
+        }),
+      );
+      expect(result.fileName).toBe("contrato_pagina_2.jpg");
+      expect(result.blob.type).toBe("image/jpeg");
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it("executa inserção de marca d'água no PDF gerando artifact com sufixo", async () => {
     const file = await fixture();
     const result = await runLauncherTool(new BrowserDocumentCorePort(), "pdf-watermark", {

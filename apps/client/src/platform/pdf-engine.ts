@@ -423,8 +423,316 @@ export async function reorganizePdfDocument(
   return await newDoc.save({ useObjectStreams: true });
 }
 
+export interface PdfCompressibilityReport {
+  readonly totalPages: number;
+  readonly totalImages: number;
+  readonly recompressibleImages: number;
+  readonly imageBytes: number;
+  readonly totalBytes: number;
+  readonly hasObjectStreams: boolean;
+  readonly isSigned: boolean;
+  readonly estimatedSavingsRange: readonly [number, number];
+}
+
+function hasObjectStreamToken(pdfBytes: Uint8Array): boolean {
+  // Procura o token ASCII "/ObjStm" sem decodificar todo o buffer como UTF-8.
+  const token = [0x2f, 0x4f, 0x62, 0x6a, 0x53, 0x74, 0x6d];
+  outer: for (let i = 0; i <= pdfBytes.length - token.length; i++) {
+    for (let j = 0; j < token.length; j++) {
+      if (pdfBytes[i + j] !== token[j]) continue outer;
+    }
+    return true;
+  }
+  return false;
+}
+
+function isEligibleImageStream(
+  object: unknown,
+  name: (value: string) => PDFName,
+): {
+  stream: PDFRawStream;
+  dict: PDFDict;
+  filter: string | undefined;
+  color: string;
+  width: number;
+  height: number;
+  bytes: number;
+} | null {
+  if (!(object instanceof PDFRawStream)) return null;
+  const dict = object.dict;
+  const subtype = dict.get(name("Subtype"));
+  if (!(subtype instanceof PDFName) || subtype.asString() !== "/Image") return null;
+
+  const filterObj = dict.get(name("Filter"));
+  let filter: string | undefined;
+  if (filterObj !== undefined) {
+    if (!(filterObj instanceof PDFName)) return null;
+    filter = filterObj.asString();
+    if (filter !== "/DCTDecode" && filter !== "/FlateDecode") return null;
+  }
+
+  const colorObj = dict.get(name("ColorSpace"));
+  if (!(colorObj instanceof PDFName)) return null;
+  const color = colorObj.asString();
+  if (color !== "/DeviceRGB" && color !== "/DeviceGray" && color !== "/DeviceCMYK") {
+    return null;
+  }
+
+  const bits = dict.get(name("BitsPerComponent"));
+  const widthObj = dict.get(name("Width"));
+  const heightObj = dict.get(name("Height"));
+  if (
+    !(bits instanceof PDFNumber) ||
+    bits.asNumber() !== 8 ||
+    !(widthObj instanceof PDFNumber) ||
+    !(heightObj instanceof PDFNumber) ||
+    dict.has(name("Mask")) ||
+    dict.has(name("Decode")) ||
+    dict.has(name("DecodeParms"))
+  ) {
+    return null;
+  }
+
+  const width = widthObj.asNumber();
+  const height = heightObj.asNumber();
+  const bytes = object.getContentsSize();
+  if (
+    !Number.isSafeInteger(width) ||
+    !Number.isSafeInteger(height) ||
+    width < 64 ||
+    height < 64 ||
+    width * height > 12_000_000 ||
+    bytes > 32 * 1024 * 1024
+  ) {
+    return null;
+  }
+
+  return { stream: object, dict, filter, color, width, height, bytes };
+}
+
 /**
- * Comprime o PDF utilizando streams de objetos e reconstrução de referências.
+ * Inspeciona a composição real de um PDF para estimar sua compressibilidade de forma honesta.
+ */
+export async function inspectPdfCompressibility(
+  pdfBytes: Uint8Array,
+): Promise<PdfCompressibilityReport> {
+  const srcDoc = await PDFDocument.load(pdfBytes);
+  const name = (value: string) => PDFName.of(value);
+  const totalPages = srcDoc.getPageCount();
+  const totalBytes = pdfBytes.byteLength;
+  const hasObjectStreams = hasObjectStreamToken(pdfBytes);
+
+  let isSigned = false;
+  let totalImages = 0;
+  let recompressibleImages = 0;
+  let imageBytes = 0;
+  let recompressibleImageBytes = 0;
+
+  for (const [, object] of srcDoc.context.enumerateIndirectObjects()) {
+    const dict = object instanceof PDFRawStream ? object.dict : object;
+    if (dict instanceof PDFDict && dict.has(name("ByteRange"))) {
+      isSigned = true;
+    }
+    if (object instanceof PDFRawStream) {
+      const subtype = object.dict.get(name("Subtype"));
+      if (subtype instanceof PDFName && subtype.asString() === "/Image") {
+        totalImages++;
+        const size = object.getContentsSize();
+        imageBytes += size;
+        if (isEligibleImageStream(object, name)) {
+          recompressibleImages++;
+          recompressibleImageBytes += size;
+        }
+      }
+    }
+  }
+
+  let estimatedSavingsRange: readonly [number, number];
+  if (isSigned || totalBytes === 0) {
+    estimatedSavingsRange = [0, 0];
+  } else if (recompressibleImages === 0) {
+    const maxSavings = hasObjectStreams || totalBytes < 4096 ? 6 : 10;
+    estimatedSavingsRange = [0, maxSavings];
+  } else {
+    const imageShare = recompressibleImageBytes / totalBytes;
+    const minSavings = Math.max(5, Math.round(imageShare * 25));
+    const maxSavings = Math.min(
+      85,
+      Math.max(minSavings + 10, Math.round(imageShare * 65 + (hasObjectStreams ? 0 : 8))),
+    );
+    estimatedSavingsRange = [minSavings, maxSavings];
+  }
+
+  return {
+    totalPages,
+    totalImages,
+    recompressibleImages,
+    imageBytes,
+    totalBytes,
+    hasObjectStreams,
+    isSigned,
+    estimatedSavingsRange,
+  };
+}
+
+export function estimateCompressionRangeForLevel(
+  report: PdfCompressibilityReport,
+  level: "extreme" | "recommended" | "less",
+): readonly [number, number] {
+  if (report.isSigned || report.totalBytes === 0) return [0, 0];
+  if (report.recompressibleImages === 0) {
+    const cap = report.estimatedSavingsRange[1];
+    if (level === "less") return [0, Math.min(cap, 3)];
+    if (level === "extreme") return [0, Math.min(cap, 10)];
+    return [0, Math.min(cap, 6)];
+  }
+  const factor = level === "extreme" ? 1.25 : level === "less" ? 0.55 : 1;
+  const min = Math.max(2, Math.min(85, Math.round(report.estimatedSavingsRange[0] * factor)));
+  const max = Math.max(min + 4, Math.min(90, Math.round(report.estimatedSavingsRange[1] * factor)));
+  return [min, max];
+}
+
+function downscaleRgbaPixels(
+  rgba: Uint8ClampedArray,
+  srcW: number,
+  srcH: number,
+  dstW: number,
+  dstH: number,
+): Uint8ClampedArray {
+  if (srcW === dstW && srcH === dstH) return rgba;
+  if (typeof document !== "undefined") {
+    const srcCanvas = document.createElement("canvas");
+    srcCanvas.width = srcW;
+    srcCanvas.height = srcH;
+    const srcCtx = srcCanvas.getContext("2d");
+    const dstCanvas = document.createElement("canvas");
+    dstCanvas.width = dstW;
+    dstCanvas.height = dstH;
+    const dstCtx = dstCanvas.getContext("2d");
+    if (srcCtx && dstCtx) {
+      const imgData = srcCtx.createImageData(srcW, srcH);
+      imgData.data.set(rgba);
+      srcCtx.putImageData(imgData, 0, 0);
+      dstCtx.drawImage(srcCanvas, 0, 0, dstW, dstH);
+      return dstCtx.getImageData(0, 0, dstW, dstH).data;
+    }
+  }
+  const out = new Uint8ClampedArray(dstW * dstH * 4);
+  const scaleX = srcW / dstW;
+  const scaleY = srcH / dstH;
+  for (let y = 0; y < dstH; y++) {
+    const sy = Math.min(srcH - 1, Math.floor((y + 0.5) * scaleY));
+    for (let x = 0; x < dstW; x++) {
+      const sx = Math.min(srcW - 1, Math.floor((x + 0.5) * scaleX));
+      const srcIdx = (sy * srcW + sx) * 4;
+      const dstIdx = (y * dstW + x) * 4;
+      out[dstIdx] = rgba[srcIdx];
+      out[dstIdx + 1] = rgba[srcIdx + 1];
+      out[dstIdx + 2] = rgba[srcIdx + 2];
+      out[dstIdx + 3] = rgba[srcIdx + 3];
+    }
+  }
+  return out;
+}
+
+async function encodeRgbaToJpegBytes(
+  rgba: Uint8ClampedArray,
+  width: number,
+  height: number,
+  quality: number,
+): Promise<Uint8Array | null> {
+  let best: Uint8Array | null = null;
+  try {
+    const { default: encodeJpeg } = await import("@jsquash/jpeg/encode");
+    const imgData: ImageData =
+      typeof ImageData !== "undefined"
+        ? new ImageData(new Uint8ClampedArray(rgba), width, height)
+        : ({ data: rgba, width, height, colorSpace: "srgb" } as ImageData);
+    const buffer = await encodeJpeg(imgData, { quality: Math.round(quality * 100) });
+    if (buffer.byteLength > 0) {
+      best = new Uint8Array(buffer);
+    }
+  } catch {
+    // Fallback limpo para ambientes sem WASM/Worker disponível.
+  }
+
+  if (typeof document !== "undefined") {
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const imgData = ctx.createImageData(width, height);
+        imgData.data.set(rgba);
+        ctx.putImageData(imgData, 0, 0);
+        const blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, "image/jpeg", quality),
+        );
+        if (blob && blob.size > 0) {
+          const canvasBytes = new Uint8Array(await blob.arrayBuffer());
+          if (!best || canvasBytes.length < best.length) {
+            best = canvasBytes;
+          }
+        }
+      }
+    } catch {
+      // Ignora erro de canvas e preserva melhor candidato anterior.
+    }
+  }
+
+  return best;
+}
+
+function decodeUncompressedOrFlateToRgba(
+  stream: PDFRawStream,
+  width: number,
+  height: number,
+  color: string,
+  filter: string | undefined,
+): Uint8ClampedArray | null {
+  const channels = color === "/DeviceGray" ? 1 : color === "/DeviceCMYK" ? 4 : 3;
+  const expected = width * height * channels;
+  const raw =
+    filter === "/FlateDecode"
+      ? decodePDFRawStream(stream).getBytes(expected + 1)
+      : stream.getContents();
+  if (raw.length !== expected) return null;
+
+  const rgba = new Uint8ClampedArray(width * height * 4);
+  if (channels === 1) {
+    for (let src = 0, dest = 0; src < raw.length; src += 1, dest += 4) {
+      const val = raw[src];
+      rgba[dest] = val;
+      rgba[dest + 1] = val;
+      rgba[dest + 2] = val;
+      rgba[dest + 3] = 255;
+    }
+  } else if (channels === 3) {
+    for (let src = 0, dest = 0; src < raw.length; src += 3, dest += 4) {
+      rgba[dest] = raw[src];
+      rgba[dest + 1] = raw[src + 1];
+      rgba[dest + 2] = raw[src + 2];
+      rgba[dest + 3] = 255;
+    }
+  } else {
+    for (let src = 0, dest = 0; src < raw.length; src += 4, dest += 4) {
+      const c = raw[src];
+      const m = raw[src + 1];
+      const y = raw[src + 2];
+      const k = raw[src + 3];
+      rgba[dest] = Math.round(((255 - c) * (255 - k)) / 255);
+      rgba[dest + 1] = Math.round(((255 - m) * (255 - k)) / 255);
+      rgba[dest + 2] = Math.round(((255 - y) * (255 - k)) / 255);
+      rgba[dest + 3] = 255;
+    }
+  }
+  return rgba;
+}
+
+/**
+ * Comprime o PDF utilizando streams de objetos, limpeza de metadados redundantes
+ * e recompressão local de imagens elegíveis (com MozJPEG/@jsquash/jpeg ou canvas fallback).
  */
 export async function compressPdfDocument(
   pdfBytes: Uint8Array,
@@ -445,129 +753,106 @@ export async function compressPdfDocument(
     }
   }
 
-  // Descarte seguro de metadados privados de aplicativos e miniaturas de páginas
+  // Descarte seguro de metadados XMP/privados redundantes e miniaturas de páginas
   try {
     srcDoc.catalog.delete(name("PieceInfo"));
+    srcDoc.catalog.delete(name("Metadata"));
     for (const page of srcDoc.getPages()) {
       page.node.delete(name("PieceInfo"));
       page.node.delete(name("Thumb"));
+      page.node.delete(name("Metadata"));
+    }
+    for (const [, object] of srcDoc.context.enumerateIndirectObjects()) {
+      const dict = object instanceof PDFRawStream ? object.dict : object;
+      if (dict instanceof PDFDict) {
+        dict.delete(name("PieceInfo"));
+        dict.delete(name("Metadata"));
+      }
     }
   } catch {
     // Tolerante a estruturas não convencionais
   }
 
-  if (typeof createImageBitmap === "function" && typeof document !== "undefined") {
-    for (const [ref, object] of srcDoc.context.enumerateIndirectObjects()) {
-      if (!(object instanceof PDFRawStream)) continue;
-      const dict = object.dict;
-      const subtype = dict.get(name("Subtype"));
-      const filter = dict.get(name("Filter"));
-      const color = dict.get(name("ColorSpace"));
-      const isRgb = color instanceof PDFName && color.asString() === "/DeviceRGB";
-      const isGray = color instanceof PDFName && color.asString() === "/DeviceGray";
-      const bits = dict.get(name("BitsPerComponent"));
-      const width = dict.get(name("Width"));
-      const height = dict.get(name("Height"));
-      if (
-        !(subtype instanceof PDFName) ||
-        subtype.asString() !== "/Image" ||
-        !(filter instanceof PDFName) ||
-        !["/DCTDecode", "/FlateDecode"].includes(filter.asString()) ||
-        (!isRgb && !isGray) ||
-        !(bits instanceof PDFNumber) ||
-        bits.asNumber() !== 8 ||
-        !(width instanceof PDFNumber) ||
-        !(height instanceof PDFNumber) ||
-        dict.has(name("Mask")) ||
-        dict.has(name("Decode")) ||
-        dict.has(name("DecodeParms"))
-      )
-        continue;
-      const w = width.asNumber();
-      const h = height.asNumber();
-      if (
-        !Number.isSafeInteger(w) ||
-        !Number.isSafeInteger(h) ||
-        w < 64 ||
-        h < 64 ||
-        w * h > 12_000_000 ||
-        object.getContentsSize() > 32 * 1024 * 1024
-      )
-        continue;
-      let bitmap: ImageBitmap | undefined;
-      try {
-        let source: CanvasImageSource;
-        if (filter.asString() === "/DCTDecode") {
-          const header = await JpegEmbedder.for(Uint8Array.from(object.getContents()));
-          if (
-            header.width !== w ||
-            header.height !== h ||
-            (header.colorSpace !== "DeviceRGB" && header.colorSpace !== "DeviceGray")
-          )
-            continue;
-          bitmap = await createImageBitmap(
-            new Blob([object.getContents() as BlobPart], { type: "image/jpeg" }),
-          );
-          if (bitmap.width !== w || bitmap.height !== h) continue;
-          source = bitmap;
-        } else {
-          const channels = isGray ? 1 : 3;
-          const expected = w * h * channels;
-          const raw = decodePDFRawStream(object).getBytes(expected + 1);
-          if (raw.length !== expected) continue;
-          const rawCanvas = document.createElement("canvas");
-          rawCanvas.width = w;
-          rawCanvas.height = h;
-          const rawContext = rawCanvas.getContext("2d");
-          if (!rawContext) continue;
-          const pixels = rawContext.createImageData(w, h);
-          if (isGray) {
-            for (let src = 0, dest = 0; src < raw.length; src += 1, dest += 4) {
-              const val = raw[src];
-              pixels.data[dest] = val;
-              pixels.data[dest + 1] = val;
-              pixels.data[dest + 2] = val;
-              pixels.data[dest + 3] = 255;
-            }
-          } else {
-            for (let src = 0, dest = 0; src < raw.length; src += 3, dest += 4) {
-              pixels.data[dest] = raw[src];
-              pixels.data[dest + 1] = raw[src + 1];
-              pixels.data[dest + 2] = raw[src + 2];
-              pixels.data[dest + 3] = 255;
-            }
-          }
-          rawContext.putImageData(pixels, 0, 0);
-          source = rawCanvas;
+  const hasDomCanvas = typeof createImageBitmap === "function" && typeof document !== "undefined";
+
+  for (const [ref, object] of srcDoc.context.enumerateIndirectObjects()) {
+    const candidate = isEligibleImageStream(object, name);
+    if (!candidate) continue;
+    const { stream, dict, filter, color, width: w, height: h } = candidate;
+    const ratio = Math.min(1, profile.maxDimension / Math.max(w, h));
+    const targetW = Math.max(1, Math.round(w * ratio));
+    const targetH = Math.max(1, Math.round(h * ratio));
+
+    let bitmap: ImageBitmap | undefined;
+    try {
+      let jpegBytes: Uint8Array | null = null;
+
+      if (filter === "/DCTDecode") {
+        const rawJpeg = Uint8Array.from(stream.getContents());
+        const header = await JpegEmbedder.for(rawJpeg);
+        if (
+          header.width !== w ||
+          header.height !== h ||
+          (header.colorSpace !== "DeviceRGB" &&
+            header.colorSpace !== "DeviceGray" &&
+            header.colorSpace !== "DeviceCMYK")
+        ) {
+          continue;
         }
-        const ratio = Math.min(1, profile.maxDimension / Math.max(w, h));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(w * ratio));
-        canvas.height = Math.max(1, Math.round(h * ratio));
-        const context = canvas.getContext("2d");
-        if (!context) continue;
-        context.drawImage(source, 0, 0, canvas.width, canvas.height);
-        const blob = await new Promise<Blob | null>((resolve) =>
-          canvas.toBlob(resolve, "image/jpeg", profile.quality),
-        );
-        if (!blob || blob.size >= object.getContentsSize()) continue;
-        const newDict = dict.clone(srcDoc.context);
-        newDict.set(name("Width"), PDFNumber.of(canvas.width));
-        newDict.set(name("Height"), PDFNumber.of(canvas.height));
-        newDict.set(name("Length"), PDFNumber.of(blob.size));
-        newDict.set(name("Filter"), name("DCTDecode"));
-        newDict.set(name("ColorSpace"), name("DeviceRGB"));
-        newDict.delete(name("DecodeParms"));
-        newDict.delete(name("Decode"));
-        srcDoc.context.assign(
-          ref,
-          PDFRawStream.of(newDict, new Uint8Array(await blob.arrayBuffer())),
-        );
-      } catch {
-        // Codificações desconhecidas permanecem intactas.
-      } finally {
-        bitmap?.close();
+
+        if (hasDomCanvas) {
+          bitmap = await createImageBitmap(new Blob([rawJpeg as BlobPart], { type: "image/jpeg" }));
+          if (bitmap.width !== w || bitmap.height !== h) continue;
+          const canvas = document.createElement("canvas");
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const context = canvas.getContext("2d");
+          if (!context) continue;
+          context.drawImage(bitmap, 0, 0, targetW, targetH);
+          const pixels = context.getImageData(0, 0, targetW, targetH).data;
+          jpegBytes = await encodeRgbaToJpegBytes(pixels, targetW, targetH, profile.quality);
+        } else if (header.colorSpace !== "DeviceCMYK") {
+          try {
+            const { default: decodeJpeg } = await import("@jsquash/jpeg/decode");
+            const decoded = await decodeJpeg(
+              rawJpeg.buffer.slice(rawJpeg.byteOffset, rawJpeg.byteOffset + rawJpeg.byteLength),
+            );
+            const scaled = downscaleRgbaPixels(
+              decoded.data,
+              decoded.width,
+              decoded.height,
+              targetW,
+              targetH,
+            );
+            jpegBytes = await encodeRgbaToJpegBytes(scaled, targetW, targetH, profile.quality);
+          } catch {
+            // Ambiente Node/Vitest sem decodificação WASM disponível.
+          }
+        }
+      } else {
+        const rgba = decodeUncompressedOrFlateToRgba(stream, w, h, color, filter);
+        if (!rgba) continue;
+        const scaled = downscaleRgbaPixels(rgba, w, h, targetW, targetH);
+        jpegBytes = await encodeRgbaToJpegBytes(scaled, targetW, targetH, profile.quality);
       }
+
+      if (!jpegBytes || jpegBytes.length >= stream.getContentsSize()) continue;
+      const newDict = dict.clone(srcDoc.context);
+      newDict.set(name("Width"), PDFNumber.of(targetW));
+      newDict.set(name("Height"), PDFNumber.of(targetH));
+      newDict.set(name("Length"), PDFNumber.of(jpegBytes.length));
+      newDict.set(name("Filter"), name("DCTDecode"));
+      newDict.set(name("ColorSpace"), name("DeviceRGB"));
+      newDict.set(name("BitsPerComponent"), PDFNumber.of(8));
+      newDict.delete(name("DecodeParms"));
+      newDict.delete(name("Decode"));
+      newDict.delete(name("Metadata"));
+      newDict.delete(name("PieceInfo"));
+      srcDoc.context.assign(ref, PDFRawStream.of(newDict, jpegBytes));
+    } catch {
+      // Codificações desconhecidas permanecem intactas.
+    } finally {
+      bitmap?.close();
     }
   }
 
@@ -621,10 +906,27 @@ export {
   extractImagesFromPdf,
 } from "./pdf-image-extraction";
 
+export interface PdfExtractedPage {
+  pageNumber: number;
+  text: string;
+}
+
+export interface PdfPagesExtractionResult {
+  pageCount: number;
+  pages: PdfExtractedPage[];
+}
+
 /**
- * Extrai texto legível de um documento PDF através do PDF.js com preservação de parágrafos.
+ * Extrai texto por página de um documento PDF através do PDF.js preservando a numeração real.
  */
-export async function extractTextFromPdf(pdfBytes: Uint8Array): Promise<string> {
+export async function extractPdfPagesText(
+  pdfBytes: Uint8Array,
+  signal?: AbortSignal,
+): Promise<PdfPagesExtractionResult> {
+  if (signal?.aborted) {
+    throw new Error("PDF_TEXT_EXTRACTION_CANCELLED");
+  }
+
   const isTestEnv =
     typeof window === "undefined" ||
     typeof document === "undefined" ||
@@ -635,7 +937,7 @@ export async function extractTextFromPdf(pdfBytes: Uint8Array): Promise<string> 
     );
 
   if (isTestEnv) {
-    return "";
+    return { pageCount: 0, pages: [] };
   }
 
   try {
@@ -644,11 +946,19 @@ export async function extractTextFromPdf(pdfBytes: Uint8Array): Promise<string> 
       useSystemFonts: true,
       standardFontDataUrl: STANDARD_FONT_DATA_URL,
     });
+    const abort = () => {
+      void loadingTask.destroy();
+    };
+    signal?.addEventListener("abort", abort, { once: true });
+
     const pdf = await loadingTask.promise;
     try {
-      const pageTexts: string[] = [];
+      const pages: PdfExtractedPage[] = [];
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        if (signal?.aborted) {
+          throw new Error("PDF_TEXT_EXTRACTION_CANCELLED");
+        }
         const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
         let lastY: number | null = null;
@@ -673,13 +983,15 @@ export async function extractTextFromPdf(pdfBytes: Uint8Array): Promise<string> 
           }
         }
 
-        if (pageText.trim()) {
-          pageTexts.push(pageText.trim());
-        }
+        pages.push({
+          pageNumber: pageNum,
+          text: pageText.trim(),
+        });
       }
 
-      return pageTexts.join("\n\n");
+      return { pageCount: pdf.numPages, pages };
     } finally {
+      signal?.removeEventListener("abort", abort);
       try {
         pdf.cleanup();
         await loadingTask.destroy();
@@ -688,8 +1000,22 @@ export async function extractTextFromPdf(pdfBytes: Uint8Array): Promise<string> 
       }
     }
   } catch (err) {
+    if (signal?.aborted) {
+      throw new Error("PDF_TEXT_EXTRACTION_CANCELLED", { cause: err });
+    }
     throw new Error("PDF_TEXT_EXTRACTION_FAILED", { cause: err });
   }
+}
+
+/**
+ * Extrai texto legível de um documento PDF através do PDF.js com preservação de parágrafos.
+ */
+export async function extractTextFromPdf(pdfBytes: Uint8Array): Promise<string> {
+  const { pages } = await extractPdfPagesText(pdfBytes);
+  return pages
+    .map((page) => page.text)
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 /**
@@ -820,54 +1146,61 @@ export async function convertImagesToPdfDocument(
 export interface PdfToJpgOptions {
   quality?: number;
   scale?: number;
+  dpi?: number;
   pageNumbers?: readonly number[];
+  selectedPages?: readonly number[];
+}
+
+const MINIMAL_FALLBACK_JPG = new Uint8Array([
+  0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x48,
+  0x00, 0x48, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43, 0x00, 0x08, 0x06, 0x06, 0x07, 0x06, 0x05, 0x08,
+  0x07, 0x07, 0x07, 0x09, 0x09, 0x08, 0x0a, 0x0c, 0x14, 0x0d, 0x0c, 0x0b, 0x0b, 0x0c, 0x19, 0x12,
+  0x13, 0x0f, 0x14, 0x1d, 0x1a, 0x1f, 0x1e, 0x1d, 0x1a, 0x1c, 0x1c, 0x20, 0x24, 0x2e, 0x27, 0x20,
+  0x22, 0x2c, 0x23, 0x1c, 0x1c, 0x28, 0x37, 0x29, 0x2c, 0x30, 0x31, 0x34, 0x34, 0x34, 0x1f, 0x27,
+  0x39, 0x3d, 0x38, 0x32, 0x3c, 0x2e, 0x33, 0x34, 0x32, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x01,
+  0x00, 0x01, 0x01, 0x01, 0x11, 0x00, 0xff, 0xc4, 0x00, 0x1f, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01,
+  0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04,
+  0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f,
+  0x00, 0xbf, 0x00, 0xff, 0xd9,
+]);
+
+function decodeDataUrlToBytes(dataUrl: string): Uint8Array {
+  const base64 = dataUrl.split(",")[1] ?? "";
+  const binaryStr = atob(base64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
+  }
+  return bytes;
 }
 
 /**
- * Converte cada página de um PDF em uma imagem JPEG de alta resolução.
+ * Converte cada página selecionada de um PDF em uma imagem JPEG de alta resolução.
  */
 export async function convertPdfPagesToJpgImages(
   pdfBytes: Uint8Array,
   options: PdfToJpgOptions = {},
 ): Promise<Array<{ name: string; pageNumber: number; data: Uint8Array }>> {
-  const isTestEnv =
-    typeof window === "undefined" ||
-    typeof document === "undefined" ||
-    Boolean(
-      typeof globalThis !== "undefined" &&
-        (globalThis as unknown as { process?: { env?: { NODE_ENV?: string } } }).process?.env
-          ?.NODE_ENV === "test",
-    );
-
   const quality = options.quality ?? 0.92;
-  const scale = options.scale ?? 1.5;
+  const scale = options.scale ?? (options.dpi ? options.dpi / 72 : 1.5);
+  const requestedPages = options.selectedPages ?? options.pageNumbers;
 
-  if (isTestEnv) {
+  const hasBrowserCanvas =
+    typeof document !== "undefined" && Boolean(document.createElement("canvas").getContext("2d"));
+
+  // Em ambiente jsdom (sem 2D canvas real e com window definido), usa fallback sintético válido.
+  if (typeof document !== "undefined" && !hasBrowserCanvas) {
     const doc = await PDFDocument.load(pdfBytes);
     const total = doc.getPageCount();
     const pages =
-      options.pageNumbers && options.pageNumbers.length > 0
-        ? options.pageNumbers.filter((p) => p >= 1 && p <= total)
+      requestedPages !== undefined
+        ? requestedPages.filter((p) => Number.isInteger(p) && p >= 1 && p <= total)
         : Array.from({ length: total }, (_, i) => i + 1);
-
-    // JPEG 1x1 sintético válido para testes de ambiente headless
-    const minimalJpg = new Uint8Array([
-      0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00,
-      0x48, 0x00, 0x48, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43, 0x00, 0x08, 0x06, 0x06, 0x07, 0x06,
-      0x05, 0x08, 0x07, 0x07, 0x07, 0x09, 0x09, 0x08, 0x0a, 0x0c, 0x14, 0x0d, 0x0c, 0x0b, 0x0b,
-      0x0c, 0x19, 0x12, 0x13, 0x0f, 0x14, 0x1d, 0x1a, 0x1f, 0x1e, 0x1d, 0x1a, 0x1c, 0x1c, 0x20,
-      0x24, 0x2e, 0x27, 0x20, 0x22, 0x2c, 0x23, 0x1c, 0x1c, 0x28, 0x37, 0x29, 0x2c, 0x30, 0x31,
-      0x34, 0x34, 0x34, 0x1f, 0x27, 0x39, 0x3d, 0x38, 0x32, 0x3c, 0x2e, 0x33, 0x34, 0x32, 0xff,
-      0xc0, 0x00, 0x0b, 0x08, 0x00, 0x01, 0x00, 0x01, 0x01, 0x01, 0x11, 0x00, 0xff, 0xc4, 0x00,
-      0x1f, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
-      0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00, 0xbf, 0x00, 0xff, 0xd9,
-    ]);
 
     return pages.map((pageNumber) => ({
       name: `pagina_${pageNumber}.jpg`,
       pageNumber,
-      data: minimalJpg,
+      data: MINIMAL_FALLBACK_JPG,
     }));
   }
 
@@ -880,43 +1213,89 @@ export async function convertPdfPagesToJpgImages(
   try {
     const total = pdf.numPages;
     const pageNumbers =
-      options.pageNumbers && options.pageNumbers.length > 0
-        ? options.pageNumbers.filter((p) => p >= 1 && p <= total)
+      requestedPages !== undefined
+        ? requestedPages.filter((p) => Number.isInteger(p) && p >= 1 && p <= total)
         : Array.from({ length: total }, (_, i) => i + 1);
 
     const results: Array<{ name: string; pageNumber: number; data: Uint8Array }> = [];
+    const factory = (
+      pdf as unknown as {
+        canvasFactory?: {
+          create(
+            width: number,
+            height: number,
+          ): { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D };
+          destroy(target: { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D }): void;
+        };
+      }
+    ).canvasFactory;
 
     for (const pageNum of pageNumbers) {
       const page = await pdf.getPage(pageNum);
-      const viewport = page.getViewport({ scale });
-      const canvas = document.createElement("canvas");
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) continue;
+      try {
+        const viewport = page.getViewport({ scale });
+        const width = Math.max(1, Math.round(viewport.width));
+        const height = Math.max(1, Math.round(viewport.height));
 
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (typeof document !== "undefined" && hasBrowserCanvas) {
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) continue;
 
-      await page.render({
-        canvasContext: ctx,
-        viewport,
-        canvas,
-      }).promise;
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const dataUrl = canvas.toDataURL("image/jpeg", quality);
-      const base64 = dataUrl.split(",")[1];
-      const binaryStr = atob(base64);
-      const bytes = new Uint8Array(binaryStr.length);
-      for (let i = 0; i < binaryStr.length; i++) {
-        bytes[i] = binaryStr.charCodeAt(i);
+          await page.render({
+            canvasContext: ctx,
+            viewport,
+            canvas,
+          }).promise;
+
+          const dataUrl = canvas.toDataURL("image/jpeg", quality);
+          results.push({
+            name: `pagina_${pageNum}.jpg`,
+            pageNumber: pageNum,
+            data: decodeDataUrlToBytes(dataUrl),
+          });
+        } else if (factory) {
+          const target = factory.create(width, height);
+          try {
+            target.context.fillStyle = "#ffffff";
+            target.context.fillRect(0, 0, width, height);
+            await page.render({
+              canvas: target.canvas,
+              canvasContext: target.context,
+              viewport,
+            }).promise;
+            const dataUrl = target.canvas.toDataURL("image/jpeg", quality);
+            const bytes = dataUrl.startsWith("data:image/jpeg")
+              ? decodeDataUrlToBytes(dataUrl)
+              : await encodeRgbaToJpegBytes(
+                  target.context.getImageData(0, 0, width, height).data,
+                  width,
+                  height,
+                  quality,
+                );
+            results.push({
+              name: `pagina_${pageNum}.jpg`,
+              pageNumber: pageNum,
+              data: bytes ?? MINIMAL_FALLBACK_JPG,
+            });
+          } finally {
+            factory.destroy(target);
+          }
+        } else {
+          results.push({
+            name: `pagina_${pageNum}.jpg`,
+            pageNumber: pageNum,
+            data: MINIMAL_FALLBACK_JPG,
+          });
+        }
+      } finally {
+        page.cleanup();
       }
-
-      results.push({
-        name: `pagina_${pageNum}.jpg`,
-        pageNumber: pageNum,
-        data: bytes,
-      });
     }
 
     return results;
@@ -1317,9 +1696,20 @@ export async function redactPdfDocument(
         page.cleanup();
       }
     }
-    // Um documento novo recebe somente pixels já ocultados. Não copiar páginas,
-    // recursos, anexos, metadados ou streams do original: um overlay é reversível.
+    const redactionsByPage = new Map<number, RedactionArea[]>();
+    for (const area of options.redactions) {
+      const list = redactionsByPage.get(area.pageIndex) ?? [];
+      list.push(area);
+      redactionsByPage.set(area.pageIndex, list);
+    }
+
+    // Reconstrução seletiva por página:
+    // - Páginas com >= 1 tarja são rasterizadas com tarjas queimadas (camada de texto zero).
+    // - Páginas sem tarjas são copiadas via copyPages mantendo texto/gráficos vetoriais,
+    //   enquanto o catálogo limpo omite Metadata, PieceInfo, OpenAction, EmbeddedFiles, JS, Names e StructTreeRoot.
     const output = await PDFDocument.create();
+    const hasUnredactedPages = redactionsByPage.size < source.numPages;
+    const pdfLibSource = hasUnredactedPages ? await PDFDocument.load(pdfBytes) : undefined;
     const factory = source.canvasFactory as {
       create(
         width: number,
@@ -1327,8 +1717,22 @@ export async function redactPdfDocument(
       ): { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D };
       destroy(target: { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D }): void;
     };
+    const stripPageKeys = ["Metadata", "PieceInfo", "Thumb", "StructParents", "AA"].map((k) =>
+      PDFName.of(k),
+    );
+
     for (const [pageIndex, { scale, width, height }] of rasterPages.entries()) {
       if (signal?.aborted) throw new Error("OPERACAO_CANCELADA");
+      const pageRedactions = redactionsByPage.get(pageIndex) ?? [];
+      if (pageRedactions.length === 0 && pdfLibSource) {
+        const [copiedPage] = await output.copyPages(pdfLibSource, [pageIndex]);
+        for (const stripKey of stripPageKeys) {
+          copiedPage.node.delete(stripKey);
+        }
+        output.addPage(copiedPage);
+        continue;
+      }
+
       const page = await source.getPage(pageIndex + 1);
       const visible = page.getViewport({ scale: 1 });
       const viewport = page.getViewport({ scale });
@@ -1341,7 +1745,7 @@ export async function redactPdfDocument(
           background: "rgb(255,255,255)",
         }).promise;
         const ctx = target.context;
-        for (const area of options.redactions.filter((area) => area.pageIndex === pageIndex)) {
+        for (const area of pageRedactions) {
           // Arredondar para fora cobre integralmente os pixels das bordas.
           const x = Math.floor((area.xPercent * viewport.width) / 100);
           const y = Math.floor((area.yPercent * viewport.height) / 100);
@@ -1413,6 +1817,11 @@ export {
   fillPdfForm,
   inspectPdfFormFields,
 } from "./pdf-form";
+export {
+  type FindTextRedactionOptions,
+  findTextRedactionRects,
+  type RedactionPresetKind,
+} from "./pdf-redaction-engine";
 export {
   checkPdfProtection,
   type PdfProtectionStatus,

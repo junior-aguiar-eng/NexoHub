@@ -8,16 +8,29 @@ describe("catálogo central de ferramentas", () => {
     expect(registry.list("studio")).toHaveLength(coreToolManifests.length);
   });
 
-  it("não inclui ferramentas planejadas sem executor no registry ativo", () => {
+  it("declara disponibilidade honesta por plataforma na suíte Office", () => {
     const registry = createCoreToolRegistry();
-    const activeIds = registry.list("quick").map((tool) => tool.id);
-    expect(activeIds).toContain("pdf-to-word");
-    expect(activeIds).not.toContain("word-to-pdf");
+    expect(registry.get("pdf-to-word")?.availability).toBeUndefined();
+    expect(registry.get("word-to-pdf")?.availability).toBe("hybrid-cloud");
+    expect(registry.get("excel-to-pdf")?.availability).toBe("hybrid-cloud");
+    expect(registry.get("powerpoint-to-pdf")?.availability).toBe("hybrid-cloud");
+    expect(registry.get("pdf-to-powerpoint")?.availability).toBe("desktop-superpower");
+    expect(registry.get("word-to-pdf")?.requiredCapability).toBe("office.suite");
+    expect(registry.get("word-to-pdf")?.optionalCloudTool).toBe("office-to-pdf");
   });
 
   it("garante contrato real de saída para text-translate", () => {
     const registry = createCoreToolRegistry();
     const translateTool = registry.get("text-translate");
     expect(translateTool?.produces).toEqual(["text/plain"]);
+  });
+
+  it("registra pdf-summarize como ferramenta universal local no navegador", () => {
+    const registry = createCoreToolRegistry();
+    const summarizeTool = registry.get("pdf-summarize");
+    expect(summarizeTool).toBeDefined();
+    expect(summarizeTool?.executor).toBe("browser");
+    expect(summarizeTool?.availability).toBeUndefined();
+    expect(summarizeTool?.produces).toEqual(["text/markdown", "text/plain", "application/pdf"]);
   });
 });

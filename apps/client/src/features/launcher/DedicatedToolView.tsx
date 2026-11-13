@@ -1,4 +1,4 @@
-import type { CloudUsage, ProcessingMode } from "@nexohub/contracts";
+import type { CloudUsage, OfficeConversionKind, ProcessingMode } from "@nexohub/contracts";
 import { applyReviewFindings, type ReviewFinding, reviewText } from "@nexohub/domain";
 import { ToolRunError } from "@nexohub/tool-sdk";
 import {
@@ -25,12 +25,17 @@ import {
   useState,
 } from "react";
 import { Button } from "@/components/ui/button";
+import { useCapabilities } from "@/features/capabilities/useCapabilities";
 import { useCloudAccount } from "@/features/cloud/CloudAccountContext";
 import { getProcessingPreference } from "@/features/cloud/processing-preference";
 import { translate } from "@/i18n";
 import type { OcrPageReport } from "@/platform/browser-ocr";
 import type { TranslationProgressInfo } from "@/platform/browser-translator";
-import type { DocumentCorePort } from "@/platform/document-core";
+import {
+  type DocumentCorePort,
+  isHttpBackendConfigured,
+  isTauriEnvironment,
+} from "@/platform/document-core";
 import { readDocumentText } from "@/platform/document-reader";
 import {
   extractPdfSpreadsheetData,
@@ -49,6 +54,7 @@ import type { ImageCompressionLevel, WatermarkPosition } from "@/platform/image-
 import { type ImageResultItem, summarizeImageResults } from "@/platform/image-results";
 import { runLauncherTool } from "@/platform/launcher-tool-runner";
 import type { MarkdownPageReport, MarkdownReadingOrder } from "@/platform/markdown-converter";
+import { buildOfficeOutputFileName, OFFICE_TOOL_METADATA } from "@/platform/office-client";
 import {
   type CropMargins,
   checkPdfProtection,
@@ -65,8 +71,22 @@ import {
 } from "@/platform/pdf-engine";
 import { PdfPreviewQueue } from "@/platform/pdf-preview-queue";
 import { PDF_REPAIR_LIMITS, type PdfRepairReport } from "@/platform/pdf-repair-engine";
+import type {
+  SummarizeErrorCode,
+  SummarizeMode,
+  SummarizeProgress,
+} from "@/platform/pdf-summarize-protocol";
+import { type PdfSummaryResult, terminateSummarizeWorker } from "@/platform/pdf-summarizer";
 import type { PdfToWordReport } from "@/platform/pdf-to-word-converter";
+import { inspectBrowserPdfForPdfa } from "@/platform/pdfa-client";
+import type {
+  PdfAConformance,
+  PdfAConversionReport,
+  PdfADiagnosticReport,
+  PdfAFontStrategy,
+} from "@/platform/pdfa-converter";
 import type { ScannedPageItem } from "@/platform/scan-to-pdf-engine";
+import { isOfficeToolId } from "@/platform/tool-availability";
 import { registerToolNavigationGuard } from "@/platform/tool-navigation-guard";
 import { addCustomWord, ignoreWordInSession } from "@/platform/user-vocabulary";
 import { CloudProcessingChoice } from "./CloudProcessingChoice";
@@ -89,16 +109,20 @@ import { ImageWatermarkPanel } from "./ImageWatermarkPanel";
 import { MergePdfPanel } from "./MergePdfPanel";
 import type { LauncherTool } from "./model";
 import { OcrScannerPanel } from "./OcrScannerPanel";
+import { OfficeConvertPanel, type OfficeSurfaceMode } from "./OfficeConvertPanel";
 import { type PageNumberFormat, PageNumbersPdfPanel } from "./PageNumbersPdfPanel";
 import { PdfComparePanel } from "./PdfComparePanel";
 import { PdfEditorPanel } from "./PdfEditorPanel";
 import { PdfPageGridPanel, type PdfPageItem } from "./PdfPageGridPanel";
 import { PdfRepairPanel } from "./PdfRepairPanel";
+import { PdfSummarizePanel } from "./PdfSummarizePanel";
 import { PdfToExcelPanel } from "./PdfToExcelPanel";
-import { PdfToJpgPanel } from "./PdfToJpgPanel";
+import { type PdfToJpgDpi, type PdfToJpgPageMode, PdfToJpgPanel } from "./PdfToJpgPanel";
 import { PdfToMarkdownPanel } from "./PdfToMarkdownPanel";
+import { PdfToPdfaPanel } from "./PdfToPdfaPanel";
 import { PdfToWordPanel } from "./PdfToWordPanel";
 import { ProtectPdfPanel } from "./ProtectPdfPanel";
+import { parsePageRange } from "./page-range-input";
 import { RedactionResultPreview } from "./RedactionResultPreview";
 import { RedactPdfPanel } from "./RedactPdfPanel";
 import { RemovePagesPanel } from "./RemovePagesPanel";
@@ -181,7 +205,12 @@ export function DedicatedToolView({
   const [status, setStatus] = useState<"idle" | "running" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-  const [inputTab, setInputTab] = useState<"upload" | "text">("upload");
+  const [inputTab, setInputTab] = useState<"upload" | "text">(() =>
+    (!initialFiles || initialFiles.length === 0) &&
+    (tool.id === "text-review" || tool.id === "text-translate")
+      ? "text"
+      : "upload",
+  );
   const actionBarRef = useCallback((bar: HTMLDivElement | null) => {
     const root = bar?.closest<HTMLElement>(".dedicated-tool-page--workspace");
     if (!bar || !root) return;
@@ -253,6 +282,9 @@ export function DedicatedToolView({
   const [compressionLevel, setCompressionLevel] = useState<"less" | "recommended" | "extreme">(
     "recommended",
   );
+  const [pdfToJpgDpi, setPdfToJpgDpi] = useState<PdfToJpgDpi>(150);
+  const [pdfToJpgPageMode, setPdfToJpgPageMode] = useState<PdfToJpgPageMode>("all");
+  const [pdfToJpgPageRangeText, setPdfToJpgPageRangeText] = useState<string>("");
   const [translationSourceLang, setTranslationSourceLang] = useState<string>("en");
   const [translationPreservedNames, setTranslationPreservedNames] = useState("");
   const [translationTargetLang, setTranslationTargetLang] = useState<string>("pt");
@@ -634,6 +666,146 @@ export function DedicatedToolView({
     };
   }, [files[0], tool.id]);
   const [pdfToWordReport, setPdfToWordReport] = useState<PdfToWordReport | null>(null);
+  const [pdfToWordPreserveTables, setPdfToWordPreserveTables] = useState<boolean>(true);
+  const [pdfToWordExtractImages, setPdfToWordExtractImages] = useState<boolean>(true);
+  const [pdfToWordRunOcrIfScanned, setPdfToWordRunOcrIfScanned] = useState<boolean>(true);
+
+  const [pdfaConformance, setPdfaConformance] = useState<PdfAConformance>("2b");
+  const [pdfaFontStrategy, setPdfaFontStrategy] = useState<PdfAFontStrategy>("preserve-vector");
+  const [pdfaAllowDiscardSignatures, setPdfaAllowDiscardSignatures] = useState<boolean>(false);
+  const [pdfaIsInspecting, setPdfaIsInspecting] = useState<boolean>(false);
+  const [pdfaDiagnostic, setPdfaDiagnostic] = useState<PdfADiagnosticReport | null>(null);
+  const [pdfaReport, setPdfaReport] = useState<PdfAConversionReport | null>(null);
+  const [pdfaThumbnail, setPdfaThumbnail] = useState<string>("");
+  const pdfaController = useRef<AbortController | null>(null);
+  useEffect(() => {
+    if (tool.id !== "pdf-to-pdfa") return;
+    pdfaController.current?.abort();
+    setPdfaAllowDiscardSignatures(false);
+    setPdfaDiagnostic(null);
+    setPdfaReport(null);
+    setPdfaThumbnail("");
+    setDownloadUrl(null);
+    setOutputBlob(null);
+    setStatus("idle");
+    setErrorMessage(null);
+    const activeFile = files[0];
+    if (!activeFile) {
+      setPdfaIsInspecting(false);
+      return;
+    }
+    const inspectAbort = new AbortController();
+    setPdfaIsInspecting(true);
+    void (async () => {
+      try {
+        const bytes = new Uint8Array(await activeFile.arrayBuffer());
+        const diag = await inspectBrowserPdfForPdfa(bytes, inspectAbort.signal);
+        if (!inspectAbort.signal.aborted) {
+          setPdfaDiagnostic(diag);
+        }
+      } catch {
+        if (!inspectAbort.signal.aborted) {
+          setPdfaDiagnostic(null);
+        }
+      } finally {
+        if (!inspectAbort.signal.aborted) {
+          setPdfaIsInspecting(false);
+        }
+      }
+    })();
+    return () => {
+      inspectAbort.abort();
+      pdfaController.current?.abort();
+    };
+  }, [files[0], tool.id]);
+
+  const [pdfSummarizeMode, setPdfSummarizeMode] = useState<SummarizeMode>("executive");
+  const [pdfSummarizeProgress, setPdfSummarizeProgress] = useState<SummarizeProgress | null>(null);
+  const [pdfSummaryResult, setPdfSummaryResult] = useState<PdfSummaryResult | null>(null);
+  const [pdfSummarizeErrorCode, setPdfSummarizeErrorCode] = useState<SummarizeErrorCode | null>(
+    null,
+  );
+  const [pdfSummarizePreviewPage, setPdfSummarizePreviewPage] = useState<number>(1);
+  const [pdfSummarizePreviewThumb, setPdfSummarizePreviewThumb] = useState<string>("");
+  const pdfSummarizeController = useRef<AbortController | null>(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: arquivo ou ferramenta reiniciam o estado de resumo local.
+  useEffect(() => {
+    if (tool.id !== "pdf-summarize") return;
+    pdfSummarizeController.current?.abort();
+    pdfSummarizeController.current = null;
+    terminateSummarizeWorker();
+    setPdfSummarizeProgress(null);
+    setPdfSummaryResult(null);
+    setPdfSummarizeErrorCode(null);
+    setPdfSummarizePreviewPage(1);
+    setPdfSummarizePreviewThumb("");
+    setDownloadUrl(null);
+    setOutputBlob(null);
+    setStatus("idle");
+    setErrorMessage(null);
+    return () => {
+      pdfSummarizeController.current?.abort();
+      terminateSummarizeWorker();
+    };
+  }, [files[0], tool.id]);
+
+  useEffect(() => {
+    if (tool.id !== "pdf-summarize") return;
+    const activeFile = files[0];
+    if (!activeFile) {
+      setPdfSummarizePreviewThumb("");
+      return;
+    }
+    const thumbAbort = new AbortController();
+    void (async () => {
+      try {
+        const bytes = new Uint8Array(await activeFile.arrayBuffer());
+        const thumb = await renderPdfPageToDataUrl(
+          bytes,
+          pdfSummarizePreviewPage,
+          1.35,
+          thumbAbort.signal,
+        );
+        if (!thumbAbort.signal.aborted && thumb) {
+          setPdfSummarizePreviewThumb(thumb);
+        }
+      } catch {
+        // Falha opcional de prévia não impede resumo textual
+      }
+    })();
+    return () => {
+      thumbAbort.abort();
+    };
+  }, [files[0], tool.id, pdfSummarizePreviewPage]);
+
+  const isCurrentOfficeTool = isOfficeToolId(tool.id);
+  const {
+    capabilities: officeCapabilities,
+    install: installCapabilityItem,
+    refresh: refreshCapabilities,
+  } = useCapabilities(isCurrentOfficeTool ? documentCore : undefined);
+  const officeCapabilityItem = officeCapabilities.find((item) => item.id === "office.suite");
+  const officeSurfaceMode: OfficeSurfaceMode =
+    isTauriEnvironment() || documentCore.supportedToolIds.has("pdf-to-powerpoint")
+      ? "desktop"
+      : isHttpBackendConfigured() || documentCore.supportedToolIds.has("word-to-pdf")
+        ? "hybrid-web"
+        : "offline-browser";
+  const [officeDurationMs, setOfficeDurationMs] = useState<number | undefined>(undefined);
+  const [officeOutputSizeBytes, setOfficeOutputSizeBytes] = useState<number | undefined>(undefined);
+  const [officeResultThumbnail, setOfficeResultThumbnail] = useState<string>("");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: arquivo ou ferramenta invalidam a conversão Office anterior.
+  useEffect(() => {
+    if (!isCurrentOfficeTool) return;
+    setOfficeDurationMs(undefined);
+    setOfficeOutputSizeBytes(undefined);
+    setOfficeResultThumbnail("");
+    setDownloadUrl(null);
+    setOutputBlob(null);
+    setStatus("idle");
+    setErrorMessage(null);
+  }, [files[0], tool.id, isCurrentOfficeTool]);
 
   // Estados de Ferramentas de Imagem (Modo Imagem)
   const [imageCompressionLevel, setImageCompressionLevel] =
@@ -859,15 +1031,17 @@ export function DedicatedToolView({
         isImageTool
       }
       accept={
-        tool.manifest.category === "image"
-          ? ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-          : isImageTool
-            ? ".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
-            : tool.id === "pdf-ocr"
-              ? ".pdf,application/pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-              : tool.suite === "text"
-                ? ".txt,.md,.pdf,.docx"
-                : ".pdf,application/pdf"
+        isOfficeToolId(tool.id)
+          ? OFFICE_TOOL_METADATA[tool.id as OfficeConversionKind].accept
+          : tool.manifest.category === "image"
+            ? ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+            : isImageTool
+              ? ".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
+              : tool.id === "pdf-ocr"
+                ? ".pdf,application/pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                : tool.suite === "text"
+                  ? ".txt,.md,.pdf,.docx"
+                  : ".pdf,application/pdf"
       }
       onChange={handleFileInput}
     />
@@ -1094,6 +1268,8 @@ export function DedicatedToolView({
     setMarkdownResult("");
     setRemovePagesSelection([]);
     setExtractPagesSelection([1]);
+    setPdfToJpgPageMode("all");
+    setPdfToJpgPageRangeText("");
     setPageRangeValid(true);
     setPreviewEpoch((epoch) => epoch + 1);
     setRedactionAreas([]);
@@ -1267,6 +1443,9 @@ export function DedicatedToolView({
     } else {
       setFiles(newFiles.slice(0, 1));
     }
+    if (tool.id === "text-review" || tool.id === "text-translate") {
+      setInputTab("upload");
+    }
     setStatus("idle");
     setErrorMessage(null);
     setDownloadUrl(null);
@@ -1430,6 +1609,24 @@ export function DedicatedToolView({
       setDownloadUrl(null);
       setOutputBlob(null);
     }
+    const pdfaRun = tool.id === "pdf-to-pdfa" ? new AbortController() : undefined;
+    if (pdfaRun) {
+      pdfaController.current?.abort();
+      pdfaController.current = pdfaRun;
+      setPdfaReport(null);
+      setPdfaThumbnail("");
+      setDownloadUrl(null);
+      setOutputBlob(null);
+    }
+    const summarizeRun = tool.id === "pdf-summarize" ? new AbortController() : undefined;
+    if (summarizeRun) {
+      pdfSummarizeController.current?.abort();
+      pdfSummarizeController.current = summarizeRun;
+      setPdfSummarizeProgress(null);
+      setPdfSummarizeErrorCode(null);
+      setDownloadUrl(null);
+      setOutputBlob(null);
+    }
     const markdownRun = tool.id === "pdf-to-markdown" ? new AbortController() : undefined;
     if (markdownRun) {
       markdownController.current?.abort();
@@ -1555,6 +1752,26 @@ export function DedicatedToolView({
           if (repairRun && !repairRun.signal.aborted && repairRun === repairController.current)
             setProgress(percent);
         },
+        pdfaConformance,
+        pdfaFontStrategy,
+        pdfaAllowDiscardSignatures,
+        pdfaSignal: pdfaRun?.signal,
+        onPdfaProgress: (percent) => {
+          if (pdfaRun && !pdfaRun.signal.aborted && pdfaRun === pdfaController.current)
+            setProgress(percent);
+        },
+        pdfSummarizeMode,
+        pdfSummarizeSignal: summarizeRun?.signal,
+        onPdfSummarizeProgress: (nextProgress) => {
+          if (
+            summarizeRun &&
+            !summarizeRun.signal.aborted &&
+            summarizeRun === pdfSummarizeController.current
+          ) {
+            setPdfSummarizeProgress(nextProgress);
+            setProgress(nextProgress.progress);
+          }
+        },
         imageSignal: currentImageRun?.signal,
         onImageProgress: (completed, total) => {
           setImageBatchProgress(`${completed} / ${total}`);
@@ -1569,6 +1786,11 @@ export function DedicatedToolView({
         pages: pageItems,
         rotateAngle,
         compressionLevel,
+        pdfToJpgDpi,
+        pdfToJpgSelectedPages:
+          tool.id === "pdf-to-jpg" && pdfToJpgPageMode === "range"
+            ? parsePageRange(pdfToJpgPageRangeText, pdfPageCount).pages
+            : undefined,
         imageCompressionLevel,
         imageResizeMode,
         imageResizePercentage,
@@ -1661,6 +1883,9 @@ export function DedicatedToolView({
         scanPageSize,
         scanOrientation,
         scanMargin,
+        pdfToWordPreserveTables,
+        pdfToWordExtractImages,
+        pdfToWordRunOcrIfScanned,
         onOcrProgress: (info) => {
           if (ocrRun?.signal.aborted) return;
           setProgress(info.progress);
@@ -1714,6 +1939,8 @@ export function DedicatedToolView({
       });
       if (tool.id === "text-review" && reviewGeneration !== reviewRunGeneration.current) return;
       if (repairRun?.signal.aborted) return;
+      if (pdfaRun?.signal.aborted) return;
+      if (summarizeRun?.signal.aborted) return;
       if (redactionRun?.signal.aborted) return;
       if (ocrRun?.signal.aborted) return;
       if (excelRun?.signal.aborted) return;
@@ -1732,6 +1959,16 @@ export function DedicatedToolView({
         if (repairRun.signal.aborted || repairRun !== repairController.current) return;
         if (!preview) throw new ToolRunError("INVALID_INPUT", translate("repair.errorPreview"));
         setRepairThumbnail(preview);
+      }
+      if (pdfaRun) {
+        const preview = await renderPdfPageToDataUrl(
+          new Uint8Array(await outputBlob.arrayBuffer()),
+          1,
+          1.2,
+          pdfaRun.signal,
+        );
+        if (pdfaRun.signal.aborted || pdfaRun !== pdfaController.current) return;
+        if (preview) setPdfaThumbnail(preview);
       }
       const outName = output.fileName;
       const categoryKey = output.categoryKey;
@@ -1781,8 +2018,30 @@ export function DedicatedToolView({
       if (tool.id === "pdf-repair" && output.pdfRepairReport) {
         setPdfRepairReport(output.pdfRepairReport);
       }
+      if (tool.id === "pdf-to-pdfa" && output.pdfaReport) {
+        setPdfaReport(output.pdfaReport);
+      }
+      if (tool.id === "pdf-summarize" && output.pdfSummaryResult) {
+        setPdfSummaryResult(output.pdfSummaryResult);
+      }
       if (tool.id === "pdf-to-word" && output.pdfToWordReport) {
         setPdfToWordReport(output.pdfToWordReport);
+      }
+      if (isOfficeToolId(tool.id)) {
+        setOfficeDurationMs(output.officeConversionDurationMs);
+        setOfficeOutputSizeBytes(output.officeOutputBytesLen ?? outputBlob.size);
+        if (outputBlob.type === "application/pdf") {
+          try {
+            const pdfPreview = await renderPdfPageToDataUrl(
+              new Uint8Array(await outputBlob.arrayBuffer()),
+              1,
+              1.2,
+            );
+            if (pdfPreview) setOfficeResultThumbnail(pdfPreview);
+          } catch {
+            // Ignora falha opcional de miniatura da saída
+          }
+        }
       }
       setProgress(100);
       setOutputFileName(outName);
@@ -1798,7 +2057,10 @@ export function DedicatedToolView({
         tool.id === "pdf-to-markdown" ||
         tool.id === "pdf-extract-images" ||
         tool.id === "pdf-repair" ||
-        tool.id === "pdf-to-word";
+        tool.id === "pdf-to-pdfa" ||
+        tool.id === "pdf-summarize" ||
+        tool.id === "pdf-to-word" ||
+        isOfficeToolId(tool.id);
 
       if (shouldStayInWorkspace) {
         setStatus("idle");
@@ -1817,6 +2079,8 @@ export function DedicatedToolView({
     } catch (err) {
       if (tool.id === "text-review" && reviewGeneration !== reviewRunGeneration.current) return;
       if (repairRun?.signal.aborted) return;
+      if (pdfaRun?.signal.aborted) return;
+      if (summarizeRun?.signal.aborted) return;
       if (excelRun?.signal.aborted) return;
       if (markdownRun?.signal.aborted) return;
       if (ocrRun?.signal.aborted) return;
@@ -1841,6 +2105,11 @@ export function DedicatedToolView({
       ) {
         console.error("Erro na execução da ferramenta:", err);
       }
+      const summarizeDetails =
+        err instanceof ToolRunError
+          ? (err.details as { summarizeCode?: SummarizeErrorCode } | undefined)?.summarizeCode
+          : undefined;
+      setPdfSummarizeErrorCode(summarizeDetails ?? null);
       setErrorMessage(
         err instanceof ToolRunError
           ? err.message
@@ -1853,6 +2122,8 @@ export function DedicatedToolView({
       setStatus("error");
     } finally {
       if (repairRun === repairController.current) repairController.current = null;
+      if (pdfaRun === pdfaController.current) pdfaController.current = null;
+      if (summarizeRun === pdfSummarizeController.current) pdfSummarizeController.current = null;
       if (markdownRun === markdownController.current) markdownController.current = null;
       if (excelRun === excelController.current) excelController.current = null;
       if (ocrRun === ocrController.current) ocrController.current = null;
@@ -1866,6 +2137,19 @@ export function DedicatedToolView({
     repairController.current = null;
     setPdfRepairReport(null);
     setRepairThumbnail("");
+    pdfaController.current?.abort();
+    pdfaController.current = null;
+    setPdfaReport(null);
+    setPdfaThumbnail("");
+    setPdfaAllowDiscardSignatures(false);
+    pdfSummarizeController.current?.abort();
+    pdfSummarizeController.current = null;
+    terminateSummarizeWorker();
+    setPdfSummarizeProgress(null);
+    setPdfSummaryResult(null);
+    setPdfSummarizeErrorCode(null);
+    setPdfSummarizePreviewPage(1);
+    setPdfSummarizePreviewThumb("");
     markdownController.current?.abort();
     markdownController.current = null;
     setMarkdownPageReports([]);
@@ -1880,8 +2164,12 @@ export function DedicatedToolView({
     setScannedPages([]);
     setRemovePagesSelection([]);
     setExtractPagesSelection([1]);
+    setPdfToJpgDpi(150);
+    setPdfToJpgPageMode("all");
+    setPdfToJpgPageRangeText("");
     setPageRangeValid(true);
     setFiles([]);
+    setInputTab(tool.id === "text-review" || tool.id === "text-translate" ? "text" : "upload");
     setStatus("idle");
     setErrorMessage(null);
     setProgress(0);
@@ -1896,6 +2184,9 @@ export function DedicatedToolView({
     setImageResults([]);
     setPdfRepairReport(null);
     setPdfToWordReport(null);
+    setOfficeDurationMs(undefined);
+    setOfficeOutputSizeBytes(undefined);
+    setOfficeResultThumbnail("");
   }
 
   async function handleSaveOutput() {
@@ -1917,6 +2208,8 @@ export function DedicatedToolView({
     if (tool.id === "pdf-split") return translate("dedicated.actionSplit");
     if (tool.id === "pdf-compress") return translate("dedicated.actionCompress");
     if (tool.id === "pdf-repair") return translate("dedicated.actionRepair");
+    if (tool.id === "pdf-to-pdfa") return translate("dedicated.actionPdfToPdfa");
+    if (tool.id === "pdf-summarize") return translate("dedicated.actionSummarize");
     if (tool.id === "pdf-to-word") return translate("dedicated.actionPdfToWord");
     if (tool.id === "pdf-merge") return translate("dedicated.actionMerge");
     if (tool.id === "pdf-rotate") return translate("dedicated.actionRotate");
@@ -1983,6 +2276,7 @@ export function DedicatedToolView({
           compressionLevel={compressionLevel}
           onCompressionLevelChange={setCompressionLevel}
           onAddMoreFiles={() => fileInputRef.current?.click()}
+          file={files[0]}
         />
       );
     }
@@ -2002,6 +2296,12 @@ export function DedicatedToolView({
             outputFileName || `${files[0]?.name?.replace(/\.[^/.]+$/, "") ?? "documento"}.docx`
           }
           thumbnail={firstPageThumb}
+          preserveTables={pdfToWordPreserveTables}
+          extractImages={pdfToWordExtractImages}
+          runOcrIfScanned={pdfToWordRunOcrIfScanned}
+          onPreserveTablesChange={setPdfToWordPreserveTables}
+          onExtractImagesChange={setPdfToWordExtractImages}
+          onRunOcrIfScannedChange={setPdfToWordRunOcrIfScanned}
           onRunConversion={() => void handleExecute()}
           onReset={handleReset}
           onNavigateToOcr={onOpenTool ? () => onOpenTool("pdf-ocr", files) : undefined}
@@ -2084,6 +2384,13 @@ export function DedicatedToolView({
           thumbnailUrl={firstPageThumb}
           pageThumbnails={allPageThumbnails}
           onPreviewPageChange={handlePreviewPageChange}
+          dpi={pdfToJpgDpi}
+          onDpiChange={setPdfToJpgDpi}
+          pageMode={pdfToJpgPageMode}
+          onPageModeChange={setPdfToJpgPageMode}
+          pageRangeText={pdfToJpgPageRangeText}
+          onPageRangeTextChange={setPdfToJpgPageRangeText}
+          onRangeValidityChange={setPageRangeValid}
         />
       );
     }
@@ -2308,6 +2615,7 @@ export function DedicatedToolView({
           onPreserveChange={setRedactionPreserve}
           redactions={redactionAreas}
           onRedactionsChange={(areas) => setRedactionAreas([...areas])}
+          file={files[0]}
         />
       );
     }
@@ -2932,6 +3240,59 @@ export function DedicatedToolView({
     );
   }
 
+  if (isCurrentOfficeTool) {
+    const officeKind = tool.id as OfficeConversionKind;
+    const officeMeta = OFFICE_TOOL_METADATA[officeKind];
+    const activeOfficeFile = files[0];
+    return (
+      <>
+        {fileInput}
+        <OfficeConvertPanel
+          toolId={officeKind}
+          toolTitle={translate(tool.titleKey)}
+          accentColor={accent}
+          surfaceMode={officeSurfaceMode}
+          fileName={activeOfficeFile?.name ?? null}
+          fileSizeBytes={activeOfficeFile?.size ?? 0}
+          capabilityStatus={officeCapabilityItem?.status ?? "not_installed"}
+          capabilityProgressPercent={officeCapabilityItem?.progressPercent}
+          isRunning={status === "running"}
+          errorMessage={errorMessage}
+          downloadUrl={downloadUrl}
+          outputFileName={
+            outputFileName ||
+            buildOfficeOutputFileName(
+              activeOfficeFile?.name ?? "documento",
+              officeMeta.outputExtension,
+            )
+          }
+          outputFileSizeBytes={officeOutputSizeBytes}
+          conversionDurationMs={officeDurationMs}
+          thumbnailUrl={officeResultThumbnail || firstPageThumb || undefined}
+          processingMode={processingMode}
+          quotaRemaining={cloudUsage?.officeFiles?.remaining}
+          isCloudAuthed={isCloudAuthed}
+          onChangeProcessingMode={setProcessingMode}
+          onSelectFile={() => fileInputRef.current?.click()}
+          onInstallCapability={() => {
+            void installCapabilityItem("office.suite").catch((err) => {
+              setErrorMessage(
+                err instanceof Error ? err.message : translate("office.errorHeading"),
+              );
+            });
+          }}
+          onRecheckCapability={() => {
+            void refreshCapabilities();
+          }}
+          onRunConvert={() => void handleExecute()}
+          onSaveOutput={documentCore.saveOutputFile ? () => void handleSaveOutput() : undefined}
+          onReset={handleReset}
+          onBack={onBack}
+        />
+      </>
+    );
+  }
+
   // FASE 1: TELA INICIAL DE UPLOAD CENTRALIZADO
   if (!isWorkspaceMode) {
     return (
@@ -3050,6 +3411,83 @@ export function DedicatedToolView({
     );
   }
 
+  if (tool.id === "pdf-to-pdfa") {
+    return (
+      <>
+        {fileInput}
+        <PdfToPdfaPanel
+          fileName={files[0].name}
+          fileSizeBytes={files[0].size}
+          conformance={pdfaConformance}
+          fontStrategy={pdfaFontStrategy}
+          allowDiscardSignatures={pdfaAllowDiscardSignatures}
+          isInspecting={pdfaIsInspecting}
+          diagnostic={pdfaDiagnostic}
+          isRunning={status === "running"}
+          progressPercent={progress}
+          report={pdfaReport}
+          errorMessage={status === "error" ? errorMessage : null}
+          downloadUrl={downloadUrl}
+          outputFileName={outputFileName}
+          outputFileSizeBytes={outputBlob?.size}
+          thumbnail={firstPageThumb}
+          resultThumbnail={pdfaThumbnail}
+          onChangeConformance={setPdfaConformance}
+          onChangeFontStrategy={setPdfaFontStrategy}
+          onChangeAllowDiscardSignatures={setPdfaAllowDiscardSignatures}
+          onBack={onBack}
+          onRunConvert={() => void handleExecute()}
+          onReset={handleReset}
+          onCancel={() => {
+            pdfaController.current?.abort();
+            pdfaController.current = null;
+            setStatus("idle");
+            setProgress(0);
+            setErrorMessage(null);
+          }}
+        />
+      </>
+    );
+  }
+
+  if (tool.id === "pdf-summarize") {
+    return (
+      <>
+        {fileInput}
+        <PdfSummarizePanel
+          fileName={files[0].name}
+          fileSizeBytes={files[0].size}
+          pageCount={Math.max(1, pdfSummaryResult?.totalPages ?? pdfPageCount)}
+          previewPage={pdfSummarizePreviewPage}
+          previewThumbnail={
+            pdfSummarizePreviewThumb || (pdfSummarizePreviewPage === 1 ? firstPageThumb : "")
+          }
+          mode={pdfSummarizeMode}
+          isRunning={status === "running"}
+          progress={pdfSummarizeProgress}
+          result={pdfSummaryResult}
+          errorCode={status === "error" ? pdfSummarizeErrorCode : null}
+          errorMessage={status === "error" ? errorMessage : null}
+          onChangeMode={setPdfSummarizeMode}
+          onSelectPreviewPage={setPdfSummarizePreviewPage}
+          onRunSummarize={() => void handleExecute()}
+          onCancel={() => {
+            pdfSummarizeController.current?.abort();
+            pdfSummarizeController.current = null;
+            terminateSummarizeWorker();
+            setStatus("idle");
+            setProgress(0);
+            setPdfSummarizeProgress(null);
+            setErrorMessage(null);
+          }}
+          onGoToOcr={onOpenTool ? () => onOpenTool("pdf-ocr", files) : undefined}
+          onReset={handleReset}
+          onBack={onBack}
+        />
+      </>
+    );
+  }
+
   // FASE 2: WORKSPACE ATIVO
   return (
     <div
@@ -3109,9 +3547,22 @@ export function DedicatedToolView({
             <div className="dedicated-tool-workspace-split">
               <div className="dedicated-tool-left-column">
                 <div className="dedicated-tool-text-input-box">
-                  <label htmlFor="dedicated-tool-direct-textarea" className="dedicated-tool-label">
-                    Conteúdo do Documento:
-                  </label>
+                  <div className="dedicated-tool-text-header">
+                    <label
+                      htmlFor="dedicated-tool-direct-textarea"
+                      className="dedicated-tool-label"
+                    >
+                      Conteúdo do Documento:
+                    </label>
+                    <button
+                      type="button"
+                      className="dedicated-tool-secondary-load-btn"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload size={14} />
+                      <span>{translate("workspace.text.loadFile")}</span>
+                    </button>
+                  </div>
                   <textarea
                     id="dedicated-tool-direct-textarea"
                     className="dedicated-tool-direct-textarea"
@@ -3143,114 +3594,116 @@ export function DedicatedToolView({
         )}
       </div>
       {/* Barra de Ação Inferior Fixa com Botão Estilo iLovePDF / iLoveIMG */}
-      <div ref={actionBarRef} className="dedicated-tool-bottom-bar">
-        {tool.manifest.category === "image" && status === "running" && (
-          <>
-            <p role="status">{imageBatchProgress}</p>
+      {tool.id !== "pdf-to-word" && (
+        <div ref={actionBarRef} className="dedicated-tool-bottom-bar">
+          {tool.manifest.category === "image" && status === "running" && (
+            <>
+              <p role="status">{imageBatchProgress}</p>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  imageController.current?.abort();
+                  setStatus("idle");
+                  setImageBatchProgress("");
+                }}
+              >
+                {translate("imageProcessing.cancel")}
+              </Button>
+            </>
+          )}
+          {tool.id === "pdf-redact" && status === "running" && (
             <Button
               variant="secondary"
               onClick={() => {
-                imageController.current?.abort();
+                redactionController.current?.abort();
                 setStatus("idle");
-                setImageBatchProgress("");
+                setErrorMessage(null);
               }}
             >
-              {translate("imageProcessing.cancel")}
+              {translate("redact.cancel")}
             </Button>
-          </>
-        )}
-        {tool.id === "pdf-redact" && status === "running" && (
-          <Button
-            variant="secondary"
-            onClick={() => {
-              redactionController.current?.abort();
-              setStatus("idle");
-              setErrorMessage(null);
-            }}
-          >
-            {translate("redact.cancel")}
-          </Button>
-        )}
-        {tool.id === "pdf-to-markdown" && status === "running" && (
-          <Button
-            variant="secondary"
-            onClick={() => {
-              markdownController.current?.abort();
-              markdownController.current = null;
-              setStatus("idle");
-              setProgress(0);
-              setErrorMessage(null);
-            }}
-          >
-            {translate("pdfToMarkdown.cancel")}
-          </Button>
-        )}
-        {tool.id === "pdf-to-excel" && status === "running" && (
-          <Button
-            variant="secondary"
-            onClick={() => {
-              excelController.current?.abort();
-              excelController.current = null;
-              setStatus("idle");
-              setProgress(0);
-              setErrorMessage(null);
-            }}
-          >
-            {translate("excel.cancel")}
-          </Button>
-        )}
-        {errorMessage && (
-          <p
-            role="alert"
-            className="dedicated-tool-error-alert text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 px-3 py-1.5 rounded-lg flex items-center gap-1.5 mr-auto"
-          >
-            <AlertCircle size={15} className="shrink-0" />
-            <span>{errorMessage}</span>
-          </p>
-        )}
-        <button
-          type="button"
-          className="ilovepdf-action-red-btn"
-          disabled={
-            status === "running" ||
-            (tool.id === "text-compare" && !hasCompareTexts) ||
-            !pageRangeValid ||
-            (tool.manifest.category === "image" &&
-              (imageBatch.pending || imageBatch.invalid || cropConflicts.length > 0)) ||
-            (tool.id === "image-crop" && !imageOriginalDimensions) ||
-            (tool.id === "image-watermark" &&
-              compositionMode &&
-              (!compositionValid || compositionAssetPending)) ||
-            (tool.id === "image-watermark" &&
-              !compositionMode &&
-              imageWatermarkType === "image" &&
-              !imageWatermarkFile) ||
-            (!hasFilesOrText && tool.id !== "text-compare") ||
-            (tool.id === "pdf-protect" && protectionStatus.isProtected) ||
-            (tool.id === "pdf-redact" && redactionAreas.length === 0) ||
-            (tool.id === "pdf-form-fill" && !formPreview.revision) ||
-            (tool.id === "pdf-to-excel" &&
-              (isAnalyzingExcel ||
-                !excelPreviewReady ||
-                Boolean(excelSelection.error ?? excelPreviewError)))
-          }
-          onClick={handleExecute}
-        >
-          {status === "running" ? (
-            <>
-              <Loader2 size={18} className="animate-spin" />
-              <span>
-                {progress > 0 ? `Processando... ${Math.round(progress)}%` : "Processando..."}
-              </span>
-            </>
-          ) : (
-            <>
-              <span>{getActionLabel()}</span>
-              <ArrowRight size={18} />
-            </>
           )}
-        </button>
-      </div>
+          {tool.id === "pdf-to-markdown" && status === "running" && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                markdownController.current?.abort();
+                markdownController.current = null;
+                setStatus("idle");
+                setProgress(0);
+                setErrorMessage(null);
+              }}
+            >
+              {translate("pdfToMarkdown.cancel")}
+            </Button>
+          )}
+          {tool.id === "pdf-to-excel" && status === "running" && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                excelController.current?.abort();
+                excelController.current = null;
+                setStatus("idle");
+                setProgress(0);
+                setErrorMessage(null);
+              }}
+            >
+              {translate("excel.cancel")}
+            </Button>
+          )}
+          {errorMessage && (
+            <p
+              role="alert"
+              className="dedicated-tool-error-alert text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 px-3 py-1.5 rounded-lg flex items-center gap-1.5 mr-auto"
+            >
+              <AlertCircle size={15} className="shrink-0" />
+              <span>{errorMessage}</span>
+            </p>
+          )}
+          <button
+            type="button"
+            className="ilovepdf-action-red-btn"
+            disabled={
+              status === "running" ||
+              (tool.id === "text-compare" && !hasCompareTexts) ||
+              !pageRangeValid ||
+              (tool.manifest.category === "image" &&
+                (imageBatch.pending || imageBatch.invalid || cropConflicts.length > 0)) ||
+              (tool.id === "image-crop" && !imageOriginalDimensions) ||
+              (tool.id === "image-watermark" &&
+                compositionMode &&
+                (!compositionValid || compositionAssetPending)) ||
+              (tool.id === "image-watermark" &&
+                !compositionMode &&
+                imageWatermarkType === "image" &&
+                !imageWatermarkFile) ||
+              (!hasFilesOrText && tool.id !== "text-compare") ||
+              (tool.id === "pdf-protect" && protectionStatus.isProtected) ||
+              (tool.id === "pdf-redact" && redactionAreas.length === 0) ||
+              (tool.id === "pdf-form-fill" && !formPreview.revision) ||
+              (tool.id === "pdf-to-excel" &&
+                (isAnalyzingExcel ||
+                  !excelPreviewReady ||
+                  Boolean(excelSelection.error ?? excelPreviewError)))
+            }
+            onClick={handleExecute}
+          >
+            {status === "running" ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                <span>
+                  {progress > 0 ? `Processando... ${Math.round(progress)}%` : "Processando..."}
+                </span>
+              </>
+            ) : (
+              <>
+                <span>{getActionLabel()}</span>
+                <ArrowRight size={18} />
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

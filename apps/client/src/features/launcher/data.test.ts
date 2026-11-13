@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { HttpDocumentCorePort } from "@/platform/http-document-core";
-import { pdfSuites, resolveLauncherTools } from "./data";
+import { TauriDocumentCorePort } from "@/platform/tauri-document-core";
+import { pdfSuites, resolveAllRegisteredTools, resolveLauncherTools } from "./data";
 
 describe("Strict Functional Tools Catalog", () => {
   it("agrupa edição, comparação e formulários de PDF na categoria correspondente", () => {
@@ -34,6 +35,8 @@ describe("Strict Functional Tools Catalog", () => {
       "scan-to-pdf",
       "pdf-repair",
       "pdf-to-word",
+      "pdf-to-pdfa",
+      "pdf-summarize",
       "pdf-edit",
       "pdf-compare",
       "image-compress",
@@ -45,12 +48,18 @@ describe("Strict Functional Tools Catalog", () => {
     ]) {
       expect(ids).toContain(id);
     }
-    expect(ids).toHaveLength(36);
+    expect(ids).toContain("word-to-pdf");
+    expect(ids).toContain("excel-to-pdf");
+    expect(ids).toContain("powerpoint-to-pdf");
+    expect(ids).not.toContain("pdf-to-powerpoint");
+    expect(ids).toHaveLength(41);
   });
-  it("não oferece conversões e proteção sem executor", () => {
+  it("não oferece ferramentas Office ou exclusivas de desktop no navegador offline", () => {
     const tools = resolveLauncherTools();
     const ids = tools.map((t) => t.id);
 
+    expect(ids).toHaveLength(38);
+    expect(ids).toContain("pdf-summarize");
     expect(ids).toContain("pdf-compress");
     expect(ids).toContain("pdf-organize");
     expect(ids).toContain("images-to-pdf");
@@ -62,6 +71,9 @@ describe("Strict Functional Tools Catalog", () => {
     expect(ids).toContain("text-compare");
     expect(ids).toContain("pdf-to-word");
     expect(ids).not.toContain("word-to-pdf");
+    expect(ids).not.toContain("excel-to-pdf");
+    expect(ids).not.toContain("powerpoint-to-pdf");
+    expect(ids).not.toContain("pdf-to-powerpoint");
     expect(ids).toContain("pdf-protect");
     expect(ids).toContain("pdf-redact");
     expect(ids).toContain("pdf-to-excel");
@@ -69,6 +81,21 @@ describe("Strict Functional Tools Catalog", () => {
 
     // Ferramenta de inteligência jurídica removida do escopo do produto
     expect(ids).not.toContain("intelligence-extract");
+
+    // Rotas diretas ainda encontram o manifesto Office para exibir orientação honesta
+    const allRegisteredIds = resolveAllRegisteredTools().map((t) => t.id);
+    expect(allRegisteredIds).toContain("word-to-pdf");
+    expect(allRegisteredIds).toContain("pdf-to-powerpoint");
+  });
+
+  it("habilita toda a suíte Office no aplicativo Desktop (Tauri)", () => {
+    const desktopTools = resolveLauncherTools([], new TauriDocumentCorePort());
+    const desktopIds = desktopTools.map((t) => t.id);
+    expect(desktopIds).toHaveLength(42);
+    expect(desktopIds).toContain("word-to-pdf");
+    expect(desktopIds).toContain("excel-to-pdf");
+    expect(desktopIds).toContain("powerpoint-to-pdf");
+    expect(desktopIds).toContain("pdf-to-powerpoint");
   });
 
   it("todas as ferramentas do launcher possuem disponibilidade confirmada sem 'Em breve'", () => {

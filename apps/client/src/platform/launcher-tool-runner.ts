@@ -28,6 +28,7 @@ import type { WatermarkPosition } from "./image-engine";
 import { processImage } from "./image-processing";
 import { type ImageResultItem, inspectImageResult } from "./image-results";
 import type { MarkdownPageReport, MarkdownReadingOrder } from "./markdown-converter";
+import { convertOfficeWithDocumentCore } from "./office-client";
 import { performBrowserPdfComparison } from "./pdf-comparison-client";
 import type {
   PdfComparisonPair,
@@ -69,7 +70,21 @@ import { getPdfFormRevisionBytes, matchesPdfFormRevision, type PdfFormRevision }
 import { redactBrowserPdf } from "./pdf-redaction-client";
 import { repairBrowserPdf } from "./pdf-repair-client";
 import { PDF_REPAIR_LIMITS, type PdfRepairReport } from "./pdf-repair-engine";
+import type { SummarizeMode, SummarizeProgress } from "./pdf-summarize-protocol";
+import {
+  buildSummaryMarkdownDocument,
+  PdfSummarizeError,
+  type PdfSummaryResult,
+  summarizePdfDocument,
+} from "./pdf-summarizer";
 import { convertPdfToWord, type PdfToWordReport } from "./pdf-to-word-converter";
+import { convertBrowserPdfToPdfA } from "./pdfa-client";
+import {
+  PDFA_LIMITS,
+  type PdfAConformance,
+  type PdfAConversionReport,
+  type PdfAFontStrategy,
+} from "./pdfa-converter";
 import { compileScannedPagesToPdf, type ScannedPageItem } from "./scan-to-pdf-engine";
 
 export interface LauncherPage {
@@ -217,6 +232,19 @@ export interface LauncherToolInput {
   readonly imageWatermarkPosition?: WatermarkPosition;
   readonly imageWatermarkFile?: File;
   readonly imageComposition?: ImageCompositionSnapshot;
+  readonly pdfToWordPreserveTables?: boolean;
+  readonly pdfToWordExtractImages?: boolean;
+  readonly pdfToWordRunOcrIfScanned?: boolean;
+  readonly pdfToJpgDpi?: 72 | 150 | 300;
+  readonly pdfToJpgSelectedPages?: readonly number[];
+  readonly pdfaConformance?: PdfAConformance;
+  readonly pdfaFontStrategy?: PdfAFontStrategy;
+  readonly pdfaAllowDiscardSignatures?: boolean;
+  readonly pdfaSignal?: AbortSignal;
+  readonly onPdfaProgress?: (percent: number) => void;
+  readonly pdfSummarizeMode?: SummarizeMode;
+  readonly pdfSummarizeSignal?: AbortSignal;
+  readonly onPdfSummarizeProgress?: (progress: SummarizeProgress) => void;
 }
 
 export interface LauncherToolOutput {
@@ -237,6 +265,10 @@ export interface LauncherToolOutput {
   readonly extractedImages?: readonly ExtractedImage[];
   readonly pdfRepairReport?: PdfRepairReport;
   readonly pdfToWordReport?: PdfToWordReport;
+  readonly pdfaReport?: PdfAConversionReport;
+  readonly pdfSummaryResult?: PdfSummaryResult;
+  readonly officeConversionDurationMs?: number;
+  readonly officeOutputBytesLen?: number;
 }
 
 import { activeToolIds } from "./tool-availability";
@@ -465,11 +497,63 @@ async function executeTool(
         pdfRepairReport: report,
       };
     }
+    case "pdf-to-pdfa": {
+      let bytes: Uint8Array;
+      let report: PdfAConversionReport;
+      try {
+        if (input.pdfaSignal?.aborted) throw new Error("OPERACAO_CANCELADA");
+        if (first.size === 0) throw new Error("PDFA_INVALID_INPUT");
+        if (first.size > PDFA_LIMITS.inputBytes) throw new Error("PDFA_INPUT_LIMIT");
+        const outcome = await convertBrowserPdfToPdfA(new Uint8Array(await first.arrayBuffer()), {
+          conformance: input.pdfaConformance ?? "2b",
+          fontStrategy: input.pdfaFontStrategy ?? "preserve-vector",
+          allowDiscardSignatures: Boolean(input.pdfaAllowDiscardSignatures),
+          signal: input.pdfaSignal,
+          onProgress: input.onPdfaProgress,
+        });
+        bytes = outcome.pdfBytes;
+        report = outcome.report;
+      } catch (error) {
+        const code = error instanceof Error ? error.message : "";
+        if (
+          code === "OPERACAO_CANCELADA" ||
+          (error instanceof Error && error.name === "AbortError")
+        ) {
+          throw new ToolRunError("CANCELLED", translate("pdfToPdfa.cancelled"));
+        }
+        if (code === "PDFA_ENCRYPTED_REFUSED") {
+          throw new ToolRunError("INVALID_INPUT", translate("pdfToPdfa.errorEncrypted"));
+        }
+        if (code === "PDFA_SIGNED_REFUSED") {
+          throw new ToolRunError("INVALID_INPUT", translate("pdfToPdfa.errorSigned"));
+        }
+        if (code === "PDFA_INPUT_LIMIT") {
+          throw new ToolRunError("INVALID_INPUT", translate("pdfToPdfa.errorLimit"));
+        }
+        if (code === "PDFA_TIMEOUT") {
+          throw new ToolRunError("INVALID_INPUT", translate("pdfToPdfa.errorTimeout"));
+        }
+        if (code.startsWith("PDFA_")) {
+          throw new ToolRunError("INVALID_INPUT", translate("pdfToPdfa.errorInvalid"));
+        }
+        throw error;
+      }
+      return {
+        blob: pdfBlob(bytes),
+        fileName: `${baseName}_pdfa.pdf`,
+        categoryKey: "recent.type.pdf",
+        pdfaReport: report,
+      };
+    }
     case "pdf-to-word": {
       let docxBytes: Uint8Array;
       let report: PdfToWordReport;
       try {
-        const outcome = await convertPdfToWord(new Uint8Array(await first.arrayBuffer()));
+        const outcome = await convertPdfToWord(new Uint8Array(await first.arrayBuffer()), {
+          preserveTables: input.pdfToWordPreserveTables,
+          extractImages: input.pdfToWordExtractImages,
+          runOcrIfScanned: input.pdfToWordRunOcrIfScanned,
+        });
         docxBytes = outcome.docxBytes;
         report = outcome.report;
       } catch (error) {
@@ -987,9 +1071,14 @@ async function executeTool(
     case "pdf-to-jpg": {
       if (!first) throw new ToolRunError("INVALID_INPUT", "Selecione um arquivo PDF.");
       const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const dpi = input.pdfToJpgDpi ?? 150;
       const jpgImages = await convertPdfPagesToJpgImages(pdfBytes, {
         quality: 0.92,
-        scale: 150 / 72,
+        scale: dpi / 72,
+        selectedPages:
+          input.pdfToJpgSelectedPages && input.pdfToJpgSelectedPages.length > 0
+            ? input.pdfToJpgSelectedPages
+            : undefined,
       });
       if (jpgImages.length === 0) {
         throw new ToolRunError("INVALID_INPUT", "Nenhuma página encontrada para converter.");
@@ -1407,6 +1496,39 @@ async function executeTool(
       const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
       return imageToolOutput(first, blob, `${baseName}_marca_dagua.${ext}`, input.imageSignal);
     }
+    case "word-to-pdf":
+    case "excel-to-pdf":
+    case "powerpoint-to-pdf":
+    case "pdf-to-powerpoint": {
+      if (!first) throw new Error("INVALID_INPUT");
+      const officeOutput = await convertOfficeWithDocumentCore(documentCore, request.toolId, first);
+      return {
+        blob: officeOutput.blob,
+        fileName: officeOutput.fileName,
+        categoryKey: "recent.type.document",
+        officeConversionDurationMs: officeOutput.durationMs,
+        officeOutputBytesLen: officeOutput.outputBytesLen,
+      };
+    }
+    case "pdf-summarize": {
+      if (!first) throw new Error("INVALID_INPUT");
+      const pdfBytes = new Uint8Array(await first.arrayBuffer());
+      const mode: SummarizeMode = input.pdfSummarizeMode ?? "executive";
+      const summaryResult = await summarizePdfDocument({
+        pdfBytes,
+        mode,
+        signal: input.pdfSummarizeSignal,
+        onProgress: input.onPdfSummarizeProgress,
+      });
+      const markdownDoc = buildSummaryMarkdownDocument(summaryResult, first.name);
+      return {
+        blob: new Blob([markdownDoc], { type: "text/markdown;charset=utf-8" }),
+        fileName: `${baseName}_resumo.md`,
+        categoryKey: "recent.type.document",
+        extractedText: summaryResult.summaryMarkdown,
+        pdfSummaryResult: summaryResult,
+      };
+    }
     default:
       throw new Error("TOOL_UNAVAILABLE");
   }
@@ -1422,7 +1544,8 @@ export async function runLauncherTool(
     const manifest = coreToolRegistry.get(id);
     if (!manifest) continue;
     const executor: ToolExecutorKind =
-      documentCore.executePdfTool && (id === "pdf-compress" || id === "pdf-organize")
+      manifest.executor === "native" ||
+      (documentCore.executePdfTool && (id === "pdf-compress" || id === "pdf-organize"))
         ? "native"
         : "browser";
     registry.register({ ...manifest, executor });
@@ -1434,6 +1557,18 @@ export async function runLauncherTool(
         const output = await executeTool(documentCore, request);
         return { artifacts: [output] };
       } catch (error) {
+        if (error instanceof PdfSummarizeError) {
+          if (error.code === "SUMMARIZE_CANCELLED") {
+            throw new ToolRunError("CANCELLED", error.message);
+          }
+          const runCode =
+            error.code === "SUMMARIZE_SCANNED_PDF_NO_TEXT" ||
+            error.code === "SUMMARIZE_EMPTY_PDF" ||
+            error.code === "SUMMARIZE_INPUT_TOO_LARGE"
+              ? "INVALID_INPUT"
+              : "EXECUTION_FAILED";
+          throw new ToolRunError(runCode, error.message, { summarizeCode: error.code });
+        }
         if (error instanceof Error && error.message === "OPERACAO_CANCELADA") {
           throw new ToolRunError("CANCELLED", translate("workspace.translate.cancelled"));
         }
@@ -1541,7 +1676,8 @@ export async function runLauncherTool(
       input.translationSignal ??
       input.comparisonSignal ??
       input.editorSignal ??
-      input.redactionSignal,
+      input.redactionSignal ??
+      input.pdfSummarizeSignal,
   });
   const output = result.artifacts[0] as LauncherToolOutput | undefined;
   if (!output?.blob || !output.fileName) throw new Error("EXECUTION_FAILED");

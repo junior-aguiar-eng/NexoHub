@@ -26,7 +26,7 @@
         {
           "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
           "kind": "generator",
-          "sha256": "cd13693ddf99a5bc3c0bf84249efc4eb7f935c10ddd843945ecf5120236be7d7"
+          "sha256": "f127e6f95021659008a19d0b9438f1860c926d6daa34dbdfb4f83518e0ce69c5"
         }
       ]
     },
@@ -311,7 +311,7 @@
         {
           "path": "apps/client/src/platform/pdf-redaction-engine.test.ts",
           "kind": "generator",
-          "sha256": "e30c53b0ddea7d1c7c7cae3de5db66393ee69a78f75774b6022786cd17e761d9"
+          "sha256": "e823cd72ffd3726b5ec3d2cbad39535daa0f7d69d52543829990c4c220774c5c"
         },
         {
           "path": "apps/client/src/platform/pdf-crop-sign.test.ts",
@@ -471,7 +471,7 @@
         {
           "path": "apps/client/e2e/language-image-quality.spec.ts",
           "kind": "generator",
-          "sha256": "681623ae708cdc881a5b65bed388125286c66866814599ee3f2e103ffd278656"
+          "sha256": "4eea9e0dde28a3b84967cebf86815e23401061227f3c52977da1caef0026d894"
         }
       ]
     },
@@ -483,7 +483,7 @@
         {
           "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
           "kind": "generator",
-          "sha256": "cd13693ddf99a5bc3c0bf84249efc4eb7f935c10ddd843945ecf5120236be7d7"
+          "sha256": "f127e6f95021659008a19d0b9438f1860c926d6daa34dbdfb4f83518e0ce69c5"
         },
         {
           "path": "apps/client/src/platform/document-reader.test.ts",
@@ -682,7 +682,7 @@
         {
           "path": "apps/client/e2e/text-quality.spec.ts",
           "kind": "generator",
-          "sha256": "5f4113f3c2c9e846832d1c31fe8733908961957dd23289c732827c829365b218"
+          "sha256": "3728f867a78c06e6499c9741b781a41bb494e1ae2b2abdcab395a864a1bb9d9f"
         },
         {
           "path": "apps/client/public/dictionaries/pt-BR/pt_BR.aff",
@@ -709,7 +709,7 @@
         {
           "path": "apps/client/src/platform/compression-quality.test.ts",
           "kind": "generator",
-          "sha256": "65615abc4c2f40ab9c57721d356dfd2b36944b6372724470b3612c3c16b945f1"
+          "sha256": "72d474b38a4f5d5d0e4cefc2795dc8f5d53637e8182949725ca45496dd4499eb"
         },
         {
           "path": "apps/client/src/platform/scan-filter-failure.test.ts",
@@ -725,6 +725,77 @@
           "path": "apps/client/e2e/scan-interface-quality.spec.ts",
           "kind": "generator",
           "sha256": "ebc1c6b854f2669e8ca52c311956af66447e1d022c59141977aacd7b93a8ab08"
+        }
+      ]
+    },
+    {
+      "id": "pdfa",
+      "origin": "Corpus sintético ISO 19005-2b/1b com fontes incorporadas/padrão, ações JS e perfil sRGB-v2-micro.icc CC0.",
+      "license": "Geradores autorais MPL-2.0; sRGB-v2-micro.icc sob CC0 1.0 Universal.",
+      "artifacts": [
+        {
+          "path": "apps/client/public/icc/sRGB-v2-micro.icc",
+          "kind": "file",
+          "sha256": "0a8a33aea66a6f154a5642ebe168ef287e73265d9f7b51c42a45e6eedbacda7a"
+        },
+        {
+          "path": "apps/client/src/platform/pdfa-converter.test.ts",
+          "kind": "generator",
+          "sha256": "4726ae20c0fd2046407a0c1dfd4e5ba403440e5d4f1d108f9368eb8ae1450884"
+        },
+        {
+          "path": "apps/client/src/platform/pdfa-client.test.ts",
+          "kind": "generator",
+          "sha256": "adc02ce42b9affe07a91025ca4bc0e2d6e73fa280c1d13284cfc7316303d5ffe"
+        }
+      ]
+    },
+    {
+      "id": "office",
+      "origin": "Contêineres OOXML/ODF sintéticos e contratos Office IPC/UI autorais (Zip-Bomb, Path Traversal, cabeçalhos mágicos e políticas Desktop/Web Híbrida).",
+      "license": "Conteúdo autoral do NexoHub sob MPL-2.0; o runtime opcional LibreOffice portátil não integra este repositório.",
+      "artifacts": [
+        {
+          "path": "crates/nexohub-core/src/office_engine.rs",
+          "kind": "generator",
+          "sha256": "12723242bdfba900f27c0491c3ee46d58d92570208a16daffef6e9aa143b22cb"
+        },
+        {
+          "path": "apps/client/src/platform/office-client.test.ts",
+          "kind": "generator",
+          "sha256": "0c6cdbc3119a13a0cf6e23ce27cd8202605c45d47188c6f9278204a397216767"
+        },
+        {
+          "path": "apps/client/src/features/launcher/OfficeConvertPanel.test.tsx",
+          "kind": "generator",
+          "sha256": "23846ffd9fe985c846570704fb42ed8c7cce28990f9aebf55285b393b356ec4b"
+        }
+      ]
+    },
+    {
+      "id": "summarize",
+      "origin": "Contratos contratuais e jurídicos em pt-BR sintéticos, cargas adversariais de prompt injection e worker determinístico do SLM Qwen2.5-0.5B-Instruct (Apache-2.0).",
+      "license": "Conteúdo autoral do NexoHub sob MPL-2.0; modelo opcional baixado sob demanda mantém licença Apache-2.0 fora do repositório.",
+      "artifacts": [
+        {
+          "path": "apps/client/src/platform/pdf-summarizer.ts",
+          "kind": "generator",
+          "sha256": "f8d334052a81dc2c7b725e3a9ae47c2110ee803afc55394a538449d6be708727"
+        },
+        {
+          "path": "apps/client/src/platform/pdf-summarizer.test.ts",
+          "kind": "generator",
+          "sha256": "eeb017f435c3aee9670c09f4e65f6aa8cb5db5ab585842aed419a801d5341f50"
+        },
+        {
+          "path": "apps/client/src/features/launcher/PdfSummarizePanel.test.tsx",
+          "kind": "generator",
+          "sha256": "188ec47c6085f81198001b398010a491441c186cfd38ba75dda5b56fc34234f3"
+        },
+        {
+          "path": "apps/client/e2e/pdf-summarize-quality.spec.ts",
+          "kind": "generator",
+          "sha256": "8e75a45274d66d2b609d0c85f16f2a5088a19b8ebc151f8da1c672441cf43de6"
         }
       ]
     }
@@ -901,6 +972,26 @@
       ],
       "docs": ["docs/R-C1-VALIDACAO.md"],
       "tests": ["apps/client/src/platform/pdf-repair-quality.test.ts"]
+    },
+    {
+      "toolId": "pdf-to-pdfa",
+      "level": "restricted-profile",
+      "corpora": ["pdfa"],
+      "supported": [
+        "Conversão 100% local para PDF/A-2b e PDF/A-1b com perfil sRGB ICC, metadados XMP /Metadata, /ID no trailer, preservação vetorial e reconstrução pesquisável quando há fonte não incorporada ou transparência."
+      ],
+      "refused": [
+        "PDFs criptografados, perfil ICC inválido, entradas acima do limite (80 MB) e PDFs assinados digitalmente sem autorização explícita."
+      ],
+      "unmeasured": [
+        "Validação externa veraPDF completa em documentos arbitrários com XFA dinâmico ou fontes CJK ausentes neste ambiente sem JRE.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/quality/PDFA-C1.md"],
+      "tests": [
+        "apps/client/src/platform/pdfa-converter.test.ts",
+        "apps/client/src/platform/pdfa-client.test.ts"
+      ]
     },
     {
       "toolId": "images-to-pdf",
@@ -1390,6 +1481,110 @@
       "tests": [
         "apps/client/src/platform/image-composition-state.test.ts",
         "apps/client/e2e/image-photo-quality.spec.ts"
+      ]
+    },
+    {
+      "toolId": "word-to-pdf",
+      "level": "restricted-profile",
+      "corpora": ["office"],
+      "supported": [
+        "Contratos DOCX/DOC/ODT/RTF -> PDF, validação de Zip-Bomb/Path Traversal e invocação IPC no Desktop com Superpoder office.suite.",
+        "Web Híbrida expõe opção explícita de Nuvem Opcional; Web Offline exibe orientação honesta sem simular conversão."
+      ],
+      "refused": [
+        "Arquivos vazios, acima de 64 MB, extensão incompatível com assinatura mágica, Zip-Bomb (>100x / >512 MiB) e ausência do runtime office.suite."
+      ],
+      "unmeasured": [
+        "Execução real do binário LibreOffice soffice portátil e renderização visual de documentos DOCX complexos neste host sem runtime instalado.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/quality/OFFICE-C1.md", "docs/adr/ADR-016-motor-documentos-office.md"],
+      "tests": [
+        "apps/client/src/platform/office-client.test.ts",
+        "apps/client/src/features/launcher/OfficeConvertPanel.test.tsx",
+        "apps/client/src/platform/tool-availability.test.ts"
+      ]
+    },
+    {
+      "toolId": "excel-to-pdf",
+      "level": "restricted-profile",
+      "corpora": ["office"],
+      "supported": [
+        "Contratos XLSX/XLS/ODS -> PDF, inspeção ZIP segura e fluxo Desktop Superpoder / Web Híbrida."
+      ],
+      "refused": [
+        "Planilhas acima de 64 MB, formatos incompatíveis ou ausência do runtime office.suite."
+      ],
+      "unmeasured": [
+        "Execução real do binário LibreOffice soffice portátil em planilhas reais neste host sem runtime instalado.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/quality/OFFICE-C1.md", "docs/adr/ADR-016-motor-documentos-office.md"],
+      "tests": [
+        "apps/client/src/platform/office-client.test.ts",
+        "apps/client/src/features/launcher/OfficeConvertPanel.test.tsx"
+      ]
+    },
+    {
+      "toolId": "powerpoint-to-pdf",
+      "level": "restricted-profile",
+      "corpora": ["office"],
+      "supported": [
+        "Contratos PPTX/PPT/ODP -> PDF, inspeção ZIP segura e fluxo Desktop Superpoder / Web Híbrida."
+      ],
+      "refused": [
+        "Apresentações acima de 64 MB, formatos incompatíveis ou ausência do runtime office.suite."
+      ],
+      "unmeasured": [
+        "Execução real do binário LibreOffice soffice portátil em slides reais neste host sem runtime instalado.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/quality/OFFICE-C1.md", "docs/adr/ADR-016-motor-documentos-office.md"],
+      "tests": [
+        "apps/client/src/platform/office-client.test.ts",
+        "apps/client/src/features/launcher/OfficeConvertPanel.test.tsx"
+      ]
+    },
+    {
+      "toolId": "pdf-to-powerpoint",
+      "level": "restricted-profile",
+      "corpora": ["office"],
+      "supported": [
+        "Contrato PDF -> PPTX exclusivo do NexoHub Desktop (Superpoder office.suite) e recusa explícita no navegador offline e Web Híbrida."
+      ],
+      "refused": [
+        "PDF acima de 64 MB, cabeçalho %PDF- ausente ou tentativa de execução fora do NexoHub Desktop com office.suite."
+      ],
+      "unmeasured": [
+        "Conversão real PDF -> PPTX pelo LibreOffice Impress portátil neste host sem runtime instalado.",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/quality/OFFICE-C1.md", "docs/adr/ADR-016-motor-documentos-office.md"],
+      "tests": [
+        "apps/client/src/platform/office-client.test.ts",
+        "apps/client/src/features/launcher/OfficeConvertPanel.test.tsx",
+        "apps/client/src/platform/tool-availability.test.ts"
+      ]
+    },
+    {
+      "toolId": "pdf-summarize",
+      "level": "restricted-profile",
+      "corpora": ["summarize"],
+      "supported": [
+        "Extração por página via PDF.js, chunking Map-Reduce [p. X–Y], neutralização contra prompt injection, citações clicáveis ligadas à prévia lateral, cancelamento com encerramento de worker e exportações .md/.txt/.pdf imutáveis."
+      ],
+      "refused": [
+        "PDFs vazios, acima de 64 MB, puramente escaneados sem camada de texto (< 40 caracteres, com atalho direto para /ocr-pdf) e referências [p. X] fora dos limites reais de página."
+      ],
+      "unmeasured": [
+        "Download completo e latência real de Qwen2.5-0.5B-Instruct ONNX em hardware de produção na execução automatizada de CI (testado com worker determinístico mockado).",
+        "Aplicativo Windows instalado e outros dispositivos não são certificados por este índice."
+      ],
+      "docs": ["docs/quality/SUMMARIZE-C1.md", "docs/adr/ADR-017-resumo-documental-ia-local.md"],
+      "tests": [
+        "apps/client/src/platform/pdf-summarizer.test.ts",
+        "apps/client/src/features/launcher/PdfSummarizePanel.test.tsx",
+        "apps/client/e2e/pdf-summarize-quality.spec.ts"
       ]
     }
   ],

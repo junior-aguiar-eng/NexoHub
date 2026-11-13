@@ -400,6 +400,96 @@ export const coreToolManifests = [
     capabilities: pdfCapabilities,
     executor: "browser",
   },
+  {
+    id: "pdf-to-pdfa",
+    version: "1.0.0",
+    name: "PDF para PDF/A",
+    category: "pdf",
+    surfaces: ["quick", "studio"],
+    accepts: ["application/pdf"],
+    produces: ["application/pdf"],
+    capabilities: pdfCapabilities,
+    executor: "browser",
+  },
+  {
+    id: "word-to-pdf",
+    version: "1.0.0",
+    name: "Word para PDF",
+    category: "pdf",
+    surfaces: ["quick", "studio"],
+    accepts: [
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+      "application/vnd.oasis.opendocument.text",
+      "application/rtf",
+    ],
+    produces: ["application/pdf"],
+    capabilities: pdfCapabilities,
+    executor: "native",
+    availability: "hybrid-cloud",
+    requiredCapability: "office.suite",
+    optionalCloudTool: "office-to-pdf",
+  },
+  {
+    id: "excel-to-pdf",
+    version: "1.0.0",
+    name: "Excel para PDF",
+    category: "pdf",
+    surfaces: ["quick", "studio"],
+    accepts: [
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-excel",
+      "application/vnd.oasis.opendocument.spreadsheet",
+    ],
+    produces: ["application/pdf"],
+    capabilities: pdfCapabilities,
+    executor: "native",
+    availability: "hybrid-cloud",
+    requiredCapability: "office.suite",
+    optionalCloudTool: "office-to-pdf",
+  },
+  {
+    id: "powerpoint-to-pdf",
+    version: "1.0.0",
+    name: "PowerPoint para PDF",
+    category: "pdf",
+    surfaces: ["quick", "studio"],
+    accepts: [
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.oasis.opendocument.presentation",
+    ],
+    produces: ["application/pdf"],
+    capabilities: pdfCapabilities,
+    executor: "native",
+    availability: "hybrid-cloud",
+    requiredCapability: "office.suite",
+    optionalCloudTool: "office-to-pdf",
+  },
+  {
+    id: "pdf-to-powerpoint",
+    version: "1.0.0",
+    name: "PDF para PowerPoint",
+    category: "pdf",
+    surfaces: ["quick", "studio"],
+    accepts: ["application/pdf"],
+    produces: ["application/vnd.openxmlformats-officedocument.presentationml.presentation"],
+    capabilities: pdfCapabilities,
+    executor: "native",
+    availability: "desktop-superpower",
+    requiredCapability: "office.suite",
+  },
+  {
+    id: "pdf-summarize",
+    version: "1.0.0",
+    name: "Resumir PDF com IA",
+    category: "text",
+    surfaces: ["quick", "studio"],
+    accepts: ["application/pdf"],
+    produces: ["text/markdown", "text/plain", "application/pdf"],
+    capabilities: pdfCapabilities,
+    executor: "browser",
+  },
 ] as const satisfies readonly ToolManifest[];
 
 export function createCoreToolRegistry(): ToolRegistry {
@@ -411,22 +501,6 @@ export function createCoreToolRegistry(): ToolRegistry {
 export const coreToolRegistry = createCoreToolRegistry();
 
 /**
- * Ferramentas planejadas/pendentes de ADR de motor de documentos complexos (Office/LibreOffice).
- * Não são registradas no registry ativo até que o executor nativo e ADR estejam consolidados.
+ * Ferramentas ainda sem executor ou ADR aprovado permanecem fora do registry ativo.
  */
-export const plannedToolManifests = [
-  {
-    id: "word-to-pdf",
-    version: "1.0.0",
-    name: "Word para PDF",
-    category: "pdf",
-    surfaces: ["quick", "studio"],
-    accepts: [
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/msword",
-    ],
-    produces: ["application/pdf"],
-    capabilities: pdfCapabilities,
-    executor: "native",
-  },
-] as const satisfies readonly ToolManifest[];
+export const plannedToolManifests = [] as const satisfies readonly ToolManifest[];

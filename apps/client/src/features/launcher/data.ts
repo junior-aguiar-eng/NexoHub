@@ -27,6 +27,8 @@ import {
   PenTool,
   RotateCw,
   Scissors,
+  ShieldCheck,
+  Sparkles,
   SpellCheck2,
   Stamp,
   Unlock,
@@ -225,6 +227,14 @@ const presentation = {
     icon: Languages,
     accentColor: "#0891B2", // Ciano / Turquesa
   },
+  "pdf-summarize": {
+    suite: "text" as const,
+    titleKey: "tool.pdfSummarize.title" as const,
+    descriptionKey: "tool.pdfSummarize.description" as const,
+    uploadTaglineKey: "tool.pdfSummarize.tagline" as const,
+    icon: Sparkles,
+    accentColor: "#7C3AED", // Violeta Inteligência Local
+  },
   "pdf-to-markdown": {
     suite: "convert" as const,
     titleKey: "tool.pdfToMarkdown.title" as const,
@@ -265,6 +275,51 @@ const presentation = {
     uploadTaglineKey: "tool.pdfToWord.tagline" as const,
     icon: FileText,
     accentColor: "#2B579A", // Azul Oficial Word
+  },
+  "pdf-to-pdfa": {
+    searchAliases: ["pdfa", "pdf/a", "iso 19005", "arquivamento", "pje", "tribunal"],
+    suite: "convert" as const,
+    titleKey: "tool.pdfToPdfa.title" as const,
+    descriptionKey: "tool.pdfToPdfa.description" as const,
+    uploadTaglineKey: "tool.pdfToPdfa.tagline" as const,
+    icon: ShieldCheck,
+    accentColor: "#047857", // Verde Arquivamento ISO
+  },
+  "word-to-pdf": {
+    searchAliases: ["word", "docx", "doc", "odt", "rtf", "office", "converter word pdf"],
+    suite: "convert" as const,
+    titleKey: "tool.wordToPdf.title" as const,
+    descriptionKey: "tool.wordToPdf.description" as const,
+    uploadTaglineKey: "tool.wordToPdf.tagline" as const,
+    icon: FileText,
+    accentColor: "#2B579A", // Azul Oficial Word
+  },
+  "excel-to-pdf": {
+    searchAliases: ["excel", "xlsx", "xls", "ods", "planilha", "office"],
+    suite: "convert" as const,
+    titleKey: "tool.excelToPdf.title" as const,
+    descriptionKey: "tool.excelToPdf.description" as const,
+    uploadTaglineKey: "tool.excelToPdf.tagline" as const,
+    icon: FileSpreadsheet,
+    accentColor: "#107C41", // Verde Esmeralda Excel
+  },
+  "powerpoint-to-pdf": {
+    searchAliases: ["powerpoint", "pptx", "ppt", "odp", "slides", "apresentacao", "office"],
+    suite: "convert" as const,
+    titleKey: "tool.powerpointToPdf.title" as const,
+    descriptionKey: "tool.powerpointToPdf.description" as const,
+    uploadTaglineKey: "tool.powerpointToPdf.tagline" as const,
+    icon: FileOutput,
+    accentColor: "#D24726", // Laranja Oficial PowerPoint
+  },
+  "pdf-to-powerpoint": {
+    searchAliases: ["powerpoint", "pptx", "slides", "apresentacao", "converter pptx"],
+    suite: "convert" as const,
+    titleKey: "tool.pdfToPowerpoint.title" as const,
+    descriptionKey: "tool.pdfToPowerpoint.description" as const,
+    uploadTaglineKey: "tool.pdfToPowerpoint.tagline" as const,
+    icon: FileOutput,
+    accentColor: "#C2410C", // Laranja Escuro Slides
   },
   "pdf-remove-pages": {
     suite: "organize" as const,
@@ -361,8 +416,7 @@ export function createDynamicCapabilitiesProvider(
   };
 }
 
-export function resolveLauncherTools(
-  _capabilities?: readonly unknown[],
+export function resolveAllRegisteredTools(
   documentCore?: DocumentCorePort,
 ): readonly LauncherTool[] {
   const supportedToolIds = documentCore?.supportedToolIds ?? browserSupportedToolIds;
@@ -377,8 +431,14 @@ export function resolveLauncherTools(
         manifest,
         createDynamicCapabilitiesProvider(supportedToolIds, manifest.id),
       ),
-    }))
-    .filter((tool) => tool.availability.available);
+    }));
+}
+
+export function resolveLauncherTools(
+  _capabilities?: readonly unknown[],
+  documentCore?: DocumentCorePort,
+): readonly LauncherTool[] {
+  return resolveAllRegisteredTools(documentCore).filter((tool) => tool.availability.available);
 }
 
 export const launcherTools: readonly LauncherTool[] = resolveLauncherTools();

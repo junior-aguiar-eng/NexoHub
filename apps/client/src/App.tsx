@@ -3,7 +3,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { NexoHubLogoIcon } from "@/components/NexoHubLogoIcon";
 import { CommandPalette } from "@/features/launcher/CommandPalette";
 import { DedicatedToolView } from "@/features/launcher/DedicatedToolView";
-import { imageSuites, pdfSuites, resolveLauncherTools } from "@/features/launcher/data";
+import {
+  imageSuites,
+  pdfSuites,
+  resolveAllRegisteredTools,
+  resolveLauncherTools,
+} from "@/features/launcher/data";
 import { GlobalDropzone } from "@/features/launcher/GlobalDropzone";
 import { Header } from "@/features/launcher/Header";
 import { Hero } from "@/features/launcher/Hero";
@@ -50,6 +55,12 @@ const ROUTE_TOOL_MAP: Record<string, string> = {
   "/pdf-to-word": "pdf-to-word",
   "/word-para-pdf": "word-to-pdf",
   "/word-to-pdf": "word-to-pdf",
+  "/excel-para-pdf": "excel-to-pdf",
+  "/excel-to-pdf": "excel-to-pdf",
+  "/powerpoint-para-pdf": "powerpoint-to-pdf",
+  "/powerpoint-to-pdf": "powerpoint-to-pdf",
+  "/pdf-para-powerpoint": "pdf-to-powerpoint",
+  "/pdf-to-powerpoint": "pdf-to-powerpoint",
   "/imagem-para-pdf": "images-to-pdf",
   "/jpg-to-pdf": "images-to-pdf",
   "/ocr-pdf": "pdf-ocr",
@@ -105,6 +116,13 @@ const ROUTE_TOOL_MAP: Record<string, string> = {
   "/rotate-image": "image-rotate",
   "/marca-dagua-imagem": "image-watermark",
   "/watermark-image": "image-watermark",
+  "/pdf-para-pdfa": "pdf-to-pdfa",
+  "/pdf-to-pdfa": "pdf-to-pdfa",
+  "/pdfa": "pdf-to-pdfa",
+  "/resumir-pdf": "pdf-summarize",
+  "/resumir": "pdf-summarize",
+  "/pdf-summarize": "pdf-summarize",
+  "/summarize-pdf": "pdf-summarize",
 };
 
 const TOOL_ROUTE_MAP: Record<string, string> = {
@@ -125,7 +143,12 @@ const TOOL_ROUTE_MAP: Record<string, string> = {
   "pdf-repair": "/reparar-pdf",
   "pdf-organize": "/organizar-pdf",
   "pdf-to-word": "/pdf-para-word",
+  "pdf-to-pdfa": "/pdf-para-pdfa",
+  "pdf-summarize": "/resumir-pdf",
   "word-to-pdf": "/word-para-pdf",
+  "excel-to-pdf": "/excel-para-pdf",
+  "powerpoint-to-pdf": "/powerpoint-para-pdf",
+  "pdf-to-powerpoint": "/pdf-para-powerpoint",
   "images-to-pdf": "/imagem-para-pdf",
   "pdf-to-jpg": "/pdf-para-jpg",
   "pdf-to-markdown": "/pdf-para-markdown",
@@ -155,6 +178,10 @@ export function App() {
     return resolveLauncherTools([], documentCore);
   }, [documentCore]);
 
+  const directRouteTools = useMemo(() => {
+    return resolveAllRegisteredTools(documentCore);
+  }, [documentCore]);
+
   // Estado da zona de trabalho: "pdf" | "img"
   const [workZone, setWorkZone] = useState<WorkZone>(() => {
     if (typeof window !== "undefined") {
@@ -164,7 +191,7 @@ export function App() {
       }
       const matchedToolId = ROUTE_TOOL_MAP[pathname];
       if (matchedToolId) {
-        const found = dynamicTools.find((t) => t.id === matchedToolId);
+        const found = directRouteTools.find((t) => t.id === matchedToolId);
         if (found?.manifest.category === "image") return "img";
       }
       try {
@@ -184,7 +211,7 @@ export function App() {
       const pathname = withoutAppBase(window.location.pathname).replace(/\/$/, "");
       const matchedToolId = ROUTE_TOOL_MAP[pathname];
       if (matchedToolId) {
-        return dynamicTools.find((t) => t.id === matchedToolId) || null;
+        return directRouteTools.find((t) => t.id === matchedToolId) || null;
       }
     }
     return null;
@@ -212,7 +239,9 @@ export function App() {
   useEffect(() => {
     function handlePopState() {
       const destination = withoutAppBase(window.location.pathname).replace(/\/$/, "");
-      const destinationTool = dynamicTools.find((tool) => tool.id === ROUTE_TOOL_MAP[destination]);
+      const destinationTool = directRouteTools.find(
+        (tool) => tool.id === ROUTE_TOOL_MAP[destination],
+      );
       const nextZone =
         destination === "/img" ||
         destination.startsWith("/img/") ||
@@ -247,7 +276,7 @@ export function App() {
 
       const matchedToolId = ROUTE_TOOL_MAP[pathname];
       if (matchedToolId) {
-        const found = dynamicTools.find((t) => t.id === matchedToolId);
+        const found = directRouteTools.find((t) => t.id === matchedToolId);
         if (found) {
           if (found.manifest.category === "image") {
             setWorkZone("img");
@@ -263,7 +292,7 @@ export function App() {
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [dynamicTools, workZone]);
+  }, [directRouteTools, workZone]);
 
   const handleZoneChange = (nextZone: WorkZone) => {
     if (nextZone === workZone || !allowToolNavigation("zone")) return;

@@ -93,3 +93,27 @@ Validação: 887 testes JavaScript do monorepo e 35 testes Python aprovados apó
 `pnpm check`, `pnpm quality:check` (7 testes) e `pnpm licenses:check` aprovados. Permanecem
 dois avisos de lint preexistentes no corpus de texto e avisos de depreciação Swig no Python.
 Essas auditorias não representam uma auditoria criptográfica ou de todos os binários nativos.
+
+## Arquivamento PDF/A (ADR-021 — Onda 3A)
+
+O motor local de PDF/A (`pdf-to-pdfa`) incorpora um perfil ICC sRGB padrão (`apps/client/public/icc/sRGB-v2-micro.icc`,
+456 bytes, ICC v2.1, SHA-256 `0A8A33AEA66A6F154A5642EBE168EF287E73265D9F7B51C42A45E6EEDBACDA7A`) proveniente do projeto
+`saucecontrol/Compact-ICC-Profiles`, distribuído sob **CC0 1.0 Universal (Domínio Público)**. O texto integral da
+licença acompanha o build em `apps/client/public/licenses/icc/Compact-ICC-Profiles-CC0.txt`. A incorporação de fontes
+pesquisáveis reutiliza a fonte **Liberation Sans** (`OFL` / Licença Liberation) e o perfil `@pdf-lib/fontkit` (`MIT`) já
+auditados no projeto.
+
+## Resumo Documental com SLM Local (ADR-017 — Onda 3C)
+
+A ferramenta `pdf-summarize` executa inferência 100% local via `@huggingface/transformers` (`Apache-2.0`, já
+auditado no inventário principal), sem envio de texto extraído, prompts ou metadados documentais a APIs externas.
+Nenhum peso neural integra o instalador ou o bundle: o download ocorre somente após aceite explícito do usuário, com
+armazenamento local no navegador (`Cache API`) para uso offline subsequente.
+
+- **Modelo fixado:** `onnx-community/Qwen2.5-0.5B-Instruct` — **Apache-2.0**
+  - Revisão fixada: `main` (pesos ONNX quantizados `q4f16` para WebGPU ~410 MB e `q4` para WASM SIMD ~390 MB).
+  - Uso: sumarização local Map-Reduce em português brasileiro (`pt-BR`), obrigações/prazos e citações de página `[p. X]`.
+  - Hardware de referência: WebGPU quando disponível (`maxBufferSize` adequado); fallback em CPU WASM SIMD condicionado à detecção de `deviceMemory` (`< 4 GB` exibe aviso de desempenho/memória antes do download).
+  - Fontes dos avisos: pesos originais Qwen2.5 (`Apache-2.0`, Alibaba Cloud) convertidos para ONNX pela `onnx-community` sob a mesma licença permissiva.
+
+

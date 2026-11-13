@@ -602,6 +602,15 @@ export const ptBR = {
   "pdfToWord.goToOcr": "Ir para OCR (Reconhecer Texto)",
   "pdfToWord.download": "Baixar documento Word (.docx)",
   "pdfToWord.convertAnother": "Converter outro arquivo",
+  "pdfToWord.optionsTitle": "Opções de conversão",
+  "pdfToWord.runOcrIfScanned": "Executar OCR automático em páginas sem texto",
+  "pdfToWord.preserveTables": "Preservar tabelas estruturadas",
+  "pdfToWord.extractImages": "Incluir imagens extraídas",
+  "pdfToWord.tablesDetected": "{count} tabela(s) reconstruída(s)",
+  "pdfToWord.imagesEmbedded": "{count} imagem(ns) incorporada(s)",
+  "pdfToWord.ocrAppliedBadge": "OCR local aplicado automaticamente",
+  "pdfToWord.pagePreviewAlt": "Prévia da página 1 de {fileName}",
+  "pdfToWord.wordDocument": "Documento Word",
   "tool.pdfExtractImages.tagline": "As imagens do seu PDF, prontas para novos usos.",
   "tool.pdfExtractImages.title": "Extrair Imagens",
   "tool.pdfExtractImages.description":
@@ -655,7 +664,19 @@ export const ptBR = {
   "tool.pdfToWord.description": "Converter documentos PDF em arquivos DOCX editáveis com precisão.",
   "tool.wordToPdf.tagline": "Seu documento, pronto para compartilhar.",
   "tool.wordToPdf.title": "Word para PDF",
-  "tool.wordToPdf.description": "Converter documentos DOCX e DOC para PDF de alta qualidade.",
+  "tool.wordToPdf.description": "Converter documentos DOCX, DOC, ODT e RTF para PDF fielmente.",
+  "tool.excelToPdf.tagline": "Planilhas nítidas, sem quebrar tabelas ou margens.",
+  "tool.excelToPdf.title": "Excel para PDF",
+  "tool.excelToPdf.description":
+    "Converter planilhas XLSX, XLS e ODS em PDF pronto para impressão.",
+  "tool.powerpointToPdf.tagline": "Slides prontos para envio em qualquer dispositivo.",
+  "tool.powerpointToPdf.title": "PowerPoint para PDF",
+  "tool.powerpointToPdf.description":
+    "Converter apresentações PPTX, PPT e ODP em PDF com layout preservado.",
+  "tool.pdfToPowerpoint.tagline": "Transforme PDFs em slides editáveis.",
+  "tool.pdfToPowerpoint.title": "PDF para PowerPoint",
+  "tool.pdfToPowerpoint.description":
+    "Converter arquivos PDF em apresentações PPTX editáveis localmente no Desktop.",
   "tool.imagesToPdf.tagline": "Transforme suas imagens em um documento.",
   "tool.imagesToPdf.title": "Imagem para PDF",
   "tool.imagesToPdf.description":
@@ -946,8 +967,20 @@ export const ptBR = {
   "redact.retryPreview": "Tentar prévia novamente",
   "redact.backToAreas": "Voltar às tarjas",
   "redact.privacyNotice":
-    "A saída reconstrói todas as páginas como imagens com as áreas ocultadas. Texto selecionável, busca, links, formulários e anexos não são mantidos. O arquivo original permanece intacto.",
+    "Páginas com tarjas são reconstruídas como imagem sem camada de texto subjacente; páginas sem tarjas preservam texto e gráficos, com metadados, anexos e scripts removidos. O arquivo original permanece intacto.",
   "redact.drawHint": "Clique e arraste sobre o documento para selecionar a área a ser ocultada.",
+  "redact.autoSearchTitle": "Busca e Tarja Automática",
+  "redact.searchPlaceholder": "Palavra-chave ou termo confidencial...",
+  "redact.searchButton": "Buscar e Tarjar",
+  "redact.searching": "Buscando...",
+  "redact.presetsLabel": "Padrões rápidos (LGPD)",
+  "redact.presetCpf": "CPF",
+  "redact.presetCnpj": "CNPJ",
+  "redact.presetEmail": "E-mail",
+  "redact.presetPhone": "Telefone",
+  "redact.searchFound": "{count} ocorrência(s) encontrada(s) e marcada(s) para tarja.",
+  "redact.searchNotFound": "Nenhuma ocorrência encontrada no texto pesquisável deste PDF.",
+  "redact.searchError": "Não foi possível analisar o texto deste PDF.",
   "pdfToMarkdown.viewRendered": "Visualização",
   "pdfToMarkdown.viewRaw": "Código Markdown",
   "pdfToMarkdown.copy": "Copiar Markdown",
@@ -1257,6 +1290,7 @@ export const ptBR = {
   "account.delete.success": "Conta excluída com sucesso.",
   "workspace.tab.upload": "Carregar Arquivo",
   "workspace.tab.typeText": "Digitar Texto",
+  "workspace.text.loadFile": "Carregar arquivo (.txt, .docx, .pdf)",
   "workspace.pageGrid.title": "Organização Visual de Páginas",
   "workspace.pageGrid.hint": "Gire, reordene ou remova páginas antes de salvar",
   "workspace.pageGrid.extractHint": "Clique nas páginas para selecionar as que deseja extrair",
@@ -1392,6 +1426,16 @@ export const ptBR = {
     "O resultado depende da estrutura do PDF. O tamanho real será mostrado após o processamento.",
   "compress.profileDescription":
     "As imagens elegíveis são otimizadas conforme o perfil. Texto e vetores permanecem selecionáveis; a redução real aparece após o processamento.",
+  "compress.compositionTitle": "Composição do documento",
+  "compress.compositionInspecting": "Analisando estrutura e imagens do PDF...",
+  "compress.compositionImages": "{count} imagem(ns) otimizável(is) de {total} ({pages} pág.)",
+  "compress.textOnlyNotice":
+    "Documento sem imagens recomprimíveis (somente texto ou vetores). A otimização será apenas estrutural (0%–{max}%).",
+  "compress.estimatedRangeLabel": "Economia estimada para este arquivo:",
+  "compress.estimatedSizeLabel": "Tamanho estimado:",
+  "compress.estimatedRangeValue": "{min}% a {max}% menor",
+  "compress.signedWarning":
+    "PDF assinado digitalmente detectado. Não pode ser recomprimido sem invalidar a assinatura.",
   "compress.sizeReduced": "de redução",
   "compress.sizeIncreased": "de aumento",
   "compress.sizeUnchanged": "sem alteração de tamanho",
@@ -1476,7 +1520,15 @@ export const ptBR = {
   "workspace.pdfToJpg.desc":
     "Cada página do seu documento será convertida em uma imagem JPG em alta resolução.",
   "workspace.pdfToJpg.resolution": "Resolução de extração",
+  "workspace.pdfToJpg.resolutionWeb": "Web / Leve (72 DPI)",
   "workspace.pdfToJpg.resolutionHigh": "Alta definição (150 DPI)",
+  "workspace.pdfToJpg.resolutionPrint": "Impressão (300 DPI)",
+  "workspace.pdfToJpg.pagesModeLabel": "Páginas para converter",
+  "workspace.pdfToJpg.pagesAll": "Todas as páginas ({count})",
+  "workspace.pdfToJpg.pagesRange": "Intervalo específico",
+  "workspace.pdfToJpg.rangePlaceholder": "Ex: 1-3, 5",
+  "workspace.pdfToJpg.rangeInvalid": "Informe páginas válidas dentro de 1 a {total} (ex: 1-3, 5).",
+  "workspace.pdfToJpg.selectedPagesCount": "Páginas selecionadas:",
   "workspace.pdfToJpg.singleNotice":
     "O PDF possui 1 página e será baixado diretamente como arquivo JPG.",
   "workspace.pdfToJpg.multipleNotice":
@@ -1546,6 +1598,13 @@ export const ptBR = {
   "excel.emptyTable": "Nenhum dado tabular detectado no documento.",
   "excel.loadingPreview": "Analisando estrutura tabular do documento...",
   "excel.actionSubmit": "Converter para Excel",
+  "excel.visualGuidesTitle": "Guias visuais de colunas",
+  "excel.visualGuidesHint":
+    "Clique na página para adicionar um separador de coluna ou arraste os marcadores existentes.",
+  "excel.visualPageAlt": "Prévia visual da página {page} de {file}",
+  "excel.clearSeparators": "Limpar separadores",
+  "excel.separatorHandleLabel": "Separador de coluna em {percent}%",
+  "excel.removeSeparator": "Remover separador em {percent}%",
 
   // REMOVER PÁGINAS
   "removePages.title": "Remover Páginas",
@@ -1583,7 +1642,7 @@ export const ptBR = {
   // HTML PARA PDF
   "htmlToPdf.title": "HTML para PDF",
   "htmlToPdf.layoutNotice":
-    "O PDF reorganiza textos, listas e tabelas para caber nas páginas. Imagens não são incluídas; fontes, cores e disposição podem mudar. A prévia mostra o original. Confira o PDF baixado.",
+    "O PDF preserva estilos CSS, cores, tabelas e imagens embutidas locais com camada de texto selecionável e pesquisável. Recursos externos de rede são bloqueados para manter sua privacidade.",
   "htmlToPdf.headerTooTall":
     "O cabeçalho da tabela não cabe na página. Reduza o texto ou escolha uma página maior.",
   "htmlToPdf.tableTooWide":
@@ -1890,6 +1949,161 @@ export const ptBR = {
     "Não foi possível atualizar a prévia. A imagem original está sendo exibida.",
   "imageWatermark.action": "Aplicar Marca d'Água",
   "imageWatermark.actionRunning": "Aplicando...",
+
+  // PDF PARA PDF/A (ISO 19005)
+  "tool.pdfToPdfa.tagline": "Converta seus PDFs para arquivamento de longo prazo ISO 19005.",
+  "tool.pdfToPdfa.title": "PDF para PDF/A",
+  "tool.pdfToPdfa.description":
+    "Incorporar perfil de cor sRGB, metadados XMP e garantir conformidade PDF/A-2b ou PDF/A-1b localmente.",
+  "dedicated.actionPdfToPdfa": "Converter para PDF/A",
+  "pdfToPdfa.title": "PDF para PDF/A",
+  "pdfToPdfa.original": "Arquivo original",
+  "pdfToPdfa.originalPreview": "Prévia da página 1 do original {file}",
+  "pdfToPdfa.resultPreviewTitle": "Arquivo PDF/A gerado",
+  "pdfToPdfa.resultPreview": "Prévia da página 1 do PDF/A gerado",
+  "pdfToPdfa.previewUnavailable": "A prévia do arquivo original não está disponível.",
+  "pdfToPdfa.conformanceLabel": "Nível de conformidade ISO 19005",
+  "pdfToPdfa.conformance2bTitle": "PDF/A-2b (Recomendado)",
+  "pdfToPdfa.conformance2bDesc":
+    "Preserva vetores e transparência moderna com perfil sRGB e metadados XMP.",
+  "pdfToPdfa.conformance1bTitle": "PDF/A-1b (Legado rigoroso)",
+  "pdfToPdfa.conformance1bDesc":
+    "Achata transparências incompatíveis mantendo texto pesquisável para tribunais e acervos antigos.",
+  "pdfToPdfa.strategyLabel": "Estratégia de fontes e páginas",
+  "pdfToPdfa.strategyVector": "Preservar vetores (reconstruir só páginas sem fonte)",
+  "pdfToPdfa.strategyRaster": "Máxima compatibilidade (reconstruir todas com texto pesquisável)",
+  "pdfToPdfa.diagnosticHeading": "Diagnóstico prévio",
+  "pdfToPdfa.diagnosticScanning": "Analisando fontes, transparências e ações do PDF...",
+  "pdfToPdfa.diagnosticPages": "{count} página(s)",
+  "pdfToPdfa.diagnosticVectorReady": "Fontes já incorporadas (conversão 100% vetorial)",
+  "pdfToPdfa.diagnosticUnembedded":
+    "{count} fonte(s) padrão/externa(s) serão reconstruídas com texto pesquisável",
+  "pdfToPdfa.diagnosticActions": "{count} ação(ões)/script(s) proibido(s) serão removidos",
+  "pdfToPdfa.signedWarning":
+    "Este PDF possui assinatura digital. Converter para PDF/A invalida a assinatura existente.",
+  "pdfToPdfa.allowDiscardSignatures":
+    "Estou ciente e autorizo gerar uma cópia PDF/A sem preservar a assinatura digital",
+  "pdfToPdfa.encryptedWarning":
+    "PDF protegido por senha/criptografia não pode ser convertido diretamente. Desbloqueie o arquivo antes.",
+  "pdfToPdfa.progressLabel": "Progresso da conversão para PDF/A",
+  "pdfToPdfa.progressNotice":
+    "Convertendo documento localmente para ISO 19005. O original permanece intocado.",
+  "pdfToPdfa.running": "Convertendo para PDF/A...",
+  "pdfToPdfa.ready": "Arquivo PDF/A pronto para baixar",
+  "pdfToPdfa.errorHeading": "Falha na conversão PDF/A",
+  "pdfToPdfa.resultSummary": "Relatório de conformidade PDF/A-{conformance}",
+  "pdfToPdfa.resultVectorCount": "{count} página(s) preservada(s) em vetor",
+  "pdfToPdfa.resultReconstructedCount": "{count} página(s) reconstruída(s) com camada pesquisável",
+  "pdfToPdfa.resultRemovedActions": "{count} ação(ões) proibida(s) removida(s)",
+  "pdfToPdfa.resultIccXmp": "Perfil sRGB ICC e pacote XMP /Metadata gravados no catálogo",
+  "pdfToPdfa.download": "Baixar PDF/A",
+  "pdfToPdfa.tryAnother": "Converter outro arquivo",
+  "pdfToPdfa.cancel": "Cancelar conversão",
+  "pdfToPdfa.cancelled": "Conversão para PDF/A cancelada.",
+  "pdfToPdfa.showResult": "Ver PDF/A",
+  "pdfToPdfa.showOriginal": "Ver original",
+  "pdfToPdfa.errorEncrypted":
+    "O arquivo está criptografado. Use Desbloquear PDF antes de converter para PDF/A.",
+  "pdfToPdfa.errorSigned":
+    "O PDF possui assinatura digital. Marque a autorização para gerar uma cópia arquivável.",
+  "pdfToPdfa.errorLimit": "O arquivo excede o limite de processamento local (80 MB).",
+  "pdfToPdfa.errorTimeout": "A conversão demorou mais que o permitido. Tente um arquivo menor.",
+  "pdfToPdfa.errorInvalid": "Não foi possível ler este PDF como documento válido.",
+  "pdfToPdfa.scopeNotice":
+    "Processamento 100% local com perfil sRGB CC0 e metadados XMP. O original é preservado intacto.",
+
+  // SUÍTE OFFICE (WORD / EXCEL / POWERPOINT <-> PDF)
+  "dedicated.actionWordToPdf": "Converter Word para PDF",
+  "dedicated.actionExcelToPdf": "Converter Excel para PDF",
+  "dedicated.actionPowerpointToPdf": "Converter PowerPoint para PDF",
+  "dedicated.actionPdfToPowerpoint": "Converter PDF para PowerPoint",
+  "office.acceptedFormats": "Formatos aceitos: {formats}",
+  "office.targetOutput": "Arquivo de saída",
+  "office.replaceFile": "Trocar arquivo",
+  "office.selectFile": "Selecionar arquivo",
+  "office.running": "Convertendo com motor Office isolado…",
+  "office.ready": "Conversão Office concluída",
+  "office.errorHeading": "Falha na conversão Office",
+  "office.download": "Baixar arquivo convertido",
+  "office.tryAnother": "Converter outro arquivo",
+  "office.statsDuration": "Tempo de conversão: {seconds} s",
+  "office.statsSize": "Tamanho de saída: {size}",
+  "office.desktopBannerTitle": "Execução 100% offline no NexoHub Desktop",
+  "office.desktopReady": "Superpoder Suíte Office ativo neste dispositivo ({formats}).",
+  "office.desktopMissing":
+    "Para converter localmente sem internet, instale o Superpoder Suíte Office (~280 MB).",
+  "office.installSuperpower": "Instalar Suíte Office",
+  "office.installingSuperpower": "Instalando Suíte Office...",
+  "office.recheckSuperpower": "Verificar novamente",
+  "office.offlineWebTitle": "Conversão Office exige NexoHub Desktop ou Nuvem Opcional",
+  "office.offlineWebBody":
+    "Navegadores estáticos offline não executam o motor Office completo em memória sem perda de tabelas e slides. Use o aplicativo NexoHub Desktop (100% offline com o Superpoder Suíte Office) ou ative o modo Web Híbrida para Word, Excel e PowerPoint.",
+  "office.desktopOnlyTitle": "Ferramenta exclusiva do NexoHub Desktop",
+  "office.desktopOnlyBody":
+    "A exportação de PDF para PowerPoint (.pptx) exige o motor nativo instalado no NexoHub Desktop (Superpoder Suíte Office 100% offline).",
+  "office.hybridCloudBody":
+    "Na Web Híbrida esta conversão é executada opcionalmente na Nuvem NexoHub com orçamento explícito e exclusão após a entrega.",
+  "office.cloudUnavailable":
+    "O servidor de nuvem opcional não está habilitado ou autenticado neste ambiente. Utilize o NexoHub Desktop para conversão 100% offline.",
+  "office.backToCatalog": "Voltar ao catálogo local",
+  "office.scopeNotice":
+    "Conversão isolada em perfil temporário e arquivo original preservado intacto (limite de 64 MB).",
+
+  // RESUMIR PDF COM IA LOCAL (ADR-017)
+  "tool.pdfSummarize.tagline":
+    "Síntese inteligente local com citações de página, sem envio externo.",
+  "tool.pdfSummarize.title": "Resumir PDF com IA",
+  "tool.pdfSummarize.description":
+    "Gere resumos executivos, listas de prazos ou síntese por seção 100% no seu dispositivo.",
+  "dedicated.actionSummarize": "Resumir PDF localmente",
+  "pdfSummarize.privacyBadge": "100% local — seu PDF nunca sai deste dispositivo",
+  "pdfSummarize.modelCardTitle": "Motor SLM local sob demanda",
+  "pdfSummarize.modelSpec": "Modelo: {model} ({license}) • Download único: ~{mb} MB ({device})",
+  "pdfSummarize.modelDownloadWarning":
+    "O modelo é baixado apenas ao clicar em iniciar e fica em cache para uso offline.",
+  "pdfSummarize.hardwareWebGpu": "Aceleração: WebGPU disponível (recomendado)",
+  "pdfSummarize.hardwareWasm":
+    "Aceleração: CPU (WASM SIMD) — processamento mais lento que WebGPU em documentos longos.",
+  "pdfSummarize.lowMemoryWarning":
+    "Memória do dispositivo informada abaixo de 4 GB; recomenda-se arquivos enxutos para evitar instabilidade da aba.",
+  "pdfSummarize.modeLegend": "Modo de síntese",
+  "pdfSummarize.modeExecutive": "Resumo Executivo",
+  "pdfSummarize.modeExecutiveDesc": "Visão geral rápida e tópicos essenciais com citações [p. X].",
+  "pdfSummarize.modeObligations": "Obrigações e Datas",
+  "pdfSummarize.modeObligationsDesc": "Extrai prazos, valores, responsabilidades e vencimentos.",
+  "pdfSummarize.modeBySection": "Por Seção",
+  "pdfSummarize.modeBySectionDesc": "Síntese sequencial organizada conforme a ordem das páginas.",
+  "pdfSummarize.phaseExtracting": "Lendo camadas de texto por página…",
+  "pdfSummarize.phaseDownloading": "Baixando pesos locais do modelo ({loaded} / {total})…",
+  "pdfSummarize.phaseDownloadingGeneric": "Preparando modelo local de linguagem (~{mb} MB)…",
+  "pdfSummarize.phaseInitializing": "Inicializando sessão neural local…",
+  "pdfSummarize.phaseMapping": "Analisando bloco {current} de {total}…",
+  "pdfSummarize.phaseReducing": "Consolidando síntese final e validando citações…",
+  "pdfSummarize.cancelRun": "Cancelar resumo",
+  "pdfSummarize.rerun": "Gerar novo resumo",
+  "pdfSummarize.resultTitle": "Síntese documental concluída",
+  "pdfSummarize.coverageInfo": "{analyzed} de {total} páginas analisadas ({device})",
+  "pdfSummarize.truncatedNotice":
+    "Resumo limitado às primeiras {analyzed} páginas para preservar a estabilidade local da aba.",
+  "pdfSummarize.reviewDisclaimer":
+    "IA local pode omitir nuances. Clique nas referências [p. X] para conferir diretamente na prévia antes de decisões críticas.",
+  "pdfSummarize.jumpToPageLabel": "Ir para a página {page} na prévia",
+  "pdfSummarize.previewTitle": "Prévia navegável do documento",
+  "pdfSummarize.previewPageStatus": "Página {current} de {total}",
+  "pdfSummarize.previewPrev": "Página anterior",
+  "pdfSummarize.previewNext": "Próxima página",
+  "pdfSummarize.previewUnavailable": "Prévia visual indisponível neste ambiente.",
+  "pdfSummarize.copyButton": "Copiar resumo",
+  "pdfSummarize.copiedButton": "Resumo copiado",
+  "pdfSummarize.exportMd": "Baixar .md",
+  "pdfSummarize.exportTxt": "Baixar .txt",
+  "pdfSummarize.exportPdf": "Baixar .pdf",
+  "pdfSummarize.scannedTitle": "PDF sem texto selecionável detectado",
+  "pdfSummarize.scannedBody":
+    "Este arquivo parece escaneado ou baseado apenas em imagens. Execute OCR primeiro para extrair texto selecionável e volte para resumir.",
+  "pdfSummarize.goToOcr": "Abrir OCR PDF",
+  "pdfSummarize.errorHeading": "Falha ao resumir localmente",
+  "pdfSummarize.tryAnother": "Trocar arquivo",
 } as const;
 
 export type MessageKey = keyof typeof ptBR;

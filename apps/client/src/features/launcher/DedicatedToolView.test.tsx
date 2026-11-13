@@ -91,7 +91,7 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
       type: "application/pdf",
     });
     const onOperationComplete = vi.fn();
-    const tool = { ...mockPdfCompressTool, id: "word-to-pdf" };
+    const tool = { ...mockPdfCompressTool, id: "unimplemented-future-tool" };
     render(
       <DedicatedToolView
         tool={tool}
@@ -149,7 +149,9 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
       />,
     );
     try {
-      fireEvent.click(screen.getByRole("button", { name: "Digitar Texto" }));
+      expect(
+        screen.getByRole("button", { name: /Carregar arquivo \(\.txt, \.docx, \.pdf\)/i }),
+      ).toBeInTheDocument();
       const input = screen.getByLabelText("Conteúdo do Documento:");
       fireEvent.change(input, { target: { value: "Texto original para revisar." } });
       fireEvent.click(screen.getByRole("button", { name: /Revisar Texto/i }));
@@ -191,7 +193,6 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
         />,
       );
       try {
-        fireEvent.click(screen.getByRole("button", { name: "Digitar Texto" }));
         fireEvent.change(screen.getByLabelText("Conteúdo do Documento:"), {
           target: { value: "Texto texto." },
         });
@@ -377,6 +378,18 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
 
     expect(
       screen.getByRole("button", { name: /Enviar e processar na nuvem/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("abre o tradutor diretamente na mesa de digitação com opção de carregar arquivo", () => {
+    const mockTranslateTool =
+      launcherTools.find((t) => t.id === "text-translate") ?? mockPdfCompressTool;
+    render(
+      <DedicatedToolView tool={mockTranslateTool} documentCore={documentCore} onBack={vi.fn()} />,
+    );
+    expect(screen.getByLabelText("Conteúdo do Documento:")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Carregar arquivo \(\.txt, \.docx, \.pdf\)/i }),
     ).toBeInTheDocument();
   });
 

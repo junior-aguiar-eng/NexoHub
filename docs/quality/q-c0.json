@@ -741,7 +741,7 @@
         {
           "path": "apps/client/src/platform/pdfa-converter.test.ts",
           "kind": "generator",
-          "sha256": "4726ae20c0fd2046407a0c1dfd4e5ba403440e5d4f1d108f9368eb8ae1450884"
+          "sha256": "079580184799a004868b3d2e1fdac2b0a454fd71a94a79aa5371f8b493ce00ba"
         },
         {
           "path": "apps/client/src/platform/pdfa-client.test.ts",

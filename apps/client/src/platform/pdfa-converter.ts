@@ -806,7 +806,8 @@ export async function verifyPdfaStructure(
   if (doc.isEncrypted) issues.push("PDF/A não permite criptografia.");
 
   const intents = doc.catalog.lookupMaybe(PDFName.of("OutputIntents"), PDFArray);
-  const expectedSubtype = conformance === "1b" ? "/GTS_PDFA1" : "/GTS_PDFA2";
+  // ISO 19005-1 e ISO 19005-2 determinam sempre /S /GTS_PDFA1 no OutputIntent do PDF/A.
+  const expectedSubtype = "/GTS_PDFA1";
   if (!intents || intents.size() === 0) {
     issues.push("Ausência de OutputIntents no catálogo.");
   } else {
@@ -1013,7 +1014,7 @@ export async function convertPdfToPdfA(
     Alternate: PDFName.of("DeviceRGB"),
   });
   const iccRef = output.context.register(iccStream);
-  const intentSubtype = conformance === "1b" ? PDFName.of("GTS_PDFA1") : PDFName.of("GTS_PDFA2");
+  const intentSubtype = PDFName.of("GTS_PDFA1");
   const intentDict = output.context.obj({
     Type: PDFName.of("OutputIntent"),
     S: intentSubtype,

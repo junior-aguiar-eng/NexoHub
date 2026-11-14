@@ -139,7 +139,7 @@ describe("pdfa-converter (ADR-021 / ISO 19005)", () => {
     const intents = parsed.catalog.lookup(PDFName.of("OutputIntents"), PDFArray);
     expect(intents.size()).toBeGreaterThanOrEqual(1);
     const intentDict = intents.lookup(0, PDFDict);
-    expect(intentDict.get(PDFName.of("S"))?.toString()).toBe("/GTS_PDFA2");
+    expect(intentDict.get(PDFName.of("S"))?.toString()).toBe("/GTS_PDFA1");
     expect(intentDict.get(PDFName.of("OutputConditionIdentifier"))?.toString()).toContain(
       "sRGB IEC61966-2.1",
     );

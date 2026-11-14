@@ -48,7 +48,7 @@ for (const viewport of [
     const intents = parsed.catalog.lookupMaybe(PDFName.of("OutputIntents"), PDFArray);
     expect(intents?.size()).toBe(1);
     const firstIntent = intents?.lookupMaybe(0, PDFDict);
-    expect(firstIntent?.get(PDFName.of("S"))?.toString()).toBe("/GTS_PDFA2");
+    expect(firstIntent?.get(PDFName.of("S"))?.toString()).toBe("/GTS_PDFA1");
 
     const metaObj = parsed.context.lookup(parsed.catalog.get(PDFName.of("Metadata")));
     expect(metaObj).toBeInstanceOf(PDFRawStream);

@@ -36,7 +36,12 @@ import { translate } from "@/i18n";
 import type { MessageKey } from "@/i18n/pt-BR";
 import type { DocumentCorePort } from "@/platform/document-core";
 import { type LauncherToolOutput, runLauncherTool } from "@/platform/launcher-tool-runner";
-import { editorReplacementIssue } from "@/platform/pdf-editor-compatibility";
+import {
+  editorReplacementIssue,
+  groupEditableParagraphs,
+  needsFallbackForText,
+  pickCompatibleFallbackFont,
+} from "@/platform/pdf-editor-compatibility";
 import {
   commitEditorSnapshot,
   type EditorHistory,
@@ -186,7 +191,74 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
     };
   }, [scrollArea]);
   const dirty = !savedSnapshot.current.has(history.present);
-  const selectedOriginal = info?.texts.find((o) => o.id === selected);
+  const groupedTexts = useMemo(() => groupEditableParagraphs(info?.texts ?? []), [info?.texts]);
+  const selectedOriginal = groupedTexts.find(
+    (o) => o.id === selected || o.memberIds.includes(selected ?? ""),
+  );
+  const [ocrBusy, setOcrBusy] = useState(false);
+  const inlineTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const updateInlineReplacementText = useCallback(
+    (nextText: string) => {
+      if (!replacement || !selectedOriginal) return;
+      const autoFallback =
+        !replacement.fallbackFont && needsFallbackForText(selectedOriginal, nextText)
+          ? pickCompatibleFallbackFont(selectedOriginal.fontName)
+          : replacement.fallbackFont;
+      setReplacement({
+        ...replacement,
+        text: nextText,
+        ...(autoFallback ? { fallbackFont: autoFallback } : {}),
+      });
+      setDraftDirty(true);
+    },
+    [replacement, selectedOriginal],
+  );
+
+  async function runOcrForCurrentPage() {
+    if (!file || !info || ocrBusy) return;
+    setOcrBusy(true);
+    setError(undefined);
+    try {
+      const { performBrowserOcr } = await import("@/platform/browser-ocr");
+      const ocr = await performBrowserOcr(file, { language: "por" });
+      const pageLines = ocr.lines.filter(
+        (l) => l.pageNumber === page + 1 && l.text.trim().length > 0,
+      );
+      if (pageLines.length === 0) {
+        setError("Nenhum texto legível foi encontrado pelo OCR nesta página.");
+        return;
+      }
+      const newElements: EditorElement[] = pageLines.slice(0, 80).map((line, idx) => {
+        const [lx, ly, lw, lh] = line.bounds;
+        return {
+          id: `ocr-${page}-${Date.now()}-${idx}`,
+          page,
+          kind: "text",
+          x: Math.max(0.01, Math.min(0.95, lx / Math.max(1, info.width))),
+          y: Math.max(0.01, Math.min(0.95, ly / Math.max(1, info.height))),
+          width: Math.max(0.1, Math.min(0.95, lw / Math.max(1, info.width))),
+          height: Math.max(0.025, Math.min(0.2, lh / Math.max(1, info.height))),
+          color: "#0f172a",
+          text: line.text,
+          font: "Helvetica",
+          fontSize: Math.max(8, Math.min(36, Math.round(lh * 0.8))),
+          align: "left",
+        };
+      });
+      const next = {
+        ...history.present,
+        elements: [...history.present.elements, ...newElements],
+      };
+      await commit(commitEditorSnapshot(history, next));
+      setMode("select");
+      setStatus("Texto reconhecido via OCR e pronto para edição.");
+    } catch {
+      setError("Não foi possível executar o OCR nesta página.");
+    } finally {
+      setOcrBusy(false);
+    }
+  }
   const replacementIssue =
     selectedOriginal && replacement
       ? editorReplacementIssue(selectedOriginal, replacement)
@@ -356,20 +428,23 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
   function selectOriginal(objectId: string) {
     if (draftDirty && selected === objectId) return;
     if (!allowDraftDiscard()) return;
-    const object = info?.texts.find((o) => o.id === objectId);
+    const object = groupedTexts.find((o) => o.id === objectId || o.memberIds.includes(objectId));
     if (!object) return;
-    setSelected(objectId);
+    setSelected(object.id);
     setReplacement(
       !object.editable
         ? undefined
-        : (history.present.replacements.find((r) => r.id === objectId) ?? {
-            id: objectId,
+        : (history.present.replacements.find((r) => r.id === object.id) ?? {
+            id: object.id,
             text: object.text,
           }),
     );
     setDraft(undefined);
     setDraftDirty(false);
     setShowProps(true);
+    if (object.editable) {
+      requestAnimationFrame(() => inlineTextareaRef.current?.focus());
+    }
   }
   async function commit(next: EditorHistory, targetPage = page, refreshThumbnails = false) {
     if (file) return run(file, next, targetPage, false, refreshThumbnails);
@@ -384,11 +459,25 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
   async function apply() {
     if (replacementIssue) return;
     if (replacement) {
+      const memberIds = selectedOriginal?.memberIds ?? [replacement.id];
+      const memberSet = new Set(memberIds);
+      const siblingRemovals: EditorReplacement[] = memberIds
+        .slice(1)
+        .map((id) => ({ id, text: "" }));
+      const primaryReplacement: EditorReplacement =
+        selectedOriginal && info && (memberIds.length > 1 || replacement.text.includes("\n"))
+          ? {
+              ...replacement,
+              maxWidth: selectedOriginal.width * info.width,
+              lineHeight: (replacement.fontSize ?? selectedOriginal.fontSize) * 1.25,
+            }
+          : replacement;
       const next = {
         ...history.present,
         replacements: [
-          ...history.present.replacements.filter((r) => r.id !== replacement.id),
-          replacement,
+          ...history.present.replacements.filter((r) => !memberSet.has(r.id)),
+          primaryReplacement,
+          ...siblingRemovals,
         ],
       };
       await commit(commitEditorSnapshot(history, next));
@@ -1038,7 +1127,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                     draggable={false}
                   />
                   {mode === "existing" &&
-                    info?.texts
+                    groupedTexts
                       .filter((o) => o.editable)
                       .map((object) => (
                         <button
@@ -1057,6 +1146,51 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                           onClick={() => selectOriginal(object.id)}
                         />
                       ))}
+                  {mode === "existing" &&
+                    selectedOriginal &&
+                    selectedOriginal.editable &&
+                    replacement && (
+                      <textarea
+                        ref={inlineTextareaRef}
+                        className="pdf-editor-inline-textarea"
+                        aria-label={t("textContent")}
+                        disabled={busy}
+                        value={replacement.text}
+                        style={{
+                          left: `${selectedOriginal.x * 100}%`,
+                          top: `${selectedOriginal.y * 100}%`,
+                          width: `${Math.max(selectedOriginal.width * 100, 16)}%`,
+                          minHeight: `${Math.max(selectedOriginal.height * 100, 3.6)}%`,
+                          fontSize: `${
+                            (replacement.fontSize ?? selectedOriginal.fontSize) *
+                            (info && viewportSize.width > 0 && viewportSize.height > 0
+                              ? (Math.min(
+                                  viewportSize.width,
+                                  (viewportSize.height * info.width) / info.height,
+                                ) *
+                                  zoom) /
+                                info.width
+                              : zoom)
+                          }px`,
+                          color: selectedOriginal.color || "#0f172a",
+                        }}
+                        onChange={(event) => updateInlineReplacementText(event.target.value)}
+                        onKeyDown={(event) => {
+                          if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                            event.preventDefault();
+                            void apply();
+                          } else if (event.key === "Escape") {
+                            event.preventDefault();
+                            clearSelection();
+                          }
+                        }}
+                        onBlur={() => {
+                          if (draftDirty && !replacementIssue && !busy) {
+                            void apply();
+                          }
+                        }}
+                      />
+                    )}
                   {mode === "select" &&
                     history.present.elements
                       .filter((e) => e.page === page)
@@ -1123,7 +1257,17 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                 </div>
               </section>
               {mode === "existing" && !info?.texts.some((o) => o.editable) && (
-                <p className="pdf-editor-warning">{t("noText")}</p>
+                <div className="pdf-editor-ocr-banner">
+                  <p className="pdf-editor-warning">{t("noText")}</p>
+                  <button
+                    type="button"
+                    className="pdf-editor-ocr-btn"
+                    disabled={busy || ocrBusy}
+                    onClick={() => void runOcrForCurrentPage()}
+                  >
+                    {ocrBusy ? "Reconhecendo texto (OCR)…" : "Reconhecer texto (OCR) para editar"}
+                  </button>
+                </div>
               )}
             </div>
             <aside className="pdf-editor-properties" aria-label={t("properties")} tabIndex={-1}>
@@ -1146,7 +1290,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                 >
                   <option value="">{t("chooseObject")}</option>
                   {mode === "existing"
-                    ? info?.texts
+                    ? groupedTexts
                         .filter((item) => item.text.trim())
                         .map((item) => (
                           <option key={item.id} value={item.id}>
@@ -1247,11 +1391,13 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                     <button
                       type="button"
                       onClick={async () => {
+                        const memberIds = selectedOriginal?.memberIds ?? [replacement.id];
+                        const memberSet = new Set(memberIds);
                         const next = {
                           ...history.present,
                           replacements: [
-                            ...history.present.replacements.filter((r) => r.id !== replacement.id),
-                            { ...replacement, text: "" },
+                            ...history.present.replacements.filter((r) => !memberSet.has(r.id)),
+                            ...memberIds.map((id) => ({ id, text: "" })),
                           ],
                         };
                         if (await commit(commitEditorSnapshot(history, next))) clearSelection();

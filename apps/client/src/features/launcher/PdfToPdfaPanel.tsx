@@ -16,6 +16,7 @@ import type {
   PdfADiagnosticReport,
   PdfAFontStrategy,
 } from "@/platform/pdfa-converter";
+import { OutputDownloadAction } from "./OutputDownloadAction";
 import { ToolWorkspace } from "./ToolWorkspace";
 import "./PdfToPdfaPanel.css";
 
@@ -43,6 +44,7 @@ export interface PdfToPdfaPanelProps {
   readonly onCancel?: () => void;
   readonly onReset: () => void;
   readonly onBack?: () => void;
+  readonly onSaveOutput?: () => void;
 }
 
 function formatBytes(bytes: number): string {
@@ -76,6 +78,7 @@ export function PdfToPdfaPanel({
   onCancel,
   onReset,
   onBack,
+  onSaveOutput,
 }: PdfToPdfaPanelProps) {
   const titleId = useId();
   const [showOriginal, setShowOriginal] = useState(false);
@@ -352,11 +355,16 @@ export function PdfToPdfaPanel({
                 )}
               </p>
             )}
-            {ready && downloadUrl ? (
-              <a className="ilovepdf-action-red-btn" href={downloadUrl} download={outputFileName}>
+            {ready && (downloadUrl || onSaveOutput) ? (
+              <OutputDownloadAction
+                className="ilovepdf-action-red-btn"
+                downloadUrl={downloadUrl}
+                outputFileName={outputFileName}
+                onSaveOutput={onSaveOutput}
+              >
                 <Download size={18} aria-hidden="true" />
                 <span>{translate("pdfToPdfa.download")}</span>
-              </a>
+              </OutputDownloadAction>
             ) : (
               <Button
                 type="button"

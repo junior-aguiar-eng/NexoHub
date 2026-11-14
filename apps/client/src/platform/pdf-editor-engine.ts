@@ -396,7 +396,7 @@ export class PdfEditorEngine {
           continue;
         }
         validateText(replacement.text);
-        if (replacement.text.includes("\n")) fail("TEXTO_NAO_CABE");
+        if (replacement.text.includes("\n") && !replacement.maxWidth) fail("TEXTO_NAO_CABE");
         const page = pages[pageIndex],
           oldBounds = bounds(entry.obj),
           oldMatrix = matrix(entry.obj);
@@ -408,68 +408,110 @@ export class PdfEditorEngine {
           !entry.info.canChangeStyle
         )
           fail("OBJETO");
+        const textLines = replacement.text.split("\n").filter((l) => l.trim().length > 0);
+        if (textLines.length === 0) fail("TEXTO");
+        const firstLineText = textLines[0];
+        const origFont = a.FPDFTextObj_GetFont(entry.obj);
+        const createLineObj = (lineText: string, lineMatrix: number[]) => {
+          if (replacement.fallbackFont) {
+            const created = fontObject(lineText, replacement.fallbackFont, fontSize / oldMatrix[3]);
+            setMatrix(created, lineMatrix);
+            color(created, entry.info.color);
+            return created;
+          }
+          const created = track(
+            a.FPDFPageObj_CreateTextObj(doc, origFont, fontSize / oldMatrix[3]),
+          );
+          check(created);
+          setMatrix(created, lineMatrix);
+          color(created, entry.info.color);
+          check(a.FPDFText_SetText(created, wide(lineText)));
+          return created;
+        };
         let obj = entry.obj;
         if (replacement.fallbackFont) {
-          obj = fontObject(replacement.text, replacement.fallbackFont, fontSize / oldMatrix[3]);
+          obj = fontObject(firstLineText, replacement.fallbackFont, fontSize / oldMatrix[3]);
           setMatrix(obj, oldMatrix);
           color(obj, entry.info.color);
         } else {
-          const font = a.FPDFTextObj_GetFont(obj),
+          const font = origFont,
             p = ptr(4);
           const standard = a.FPDFFont_GetIsEmbedded(font) === 0 && fonts.has(entry.info.fontName);
           if (
             standard
               ? !latin(replacement.text)
               : Array.from(replacement.text).some(
-                  (ch) => ch !== " " && !fontCoverage.get(font)?.has(ch),
+                  (ch) => ch !== " " && ch !== "\n" && !fontCoverage.get(font)?.has(ch),
                 )
           )
             fail("GLIFO");
-          for (const ch of replacement.text)
+          for (const ch of replacement.text) {
+            if (ch === "\n") continue;
             if (
               !a.FPDFFont_GetGlyphWidth(font, ch.codePointAt(0) ?? 0, entry.info.fontSize, p) ||
               num(p) <= 0
             )
               fail("GLIFO");
+          }
           if (replacement.fontSize !== undefined && replacement.fontSize !== entry.info.fontSize) {
             obj = track(a.FPDFPageObj_CreateTextObj(doc, font, fontSize / oldMatrix[3]));
             check(obj);
             setMatrix(obj, oldMatrix);
             color(obj, entry.info.color);
           }
-          check(a.FPDFText_SetText(obj, wide(replacement.text)));
+          check(a.FPDFText_SetText(obj, wide(firstLineText)));
         }
         const newBounds = bounds(obj);
+        const allowedWidth = Math.max(oldBounds.right - oldBounds.left, replacement.maxWidth ?? 0);
         if (
-          newBounds.right - newBounds.left > oldBounds.right - oldBounds.left + 2 ||
+          newBounds.right - newBounds.left > allowedWidth + 2 ||
           newBounds.top > oldBounds.top + 2 ||
-          newBounds.bottom < oldBounds.bottom - 3
+          (textLines.length === 1 && newBounds.bottom < oldBounds.bottom - 3)
         ) {
           if (obj !== entry.obj) destroyObject(obj);
           fail("TEXTO_NAO_CABE");
         }
+        const insertBaseIndex = Array.from({ length: a.FPDFPage_CountObjects(page) }, (_, i) =>
+          a.FPDFPage_GetObject(page, i),
+        ).indexOf(entry.obj);
         if (obj !== entry.obj) {
-          const currentIndex = Array.from({ length: a.FPDFPage_CountObjects(page) }, (_, i) =>
-            a.FPDFPage_GetObject(page, i),
-          ).indexOf(entry.obj);
-          if (currentIndex < 0) fail("OBJETO");
+          if (insertBaseIndex < 0) fail("OBJETO");
           check(a.FPDFPage_RemoveObject(page, entry.obj));
           a.FPDFPageObj_Destroy(entry.obj);
-          check(a.FPDFPage_InsertObjectAtIndex(page, obj, currentIndex));
+          check(a.FPDFPage_InsertObjectAtIndex(page, obj, insertBaseIndex));
           unowned.delete(obj);
+        }
+        const extraLineObjs: { obj: number; text: string }[] = [];
+        const lineStep = replacement.lineHeight ?? fontSize * 1.25;
+        for (let lineIdx = 1; lineIdx < textLines.length; lineIdx++) {
+          const lineText = textLines[lineIdx];
+          const lineMat = [...oldMatrix];
+          lineMat[5] = oldMatrix[5] - lineIdx * lineStep;
+          const extraObj = createLineObj(lineText, lineMat);
+          const extraBounds = bounds(extraObj);
+          if (extraBounds.right - extraBounds.left > allowedWidth + 2) {
+            destroyObject(extraObj);
+            fail("TEXTO_NAO_CABE");
+          }
+          check(a.FPDFPage_InsertObjectAtIndex(page, extraObj, insertBaseIndex + lineIdx));
+          unowned.delete(extraObj);
+          extraLineObjs.push({ obj: extraObj, text: lineText });
         }
         const verification = a.FPDFText_LoadPage(page);
         check(verification);
         try {
           if (
             getText(obj, verification).replace(/\s+/gu, " ").trim() !==
-            replacement.text.replace(/\s+/gu, " ").trim()
+            firstLineText.replace(/\s+/gu, " ").trim()
           )
             fail("GLIFO");
         } finally {
           a.FPDFText_ClosePage(verification);
         }
-        verifyObjects.push({ page: pageIndex, object: obj, text: replacement.text });
+        verifyObjects.push({ page: pageIndex, object: obj, text: firstLineText });
+        for (const extra of extraLineObjs) {
+          verifyObjects.push({ page: pageIndex, object: extra.obj, text: extra.text });
+        }
         entry.info.text = replacement.text;
         entry.info.fontSize = fontSize;
         touched.add(pageIndex);

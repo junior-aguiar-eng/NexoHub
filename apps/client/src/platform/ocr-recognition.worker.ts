@@ -17,6 +17,9 @@ scope.onmessage = async (event) => {
   try {
     if (event.data.type === "initialize") {
       engine = await createWorker(event.data.language, 1, {
+        workerPath: "/tesseract/worker.min.js",
+        corePath: "/tesseract/tesseract-core-simd-lstm.wasm.js",
+        langPath: "/tesseract/tessdata",
         logger: (message) =>
           scope.postMessage({
             type: "progress",

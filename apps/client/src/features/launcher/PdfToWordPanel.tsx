@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import type { PdfToWordReport } from "@/platform/pdf-to-word-converter";
+import { OutputDownloadAction } from "./OutputDownloadAction";
 
 interface PdfToWordPanelProps {
   readonly fileName: string;
@@ -34,6 +35,7 @@ interface PdfToWordPanelProps {
   readonly onRunConversion: () => void;
   readonly onReset: () => void;
   readonly onNavigateToOcr?: () => void;
+  readonly onSaveOutput?: () => void;
 }
 
 function formatBytes(bytes: number): string {
@@ -62,6 +64,7 @@ export function PdfToWordPanel({
   onRunConversion,
   onReset,
   onNavigateToOcr,
+  onSaveOutput,
 }: PdfToWordPanelProps) {
   // Estado de erro
   if (errorMessage) {
@@ -262,15 +265,15 @@ export function PdfToWordPanel({
 
             {/* Ações */}
             <div className="pdf-word-actions-row mt-6">
-              <a
-                href={downloadUrl}
-                download={outputFileName}
+              <OutputDownloadAction
+                downloadUrl={downloadUrl}
+                outputFileName={outputFileName}
+                onSaveOutput={onSaveOutput}
                 className="ilovepdf-action-red-btn inline-flex items-center justify-center font-semibold text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all"
-                style={{ backgroundColor: "#2B579A" }}
               >
                 <Download size={20} className="mr-2" aria-hidden="true" />
                 {translate("pdfToWord.download")}
-              </a>
+              </OutputDownloadAction>
 
               <Button
                 type="button"

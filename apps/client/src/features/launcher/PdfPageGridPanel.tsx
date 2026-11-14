@@ -1,12 +1,4 @@
-import {
-  ArrowLeftRight,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  RotateCw,
-  Trash2,
-  Undo2,
-} from "lucide-react";
+import { ArrowLeftRight, Check, RotateCw, Trash2, Undo2 } from "lucide-react";
 import { type ChangeEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
@@ -69,16 +61,6 @@ export function PdfPageGridPanel({
     newPages.splice(targetIndex, 0, moved);
     onPagesChange?.(newPages);
     setDraggedIndex(null);
-  }
-
-  function handleMove(index: number, direction: "left" | "right") {
-    const targetIndex = direction === "left" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= pages.length) return;
-    const newPages = [...pages];
-    const temp = newPages[index];
-    newPages[index] = newPages[targetIndex];
-    newPages[targetIndex] = temp;
-    onPagesChange?.(newPages);
   }
 
   function handleRotate(index: number) {
@@ -355,18 +337,6 @@ export function PdfPageGridPanel({
               <div className="pdf-page-card-toolbar">
                 {!isDeleted ? (
                   <>
-                    <button
-                      type="button"
-                      className="pdf-page-tool-btn"
-                      disabled={index === 0}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMove(index, "left");
-                      }}
-                      title="Mover para esquerda"
-                    >
-                      <ChevronLeft size={14} />
-                    </button>
                     {allowRotation && (
                       <button
                         type="button"
@@ -390,18 +360,6 @@ export function PdfPageGridPanel({
                       title="Excluir esta página"
                     >
                       <Trash2 size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      className="pdf-page-tool-btn"
-                      disabled={index === pages.length - 1}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMove(index, "right");
-                      }}
-                      title="Mover para direita"
-                    >
-                      <ChevronRight size={14} />
                     </button>
                   </>
                 ) : (

@@ -9,6 +9,14 @@ export const installerSources = [
   "../target/release/runtime/setup/languagetool-community.json",
   "../target/release/runtime/setup/languagetool-jars.json",
   "../target/release/runtime/setup/languagetool-java-files.json",
+  "../target/release/runtime/qpdf/*",
+  "../target/release/runtime/python/*",
+  "../target/release/runtime/office/*",
+  "../target/release/runtime/jre/*",
+  "../target/release/runtime/languagetool/*",
+  "../target/release/runtime/verapdf/*",
+  "../target/release/runtime/models/*",
+  "../target/release/runtime/tesseract/*",
   "../target/release/runtime/MicrosoftEdgeWebview2Setup.exe",
 ];
 

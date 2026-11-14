@@ -102,7 +102,7 @@ export function ExtractImagesPanel({
       <div
         className="ilovepdf-compress-preview-area"
         data-workspace-part="document"
-        style={{ overflowY: "auto", maxHeight: "80vh" }}
+        style={{ overflowY: "auto", height: "100%" }}
       >
         {extractedImages.length > 0 ? (
           <div style={{ width: "100%", maxWidth: "720px", margin: "0 auto" }}>

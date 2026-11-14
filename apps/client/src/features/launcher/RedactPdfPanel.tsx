@@ -963,6 +963,8 @@ export function RedactPdfPanel({
           display: flex;
           flex-direction: column;
           flex: 1;
+          min-width: 0;
+          width: 100%;
           min-height: 0;
           gap: 2px;
         }
@@ -975,8 +977,9 @@ export function RedactPdfPanel({
           align-items: center;
           justify-content: space-between;
           gap: 0.5rem;
-          min-height: 20px;
-          line-height: 1.15;
+          padding: 8px 16px 4px;
+          min-height: 28px;
+          line-height: 1.2;
         }
         .redact-preview-title {
           font-size: 0.75rem;
@@ -1104,7 +1107,7 @@ export function RedactPdfPanel({
           pointer-events: none;
         }
         .redact-preview-footer {
-          padding-top: 0.5rem;
+          padding: 8px 16px;
           border-top: 1px solid var(--color-border);
           text-align: center;
         }
@@ -1134,8 +1137,14 @@ export function RedactPdfPanel({
           display: flex;
           gap: 0.5rem;
           align-items: center;
+          min-width: 0;
+        }
+        .redact-search-row > input {
+          flex: 1;
+          min-width: 0;
         }
         .redact-search-submit-btn {
+          flex-shrink: 0;
           padding: 0.55rem 0.85rem;
           border-radius: 6px;
           border: 1px solid #0284c7;

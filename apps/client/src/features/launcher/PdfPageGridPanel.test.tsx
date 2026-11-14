@@ -47,9 +47,9 @@ describe("PdfPageGridPanel - Painel Visual de Páginas (iLovePDF style)", () => 
     ]);
   });
 
-  it("permite mover uma página para a direita", () => {
+  it("permite reordenar páginas por arraste e soltura sem botões de seta", () => {
     const onPagesChange = vi.fn();
-    render(
+    const { container } = render(
       <PdfPageGridPanel
         mode="organize"
         totalPages={3}
@@ -59,8 +59,14 @@ describe("PdfPageGridPanel - Painel Visual de Páginas (iLovePDF style)", () => 
       />,
     );
 
-    const moveRightButtons = screen.getAllByTitle(/Mover para direita/i);
-    fireEvent.click(moveRightButtons[0]);
+    const pageCards = container.querySelectorAll(".pdf-page-card");
+    expect(pageCards.length).toBe(3);
+    expect(screen.queryByTitle(/Mover para direita/i)).not.toBeInTheDocument();
+    expect(screen.queryByTitle(/Mover para esquerda/i)).not.toBeInTheDocument();
+
+    fireEvent.dragStart(pageCards[0]);
+    fireEvent.dragOver(pageCards[1]);
+    fireEvent.drop(pageCards[1]);
 
     expect(onPagesChange).toHaveBeenCalledWith([
       { id: "page-2", originalIndex: 2, rotation: 0 },

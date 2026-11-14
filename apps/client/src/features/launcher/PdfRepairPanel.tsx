@@ -3,6 +3,7 @@ import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import type { PdfRepairReport } from "@/platform/pdf-repair-engine";
+import { OutputDownloadAction } from "./OutputDownloadAction";
 import { ToolWorkspace } from "./ToolWorkspace";
 import "./PdfRepairPanel.css";
 
@@ -22,6 +23,7 @@ interface PdfRepairPanelProps {
   readonly onBack?: () => void;
   readonly onRunRepair: () => void;
   readonly onReset: () => void;
+  readonly onSaveOutput?: () => void;
 }
 
 function formatBytes(bytes: number): string {
@@ -46,6 +48,7 @@ export function PdfRepairPanel({
   onBack,
   onRunRepair,
   onReset,
+  onSaveOutput,
 }: PdfRepairPanelProps) {
   const titleId = useId();
   const [showOriginal, setShowOriginal] = useState(false);
@@ -179,11 +182,16 @@ export function PdfRepairPanel({
                 )}
               </p>
             )}
-            {ready && downloadUrl ? (
-              <a className="ilovepdf-action-red-btn" href={downloadUrl} download={outputFileName}>
+            {ready && (downloadUrl || onSaveOutput) ? (
+              <OutputDownloadAction
+                className="ilovepdf-action-red-btn"
+                downloadUrl={downloadUrl}
+                outputFileName={outputFileName}
+                onSaveOutput={onSaveOutput}
+              >
                 <Download size={18} aria-hidden="true" />
                 <span>{translate("repair.download")}</span>
-              </a>
+              </OutputDownloadAction>
             ) : (
               <Button
                 type="button"

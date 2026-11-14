@@ -12,6 +12,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import type { OcrPageReport } from "@/platform/browser-ocr";
+import { OutputDownloadAction } from "./OutputDownloadAction";
 import "./OcrScannerPanel.css";
 
 export type OcrScannerPanelProps = {
@@ -31,6 +32,7 @@ export type OcrScannerPanelProps = {
   onCancel?: () => void;
   downloadUrl?: string | null;
   outputFileName?: string;
+  onSaveOutput?: () => void;
 };
 
 export function OcrScannerPanel({
@@ -50,6 +52,7 @@ export function OcrScannerPanel({
   onCancel,
   downloadUrl,
   outputFileName,
+  onSaveOutput,
 }: OcrScannerPanelProps) {
   const [copied, setCopied] = useState(false);
 
@@ -232,10 +235,15 @@ export function OcrScannerPanel({
               </Button>
             </div>
           </div>
-          {downloadUrl && outputFileName && (
-            <a href={downloadUrl} download={outputFileName} className="ocr-result-download">
+          {(downloadUrl || onSaveOutput) && outputFileName && (
+            <OutputDownloadAction
+              downloadUrl={downloadUrl ?? null}
+              outputFileName={outputFileName}
+              onSaveOutput={onSaveOutput}
+              className="ocr-result-download"
+            >
               {translate("workspace.ocr.downloadResult")}
-            </a>
+            </OutputDownloadAction>
           )}
 
           <textarea

@@ -363,3 +363,49 @@ test("página cabe no palco em 1366x768 e barra lateral preenche até a ação s
     expect(metrics.optsHeight).toBeGreaterThanOrEqual(metrics.availHeight - 4);
   }
 });
+
+test("enquadramento desktop 1366x768 em Traduzir Texto, Editar PDF e HTML para PDF", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+
+  await page.goto(`${process.env.NEXOHUB_BASE_PATH ?? "/"}traduzir-texto`);
+  const translateMetrics = await page.evaluate(() => {
+    const panels = document.querySelector(".dedicated-tool-workspace-panels");
+    const bar = document.querySelector(".dedicated-tool-bottom-bar");
+    const pRect = panels?.getBoundingClientRect();
+    const bRect = bar?.getBoundingClientRect();
+    return {
+      docScrollH: document.documentElement.scrollHeight,
+      overflowY: panels ? getComputedStyle(panels).overflowY : "",
+      panelsBottom: pRect?.bottom ?? 0,
+      barTop: bRect?.top ?? 0,
+    };
+  });
+  expect(translateMetrics.docScrollH).toBeLessThanOrEqual(768);
+  expect(["auto", "scroll"]).toContain(translateMetrics.overflowY);
+  expect(translateMetrics.panelsBottom).toBeLessThanOrEqual(translateMetrics.barTop + 2);
+
+  await page.goto(`${process.env.NEXOHUB_BASE_PATH ?? "/"}editar-pdf`);
+  const uploadMetrics = await page.evaluate(() => {
+    const card = document.querySelector(".pdf-editor-upload");
+    return {
+      docScrollH: document.documentElement.scrollHeight,
+      cardScrollH: card?.scrollHeight ?? 0,
+      cardClientH: card?.clientHeight ?? 0,
+    };
+  });
+  expect(uploadMetrics.docScrollH).toBeLessThanOrEqual(768);
+  expect(uploadMetrics.cardScrollH).toBeLessThanOrEqual(uploadMetrics.cardClientH + 2);
+
+  await page.goto(`${process.env.NEXOHUB_BASE_PATH ?? "/"}html-para-pdf`);
+  await page.getByRole("button", { name: "Digitar / Colar Código HTML", exact: true }).click();
+  const largeHtml =
+    "<!doctype html><html><head><style>td{padding:4px}</style></head><body><table>" +
+    Array.from({ length: 1500 }, (_, i) => `<tr><td>Linha grande ${i}</td></tr>`).join("") +
+    "</table></body></html>";
+  await page.getByTestId("html-code-input").fill(largeHtml);
+  const iframe = page.locator('iframe[title="Pré-visualização HTML"]');
+  await expect(iframe).toHaveAttribute("srcdoc", /Linha grande 1499/, { timeout: 10000 });
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(768);
+});

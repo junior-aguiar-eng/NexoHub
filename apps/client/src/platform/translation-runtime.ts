@@ -167,7 +167,9 @@ async function getPipeline(
       onProgress?.({ status: "initializing", progress: 0 });
       const { env } = await import("@huggingface/transformers");
       const { createTranslationPipeline } = await import("./translation-model");
-      env.allowLocalModels = false;
+      env.allowLocalModels = true;
+      env.allowRemoteModels = false;
+      env.localModelPath = "/models/";
       env.useBrowserCache = true;
       env.fetch = createInactivityFetch(globalThis.fetch.bind(globalThis));
       // WASM é o dispositivo medido neste perfil. Não selecionar WebGPU por

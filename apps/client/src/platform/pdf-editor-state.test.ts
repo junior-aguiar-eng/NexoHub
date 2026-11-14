@@ -1,5 +1,11 @@
 import { expect, it } from "vitest";
 import {
+  groupEditableParagraphs,
+  groupEditableTextRuns,
+  needsFallbackForText,
+  pickCompatibleFallbackFont,
+} from "./pdf-editor-compatibility";
+import {
   commitEditorSnapshot,
   EditorPreviewCache,
   editorHistory,
@@ -96,4 +102,47 @@ it("preserva o limite de 50 etapas mesmo com comandos pequenos", () => {
   expect(history.past).toHaveLength(50);
   expect(history.present.replacements[0].text).toBe("59");
   expect(history.truncated).toBe(true);
+});
+
+it("agrupa caracteres e fragmentos adjacentes da mesma linha mantendo colunas separadas", () => {
+  const base = {
+    fontName: "Helvetica",
+    fontSize: 10,
+    color: "#111111",
+    editable: true,
+    height: 0.015,
+    fontPolicy: "latin" as const,
+  };
+  const grouped = groupEditableTextRuns([
+    { ...base, id: "0:0", text: "§", x: 0.1, y: 0.2, width: 0.01 },
+    { ...base, id: "0:1", text: "2", x: 0.115, y: 0.2, width: 0.01 },
+    { ...base, id: "0:2", text: "º", x: 0.125, y: 0.2, width: 0.008 },
+    { ...base, id: "0:3", text: "Coluna2", x: 0.45, y: 0.2, width: 0.08 },
+  ]);
+  expect(grouped).toHaveLength(2);
+  expect(grouped[0].text).toBe("§ 2º");
+  expect(grouped[0].memberIds).toEqual(["0:0", "0:1", "0:2"]);
+  expect(grouped[1].text).toBe("Coluna2");
+});
+
+it("agrupa linhas consecutivas em parágrafo editável e ativa fallback automático para acentos ausentes", () => {
+  const base = {
+    fontName: "Arial-BoldMT",
+    fontSize: 11,
+    color: "#111111",
+    editable: true,
+    height: 0.015,
+    fontPolicy: "observed" as const,
+    supportedCharacters: "Linha12",
+  };
+  const paragraphs = groupEditableParagraphs([
+    { ...base, id: "0:0", text: "Linha 1", x: 0.1, y: 0.2, width: 0.35 },
+    { ...base, id: "0:1", text: "Linha 2", x: 0.1, y: 0.22, width: 0.32 },
+    { ...base, id: "0:2", text: "OutraColuna", x: 0.6, y: 0.2, width: 0.2 },
+  ]);
+  expect(paragraphs).toHaveLength(2);
+  expect(paragraphs[0].text).toBe("Linha 1\nLinha 2");
+  expect(paragraphs[0].memberIds).toEqual(["0:0", "0:1"]);
+  expect(needsFallbackForText(paragraphs[0], "Ação")).toBe(true);
+  expect(pickCompatibleFallbackFont("Arial-BoldMT")).toBe("Helvetica-Bold");
 });

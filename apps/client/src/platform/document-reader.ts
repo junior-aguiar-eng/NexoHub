@@ -18,9 +18,17 @@ export async function readDocumentText(file: File): Promise<string> {
     try {
       const buffer = new Uint8Array(await file.arrayBuffer());
       const extracted = await extractTextFromPdf(buffer);
-      if (!extracted.trim())
-        throw new ToolRunError("INVALID_INPUT", translate("document.errorPdfNoText"));
-      return extracted.trim();
+      if (extracted.trim()) {
+        return extracted.trim();
+      }
+      if (typeof window !== "undefined" && typeof Worker !== "undefined") {
+        const { performBrowserOcr } = await import("./browser-ocr");
+        const ocr = await performBrowserOcr(file, { language: "por" });
+        if (ocr.text.trim()) {
+          return ocr.text.trim();
+        }
+      }
+      throw new ToolRunError("INVALID_INPUT", translate("document.errorPdfNoText"));
     } catch (err) {
       if (err instanceof ToolRunError) throw err;
       throw new ToolRunError("INVALID_INPUT", translate("document.errorPdfTextExtraction"));

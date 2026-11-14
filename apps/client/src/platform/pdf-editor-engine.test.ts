@@ -379,7 +379,7 @@ it("recusa PDF inválido, comandos fora da página e limites", async () => {
     engine.revise(new Uint8Array([1, 2]), { replacements: [], elements: [] }, 0),
   ).toThrow(/PDF_INVALIDO/);
   expect(() =>
-    engine.revise(new Uint8Array(21 * 1024 * 1024), { replacements: [], elements: [] }, 0),
+    engine.revise(new Uint8Array(101 * 1024 * 1024), { replacements: [], elements: [] }, 0),
   ).toThrow(/LIMITE/);
   expect(() => engine.revise(new Uint8Array(), { replacements: [], elements: [] }, 0)).toThrow();
 });

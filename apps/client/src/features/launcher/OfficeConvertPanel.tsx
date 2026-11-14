@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import { OFFICE_TOOL_METADATA } from "@/platform/office-client";
 import { CloudProcessingChoice } from "./CloudProcessingChoice";
+import { OutputDownloadAction } from "./OutputDownloadAction";
 import { ToolWorkspace } from "./ToolWorkspace";
 import "./OfficeConvertPanel.css";
 
@@ -297,17 +298,15 @@ export function OfficeConvertPanel({
             )
           ) : isSuccess && downloadUrl ? (
             <>
-              {onSaveOutput ? (
-                <button type="button" className="ilovepdf-action-red-btn" onClick={onSaveOutput}>
-                  <Download size={18} aria-hidden="true" />
-                  <span>{translate("office.download")}</span>
-                </button>
-              ) : (
-                <a className="ilovepdf-action-red-btn" href={downloadUrl} download={outputFileName}>
-                  <Download size={18} aria-hidden="true" />
-                  <span>{translate("office.download")}</span>
-                </a>
-              )}
+              <OutputDownloadAction
+                className="ilovepdf-action-red-btn"
+                downloadUrl={downloadUrl}
+                outputFileName={outputFileName}
+                onSaveOutput={onSaveOutput}
+              >
+                <Download size={18} aria-hidden="true" />
+                <span>{translate("office.download")}</span>
+              </OutputDownloadAction>
               <Button type="button" variant="secondary" onClick={onReset}>
                 <RefreshCw size={16} aria-hidden="true" />
                 <span>{translate("office.tryAnother")}</span>

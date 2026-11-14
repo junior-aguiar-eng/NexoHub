@@ -34,6 +34,8 @@ export interface EditorReplacement {
   text: string;
   fallbackFont?: EditorFont;
   fontSize?: number;
+  maxWidth?: number;
+  lineHeight?: number;
 }
 export interface EditorElement extends EditorBox {
   id: string;
@@ -79,14 +81,14 @@ export interface EditorWorkerResponse {
   error?: string;
 }
 export const EDITOR_LIMITS = Object.freeze({
-  bytes: 20 * 1024 * 1024,
-  pages: 30,
-  objects: 3000,
-  elements: 200,
-  text: 4000,
+  bytes: 100 * 1024 * 1024,
+  pages: 300,
+  objects: 300_000,
+  elements: 1_000,
+  text: 8000,
   renderSide: 1400,
   imagePixels: 8_000_000,
-  outputBytes: 80 * 1024 * 1024,
+  outputBytes: 200 * 1024 * 1024,
   previewCacheBytes: 16 * 1024 * 1024,
   historyBytes: 64 * 1024 * 1024,
 });

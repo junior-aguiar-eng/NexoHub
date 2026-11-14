@@ -41,6 +41,14 @@ Source: "..\target\release\runtime\setup\install-languagetool.ps1"; DestDir: "{a
 Source: "..\target\release\runtime\setup\languagetool-community.json"; DestDir: "{app}\runtime\setup"; Flags: ignoreversion
 Source: "..\target\release\runtime\setup\languagetool-jars.json"; DestDir: "{app}\runtime\setup"; Flags: ignoreversion
 Source: "..\target\release\runtime\setup\languagetool-java-files.json"; DestDir: "{app}\runtime\setup"; Flags: ignoreversion
+Source: "..\target\release\runtime\qpdf\*"; DestDir: "{app}\runtime\qpdf"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "..\target\release\runtime\python\*"; DestDir: "{app}\runtime\python"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "..\target\release\runtime\office\*"; DestDir: "{app}\runtime\office"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "..\target\release\runtime\jre\*"; DestDir: "{app}\runtime\jre"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "..\target\release\runtime\languagetool\*"; DestDir: "{app}\runtime\languagetool"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "..\target\release\runtime\verapdf\*"; DestDir: "{app}\runtime\verapdf"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "..\target\release\runtime\models\*"; DestDir: "{app}\runtime\models"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "..\target\release\runtime\tesseract\*"; DestDir: "{app}\runtime\tesseract"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "..\target\release\runtime\MicrosoftEdgeWebview2Setup.exe"; Flags: dontcopy
 
 [Icons]

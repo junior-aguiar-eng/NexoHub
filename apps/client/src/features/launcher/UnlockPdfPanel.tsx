@@ -80,7 +80,7 @@ export function UnlockPdfPanel({
                 <Unlock size={22} color="#10b981" />
               )}
             </div>
-            <div>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <div className="unlock-file-name" title={fileName}>
                 {fileName}
               </div>
@@ -326,6 +326,7 @@ export function UnlockPdfPanel({
           display: flex;
           align-items: center;
           gap: 0.85rem;
+          flex: 1;
           min-width: 0;
         }
 
@@ -347,7 +348,11 @@ export function UnlockPdfPanel({
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          max-width: 230px;
+          max-width: 100%;
+        }
+
+        .unlock-status-badge {
+          flex-shrink: 0;
         }
 
         .unlock-file-meta {

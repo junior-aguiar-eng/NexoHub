@@ -186,4 +186,91 @@ describe("App", () => {
       screen.getByRole("heading", { name: "Suas imagens, do jeito que você precisa." }),
     ).toBeInTheDocument();
   });
+
+  it("encadeia o PDF gerado em Imagem para PDF para outras ferramentas sem perder o arquivo", async () => {
+    // 1x1 PNG válido
+    const pngBytes = new Uint8Array([
+      137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 8, 2, 0,
+      0, 0, 144, 119, 83, 222, 0, 0, 0, 12, 73, 68, 65, 84, 8, 215, 99, 248, 207, 192, 0, 0, 3, 1,
+      1, 0, 24, 221, 141, 176, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+    ]);
+    const imageFile = new File([pngBytes], "foto.png", { type: "image/png" });
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+
+    try {
+      window.history.pushState({}, "", "/imagem-para-pdf");
+      const { container } = render(<App />);
+
+      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+      expect(fileInput).toBeTruthy();
+      fireEvent.change(fileInput, { target: { files: [imageFile] } });
+
+      const convertBtn = await screen.findByRole("button", { name: /Converter em PDF/i });
+      fireEvent.click(convertBtn);
+
+      await waitFor(() =>
+        expect(
+          screen.getByRole("heading", { name: /Pronto! Arquivo processado/i }),
+        ).toBeInTheDocument(),
+      );
+
+      // Download automático no navegador foi disparado ao concluir
+      expect(clickSpy).toHaveBeenCalledTimes(1);
+
+      // Clica em Comprimir PDF na barra de encadeamento
+      const chainingBar = screen.getByRole("region", { name: /Continuar trabalhando/i });
+      fireEvent.click(within(chainingBar).getByRole("button", { name: /Comprimir PDF/i }));
+
+      await waitFor(() =>
+        expect(screen.getByRole("heading", { name: "Comprimir PDF" })).toBeInTheDocument(),
+      );
+      expect(screen.getByText("foto_imagens.pdf")).toBeInTheDocument();
+    } finally {
+      clickSpy.mockRestore();
+    }
+  });
+
+  it("encadeia o PDF gerado em Imagem para PDF para Proteger, Numerar Páginas e Assinar sem perder o arquivo", async () => {
+    const pngBytes = new Uint8Array([
+      137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 8, 2, 0,
+      0, 0, 144, 119, 83, 222, 0, 0, 0, 12, 73, 68, 65, 84, 8, 215, 99, 248, 207, 192, 0, 0, 3, 1,
+      1, 0, 24, 221, 141, 176, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+    ]);
+    const targets = [
+      { buttonName: /Proteger com Senha/i, heading: "Proteger PDF" },
+      { buttonName: /Numerar Páginas/i, heading: "Inserir Números de Página" },
+      { buttonName: /Assinar Documento/i, heading: "Assinar PDF" },
+    ];
+
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    try {
+      for (const target of targets) {
+        window.history.pushState({}, "", "/imagem-para-pdf");
+        const { container, unmount } = render(<App />);
+        const imageFile = new File([pngBytes], "foto.png", { type: "image/png" });
+        const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+        fireEvent.change(fileInput, { target: { files: [imageFile] } });
+
+        const convertBtn = await screen.findByRole("button", { name: /Converter em PDF/i });
+        fireEvent.click(convertBtn);
+
+        await waitFor(() =>
+          expect(
+            screen.getByRole("heading", { name: /Pronto! Arquivo processado/i }),
+          ).toBeInTheDocument(),
+        );
+
+        const chainingBar = screen.getByRole("region", { name: /Continuar trabalhando/i });
+        fireEvent.click(within(chainingBar).getByRole("button", { name: target.buttonName }));
+
+        await waitFor(() =>
+          expect(screen.getByRole("heading", { name: target.heading })).toBeInTheDocument(),
+        );
+        expect(screen.getByText("foto_imagens.pdf")).toBeInTheDocument();
+        unmount();
+      }
+    } finally {
+      clickSpy.mockRestore();
+    }
+  });
 });

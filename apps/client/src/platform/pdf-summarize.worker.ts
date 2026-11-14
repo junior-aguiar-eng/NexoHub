@@ -143,7 +143,9 @@ async function ensureGenerator(
   }
 
   loadingPromise = (async () => {
-    env.allowLocalModels = false;
+    env.allowLocalModels = true;
+    env.allowRemoteModels = false;
+    env.localModelPath = "/models/";
     env.useBrowserCache = true;
     const originalFetch = globalThis.fetch.bind(globalThis);
     globalThis.fetch = createInactivityFetch(originalFetch, SUMMARIZE_LIMITS.inactivityTimeoutMs);

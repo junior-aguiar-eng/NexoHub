@@ -237,7 +237,7 @@ export const ptBR = {
   "editor.upload": "Selecionar PDF",
   "editor.drop": "ou arraste seu PDF aqui",
   "editor.limits":
-    "Até 20 MiB e 30 páginas. Edição de texto por objeto; sem redistribuição automática de parágrafos.",
+    "Até 100 MiB e 300 páginas. Edição de texto por objeto; sem redistribuição automática de parágrafos.",
   "editor.invalidPdf": "Selecione um arquivo PDF válido.",
   "editor.limit": "O documento ou a edição excede os limites do editor.",
   "editor.loading": "Preparando a revisão…",

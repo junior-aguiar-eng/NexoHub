@@ -110,6 +110,7 @@ import { MergePdfPanel } from "./MergePdfPanel";
 import type { LauncherTool } from "./model";
 import { OcrScannerPanel } from "./OcrScannerPanel";
 import { OfficeConvertPanel, type OfficeSurfaceMode } from "./OfficeConvertPanel";
+import { OutputDownloadAction } from "./OutputDownloadAction";
 import { type PageNumberFormat, PageNumbersPdfPanel } from "./PageNumbersPdfPanel";
 import { PdfComparePanel } from "./PdfComparePanel";
 import { PdfEditorPanel } from "./PdfEditorPanel";
@@ -2068,6 +2069,16 @@ export function DedicatedToolView({
         setStatus("success");
       }
 
+      if (outputBlob.size > 0 && !documentCore.saveOutputFile && typeof document !== "undefined") {
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = outName;
+        anchor.style.display = "none";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+      }
+
       onOperationComplete?.({
         documentName: primaryFile.name,
         toolId: tool.id,
@@ -2304,6 +2315,9 @@ export function DedicatedToolView({
           onRunOcrIfScannedChange={setPdfToWordRunOcrIfScanned}
           onRunConversion={() => void handleExecute()}
           onReset={handleReset}
+          onSaveOutput={
+            documentCore.saveOutputFile && outputBlob ? () => void handleSaveOutput() : undefined
+          }
           onNavigateToOcr={onOpenTool ? () => onOpenTool("pdf-ocr", files) : undefined}
         />
       );
@@ -2496,11 +2510,20 @@ export function DedicatedToolView({
             }}
             isExtracting={status === "running"}
           />
-          {downloadUrl && (
-            <a className="ilovepdf-big-download-btn" href={downloadUrl} download={outputFileName}>
+          {(downloadUrl || (documentCore.saveOutputFile && outputBlob)) && (
+            <OutputDownloadAction
+              className="ilovepdf-big-download-btn"
+              downloadUrl={downloadUrl}
+              outputFileName={outputFileName}
+              onSaveOutput={
+                documentCore.saveOutputFile && outputBlob
+                  ? () => void handleSaveOutput()
+                  : undefined
+              }
+            >
               <Download size={20} />
               {translate("extractImages.downloadSelection")}
-            </a>
+            </OutputDownloadAction>
           )}
         </div>
       );
@@ -2805,6 +2828,9 @@ export function DedicatedToolView({
             pageReports={ocrPageReports}
             downloadUrl={downloadUrl}
             outputFileName={outputFileName}
+            onSaveOutput={
+              documentCore.saveOutputFile && outputBlob ? () => void handleSaveOutput() : undefined
+            }
             onCancel={() => {
               ocrController.current?.abort();
               ocrController.current = null;
@@ -3181,23 +3207,17 @@ export function DedicatedToolView({
           )}
         </div>
         <div className="dedicated-tool-success-footer">
-          {documentCore.saveOutputFile && outputBlob ? (
-            <button
-              type="button"
-              className="ilovepdf-big-download-btn"
-              onClick={() => void handleSaveOutput()}
-            >
-              <Download size={22} />
-              <span>{translate("dedicated.download")}</span>
-            </button>
-          ) : (
-            downloadUrl && (
-              <a href={downloadUrl} download={outputFileName} className="ilovepdf-big-download-btn">
-                <Download size={22} />
-                <span>{translate("dedicated.download")}</span>
-              </a>
-            )
-          )}
+          <OutputDownloadAction
+            className="ilovepdf-big-download-btn"
+            downloadUrl={downloadUrl}
+            outputFileName={outputFileName}
+            onSaveOutput={
+              documentCore.saveOutputFile && outputBlob ? () => void handleSaveOutput() : undefined
+            }
+          >
+            <Download size={22} />
+            <span>{translate("dedicated.download")}</span>
+          </OutputDownloadAction>
 
           <div className="ilovepdf-success-actions">
             {tool.id === "pdf-redact" && (
@@ -3398,6 +3418,9 @@ export function DedicatedToolView({
           onBack={onBack}
           onRunRepair={() => void handleExecute()}
           onReset={handleReset}
+          onSaveOutput={
+            documentCore.saveOutputFile && outputBlob ? () => void handleSaveOutput() : undefined
+          }
           resultThumbnail={repairThumbnail}
           onCancel={() => {
             repairController.current?.abort();
@@ -3438,6 +3461,9 @@ export function DedicatedToolView({
           onBack={onBack}
           onRunConvert={() => void handleExecute()}
           onReset={handleReset}
+          onSaveOutput={
+            documentCore.saveOutputFile && outputBlob ? () => void handleSaveOutput() : undefined
+          }
           onCancel={() => {
             pdfaController.current?.abort();
             pdfaController.current = null;

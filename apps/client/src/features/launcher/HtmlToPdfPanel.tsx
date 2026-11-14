@@ -1,5 +1,5 @@
 import { Code, FileCode, Globe, Layout, UploadCloud } from "lucide-react";
-import { type ChangeEvent, useState } from "react";
+import { type ChangeEvent, useDeferredValue, useMemo, useState } from "react";
 import { translate } from "@/i18n";
 import { localHtmlPreview } from "@/platform/html-local-document";
 
@@ -68,6 +68,19 @@ export function HtmlToPdfPanel({
   margin,
   onMarginChange,
 }: HtmlToPdfPanelProps) {
+  const deferredHtmlContent = useDeferredValue(htmlContent);
+  const previewSrcDoc = useMemo(() => {
+    const raw =
+      deferredHtmlContent ||
+      "<p style='color:#94a3b8;padding:20px;font-family:sans-serif;'>Nenhum código HTML para pré-visualizar.</p>";
+    try {
+      return localHtmlPreview(raw);
+    } catch {
+      return localHtmlPreview(
+        "<p style='color:#dc2626;padding:20px;font-family:sans-serif;'>Não foi possível gerar a pré-visualização deste código HTML.</p>",
+      );
+    }
+  }, [deferredHtmlContent]);
   const [activeTab, setActiveTab] = useState<"code" | "upload">(htmlContent ? "code" : "upload");
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
@@ -271,10 +284,7 @@ export function HtmlToPdfPanel({
               <div className="w-full h-96 rounded-2xl border border-border bg-white overflow-hidden shadow-xs">
                 <iframe
                   title="Pré-visualização HTML"
-                  srcDoc={localHtmlPreview(
-                    htmlContent ||
-                      "<p style='color:#94a3b8;padding:20px;font-family:sans-serif;'>Nenhum código HTML para pré-visualizar.</p>",
-                  )}
+                  srcDoc={previewSrcDoc}
                   sandbox=""
                   className="w-full h-full border-none"
                 />

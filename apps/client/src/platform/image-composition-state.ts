@@ -83,7 +83,7 @@ export function compositionReducer(
           : { type: "reorder", id: action.id, index };
   const objects = apply(state.objects, action);
   const past = [...state.past, { forward: action, backward }].slice(-100);
-  while (past.length && assetBytes(objects, past) > 128 * 1024 * 1024) past.shift();
+  while (past.length && assetBytes(objects, past) > 32 * 1024 * 1024) past.shift();
   return { objects, past, future: [] };
 }
 export function validateComposition(

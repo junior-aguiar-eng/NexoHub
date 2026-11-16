@@ -155,8 +155,8 @@ export function renderPdfToolPanel(p: PdfToolPanelProps): React.ReactNode | unde
         fileName={p.files[0]?.name || "documento.pdf"}
         firstPageThumb={p.firstPageThumb}
         lastPageThumb={p.lastPageThumb}
-        pageThumbnails={p.pageThumbnails}
-        onPreviewPageChange={p.requestPageThumbnail}
+        pageThumbnails={p.allPageThumbnails}
+        onPreviewPageChange={p.handlePreviewPageChange}
         intervals={p.splitIntervals}
         mergeIntervals={p.splitMergeIntervals}
         splitMode={p.splitMode}

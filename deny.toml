@@ -9,6 +9,9 @@ ignore = [
     "RUSTSEC-2024-0429",
     "RUSTSEC-2026-0194",
     "RUSTSEC-2026-0195",
+    # rusqlite 0.41 / libsqlite3-sys 0.39 exige rustc >= 1.89 (workspace fixa MSRV 1.88);
+    # apenas DBs/WAL locais sob projeto concedido são abertos.
+    "RUSTSEC-2026-0459",
 ]
 
 [licenses]

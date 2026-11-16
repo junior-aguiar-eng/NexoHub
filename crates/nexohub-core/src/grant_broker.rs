@@ -259,7 +259,6 @@ mod tests {
 
     #[test]
     fn grants_and_verifies_path() {
-        revoke_all();
         let temp_dir = std::env::temp_dir().join(format!("nexohub-grant-test-{}", Uuid::new_v4()));
         fs::create_dir_all(&temp_dir).expect("temp dir");
 
@@ -275,6 +274,7 @@ mod tests {
         assert!(!is_granted(&not_granted));
         assert!(require_granted(&not_granted).is_err());
 
+        revoke_path(&temp_dir);
         let _ = fs::remove_dir_all(&temp_dir);
     }
 
@@ -327,7 +327,6 @@ mod tests {
 
     #[test]
     fn directory_grant_does_not_authorize_sibling_source_file_import() {
-        revoke_all();
         let parent = std::env::temp_dir().join(format!("nexohub-parent-{}", Uuid::new_v4()));
         let project_dir = parent.join("NexoHub.nexohub");
         fs::create_dir_all(&project_dir).expect("project dir");
@@ -349,6 +348,8 @@ mod tests {
 
         revoke_path(&sibling_file);
         assert!(require_granted_source_file(&sibling_file).is_err());
+        revoke_path(&project_dir);
+        revoke_path(&parent);
         let _ = fs::remove_dir_all(&parent);
     }
 }

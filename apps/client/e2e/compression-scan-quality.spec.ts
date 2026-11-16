@@ -152,7 +152,11 @@ test("scanner confere pixels de quatro filtros, ordem e rotação no PDF baixado
   for (const [i, filter] of ["original", "grayscale", "bw", "contrast"].entries())
     await filters.nth(i).selectOption(filter);
   await page.getByRole("button", { name: "Girar 90°", exact: true }).nth(1).click();
-  await page.getByRole("button", { name: "Mover para Esquerda", exact: true }).nth(3).click();
+  const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
+  await page.getByTestId("scanned-item-4").dispatchEvent("dragstart", { dataTransfer });
+  await page.getByTestId("scanned-item-3").dispatchEvent("dragover", { dataTransfer });
+  await page.getByTestId("scanned-item-3").dispatchEvent("drop", { dataTransfer });
+  await page.getByTestId("scanned-item-4").dispatchEvent("dragend");
   await page.locator("#scan-page-size").selectOption("fit");
   await page.locator("#scan-margins").selectOption("none");
   await page.locator(".ilovepdf-action-red-btn").click();

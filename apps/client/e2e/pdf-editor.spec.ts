@@ -194,8 +194,8 @@ test("edita objeto contíguo sem alterar o texto vizinho agregado pelo leitor", 
   await open(page, await doc.save());
   const opened = performance.now();
   await page.getByRole("button", { name: "Editar texto existente", exact: true }).click();
-  await page.getByRole("button", { name: "Selecionar texto: Casa", exact: true }).click();
-  await page.getByLabel("Conteúdo do texto").fill("Novo");
+  await page.getByRole("button", { name: "Selecionar texto: Casa vizinho", exact: true }).click();
+  await page.getByLabel("Conteúdo do texto").fill("Novo vizinho");
   const applying = performance.now();
   await page.getByRole("button", { name: "Aplicar alteração", exact: true }).click();
   await ready(page);

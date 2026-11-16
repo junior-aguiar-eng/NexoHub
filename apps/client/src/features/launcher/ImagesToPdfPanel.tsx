@@ -1,4 +1,5 @@
-import { ArrowLeft, ArrowRight, Image as ImageIcon, Plus, Trash2 } from "lucide-react";
+import { Image as ImageIcon, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { translate } from "@/i18n";
 
 const fileKeys = new WeakMap<File, string>();
@@ -23,7 +24,7 @@ export type ImagesToPdfPanelProps = {
   onMarginChange: (margin: "none" | "small" | "big") => void;
   onPageSizeChange: (pageSize: "A4" | "fit") => void;
   onRemoveFile: (index: number) => void;
-  onMoveFile: (index: number, direction: "left" | "right") => void;
+  onReorderFiles: (fromIndex: number, toIndex: number) => void;
   onAddMoreFiles: () => void;
 };
 
@@ -37,9 +38,32 @@ export function ImagesToPdfPanel({
   onMarginChange,
   onPageSizeChange,
   onRemoveFile,
-  onMoveFile,
+  onReorderFiles,
   onAddMoreFiles,
 }: ImagesToPdfPanelProps) {
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  function handleDragStart(e: React.DragEvent, index: number) {
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(index));
+    }
+    setDraggedIndex(index);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+  }
+
+  function handleDrop(targetIndex: number) {
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      return;
+    }
+    onReorderFiles(draggedIndex, targetIndex);
+    setDraggedIndex(null);
+  }
+
   function formatSize(bytes: number) {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -54,7 +78,16 @@ export function ImagesToPdfPanel({
           {files.map((file, idx) => {
             const thumb = thumbnails.get(file);
             return (
-              <div key={getFileKey(file)} className="ilovepdf-merge-file-card">
+              // biome-ignore lint/a11y/noStaticElementInteractions: card de arrastar e soltar para reordenação de imagens
+              <div
+                key={getFileKey(file)}
+                className={`ilovepdf-merge-file-card${draggedIndex === idx ? " ilovepdf-merge-file-card--dragging" : ""}`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, idx)}
+                onDragOver={handleDragOver}
+                onDrop={() => handleDrop(idx)}
+                onDragEnd={() => setDraggedIndex(null)}
+              >
                 <div className="ilovepdf-merge-card-header">
                   <span className="ilovepdf-merge-card-badge">{idx + 1}</span>
                   <button
@@ -74,6 +107,7 @@ export function ImagesToPdfPanel({
                       alt={`Imagem ${file.name}`}
                       className="ilovepdf-merge-img"
                       style={{ objectFit: "contain" }}
+                      draggable={false}
                     />
                   ) : (
                     <div className="ilovepdf-merge-placeholder">
@@ -86,27 +120,6 @@ export function ImagesToPdfPanel({
                   {file.name}
                 </span>
                 <span className="ilovepdf-merge-filesize">{formatSize(file.size)}</span>
-
-                <div className="ilovepdf-merge-card-actions">
-                  <button
-                    type="button"
-                    className="ilovepdf-merge-move-btn"
-                    disabled={idx === 0}
-                    onClick={() => onMoveFile(idx, "left")}
-                    title={translate("workspace.imagesToPdf.moveLeft")}
-                  >
-                    <ArrowLeft size={13} />
-                  </button>
-                  <button
-                    type="button"
-                    className="ilovepdf-merge-move-btn"
-                    disabled={idx === files.length - 1}
-                    onClick={() => onMoveFile(idx, "right")}
-                    title={translate("workspace.imagesToPdf.moveRight")}
-                  >
-                    <ArrowRight size={13} />
-                  </button>
-                </div>
               </div>
             );
           })}

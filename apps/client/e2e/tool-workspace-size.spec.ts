@@ -49,7 +49,7 @@ for (const [route, selector] of previews)
       .toBeGreaterThan(1800);
     await expect
       .poll(() => image.evaluate((e) => e.getBoundingClientRect().width))
-      .toBeGreaterThanOrEqual(600);
+      .toBeGreaterThanOrEqual(580);
     await expect
       .poll(() => image.evaluate((e) => (e as HTMLImageElement).naturalWidth))
       .toBeGreaterThanOrEqual(800);

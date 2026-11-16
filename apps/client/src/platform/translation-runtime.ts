@@ -167,8 +167,11 @@ async function getPipeline(
       onProgress?.({ status: "initializing", progress: 0 });
       const { env } = await import("@huggingface/transformers");
       const { createTranslationPipeline } = await import("./translation-model");
-      env.allowLocalModels = true;
-      env.allowRemoteModels = false;
+      const isTauriOrigin =
+        typeof globalThis.location?.origin === "string" &&
+        globalThis.location.origin.includes("tauri");
+      env.allowLocalModels = isTauriOrigin;
+      env.allowRemoteModels = !isTauriOrigin;
       env.localModelPath = "/models/";
       env.useBrowserCache = true;
       env.fetch = createInactivityFetch(globalThis.fetch.bind(globalThis));

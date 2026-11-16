@@ -141,7 +141,8 @@ test("Q-C0 imagens→PDF: ordem, formatos, proporção e alpha sobre branco no d
       buffer: Buffer.from(image.bytes),
     })),
   );
-  await page.getByTitle("Mover para esquerda").nth(1).click();
+  const cards = page.locator(".ilovepdf-merge-file-card");
+  await cards.nth(1).dragTo(cards.nth(0));
   await page.getByRole("button", { name: "Ajustar à imagem", exact: true }).click();
   await page.getByRole("button", { name: "Sem margem", exact: true }).click();
   await run(page);

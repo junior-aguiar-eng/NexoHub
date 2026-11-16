@@ -102,12 +102,11 @@ for (const width of [390, 768, 1024, 1366])
         page,
         page.getByTestId("scanned-item-2").getByRole("button", { name: "Girar 90°", exact: true }),
       );
-      await activate(
-        page,
-        page
-          .getByTestId("scanned-item-4")
-          .getByRole("button", { name: "Mover para Esquerda", exact: true }),
-      );
+      const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
+      await page.getByTestId("scanned-item-4").dispatchEvent("dragstart", { dataTransfer });
+      await page.getByTestId("scanned-item-3").dispatchEvent("dragover", { dataTransfer });
+      await page.getByTestId("scanned-item-3").dispatchEvent("drop", { dataTransfer });
+      await page.getByTestId("scanned-item-4").dispatchEvent("dragend");
       for (const [index, value] of ["original", "bw", "contrast", "grayscale"].entries())
         await expect(filters.nth(index)).toHaveValue(value);
       for (const card of await page.locator('[data-testid^="scanned-item-"]').all()) {

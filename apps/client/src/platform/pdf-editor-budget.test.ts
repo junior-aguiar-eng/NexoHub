@@ -10,6 +10,7 @@ import {
 } from "pdf-lib";
 import { beforeAll, expect, it } from "vitest";
 import { PdfEditorEngine } from "./pdf-editor-engine";
+import { EDITOR_LIMITS } from "./pdf-editor-types";
 
 let engine: PdfEditorEngine;
 let wasmCapacity = () => 0;
@@ -97,7 +98,7 @@ it("renderiza revisão próxima a 20 MiB preservando bytes e limites", async () 
   expect(preview.data.length).toBe(revision.preview.data.length);
   expect(preview.data.every((value, i) => value === revision.preview.data[i])).toBe(true);
   expect(() => engine.renderRevisionPage(revision.bytes, 1)).toThrow("EDITOR_PAGINA");
-  expect(() => engine.renderRevisionPage(new Uint8Array(80 * 1024 * 1024 + 1), 0)).toThrow(
+  expect(() => engine.renderRevisionPage(new Uint8Array(EDITOR_LIMITS.outputBytes + 1), 0)).toThrow(
     "EDITOR_LIMITE",
   );
   if (process.env.NEXOHUB_EDITOR_BENCHMARK_LOG)

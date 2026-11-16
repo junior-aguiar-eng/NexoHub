@@ -101,4 +101,51 @@ describe("ScanToPdfPanel", () => {
     fireEvent.click(removeBtn);
     expect(onPagesChange).toHaveBeenCalledWith([]);
   });
+
+  it("reordena páginas apenas por arrastar e soltar, sem botões de seta", () => {
+    const onPagesChange = vi.fn();
+    render(
+      <ScanToPdfPanel
+        pages={[
+          {
+            id: "p1",
+            imageBytes: fakeImageBytes,
+            mimeType: "image/jpeg",
+            rotation: 0,
+            filter: "original",
+          },
+          {
+            id: "p2",
+            imageBytes: fakeImageBytes,
+            mimeType: "image/jpeg",
+            rotation: 0,
+            filter: "original",
+          },
+        ]}
+        onPagesChange={onPagesChange}
+        pageSize="A4"
+        onPageSizeChange={vi.fn()}
+        orientation="auto"
+        onOrientationChange={vi.fn()}
+        margin="small"
+        onMarginChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByLabelText(/Mover para Esquerda/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Mover para Direita/i)).not.toBeInTheDocument();
+
+    const first = screen.getByTestId("scanned-item-1");
+    const second = screen.getByTestId("scanned-item-2");
+    expect(first).toHaveAttribute("draggable", "true");
+
+    fireEvent.dragStart(first);
+    fireEvent.dragOver(second);
+    fireEvent.drop(second);
+
+    expect(onPagesChange).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "p2" }),
+      expect.objectContaining({ id: "p1" }),
+    ]);
+  });
 });

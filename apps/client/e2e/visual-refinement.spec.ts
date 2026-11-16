@@ -104,8 +104,8 @@ for (const [width, columns] of [
       )
       .toBe(columns);
     await expect(page.locator(".tool-card__icon").first()).toHaveCSS("width", "48px");
-    await expect(cards.first()).toHaveCSS("padding", "24px");
-    await expect(cards.first()).toHaveCSS("border-radius", "16px");
+    await expect(cards.first()).toHaveCSS("padding", "20px");
+    await expect(cards.first()).toHaveCSS("border-radius", "12px");
     await expect(page.locator(".tool-grid")).toHaveCSS("gap", "16px");
     const layout = await cards.evaluateAll((elements) =>
       elements.map((card) => {

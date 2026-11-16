@@ -13,17 +13,7 @@ import {
   RefreshCw,
   Upload,
 } from "lucide-react";
-import {
-  type DragEvent,
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from "react";
+import { type DragEvent, useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCapabilities } from "@/features/capabilities/useCapabilities";
 import { useCloudAccount } from "@/features/cloud/CloudAccountContext";
@@ -37,13 +27,6 @@ import {
   isTauriEnvironment,
 } from "@/platform/document-core";
 import { readDocumentText } from "@/platform/document-reader";
-import {
-  extractPdfSpreadsheetData,
-  type PdfSpreadsheetData,
-  type PdfToExcelOptions,
-  type SpreadsheetRegion,
-  validateSpreadsheetSelection,
-} from "@/platform/excel-converter";
 import { cropBatchConflicts } from "@/platform/image-batch";
 import {
   compositionReducer,
@@ -89,56 +72,39 @@ import type { ScannedPageItem } from "@/platform/scan-to-pdf-engine";
 import { isOfficeToolId } from "@/platform/tool-availability";
 import { registerToolNavigationGuard } from "@/platform/tool-navigation-guard";
 import { addCustomWord, ignoreWordInSession } from "@/platform/user-vocabulary";
-import { CloudProcessingChoice } from "./CloudProcessingChoice";
-import { CompressPdfPanel } from "./CompressPdfPanel";
-import { CropPdfPanel } from "./CropPdfPanel";
-import { DocumentComparePanel } from "./DocumentComparePanel";
-import { ExtractImagesPanel } from "./ExtractImagesPanel";
-import { ExtractPagesPanel } from "./ExtractPagesPanel";
-import { FormFillPdfPanel } from "./FormFillPdfPanel";
-import { HtmlToPdfPanel } from "./HtmlToPdfPanel";
+import { renderImageToolPanel } from "./dedicated/renderImageToolPanel";
+import { renderPdfToolPanel } from "./dedicated/renderPdfToolPanel";
+import { renderSecurityFormPanel } from "./dedicated/renderSecurityFormPanel";
+import { renderTextAndIntelPanel } from "./dedicated/renderTextAndIntelPanel";
+import {
+  formatFileSize,
+  isPdfCandidate,
+  parseSelectedPages,
+  resolveDedicatedActionLabel,
+} from "./dedicated/tool-metadata-registry";
+import { usePdfToExcelState } from "./dedicated/usePdfToExcelState";
 import { ImageBatchPanel } from "./ImageBatchPanel";
-import { ImageCompressPanel } from "./ImageCompressPanel";
-import { ImageConvertPanel, type ImageTargetFormat } from "./ImageConvertPanel";
-import { type CropRatioPreset, ImageCropPanel } from "./ImageCropPanel";
-import { ImageResizePanel } from "./ImageResizePanel";
+import type { ImageTargetFormat } from "./ImageConvertPanel";
+import type { CropRatioPreset } from "./ImageCropPanel";
 import { ImageResultsPanel } from "./ImageResultsPanel";
-import { ImageRotatePanel } from "./ImageRotatePanel";
-import { ImagesToPdfPanel } from "./ImagesToPdfPanel";
-import { ImageWatermarkPanel } from "./ImageWatermarkPanel";
-import { MergePdfPanel } from "./MergePdfPanel";
 import type { LauncherTool } from "./model";
-import { OcrScannerPanel } from "./OcrScannerPanel";
 import { OfficeConvertPanel, type OfficeSurfaceMode } from "./OfficeConvertPanel";
 import { OutputDownloadAction } from "./OutputDownloadAction";
-import { type PageNumberFormat, PageNumbersPdfPanel } from "./PageNumbersPdfPanel";
+import type { PageNumberFormat } from "./PageNumbersPdfPanel";
 import { PdfComparePanel } from "./PdfComparePanel";
 import { PdfEditorPanel } from "./PdfEditorPanel";
-import { PdfPageGridPanel, type PdfPageItem } from "./PdfPageGridPanel";
+import type { PdfPageItem } from "./PdfPageGridPanel";
 import { PdfRepairPanel } from "./PdfRepairPanel";
 import { PdfSummarizePanel } from "./PdfSummarizePanel";
-import { PdfToExcelPanel } from "./PdfToExcelPanel";
-import { type PdfToJpgDpi, type PdfToJpgPageMode, PdfToJpgPanel } from "./PdfToJpgPanel";
-import { PdfToMarkdownPanel } from "./PdfToMarkdownPanel";
+import type { PdfToJpgDpi, PdfToJpgPageMode } from "./PdfToJpgPanel";
 import { PdfToPdfaPanel } from "./PdfToPdfaPanel";
-import { PdfToWordPanel } from "./PdfToWordPanel";
-import { ProtectPdfPanel } from "./ProtectPdfPanel";
 import { parsePageRange } from "./page-range-input";
 import { RedactionResultPreview } from "./RedactionResultPreview";
-import { RedactPdfPanel } from "./RedactPdfPanel";
-import { RemovePagesPanel } from "./RemovePagesPanel";
-import { ReviewDocumentPanel } from "./ReviewDocumentPanel";
-import { RotatePdfPanel } from "./RotatePdfPanel";
-import { ScanToPdfPanel } from "./ScanToPdfPanel";
-import { SignPdfPanel } from "./SignPdfPanel";
-import { type SplitInterval, SplitPdfPanel } from "./SplitPdfPanel";
+import type { SplitInterval } from "./SplitPdfPanel";
 import { ToolChainingBar } from "./ToolChainingBar";
 import { WorkspaceTabs, type WorkspaceView } from "./ToolWorkspace";
-import { TranslateDocumentPanel } from "./TranslateDocumentPanel";
-import { UnlockPdfPanel } from "./UnlockPdfPanel";
 import { useFormPreview } from "./useFormPreview";
 import { useImageBatch } from "./useImageBatch";
-import { WatermarkPdfPanel } from "./WatermarkPdfPanel";
 
 const NO_IMAGE_FILES: readonly File[] = [];
 
@@ -163,34 +129,6 @@ type DedicatedToolViewProps = {
       | "recent.type.opinion";
   }) => void;
 };
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
-
-function parseSelectedPages(input: string, maxPages: number): number[] {
-  const pages = new Set<number>();
-  if (!input.trim() || !Number.isSafeInteger(maxPages) || maxPages < 1) return [];
-  for (const part of input.split(",").map((value) => value.trim())) {
-    if (!/^\d+(?:\s*-\s*\d+)?$/.test(part)) return [];
-    const [first, last = first] = part.split("-").map(Number);
-    if (![first, last].every((page) => Number.isSafeInteger(page) && page >= 1 && page <= maxPages))
-      return [];
-    // A faixa é validada antes de expandir: nunca itera além das páginas existentes.
-    for (let page = Math.min(first, last); page <= Math.max(first, last); page++) pages.add(page);
-  }
-  return Array.from(pages).sort((a, b) => a - b);
-}
-
-const ImageCompositionPanel = lazy(() =>
-  import("./ImageCompositionPanel").then((module) => ({ default: module.ImageCompositionPanel })),
-);
-
-function isPdfCandidate(file: File | undefined): boolean {
-  return Boolean(file && (file.type.includes("pdf") || file.name.toLowerCase().endsWith(".pdf")));
-}
 
 export function DedicatedToolView({
   tool,
@@ -445,12 +383,6 @@ export function DedicatedToolView({
   const redactionController = useRef<AbortController | null>(null);
   const [redactionAreas, setRedactionAreas] = useState<RedactionArea[]>([]);
 
-  // Estados de PDF para Excel
-  const [excelOutputFormat, setExcelOutputFormat] = useState<"xlsx" | "csv">("xlsx");
-  const [excelSheetMode, setExcelSheetMode] = useState<"per-page" | "single-sheet">("per-page");
-  const [excelCsvDelimiter, setExcelCsvDelimiter] = useState<"," | ";" | "\t">(";");
-  const [excelDetectTablesOnly, setExcelDetectTablesOnly] = useState<boolean>(false);
-
   // Estados de Remoção e Extração de Páginas
   const [removePagesSelection, setRemovePagesSelection] = useState<number[]>([]);
   const [pageRangeValid, setPageRangeValid] = useState(true);
@@ -473,143 +405,44 @@ export function DedicatedToolView({
 
   // Estados de Páginas (Organizador e Extrator)
   const [pdfPageCount, setPdfPageCount] = useState(1);
-  const [excelPagesText, setExcelPagesText] = useState("");
-  const [excelSeparatorsText, setExcelSeparatorsText] = useState("");
-  const [excelRegion, setExcelRegion] = useState<SpreadsheetRegion>({
-    left: 0,
-    top: 0,
-    width: 1,
-    height: 1,
-  });
-  const [excelPreserveText, setExcelPreserveText] = useState(true);
-  const [excelPreviewPage, setExcelPreviewPage] = useState(1);
-  const excelController = useRef<AbortController | null>(null);
-  const excelSelection = useMemo<{ options?: PdfToExcelOptions; error?: string }>(() => {
-    const selectedPages = excelPagesText.trim()
-      ? parseSelectedPages(excelPagesText, pdfPageCount)
-      : undefined;
-    const columnSeparators = excelSeparatorsText.trim()
-      ? excelSeparatorsText
-          .split(";")
-          .map((value) =>
-            /^\d+(?:[.,]\d+)?$/.test(value.trim())
-              ? Number(value.trim().replace(",", ".")) / 100
-              : Number.NaN,
-          )
-      : undefined;
-    const options: PdfToExcelOptions = {
-      selectedPages,
-      region: excelRegion,
-      columnSeparators,
-      detectTablesOnly: excelDetectTablesOnly,
-      preserveText: excelPreserveText,
-    };
-    try {
-      validateSpreadsheetSelection(options, pdfPageCount);
-      return { options };
-    } catch {
-      return { error: translate("excel.invalidSelection") };
-    }
-  }, [
-    excelPagesText,
-    excelSeparatorsText,
-    excelRegion,
-    excelDetectTablesOnly,
-    excelPreserveText,
-    pdfPageCount,
-  ]);
-  const [excelPreview, setExcelPreview] = useState<{
-    file: File;
-    options: PdfToExcelOptions;
-    data: PdfSpreadsheetData;
-  }>();
-  const excelPreviewReady =
-    excelPreview?.file === files[0] &&
-    excelPreview?.options === excelSelection.options &&
-    Boolean(excelSelection.options);
-  const excelPreviewRows = excelPreviewReady
-    ? excelPreview?.data.sheets
-        .find((sheet) => sheet.pageIndex === excelPreviewPage - 1)
-        ?.rows.slice(0, 15)
-    : undefined;
-  const [excelPreviewError, setExcelPreviewError] = useState<string>();
-  const [isAnalyzingExcel, setIsAnalyzingExcel] = useState(false);
   const [previewEpoch, setPreviewEpoch] = useState(0);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: seleção revisada pertence ao arquivo e à ferramenta atuais.
-  useEffect(() => {
-    setExcelPagesText("");
-    setExcelSeparatorsText("");
-    setExcelRegion({ left: 0, top: 0, width: 1, height: 1 });
-    setExcelPreviewPage(1);
-  }, [files[0], tool.id]);
-  useEffect(() => {
-    const pages = excelSelection.options?.selectedPages;
-    if (pages?.length && !pages.includes(excelPreviewPage)) setExcelPreviewPage(pages[0]);
-  }, [excelSelection, excelPreviewPage]);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: todas as opções e a entrada invalidam o resultado em andamento.
-  useEffect(() => {
-    if (tool.id !== "pdf-to-excel") return;
-    setDownloadUrl(null);
-    setOutputBlob(null);
-    setStatus("idle");
-    return () => {
-      excelController.current?.abort();
-      excelController.current = null;
-    };
-  }, [files[0], tool.id, excelSelection, excelOutputFormat, excelSheetMode, excelCsvDelimiter]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setExcelPreview(undefined);
-    setExcelPreviewError(undefined);
-    const file = files[0];
-    if (tool.id !== "pdf-to-excel" || !file || !excelSelection.options) {
-      setIsAnalyzingExcel(false);
-      if (tool.id === "pdf-to-excel") setExcelPreviewError(excelSelection.error);
-      return;
-    }
-    setIsAnalyzingExcel(true);
-    void file
-      .arrayBuffer()
-      .then((bytes) =>
-        extractPdfSpreadsheetData(new Uint8Array(bytes), {
-          ...excelSelection.options,
-          signal: controller.signal,
-        }),
-      )
-      .then((result) => {
-        if (!controller.signal.aborted && excelSelection.options)
-          setExcelPreview({ file, options: excelSelection.options, data: result });
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        const code = error instanceof Error ? error.message : "";
-        setExcelPreviewError(
-          translate(
-            code === "PDF_SEM_TEXTO_SELECIONAVEL"
-              ? "document.errorPdfNoText"
-              : code === "PDF_REGIAO_CORTA_TEXTO"
-                ? "excel.regionCutsText"
-                : code === "PDF_SEPARADOR_CORTA_TEXTO"
-                  ? "excel.separatorCutsText"
-                  : code === "PDF_SEM_DADOS_SELECAO"
-                    ? "excel.emptySelection"
-                    : code === "OPCOES_PLANILHA_INVALIDAS"
-                      ? "excel.invalidSelection"
-                      : code === "PDF_SEM_TABELAS"
-                        ? "excel.noTables"
-                        : "excel.previewError",
-          ),
-        );
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsAnalyzingExcel(false);
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [files, tool.id, excelSelection]);
+  // Estados de PDF para Excel
+  const {
+    excelOutputFormat,
+    setExcelOutputFormat,
+    excelSheetMode,
+    setExcelSheetMode,
+    excelCsvDelimiter,
+    setExcelCsvDelimiter,
+    excelDetectTablesOnly,
+    setExcelDetectTablesOnly,
+    excelPagesText,
+    setExcelPagesText,
+    excelSeparatorsText,
+    setExcelSeparatorsText,
+    excelRegion,
+    setExcelRegion,
+    excelPreserveText,
+    setExcelPreserveText,
+    excelPreviewPage,
+    setExcelPreviewPage,
+    excelController,
+    excelSelection,
+    excelPreviewReady,
+    excelPreviewRows,
+    excelPreviewError,
+    isAnalyzingExcel,
+  } = usePdfToExcelState({
+    toolId: tool.id,
+    firstFile: files[0],
+    pdfPageCount,
+    onInvalidateOutput: () => {
+      setDownloadUrl(null);
+      setOutputBlob(null);
+      setStatus("idle");
+    },
+  });
   const [pageItems, setPageItems] = useState<PdfPageItem[]>(() =>
     initialFiles && initialFiles.length > 0
       ? [{ id: "page-1", originalIndex: 1, rotation: 0 }]
@@ -1005,7 +838,7 @@ export function DedicatedToolView({
       setExcelPreviewPage(page);
       handlePreviewPageChange(page);
     },
-    [handlePreviewPageChange],
+    [handlePreviewPageChange, setExcelPreviewPage],
   );
   const formOriginalOnly =
     tool.id === "pdf-form-fill" &&
@@ -1471,13 +1304,19 @@ export function DedicatedToolView({
     }
   }
 
-  function handleMoveFile(index: number, direction: "left" | "right") {
-    const target = direction === "left" ? index - 1 : index + 1;
-    if (target < 0 || target >= files.length) return;
+  function handleReorderFiles(fromIndex: number, toIndex: number) {
+    if (
+      fromIndex === toIndex ||
+      fromIndex < 0 ||
+      toIndex < 0 ||
+      fromIndex >= files.length ||
+      toIndex >= files.length
+    ) {
+      return;
+    }
     const reordered = [...files];
-    const temp = reordered[index];
-    reordered[index] = reordered[target];
-    reordered[target] = temp;
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
     setFiles(reordered);
   }
 
@@ -2212,901 +2051,377 @@ export function DedicatedToolView({
 
   // Título do Botão Principal estilo iLovePDF
   function getActionLabel() {
-    const isCloudEligible = tool.id === "pdf-ocr" || tool.id === "text-translate";
-    if (isCloudEligible && processingMode === "cloud") {
-      return translate("cloudProcessing.actionCloud");
-    }
-    if (tool.id === "pdf-split") return translate("dedicated.actionSplit");
-    if (tool.id === "pdf-compress") return translate("dedicated.actionCompress");
-    if (tool.id === "pdf-repair") return translate("dedicated.actionRepair");
-    if (tool.id === "pdf-to-pdfa") return translate("dedicated.actionPdfToPdfa");
-    if (tool.id === "pdf-summarize") return translate("dedicated.actionSummarize");
-    if (tool.id === "pdf-to-word") return translate("dedicated.actionPdfToWord");
-    if (tool.id === "pdf-merge") return translate("dedicated.actionMerge");
-    if (tool.id === "pdf-rotate") return translate("dedicated.actionRotate");
-    if (tool.id === "pdf-crop") return translate("dedicated.actionCrop");
-    if (tool.id === "pdf-sign") return translate("dedicated.actionSign");
-    if (tool.id === "pdf-form-fill") return translate("dedicated.actionFormFill");
-    if (tool.id === "pdf-unlock") return translate("dedicated.actionUnlock");
-    if (tool.id === "pdf-protect") return translate("protect.actionSubmit");
-    if (tool.id === "pdf-redact") return translate("redact.actionSubmit");
-    if (tool.id === "pdf-to-excel") return translate("excel.actionSubmit");
-    if (tool.id === "pdf-remove-pages") return translate("removePages.confirmButton");
-    if (tool.id === "pdf-extract-pages") return translate("extractPages.confirmButton");
-    if (tool.id === "html-to-pdf") return translate("htmlToPdf.confirmButton");
-    if (tool.id === "scan-to-pdf") return translate("scanToPdf.confirmButton");
-    if (tool.id === "pdf-organize") return translate("dedicated.actionOrganize");
-    if (tool.id === "images-to-pdf") return translate("dedicated.actionImagesToPdf");
-    if (tool.id === "pdf-extract-images") return translate("dedicated.actionExtractImages");
-    if (tool.id === "pdf-to-jpg") return translate("dedicated.actionPdfToJpg");
-    if (tool.id === "pdf-to-markdown") return translate("dedicated.actionPdfToMarkdown");
-    if (tool.id === "pdf-watermark") return translate("dedicated.actionWatermark");
-    if (tool.id === "pdf-page-numbers") return translate("dedicated.actionPageNumbers");
-    if (tool.id === "pdf-ocr") return translate("dedicated.actionOcr");
-    if (tool.id === "text-compare") return translate("dedicated.actionCompare");
-    if (tool.id === "text-review") return translate("dedicated.actionReview");
-    if (tool.id === "image-compress") return translate("dedicated.actionImageCompress");
-    if (tool.id === "image-resize") return translate("dedicated.actionImageResize");
-    if (tool.id === "image-crop") return translate("dedicated.actionImageCrop");
-    if (tool.id === "image-convert") return translate("dedicated.actionImageConvert");
-    if (tool.id === "image-rotate") return translate("dedicated.actionImageRotate");
-    if (tool.id === "image-watermark")
-      return translate(compositionMode ? "composition.export" : "dedicated.actionImageWatermark");
-    return translate("dedicated.actionRun");
+    return resolveDedicatedActionLabel(tool.id, processingMode, compositionMode);
   }
 
   // Renderiza o Painel Visual Central Específico
   function renderVisualPanel() {
-    // DIVIDIR PDF
-    if (tool.id === "pdf-split") {
-      return (
-        <SplitPdfPanel
-          totalPages={pdfPageCount}
-          fileName={files[0]?.name || "documento.pdf"}
-          firstPageThumb={firstPageThumb}
-          lastPageThumb={lastPageThumb}
-          intervals={splitIntervals}
-          mergeIntervals={splitMergeIntervals}
-          splitMode={splitMode}
-          selectedPageNumbers={splitSelectedPages}
-          onIntervalsChange={setSplitIntervals}
-          onMergeIntervalsChange={setSplitMergeIntervals}
-          onSplitModeChange={setSplitMode}
-          onSelectedPageNumbersChange={setSplitSelectedPages}
-        />
-      );
-    }
+    const pdfPanel = renderPdfToolPanel({
+      toolId: tool.id,
+      files,
+      fileInputRef,
+      documentCore,
+      pdfPageCount,
+      firstPageThumb,
+      lastPageThumb,
+      allPageThumbnails,
+      fileThumbnails,
+      previewEpoch,
+      status,
+      progress,
+      errorMessage,
+      downloadUrl,
+      outputBlob,
+      outputFileName,
+      handlePreviewPageChange,
+      handleExecute,
+      handleReset,
+      handleSaveOutput,
+      handleRemoveFile,
+      handleReorderFiles,
+      handleRotateAll,
+      handleResetOrder,
+      onOpenTool,
+      onInvalidateDownload: () => {
+        setDownloadUrl(null);
+        setOutputBlob(null);
+      },
+      splitIntervals,
+      setSplitIntervals,
+      splitMergeIntervals,
+      setSplitMergeIntervals,
+      splitMode,
+      setSplitMode,
+      splitSelectedPages,
+      setSplitSelectedPages,
+      compressionLevel,
+      setCompressionLevel,
+      pdfToWordReport,
+      pdfToWordPreserveTables,
+      setPdfToWordPreserveTables,
+      pdfToWordExtractImages,
+      setPdfToWordExtractImages,
+      pdfToWordRunOcrIfScanned,
+      setPdfToWordRunOcrIfScanned,
+      pageItems,
+      setPageItems,
+      selectedPageIndices,
+      rotateAngle,
+      setRotateAngle,
+      pdfToJpgDpi,
+      setPdfToJpgDpi,
+      pdfToJpgPageMode,
+      setPdfToJpgPageMode,
+      pdfToJpgPageRangeText,
+      setPdfToJpgPageRangeText,
+      setPageRangeValid,
+      markdownDetectHeadings,
+      setMarkdownDetectHeadings,
+      markdownDetectTables,
+      setMarkdownDetectTables,
+      markdownIncludePageBreaks,
+      setMarkdownIncludePageBreaks,
+      markdownReadingOrder,
+      setMarkdownReadingOrder,
+      markdownPageReports,
+      markdownResult,
+      setMarkdownResult,
+      cropMargins,
+      setCropMargins,
+      cropScope,
+      setCropScope,
+      cropSelectedPagesText,
+      setCropSelectedPagesText,
+      extractImageScope,
+      setExtractImageScope,
+      extractImagePagesText,
+      setExtractImagePagesText,
+      ignoreSmallImages,
+      setIgnoreSmallImages,
+      extractedImages,
+      selectedImageIds,
+      setSelectedImageIds,
+      removePagesSelection,
+      setRemovePagesSelection,
+      extractPagesSelection,
+      setExtractPagesSelection,
+      extractPagesMode,
+      setExtractPagesMode,
+      watermarkText,
+      setWatermarkText,
+      watermarkAngle,
+      setWatermarkAngle,
+      watermarkOpacity,
+      setWatermarkOpacity,
+      watermarkColor,
+      setWatermarkColor,
+      pageNumbersPosition,
+      setPageNumbersPosition,
+      pageNumbersFormat,
+      setPageNumbersFormat,
+      pageNumbersStartPage,
+      setPageNumbersStartPage,
+      pageNumbersCustomPrefix,
+      setPageNumbersCustomPrefix,
+    });
+    if (pdfPanel !== undefined) return pdfPanel;
 
-    // COMPRIMIR PDF
-    if (tool.id === "pdf-compress") {
-      return (
-        <CompressPdfPanel
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          thumbnailUrl={firstPageThumb}
-          compressionLevel={compressionLevel}
-          onCompressionLevelChange={setCompressionLevel}
-          onAddMoreFiles={() => fileInputRef.current?.click()}
-          file={files[0]}
-        />
-      );
-    }
+    const securityFormPanel = renderSecurityFormPanel({
+      toolId: tool.id,
+      files,
+      fileInputRef,
+      pdfPageCount,
+      firstPageThumb,
+      allPageThumbnails,
+      previewEpoch,
+      handlePreviewPageChange,
+      onOpenTool,
+      signaturePlacement,
+      setSignaturePlacement,
+      signatureImageBytes,
+      setSignatureImageBytes,
+      signerName,
+      setSignerName,
+      includeSignatureDate,
+      setIncludeSignatureDate,
+      formPreviewPage,
+      setFormPreviewPage,
+      formOriginalOnly,
+      formOriginalThumbnail,
+      formPreview,
+      formInputError,
+      formFieldsFile,
+      formFields,
+      isLoadingFormFields,
+      formValues,
+      setFormValues,
+      formFlatten,
+      setFormFlatten,
+      protectionStatus,
+      isCheckingProtection,
+      unlockPassword,
+      setUnlockPassword,
+      protectPassword,
+      setProtectPassword,
+      protectConfirmPassword,
+      setProtectConfirmPassword,
+      protectAlgorithm,
+      setProtectAlgorithm,
+      protectAllowPrinting,
+      setProtectAllowPrinting,
+      protectAllowCopying,
+      setProtectAllowCopying,
+      protectAllowModifying,
+      setProtectAllowModifying,
+      protectAllowAnnotating,
+      setProtectAllowAnnotating,
+      protectAllowFillingForms,
+      setProtectAllowFillingForms,
+      redactionPreserve,
+      setRedactionPreserve,
+      redactionAreas,
+      setRedactionAreas,
+    });
+    if (securityFormPanel !== undefined) return securityFormPanel;
 
-    // PDF PARA WORD
-    if (tool.id === "pdf-to-word") {
-      return (
-        <PdfToWordPanel
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          isRunning={status === "running"}
-          progressPercent={progress}
-          report={pdfToWordReport}
-          errorMessage={status === "error" ? errorMessage : null}
-          downloadUrl={downloadUrl}
-          outputFileName={
-            outputFileName || `${files[0]?.name?.replace(/\.[^/.]+$/, "") ?? "documento"}.docx`
-          }
-          thumbnail={firstPageThumb}
-          preserveTables={pdfToWordPreserveTables}
-          extractImages={pdfToWordExtractImages}
-          runOcrIfScanned={pdfToWordRunOcrIfScanned}
-          onPreserveTablesChange={setPdfToWordPreserveTables}
-          onExtractImagesChange={setPdfToWordExtractImages}
-          onRunOcrIfScannedChange={setPdfToWordRunOcrIfScanned}
-          onRunConversion={() => void handleExecute()}
-          onReset={handleReset}
-          onSaveOutput={
-            documentCore.saveOutputFile && outputBlob ? () => void handleSaveOutput() : undefined
-          }
-          onNavigateToOcr={onOpenTool ? () => onOpenTool("pdf-ocr", files) : undefined}
-        />
-      );
-    }
+    const textAndIntelPanel = renderTextAndIntelPanel({
+      toolId: tool.id,
+      files,
+      setFiles,
+      documentCore,
+      accent,
+      status,
+      progress,
+      pdfPageCount,
+      firstPageThumb,
+      allPageThumbnails,
+      previewEpoch,
+      downloadUrl,
+      outputBlob,
+      outputFileName,
+      processingMode,
+      setProcessingMode,
+      cloudUsage,
+      isCloudAuthed,
+      handleExecute,
+      handleSaveOutput,
+      handleExcelPreviewPageChange,
+      excelPreviewPage,
+      excelSelection,
+      excelPagesText,
+      setExcelPagesText,
+      excelSeparatorsText,
+      setExcelSeparatorsText,
+      excelRegion,
+      setExcelRegion,
+      excelPreserveText,
+      setExcelPreserveText,
+      excelPreviewRows,
+      excelPreviewError,
+      isAnalyzingExcel,
+      excelOutputFormat,
+      setExcelOutputFormat,
+      excelSheetMode,
+      setExcelSheetMode,
+      excelCsvDelimiter,
+      setExcelCsvDelimiter,
+      excelDetectTablesOnly,
+      setExcelDetectTablesOnly,
+      htmlCodeContent,
+      setHtmlCodeContent,
+      htmlPageSize,
+      setHtmlPageSize,
+      htmlOrientation,
+      setHtmlOrientation,
+      htmlMargin,
+      setHtmlMargin,
+      ocrProgressStatus,
+      setOcrProgressStatus,
+      recognizedOcrText,
+      setRecognizedOcrText,
+      ocrLanguage,
+      setOcrLanguage,
+      ocrOutputMode,
+      setOcrOutputMode,
+      ocrEnhanceContrast,
+      setOcrEnhanceContrast,
+      ocrPageReports,
+      ocrController,
+      onInvalidateOcrOutput: () => {
+        setDownloadUrl(null);
+        setOutputBlob(null);
+      },
+      onCancelOcr: () => {
+        ocrController.current?.abort();
+        ocrController.current = null;
+        setStatus("idle");
+        setProgress(0);
+        setOcrProgressStatus(translate("workspace.ocr.cancelled"));
+      },
+      doc1Text,
+      setDoc1Text,
+      doc1Name,
+      setDoc1Name,
+      doc2Text,
+      setDoc2Text,
+      doc2Name,
+      setDoc2Name,
+      doc3Text,
+      setDoc3Text,
+      doc3Name,
+      setDoc3Name,
+      showDoc3,
+      setShowDoc3,
+      comparePair,
+      setComparePair,
+      reviewFindings,
+      setReviewFindings,
+      reviewedText,
+      setReviewedText,
+      invalidateReviewResult,
+      handleApplySingleReview,
+      handleApplyAllReview,
+      handleIgnoreFinding,
+      handleAddToDictionary,
+      reviewProgressStatus,
+      translationSourceLang,
+      setTranslationSourceLang,
+      translationTargetLang,
+      setTranslationTargetLang,
+      translationPreservedNames,
+      setTranslationPreservedNames,
+      handleSwapLanguages,
+      translatedText,
+      setTranslatedText,
+      translationProgressStatus,
+      translationProgress,
+      cancelTranslation,
+      clearTranslationResult,
+    });
+    if (textAndIntelPanel !== undefined) return textAndIntelPanel;
 
-    // JUNTAR PDF
-    if (tool.id === "pdf-merge") {
-      return (
-        <MergePdfPanel
-          files={files}
-          thumbnails={fileThumbnails}
-          onRemoveFile={handleRemoveFile}
-          onMoveFile={handleMoveFile}
-          onAddMoreFiles={() => fileInputRef.current?.click()}
-        />
-      );
-    }
-
-    // ORGANIZAR PDF
-    if (tool.id === "pdf-organize") {
-      return (
-        <PdfPageGridPanel
-          mode="organize"
-          totalPages={pdfPageCount}
-          pages={pageItems}
-          selectedIndices={selectedPageIndices}
-          realThumbnails={allPageThumbnails}
-          onPreviewPageChange={handlePreviewPageChange}
-          onPagesChange={setPageItems}
-          onRotateAll={handleRotateAll}
-          allowRotation={true}
-          onResetOrder={handleResetOrder}
-        />
-      );
-    }
-
-    // ROTACIONAR PDF
-    if (tool.id === "pdf-rotate") {
-      return (
-        <RotatePdfPanel
-          fileName={files[0]?.name || "documento.pdf"}
-          totalPages={pdfPageCount}
-          thumbnailUrl={firstPageThumb}
-          rotation={rotateAngle}
-          onRotateRight={() => setRotateAngle((r) => (r + 90) % 360)}
-          onRotateLeft={() => setRotateAngle((r) => (r - 90 + 360) % 360)}
-        />
-      );
-    }
-
-    // IMAGEM PARA PDF
-    if (tool.id === "images-to-pdf") {
-      return (
-        <ImagesToPdfPanel
-          files={files}
-          thumbnails={fileThumbnails}
-          orientation={imageOrientation}
-          margin={imageMargin}
-          pageSize={imagePageSize}
-          onOrientationChange={setImageOrientation}
-          onMarginChange={setImageMargin}
-          onPageSizeChange={setImagePageSize}
-          onRemoveFile={handleRemoveFile}
-          onMoveFile={handleMoveFile}
-          onAddMoreFiles={() => fileInputRef.current?.click()}
-        />
-      );
-    }
-
-    // PDF PARA JPG
-    if (tool.id === "pdf-to-jpg") {
-      return (
-        <PdfToJpgPanel
-          key={previewEpoch}
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          totalPages={pdfPageCount}
-          thumbnailUrl={firstPageThumb}
-          pageThumbnails={allPageThumbnails}
-          onPreviewPageChange={handlePreviewPageChange}
-          dpi={pdfToJpgDpi}
-          onDpiChange={setPdfToJpgDpi}
-          pageMode={pdfToJpgPageMode}
-          onPageModeChange={setPdfToJpgPageMode}
-          pageRangeText={pdfToJpgPageRangeText}
-          onPageRangeTextChange={setPdfToJpgPageRangeText}
-          onRangeValidityChange={setPageRangeValid}
-        />
-      );
-    }
-
-    // PDF PARA MARKDOWN
-    if (tool.id === "pdf-to-markdown") {
-      return (
-        <PdfToMarkdownPanel
-          key={previewEpoch}
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          pageCount={pdfPageCount}
-          thumbnailUrl={firstPageThumb}
-          pageThumbnails={allPageThumbnails}
-          onPreviewPageChange={handlePreviewPageChange}
-          detectHeadings={markdownDetectHeadings}
-          onDetectHeadingsChange={setMarkdownDetectHeadings}
-          detectTables={markdownDetectTables}
-          onDetectTablesChange={setMarkdownDetectTables}
-          includePageBreaks={markdownIncludePageBreaks}
-          onIncludePageBreaksChange={setMarkdownIncludePageBreaks}
-          readingOrder={markdownReadingOrder}
-          onReadingOrderChange={setMarkdownReadingOrder}
-          pagesWithoutText={markdownPageReports
-            .filter((report) => report.textItemCount === 0)
-            .map((report) => report.pageNumber)}
-          columnPages={markdownPageReports
-            .filter((report) => report.readingOrder === "columns")
-            .map((report) => report.pageNumber)}
-          onRequestOcr={onOpenTool ? () => onOpenTool("pdf-ocr", files) : undefined}
-          markdownResult={markdownResult}
-          onMarkdownResultChange={setMarkdownResult}
-          isConverting={status === "running"}
-        />
-      );
-    }
-
-    // RECORTAR PDF
-    if (tool.id === "pdf-crop") {
-      return (
-        <CropPdfPanel
-          key={previewEpoch}
-          onPreviewPageChange={handlePreviewPageChange}
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          totalPages={pdfPageCount}
-          thumbnailUrl={firstPageThumb}
-          pageThumbnails={allPageThumbnails}
-          margins={cropMargins}
-          onMarginsChange={setCropMargins}
-          scope={cropScope}
-          onScopeChange={setCropScope}
-          selectedPagesText={cropSelectedPagesText}
-          onSelectedPagesTextChange={setCropSelectedPagesText}
-        />
-      );
-    }
-
-    // ASSINAR PDF
-    if (tool.id === "pdf-sign") {
-      return (
-        <SignPdfPanel
-          key={previewEpoch}
-          onPreviewPageChange={handlePreviewPageChange}
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          totalPages={pdfPageCount}
-          thumbnailUrl={firstPageThumb}
-          pageThumbnails={allPageThumbnails}
-          placement={signaturePlacement}
-          onPlacementChange={setSignaturePlacement}
-          signatureImageBytes={signatureImageBytes}
-          onSignatureImageChange={setSignatureImageBytes}
-          signerName={signerName}
-          onSignerNameChange={setSignerName}
-          includeDate={includeSignatureDate}
-          onIncludeDateChange={setIncludeSignatureDate}
-        />
-      );
-    }
-
-    // EXTRAIR IMAGENS
-    if (tool.id === "pdf-extract-images") {
-      return (
-        <div>
-          <ExtractImagesPanel
-            fileName={files[0]?.name || "documento.pdf"}
-            fileSizeBytes={files[0]?.size || 0}
-            totalPages={pdfPageCount}
-            thumbnailUrl={firstPageThumb}
-            scope={extractImageScope}
-            onScopeChange={setExtractImageScope}
-            selectedPagesText={extractImagePagesText}
-            onSelectedPagesTextChange={setExtractImagePagesText}
-            ignoreSmall={ignoreSmallImages}
-            onIgnoreSmallChange={setIgnoreSmallImages}
-            extractedImages={extractedImages}
-            selectedImageIds={selectedImageIds}
-            onSelectedImageIdsChange={(ids) => {
-              setSelectedImageIds(ids);
-              setDownloadUrl(null);
-              setOutputBlob(null);
-            }}
-            isExtracting={status === "running"}
-          />
-          {(downloadUrl || (documentCore.saveOutputFile && outputBlob)) && (
-            <OutputDownloadAction
-              className="ilovepdf-big-download-btn"
-              downloadUrl={downloadUrl}
-              outputFileName={outputFileName}
-              onSaveOutput={
-                documentCore.saveOutputFile && outputBlob
-                  ? () => void handleSaveOutput()
-                  : undefined
-              }
-            >
-              <Download size={20} />
-              {translate("extractImages.downloadSelection")}
-            </OutputDownloadAction>
-          )}
-        </div>
-      );
-    }
-
-    // PREENCHER FORMULÁRIO PDF
-    if (tool.id === "pdf-form-fill") {
-      return (
-        <FormFillPdfPanel
-          key={previewEpoch}
-          onPreviewPageChange={setFormPreviewPage}
-          previewPage={formPreviewPage}
-          revisionPreview={
-            formOriginalOnly
-              ? {
-                  previewUrl: formOriginalThumbnail,
-                  pending: !formOriginalThumbnail,
-                  isOriginal: true,
-                }
-              : { ...formPreview, error: formInputError ?? formPreview.error }
-          }
-          onRetryPreview={formInputError ? undefined : formPreview.retry}
-          onReplaceFile={() => fileInputRef.current?.click()}
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          totalPages={pdfPageCount}
-          thumbnailUrl={firstPageThumb}
-          pageThumbnails={allPageThumbnails}
-          fields={formFieldsFile === files[0] ? formFields : []}
-          isLoadingFields={isLoadingFormFields}
-          values={formValues}
-          onValuesChange={setFormValues}
-          flatten={formFlatten}
-          onFlattenChange={setFormFlatten}
-          onGoToSign={() => {
-            window.location.hash = "#/assinar-pdf";
-          }}
-        />
-      );
-    }
-
-    // DESBLOQUEAR PDF
-    if (tool.id === "pdf-unlock") {
-      return (
-        <UnlockPdfPanel
-          key={`${files[0]?.name}-${files[0]?.size}-${files[0]?.lastModified}`}
-          onPreviewPageChange={handlePreviewPageChange}
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          totalPages={pdfPageCount}
-          thumbnailUrl={firstPageThumb}
-          pageThumbnails={allPageThumbnails}
-          protectionStatus={protectionStatus}
-          isCheckingStatus={isCheckingProtection}
-          passwordValue={unlockPassword}
-          onPasswordChange={setUnlockPassword}
-          onGoToCompress={() => {
-            window.location.hash = "#/comprimir-pdf";
-          }}
-          onGoToOrganize={() => {
-            window.location.hash = "#/organizar-pdf";
-          }}
-        />
-      );
-    }
-
-    // PROTEGER PDF
-    if (tool.id === "pdf-protect") {
-      return (
-        <ProtectPdfPanel
-          key={previewEpoch}
-          onPreviewPageChange={handlePreviewPageChange}
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          totalPages={pdfPageCount}
-          thumbnailUrl={firstPageThumb}
-          pageThumbnails={allPageThumbnails}
-          protectionStatus={protectionStatus}
-          passwordValue={protectPassword}
-          onPasswordChange={setProtectPassword}
-          confirmPasswordValue={protectConfirmPassword}
-          onConfirmPasswordChange={setProtectConfirmPassword}
-          algorithm={protectAlgorithm}
-          onAlgorithmChange={setProtectAlgorithm}
-          allowPrinting={protectAllowPrinting}
-          onAllowPrintingChange={setProtectAllowPrinting}
-          allowCopying={protectAllowCopying}
-          onAllowCopyingChange={setProtectAllowCopying}
-          allowModifying={protectAllowModifying}
-          onAllowModifyingChange={setProtectAllowModifying}
-          allowAnnotating={protectAllowAnnotating}
-          onAllowAnnotatingChange={setProtectAllowAnnotating}
-          allowFillingForms={protectAllowFillingForms}
-          onAllowFillingFormsChange={setProtectAllowFillingForms}
-          onGoToUnlock={onOpenTool ? () => onOpenTool("pdf-unlock", files) : undefined}
-        />
-      );
-    }
-
-    // OCULTAR / TARJAR PDF
-    if (tool.id === "pdf-redact") {
-      return (
-        <RedactPdfPanel
-          key={previewEpoch}
-          onPreviewPageChange={handlePreviewPageChange}
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          totalPages={pdfPageCount}
-          thumbnailUrl={firstPageThumb}
-          pageThumbnails={allPageThumbnails}
-          preserve={redactionPreserve}
-          onPreserveChange={setRedactionPreserve}
-          redactions={redactionAreas}
-          onRedactionsChange={(areas) => setRedactionAreas([...areas])}
-          file={files[0]}
-        />
-      );
-    }
-
-    // PDF PARA EXCEL
-    if (tool.id === "pdf-to-excel") {
-      return (
-        <PdfToExcelPanel
-          key={previewEpoch}
-          onPreviewPageChange={handleExcelPreviewPageChange}
-          previewPage={excelPreviewPage}
-          selectedPages={excelSelection.options?.selectedPages}
-          pagesText={excelPagesText}
-          onPagesTextChange={setExcelPagesText}
-          separatorsText={excelSeparatorsText}
-          onSeparatorsTextChange={setExcelSeparatorsText}
-          region={excelRegion}
-          onRegionChange={setExcelRegion}
-          preserveText={excelPreserveText}
-          onPreserveTextChange={setExcelPreserveText}
-          isRunning={status === "running"}
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          totalPages={pdfPageCount}
-          thumbnailUrl={firstPageThumb}
-          pageThumbnails={allPageThumbnails}
-          previewRows={excelPreviewRows}
-          previewError={excelSelection.error ?? excelPreviewError}
-          isConverting={isAnalyzingExcel || status === "running"}
-          outputFormat={excelOutputFormat}
-          onOutputFormatChange={setExcelOutputFormat}
-          sheetMode={excelSheetMode}
-          onSheetModeChange={setExcelSheetMode}
-          csvDelimiter={excelCsvDelimiter}
-          onCsvDelimiterChange={setExcelCsvDelimiter}
-          detectTablesOnly={excelDetectTablesOnly}
-          onDetectTablesOnlyChange={setExcelDetectTablesOnly}
-        />
-      );
-    }
-
-    // REMOVER PÁGINAS
-    if (tool.id === "pdf-remove-pages") {
-      return (
-        <RemovePagesPanel
-          key={previewEpoch}
-          onRangeValidityChange={setPageRangeValid}
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          totalPages={pdfPageCount}
-          pageThumbnails={allPageThumbnails}
-          onPreviewPageChange={handlePreviewPageChange}
-          pagesToRemove={removePagesSelection}
-          onPagesToRemoveChange={setRemovePagesSelection}
-        />
-      );
-    }
-
-    // EXTRAIR PÁGINAS
-    if (tool.id === "pdf-extract-pages") {
-      return (
-        <ExtractPagesPanel
-          key={previewEpoch}
-          onRangeValidityChange={setPageRangeValid}
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          totalPages={pdfPageCount}
-          pageThumbnails={allPageThumbnails}
-          onPreviewPageChange={handlePreviewPageChange}
-          selectedPages={extractPagesSelection}
-          onSelectedPagesChange={setExtractPagesSelection}
-          mode={extractPagesMode}
-          onModeChange={setExtractPagesMode}
-        />
-      );
-    }
-
-    // HTML PARA PDF
-    if (tool.id === "html-to-pdf") {
-      return (
-        <HtmlToPdfPanel
-          fileName={files[0]?.name}
-          htmlContent={htmlCodeContent}
-          onHtmlContentChange={setHtmlCodeContent}
-          onFileUpload={(f) => setFiles([f])}
-          pageSize={htmlPageSize}
-          onPageSizeChange={setHtmlPageSize}
-          orientation={htmlOrientation}
-          onOrientationChange={setHtmlOrientation}
-          margin={htmlMargin}
-          onMarginChange={setHtmlMargin}
-        />
-      );
-    }
-
-    // DIGITALIZAR PARA PDF
-    if (tool.id === "scan-to-pdf") {
-      return (
-        <ScanToPdfPanel
-          pages={scannedPages}
-          onPagesChange={setScannedPages}
-          pageSize={scanPageSize}
-          onPageSizeChange={setScanPageSize}
-          orientation={scanOrientation}
-          onOrientationChange={setScanOrientation}
-          margin={scanMargin}
-          onMarginChange={setScanMargin}
-        />
-      );
-    }
-
-    // MARCA D'ÁGUA
-    if (tool.id === "pdf-watermark") {
-      return (
-        <WatermarkPdfPanel
-          key={previewEpoch}
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          totalPages={pdfPageCount}
-          thumbnailUrl={firstPageThumb}
-          pageThumbnails={allPageThumbnails}
-          onPreviewPageChange={handlePreviewPageChange}
-          watermarkText={watermarkText}
-          watermarkAngle={watermarkAngle}
-          watermarkOpacity={watermarkOpacity}
-          watermarkColor={watermarkColor}
-          onWatermarkTextChange={setWatermarkText}
-          onWatermarkAngleChange={setWatermarkAngle}
-          onWatermarkOpacityChange={setWatermarkOpacity}
-          onWatermarkColorChange={setWatermarkColor}
-        />
-      );
-    }
-
-    // NÚMEROS DE PÁGINA
-    if (tool.id === "pdf-page-numbers") {
-      return (
-        <PageNumbersPdfPanel
-          key={previewEpoch}
-          fileName={files[0]?.name || "documento.pdf"}
-          fileSizeBytes={files[0]?.size || 0}
-          totalPages={pdfPageCount}
-          thumbnailUrl={firstPageThumb}
-          pageThumbnails={allPageThumbnails}
-          onPreviewPageChange={handlePreviewPageChange}
-          position={pageNumbersPosition}
-          format={pageNumbersFormat}
-          customPrefix={pageNumbersCustomPrefix}
-          startPage={pageNumbersStartPage}
-          onPositionChange={setPageNumbersPosition}
-          onFormatChange={setPageNumbersFormat}
-          onStartPageChange={setPageNumbersStartPage}
-          onCustomPrefixChange={setPageNumbersCustomPrefix}
-        />
-      );
-    }
-
-    if (tool.id === "pdf-ocr") {
-      return (
-        <>
-          <CloudProcessingChoice
-            toolId="pdf-ocr"
-            mode={processingMode}
-            onChangeMode={setProcessingMode}
-            quotaRemaining={cloudUsage?.ocrPages?.remaining}
-            quotaUnitLabel={translate("cloudProcessing.pagesUnit")}
-            isAuthenticated={isCloudAuthed}
-            disabled={status === "running"}
-          />
-          <OcrScannerPanel
-            isScanning={status === "running"}
-            progress={progress}
-            progressStatus={ocrProgressStatus}
-            recognizedText={recognizedOcrText}
-            onTextChange={(text) => {
-              setRecognizedOcrText(text);
-              setDownloadUrl(null);
-              setOutputBlob(null);
-            }}
-            fileName={files[0]?.name || "documento_ocr.pdf"}
-            language={ocrLanguage}
-            onLanguageChange={setOcrLanguage}
-            outputMode={ocrOutputMode}
-            onOutputModeChange={setOcrOutputMode}
-            enhanceContrast={ocrEnhanceContrast}
-            onEnhanceContrastChange={setOcrEnhanceContrast}
-            pageReports={ocrPageReports}
-            downloadUrl={downloadUrl}
-            outputFileName={outputFileName}
-            onSaveOutput={
-              documentCore.saveOutputFile && outputBlob ? () => void handleSaveOutput() : undefined
-            }
-            onCancel={() => {
-              ocrController.current?.abort();
-              ocrController.current = null;
-              setStatus("idle");
-              setProgress(0);
-              setOcrProgressStatus(translate("workspace.ocr.cancelled"));
-            }}
-          />
-        </>
-      );
-    }
-
-    if (tool.id === "text-compare") {
-      return (
-        <DocumentComparePanel
-          doc1Text={doc1Text}
-          doc1Name={doc1Name}
-          onDoc1TextChange={setDoc1Text}
-          onDoc1NameChange={setDoc1Name}
-          doc2Text={doc2Text}
-          doc2Name={doc2Name}
-          onDoc2TextChange={setDoc2Text}
-          onDoc2NameChange={setDoc2Name}
-          doc3Text={doc3Text}
-          doc3Name={doc3Name}
-          onDoc3TextChange={setDoc3Text}
-          onDoc3NameChange={setDoc3Name}
-          showDoc3={showDoc3}
-          onToggleDoc3={setShowDoc3}
-          diffPair={comparePair}
-          onDiffPairChange={setComparePair}
-          onExportDiff={() => void handleExecute()}
-        />
-      );
-    }
-
-    if (tool.id === "text-review") {
-      const baseOutName = files[0]?.name?.replace(/\.[^/.]+$/, "") || "documento";
-      return (
-        <ReviewDocumentPanel
-          reviewFindings={reviewFindings}
-          reviewedText={reviewedText}
-          onReviewedTextChange={(text) => {
-            invalidateReviewResult();
-            setReviewedText(text);
-            setReviewFindings([]);
-          }}
-          onApplySingleReview={handleApplySingleReview}
-          onApplyAllReview={handleApplyAllReview}
-          onIgnoreFinding={handleIgnoreFinding}
-          onAddToDictionary={handleAddToDictionary}
-          isRunning={status === "running"}
-          progressPercent={progress}
-          progressStatusMessage={reviewProgressStatus}
-          accentColor={accent}
-          outputFileName={`${baseOutName}_revisado.txt`}
-        />
-      );
-    }
-
-    if (tool.id === "text-translate") {
-      const baseOutName = files[0]?.name?.replace(/\.[^/.]+$/, "") || "documento";
-      return (
-        <>
-          <CloudProcessingChoice
-            toolId="text-translate"
-            mode={processingMode}
-            onChangeMode={setProcessingMode}
-            quotaRemaining={cloudUsage?.translationCharacters?.remaining}
-            quotaUnitLabel={translate("cloudProcessing.charactersUnit")}
-            isAuthenticated={isCloudAuthed}
-            disabled={status === "running"}
-          />
-          <TranslateDocumentPanel
-            browserModel={documentCore.translationEngine === "browser" || !documentCore.invoke}
-            sourceLang={translationSourceLang as "en" | "pt" | "es"}
-            targetLang={translationTargetLang as "en" | "pt" | "es"}
-            onSourceLangChange={(l) => {
-              cancelTranslation();
-              clearTranslationResult();
-              setTranslationSourceLang(l);
-            }}
-            onTargetLangChange={(l) => {
-              cancelTranslation();
-              clearTranslationResult();
-              setTranslationTargetLang(l);
-            }}
-            preservedNames={translationPreservedNames}
-            onPreservedNamesChange={(value) => {
-              cancelTranslation();
-              clearTranslationResult();
-              setTranslationPreservedNames(value);
-            }}
-            onSwapLanguages={handleSwapLanguages}
-            translatedText={translatedText}
-            onTranslatedTextChange={setTranslatedText}
-            isRunning={status === "running"}
-            progressPercent={progress}
-            progressStatusMessage={translationProgressStatus}
-            progressPhase={translationProgress?.status}
-            loadedBytes={translationProgress?.loadedBytes}
-            totalBytes={translationProgress?.totalBytes}
-            onCancel={cancelTranslation}
-            accentColor={accent}
-            outputFileName={
-              outputFileName ||
-              `${baseOutName}_${translationSourceLang}_para_${translationTargetLang}.txt`
-            }
-            outputBlob={outputBlob ?? undefined}
-          />
-        </>
-      );
-    }
-
-    // PAINÉIS DE FERRAMENTAS DE IMAGEM
-    if (tool.id === "image-compress") {
-      return (
-        <ImageCompressPanel
-          fileName={imagePreviewFile?.name || "imagem.jpg"}
-          fileSizeBytes={imagePreviewFile?.size || 0}
-          thumbnailUrl={imagePreviewUrl ?? undefined}
-          dimensions={imageOriginalDimensions ?? undefined}
-          level={imageCompressionLevel}
-          losslessOnly={
-            imageBatch.entries.length > 0 &&
-            imageBatch.entries.every((entry) => entry.metadata?.mimeType === "image/png")
-          }
-          onLevelChange={setImageCompressionLevel}
-        />
-      );
-    }
-
-    if (tool.id === "image-resize") {
-      return (
-        <ImageResizePanel
-          fileName={imagePreviewFile?.name || "imagem.jpg"}
-          fileSizeBytes={imagePreviewFile?.size || 0}
-          thumbnailUrl={imagePreviewUrl ?? undefined}
-          originalDimensions={imageOriginalDimensions ?? undefined}
-          mode={imageResizeMode}
-          onModeChange={setImageResizeMode}
-          percentage={imageResizePercentage}
-          onPercentageChange={setImageResizePercentage}
-          width={imageResizeWidth}
-          onWidthChange={setImageResizeWidth}
-          height={imageResizeHeight}
-          onHeightChange={setImageResizeHeight}
-          maintainAspectRatio={imageMaintainAspect}
-          onMaintainAspectRatioChange={setImageMaintainAspect}
-          doNotEnlarge={imageDoNotEnlarge}
-          onDoNotEnlargeChange={setImageDoNotEnlarge}
-        />
-      );
-    }
-
-    if (tool.id === "image-crop") {
-      return (
-        <ImageCropPanel
-          fileName={imagePreviewFile?.name || "imagem.jpg"}
-          fileSizeBytes={imagePreviewFile?.size || 0}
-          thumbnailUrl={imagePreviewUrl ?? undefined}
-          originalDimensions={imageOriginalDimensions ?? undefined}
-          ratio={imageCropPreset}
-          onRatioChange={setImageCropPreset}
-          cropX={imageCropX}
-          onCropXChange={setImageCropX}
-          cropY={imageCropY}
-          onCropYChange={setImageCropY}
-          cropWidth={imageCropWidth}
-          onCropWidthChange={setImageCropWidth}
-          cropHeight={imageCropHeight}
-          onCropHeightChange={setImageCropHeight}
-        />
-      );
-    }
-
-    if (tool.id === "image-convert") {
-      return (
-        <ImageConvertPanel
-          fileName={imagePreviewFile?.name || "imagem.jpg"}
-          fileSizeBytes={imagePreviewFile?.size || 0}
-          thumbnailUrl={imagePreviewUrl ?? undefined}
-          originalDimensions={imageOriginalDimensions ?? undefined}
-          targetFormat={imageTargetFormat}
-          onTargetFormatChange={setImageTargetFormat}
-          quality={imageConvertQuality}
-          onQualityChange={setImageConvertQuality}
-        />
-      );
-    }
-
-    if (tool.id === "image-rotate") {
-      return (
-        <ImageRotatePanel
-          fileName={imagePreviewFile?.name || "imagem.jpg"}
-          fileSizeBytes={imagePreviewFile?.size || 0}
-          thumbnailUrl={imagePreviewUrl ?? undefined}
-          originalDimensions={imageOriginalDimensions ?? undefined}
-          angle={imageRotateAngle}
-          onAngleChange={setImageRotateAngle}
-          flipHorizontal={imageFlipHorizontal}
-          onFlipHorizontalChange={setImageFlipHorizontal}
-          flipVertical={imageFlipVertical}
-          onFlipVerticalChange={setImageFlipVertical}
-        />
-      );
-    }
-
-    if (tool.id === "image-watermark") {
-      return (
-        <>
-          <fieldset
-            className="image-composition-mode"
-            aria-label={translate("composition.advanced")}
-          >
-            <button
-              type="button"
-              disabled={status === "running"}
-              aria-pressed={!compositionMode}
-              onClick={() => setCompositionMode(false)}
-            >
-              {translate("composition.quick")}
-            </button>
-            <button
-              type="button"
-              disabled={status === "running"}
-              aria-pressed={compositionMode}
-              onClick={() => setCompositionMode(true)}
-            >
-              {translate("composition.advanced")}
-            </button>
-          </fieldset>
-          {compositionMode && imagePreviewFile && imagePreviewUrl && imageOriginalDimensions ? (
-            <>
-              {!compositionValid && compositionState.objects.length > 0 && (
-                <p role="alert">{translate("composition.invalid")}</p>
-              )}
-              <Suspense fallback={<p role="status">{translate("composition.pending")}</p>}>
-                <ImageCompositionPanel
-                  file={imagePreviewFile}
-                  source={imagePreviewUrl}
-                  width={imageOriginalDimensions.width}
-                  height={imageOriginalDimensions.height}
-                  onAssetPendingChange={setCompositionAssetPending}
-                  state={compositionState}
-                  dispatch={compositionDispatch}
-                  disabled={status === "running"}
-                />
-              </Suspense>
-            </>
-          ) : (
-            <ImageWatermarkPanel
-              isProcessing={status === "running"}
-              fileName={imagePreviewFile?.name || "imagem.jpg"}
-              fileSizeBytes={imagePreviewFile?.size || 0}
-              thumbnailUrl={imagePreviewUrl ?? undefined}
-              originalDimensions={imageOriginalDimensions ?? undefined}
-              watermarkFile={imageWatermarkFile}
-              onWatermarkFileChange={setImageWatermarkFile}
-              watermarkType={imageWatermarkType}
-              onWatermarkTypeChange={setImageWatermarkType}
-              text={imageWatermarkText}
-              onTextChange={setImageWatermarkText}
-              color={imageWatermarkColor}
-              onColorChange={setImageWatermarkColor}
-              opacity={imageWatermarkOpacity}
-              onOpacityChange={setImageWatermarkOpacity}
-              rotation={imageWatermarkRotation}
-              onRotationChange={setImageWatermarkRotation}
-              position={imageWatermarkPosition}
-              onPositionChange={setImageWatermarkPosition}
-            />
-          )}
-        </>
-      );
-    }
+    const imageToolPanel = renderImageToolPanel({
+      toolId: tool.id,
+      files,
+      fileInputRef,
+      fileThumbnails,
+      status,
+      handleRemoveFile,
+      handleReorderFiles,
+      imageOrientation,
+      setImageOrientation,
+      imageMargin,
+      setImageMargin,
+      imagePageSize,
+      setImagePageSize,
+      scannedPages,
+      setScannedPages,
+      scanPageSize,
+      setScanPageSize,
+      scanOrientation,
+      setScanOrientation,
+      scanMargin,
+      setScanMargin,
+      imagePreviewFile,
+      imagePreviewUrl,
+      imageOriginalDimensions,
+      imageBatch,
+      imageCompressionLevel,
+      setImageCompressionLevel,
+      imageResizeMode,
+      setImageResizeMode,
+      imageResizePercentage,
+      setImageResizePercentage,
+      imageResizeWidth,
+      setImageResizeWidth,
+      imageResizeHeight,
+      setImageResizeHeight,
+      imageMaintainAspect,
+      setImageMaintainAspect,
+      imageDoNotEnlarge,
+      setImageDoNotEnlarge,
+      imageCropPreset,
+      setImageCropPreset,
+      imageCropX,
+      setImageCropX,
+      imageCropY,
+      setImageCropY,
+      imageCropWidth,
+      setImageCropWidth,
+      imageCropHeight,
+      setImageCropHeight,
+      imageTargetFormat,
+      setImageTargetFormat,
+      imageConvertQuality,
+      setImageConvertQuality,
+      imageRotateAngle,
+      setImageRotateAngle,
+      imageFlipHorizontal,
+      setImageFlipHorizontal,
+      imageFlipVertical,
+      setImageFlipVertical,
+      compositionMode,
+      setCompositionMode,
+      compositionValid,
+      compositionState,
+      compositionDispatch,
+      setCompositionAssetPending,
+      imageWatermarkFile,
+      setImageWatermarkFile,
+      imageWatermarkType,
+      setImageWatermarkType,
+      imageWatermarkText,
+      setImageWatermarkText,
+      imageWatermarkColor,
+      setImageWatermarkColor,
+      imageWatermarkOpacity,
+      setImageWatermarkOpacity,
+      imageWatermarkRotation,
+      setImageWatermarkRotation,
+      imageWatermarkPosition,
+      setImageWatermarkPosition,
+    });
+    if (imageToolPanel !== undefined) return imageToolPanel;
 
     return (
       <div className="generic-tool-visual-panel">

@@ -1,0 +1,1874 @@
+/* ==========================================================================
+   DEDICATED TOOL WORKSPACE & 2-COLUMN PANELS
+   ========================================================================== */
+
+.dedicated-tool-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--color-surface-muted, #f8fafc);
+  color: var(--color-ink, #0f172a);
+}
+
+.dedicated-tool-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-6);
+  background: var(--glass-bg, rgba(255, 255, 255, 0.85));
+  backdrop-filter: var(--glass-blur, blur(12px));
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.dedicated-tool-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: transparent;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-ink-muted, #64748b);
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.dedicated-tool-back-btn:hover {
+  background: var(--color-surface, #ffffff);
+  color: var(--color-ink, #0f172a);
+}
+
+.dedicated-tool-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-brand);
+  background: var(--color-surface);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.dedicated-tool-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dedicated-tool-content {
+  flex: 1;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-6) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.dedicated-tool-intro {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dedicated-tool-icon-large {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.dedicated-tool-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+.dedicated-tool-desc {
+  font-size: 0.9rem;
+  color: var(--color-ink-muted, #64748b);
+  max-width: 580px;
+  line-height: 1.5;
+}
+
+/* Tabs Bar (Upload vs Type Text) */
+.dedicated-tool-tabs-bar {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.dedicated-tool-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dedicated-tool-tab-btn:hover {
+  border-color: var(--color-brand);
+  color: var(--color-ink);
+}
+
+.dedicated-tool-tab-btn--active {
+  background: var(--color-brand);
+  color: #ffffff;
+  border-color: var(--color-brand);
+}
+
+/* 2-Column Responsive Workspace */
+.dedicated-tool-workspace-split {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .dedicated-tool-workspace-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dedicated-tool-left-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.dedicated-tool-right-column {
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Direct Textarea Input */
+.dedicated-tool-text-input-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
+.dedicated-tool-direct-textarea {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  resize: vertical;
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+  outline: none;
+}
+
+.dedicated-tool-direct-textarea:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-brand), transparent 85%);
+}
+
+.dedicated-tool-text-metrics {
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+  text-align: right;
+}
+
+/* Dropzone & Files */
+.dedicated-tool-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  background: var(--color-surface);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.dedicated-tool-dropzone:hover,
+.dedicated-tool-dropzone--active {
+  border-color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand), transparent 95%);
+}
+
+.dedicated-tool-dropzone__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-pill);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.dedicated-tool-dropzone__hint {
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+}
+
+.dedicated-tool-files-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
+.dedicated-tool-files-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dedicated-tool-files-header h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.dedicated-tool-files-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.dedicated-tool-file-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.dedicated-tool-file-card__icon {
+  flex-shrink: 0;
+}
+
+.dedicated-tool-file-card__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dedicated-tool-file-card__name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dedicated-tool-file-card__size {
+  font-size: 0.72rem;
+  color: var(--color-ink-muted);
+}
+
+.dedicated-tool-file-card__remove {
+  background: transparent;
+  border: none;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: color 0.15s ease;
+}
+
+.dedicated-tool-file-card__remove:hover {
+  color: #ef4444;
+}
+
+/* Options Panel */
+.dedicated-tool-options-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.dedicated-tool-options-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dedicated-tool-options-header h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.dedicated-tool-options-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dedicated-tool-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+
+.dedicated-tool-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dedicated-tool-radio-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.dedicated-tool-radio-item--selected {
+  border-color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand), transparent 90%);
+  color: var(--color-brand-strong, var(--color-brand));
+  font-weight: 700;
+}
+
+.dedicated-tool-select {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.dedicated-tool-action-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.dedicated-tool-action-btn {
+  flex: 1;
+  font-weight: 700;
+  gap: var(--space-2);
+}
+
+/* Barra de Ação Inferior Fixa/Docada */
+.dedicated-tool-bottom-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4, 1rem);
+  padding: 1rem 1.5rem;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.92));
+  backdrop-filter: var(--glass-blur, blur(12px));
+  border-top: 1px solid var(--color-border, #e2e8f0);
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .dedicated-tool-bottom-bar {
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   ILOVEPDF INTEGRATED 3-PHASE STYLES & CONTINUOUS SHELL
+   ========================================================================== */
+
+.brand-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+
+.brand-btn:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.dedicated-tool-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 74rem;
+  margin: 0 auto;
+  padding-bottom: var(--space-8);
+  animation: fadeIn 0.25s ease-out;
+}
+
+.ilovepdf-tool-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+}
+
+.ilovepdf-hero-section {
+  text-align: center;
+  padding: var(--space-6) 0 var(--space-4);
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.ilovepdf-upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-6);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-raised);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  min-height: 280px;
+  max-width: 50rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.ilovepdf-upload-dropzone:hover,
+.ilovepdf-upload-dropzone--active {
+  border-color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand), transparent 96%);
+  transform: translateY(-2px);
+}
+
+.ilovepdf-main-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: 0.95rem 2rem;
+  border-radius: var(--radius-lg);
+  color: #ffffff;
+  font-size: 1.075rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 16px -4px rgb(15 23 42 / 20%);
+  transition:
+    background-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.ilovepdf-main-upload-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px -4px rgb(15 23 42 / 24%);
+}
+
+.ilovepdf-main-drop-hint {
+  margin-top: var(--space-4);
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+  font-weight: 500;
+}
+
+/* Fase 3: Sucesso e Download */
+.ilovepdf-success-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-10) var(--space-4);
+  max-width: 44rem;
+  margin: 0 auto;
+  gap: var(--space-4);
+}
+
+.ilovepdf-success-icon-circle {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  margin-bottom: var(--space-2);
+}
+
+.ilovepdf-success-title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.ilovepdf-success-subtitle {
+  font-size: 1rem;
+  color: var(--color-ink-muted);
+  max-width: 40ch;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ilovepdf-savings-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(34, 197, 94, 0.08);
+  border: 2px solid rgba(34, 197, 94, 0.25);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-8);
+  margin: var(--space-2) 0;
+}
+
+.ilovepdf-savings-val {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: #16a34a;
+  letter-spacing: -0.03em;
+}
+
+.ilovepdf-savings-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #15803d;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ilovepdf-savings-sizes {
+  margin-top: var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.95rem;
+  color: var(--color-ink);
+}
+
+.ilovepdf-savings-arrow {
+  color: var(--color-ink-muted);
+}
+
+.ilovepdf-integrity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+  font-weight: 500;
+  padding: 0.35rem 0.85rem;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+.ilovepdf-big-download-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: 0.9rem 2rem;
+  border-radius: var(--radius-lg);
+  color: #ffffff;
+  background: var(--color-brand);
+  border: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  box-shadow: 0 6px 16px -4px rgb(15 23 42 / 20%);
+  transition:
+    background-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+  margin-top: var(--space-2);
+}
+
+.ilovepdf-big-download-btn:hover {
+  background: var(--color-brand-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px -4px rgb(15 23 42 / 24%);
+}
+
+.ilovepdf-success-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.ilovepdf-files-chip-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   ILOVEPDF ULTRA-CLEAN DESIGN SYSTEM
+   ========================================================================== */
+
+/* Fundo decorativo: três profundidades, sem interação ou conteúdo semântico. */
+.parallax-backdrop {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  user-select: none;
+}
+
+.parallax-backdrop__item,
+.parallax-backdrop__shape {
+  position: absolute;
+  transform: translate3d(
+      calc(var(--parallax-x) * var(--depth)),
+      calc(var(--parallax-y) * var(--depth)),
+      0
+    )
+    rotate(var(--rotation, 0deg));
+}
+
+.parallax-backdrop__item {
+  font: 700 var(--text-sm) var(--font-sans);
+  color: var(--color-ink);
+  opacity: 0.07;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.parallax-backdrop__shape {
+  width: clamp(200px, 27vw, 420px);
+  aspect-ratio: 1;
+  border-radius: 32%;
+}
+
+.parallax-backdrop__shape--1 {
+  top: -14%;
+  right: -9%;
+  --rotation: 24deg;
+  background: linear-gradient(135deg, rgb(244 63 94 / 9%), rgb(244 63 94 / 2%));
+}
+
+.parallax-backdrop__shape--2 {
+  top: 42%;
+  left: -16%;
+  --rotation: -28deg;
+  background: linear-gradient(135deg, rgb(124 58 237 / 8%), rgb(37 99 235 / 2%));
+}
+
+.parallax-backdrop__shape--3 {
+  bottom: -18%;
+  right: -12%;
+  --rotation: 18deg;
+  border: 1px solid rgb(244 63 94 / 10%);
+  background: rgb(244 63 94 / 3%);
+}
+
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .parallax-backdrop__item,
+  .parallax-backdrop__shape {
+    transform: rotate(var(--rotation, 0deg));
+  }
+}
+
+/* Fundo suave e layout global */
+body,
+.app-shell {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  position: relative;
+}
+
+/* Header Estilo iLovePDF - Levemente ampliado para ergonomia e conforto */
+.app-header--ilovepdf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 74px;
+  padding: 0 var(--space-8);
+  background-color: var(--color-surface-raised);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+}
+
+.ilovepdf-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+}
+
+.brand-app-icon {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 8px;
+}
+
+.brand-logo-text {
+  font-size: 1.55rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+}
+
+.brand-logo-accent {
+  color: var(--color-brand);
+  margin-left: 2px;
+}
+
+/* Navegação Principal do Header */
+.header-main-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.nav-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #1e293b;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.nav-link-btn:hover,
+.nav-link-btn--active {
+  color: var(--color-brand-strong);
+  background-color: var(--color-brand-soft);
+}
+
+.dropdown-chevron {
+  transition: transform 0.2s ease;
+}
+
+.dropdown-chevron--open {
+  transform: rotate(180deg);
+}
+
+.nav-dropdown-wrapper {
+  position: relative;
+}
+
+/* Megamenu Flutuante */
+.megamenu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow:
+    0 20px 35px -5px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
+  padding: 1.5rem;
+  display: grid;
+  gap: 2rem;
+  z-index: 200;
+  animation: fadeIn 0.18s ease-out;
+}
+
+.megamenu-panel--convert {
+  grid-template-columns: repeat(2, 210px);
+}
+
+.megamenu-panel--all {
+  position: fixed;
+  top: 64px;
+  left: 1rem;
+  right: 1rem;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  transform: none;
+}
+
+.megamenu-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.megamenu-col-title {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.megamenu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #1e293b;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.megamenu-item svg {
+  flex-shrink: 0;
+}
+
+.megamenu-item:hover {
+  background-color: #f8fafc;
+  color: #e11d48;
+  transform: translateX(2px);
+}
+
+.header-search-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.header-search-icon-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.header-capabilities-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.header-capabilities-btn:hover {
+  background-color: #e2e8f0;
+  color: #e11d48;
+}
+
+/* Catálogo: névoas estáticas nas bordas, sem competir com o conteúdo. */
+.app-shell--catalog {
+  --color-surface: #fafafa;
+  --color-border: #e4e4e7;
+  --color-ink: #18181b;
+  --color-ink-muted: #71717a;
+  --catalog-blue-ink: #2563eb;
+  --catalog-blue-surface: #eff6ff;
+  --catalog-violet-ink: #7c3aed;
+  --catalog-violet-surface: #f5f3ff;
+  --catalog-teal-ink: #0f766e;
+  --catalog-teal-surface: #f0fdfa;
+  --catalog-coral-ink: #e11d48;
+  --catalog-coral-surface: #fff1f2;
+  --catalog-amber-ink: #b45309;
+  --catalog-amber-surface: #fffbeb;
+  --catalog-indigo-ink: #4f46e5;
+  --catalog-indigo-surface: #eef2ff;
+  --catalog-emerald-ink: #047857;
+  --catalog-emerald-surface: #ecfdf5;
+  --catalog-rose-ink: #be123c;
+  --catalog-rose-surface: #fff1f2;
+  background-image:
+    radial-gradient(
+      ellipse 54rem 38rem at -12% 6rem,
+      rgb(var(--fog-primary, 251 113 133) / 18%),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 52rem 44rem at 110% 30rem,
+      rgb(var(--fog-secondary, 139 92 246) / 15%),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 64rem 40rem at 14% 88%,
+      rgb(var(--fog-tertiary, 56 189 248) / 12%),
+      transparent 75%
+    );
+  background-repeat: no-repeat;
+}
+
+.hero__security-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  margin-top: var(--space-3);
+  max-width: 100%;
+  color: var(--color-ink-muted);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  line-height: 1.6;
+}
+.hero__security-badge svg {
+  color: #047857;
+  flex-shrink: 0;
+}
+.hero__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 32rem;
+  margin: var(--space-6) auto 0;
+  padding: 0 var(--space-3);
+  min-height: 52px;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  box-shadow: 0 1px 3px rgb(24 24 27 / 4%);
+  transition:
+    border-color 200ms ease-out,
+    box-shadow 200ms ease-out;
+}
+.hero__search > svg {
+  flex-shrink: 0;
+  color: #a1a1aa;
+}
+.hero__search:focus-within {
+  border-color: #a1a1aa;
+  box-shadow: 0 3px 12px rgb(24 24 27 / 8%);
+}
+.hero__search:has(input:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+.hero__search input {
+  min-width: 0;
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font-size: 0.8125rem;
+  outline: none;
+}
+.hero__search input::placeholder {
+  color: var(--color-ink-muted);
+  opacity: 1;
+}
+.hero__search-shortcut {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--color-ink-muted);
+}
+.hero__search-shortcut kbd {
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  padding: 3px 5px;
+  font-size: 0.625rem;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.hero__search-shortcut:hover kbd {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+[data-theme="dark"] .app-shell--catalog {
+  --color-surface: #090d12;
+  --color-ink: #f8fafc;
+  --color-ink-muted: #a1a1aa;
+  --color-border: #3f3f46;
+}
+
+/* Hero Section Ultra-Clean */
+.hero--clean {
+  text-align: center;
+  padding: 0 0 var(--space-2);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.hero--clean .hero__welcome-title {
+  font-size: var(--text-title);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--color-ink);
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+}
+
+.hero__clean-subtitle {
+  font-size: var(--text-base);
+  color: var(--color-ink-muted);
+  font-weight: 400;
+  line-height: 1.6;
+  margin: 0 auto;
+  max-width: 42rem;
+}
+
+/* Pílulas de Suíte / Categorias Centralizadas */
+.launcher-suites-center {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-3);
+  margin-bottom: 0;
+}
+
+.suite-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1);
+  max-width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.suite-nav__item {
+  min-height: 48px;
+  min-width: 48px;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  color: #52525b;
+  font-size: var(--text-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast);
+  white-space: nowrap;
+}
+
+.suite-nav__item:hover:not([data-active="true"]) {
+  color: #18181b;
+  background: #f4f4f5;
+  border-color: #d4d4d8;
+}
+
+.suite-nav__item[data-active="true"] {
+  background: #18181b;
+  border-color: #18181b;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+/* Grade responsiva com medidas únicas, sem truncar descrições. */
+.quick-tools-section--clean {
+  padding: 0 0 var(--space-8);
+  width: 100%;
+  margin: 0 auto;
+}
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  transition: none;
+}
+
+@media (min-width: 520px) {
+  .tool-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 760px) {
+  .tool-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1000px) {
+  .tool-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (width > 1200px) {
+  .tool-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.tool-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 0;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  min-height: 188px;
+  cursor: pointer;
+  transition:
+    translate 180ms ease-out,
+    box-shadow 180ms ease-out,
+    border-color 180ms ease-out;
+  box-shadow: var(--shadow-card);
+  text-decoration: none;
+  position: relative;
+  overflow: visible;
+}
+
+.tool-card:hover {
+  translate: 0 -4px;
+  border-color: #d4d4d8;
+  box-shadow: 0 10px 20px -6px rgb(24 24 27 / 12%);
+}
+.tool-card:focus-visible,
+.tool-card--drag-over {
+  border-color: var(--tool-accent);
+  box-shadow: var(--shadow-card-hover);
+}
+.tool-card--drag-over {
+  background: var(--tool-tint);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tool-card:hover {
+    translate: none;
+  }
+}
+
+.tool-card:focus-visible {
+  outline: 3px solid var(--tool-accent, var(--color-focus));
+  outline-offset: 3px;
+}
+
+.tool-card__topline {
+  margin-bottom: var(--space-4);
+}
+
+.tool-card__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  margin: 0;
+  color: #ffffff;
+  background: var(--tool-accent);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--tool-accent) 16%, transparent);
+}
+
+.tool-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  margin: 0 0 var(--space-1);
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.tool-card__desc {
+  font-size: 0.875rem;
+  color: var(--color-ink-muted);
+  line-height: 1.6;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.tool-card__hover-arrow {
+  top: var(--space-5);
+  right: var(--space-5);
+  bottom: auto;
+}
+
+.tool-card:focus-visible .tool-card__hover-arrow,
+.tool-card--drag-over .tool-card__hover-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Cabeçalho compacto sem perder o acesso ao catálogo completo. */
+.ilovepdf-brand {
+  min-height: var(--control-height);
+}
+.header-actions {
+  flex-shrink: 0;
+}
+.nav-link-label--compact {
+  display: none;
+}
+.header-main-nav {
+  min-width: 0;
+}
+
+@media (max-width: 1099px) {
+  .header-main-nav > .nav-link-btn {
+    display: none;
+  }
+  .app-header--ilovepdf {
+    padding: 0 var(--space-6);
+  }
+}
+
+@media (max-width: 759px) {
+  .launcher-content--full {
+    width: 100%;
+    padding: var(--space-3) var(--space-4) var(--space-6);
+    gap: var(--space-3);
+  }
+  .app-header--ilovepdf {
+    gap: var(--space-2);
+    padding: 0 var(--space-4);
+  }
+  .nav-link-label--full {
+    display: none;
+  }
+  .nav-link-label--compact {
+    display: inline;
+  }
+  .brand-logo-text {
+    font-size: 1.15rem;
+  }
+  .brand-app-icon {
+    width: 28px;
+    height: 28px;
+  }
+  .nav-link-btn--dropdown {
+    font-size: 0.75rem;
+    padding: var(--space-2);
+    white-space: normal;
+    text-align: left;
+  }
+  .hero--clean .hero__welcome-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+  }
+  .hero__clean-subtitle {
+    font-size: var(--text-sm);
+  }
+  .launcher-suites-center {
+    margin-top: var(--space-2);
+  }
+  .suite-nav {
+    gap: var(--space-2);
+  }
+  .suite-nav__item {
+    min-height: 44px;
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 519px) {
+  .tool-card {
+    min-height: 0;
+  }
+  .tool-card__topline {
+    margin-bottom: var(--space-2);
+  }
+  .tool-card__desc {
+    font-size: 0.8rem;
+    line-height: 1.38;
+  }
+}
+
+/* Seletor PDF/Imagem compacto: os botões mantêm aria-label, só o rótulo visual sai. */
+@media (max-width: 479px) {
+  .header-zone-toggle button > span {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   iLovePDF Ergonomics - Split, Compress & Merge Real Layouts
+   ========================================================================== */
+
+/* Split PDF Layout */
+.ilovepdf-split-container {
+  display: flex;
+  width: 100%;
+  min-height: 520px;
+  gap: 2rem;
+}
+
+.ilovepdf-split-preview-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  overflow-y: auto;
+}
+
+.ilovepdf-interval-cards-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.ilovepdf-interval-card {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.ilovepdf-interval-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.ilovepdf-interval-card-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.ilovepdf-interval-card-delete {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.ilovepdf-interval-card-delete:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.ilovepdf-interval-card-body {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ilovepdf-page-thumb-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ilovepdf-page-thumb-img {
+  width: 140px;
+  height: 190px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.ilovepdf-page-thumb-fallback {
+  width: 140px;
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.ilovepdf-page-number-tag {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-brand);
+}
+
+.ilovepdf-interval-dots {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 2px;
+}
+
+.ilovepdf-split-options-sidebar {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.ilovepdf-split-mode-tabs {
+  display: flex;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ilovepdf-split-tab {
+  flex: 1;
+  padding: 0.6rem;
+  background: #f8fafc;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ilovepdf-split-tab--active {
+  background: #ffffff;
+  color: var(--color-brand);
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 var(--color-brand);
+}
+
+.ilovepdf-control-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.ilovepdf-btn-toggle-group {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.ilovepdf-toggle-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+}
+
+.ilovepdf-toggle-btn--active {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  background: var(--color-brand-soft);
+}
+
+.ilovepdf-interval-input-row {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.ilovepdf-interval-row-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #475569;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.ilovepdf-range-input-fields {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.ilovepdf-range-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ilovepdf-range-field label {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.ilovepdf-range-field input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.ilovepdf-add-interval-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.6rem;
+  background: var(--color-surface, #ffffff);
+  border: 1px dashed var(--color-border, #cbd5e1);
+  color: var(--color-ink, #0f172a);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: all 0.15s ease;
+}
+
+.ilovepdf-add-interval-btn:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  background: var(--color-brand-soft);
+}
+
+.ilovepdf-add-interval-btn:hover {
+  background: var(--color-brand-soft);
+}
+
+.ilovepdf-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #475569;
+  cursor: pointer;
+  line-height: 1.35;
+}
+
+.ilovepdf-checkbox-label input {
+  margin-top: 2px;
+}
+
+/* Compress PDF Layout */
+.ilovepdf-compress-container {
+  display: flex;
+  width: 100%;
+  min-height: 520px;
+  gap: 2rem;
+}
+
+.ilovepdf-compress-preview-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+}
+
+.ilovepdf-file-card-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 220px;
+}
+
+.ilovepdf-file-thumb-wrapper {
+  position: relative;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.ilovepdf-file-thumb-img {
+  width: 180px;
+  height: 245px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+.ilovepdf-file-thumb-placeholder {
+  width: 180px;
+  height: 245px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #cbd5e1;
+}
+
+.ilovepdf-floating-add-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(229, 50, 45, 0.4);
+  transition: transform 0.15s ease;
+}
+
+.ilovepdf-floating-add-btn:hover {
+  transform: scale(1.1);
+}
+
+.ilovepdf-file-card-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: center;
+  word-break: break-all;
+  max-width: 100%;
+}
+
+.ilovepdf-file-card-size {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.ilovepdf-compress-options-sidebar {
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.ilovepdf-sidebar-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.ilovepdf-compress-levels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ilovepdf-level-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 1rem 1.1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.ilovepdf-level-card:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.ilovepdf-level-card--selected {
+  border-color: var(--color-brand);
+  background: var(--color-brand-soft);
+}
+
+.ilovepdf-level-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 0.2rem;
+}
+
+.ilovepdf-level-name {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--color-brand);
+  letter-spacing: -0.01em;
+}
+
+.ilovepdf-level-sub {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.ilovepdf-level-check {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Botão de Execução Principal Vermelho Estilo iLovePDF */
+.ilovepdf-action-red-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background-color: var(--color-brand);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgb(225 29 72 / 16%);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: auto;
+}
+
+.ilovepdf-action-red-btn:hover:not(:disabled) {
+  background-color: var(--color-brand-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgb(225 29 72 / 22%);
+}
+
+.ilovepdf-action-red-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}

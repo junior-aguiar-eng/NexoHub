@@ -1153,7 +1153,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                       <textarea
                         ref={inlineTextareaRef}
                         className="pdf-editor-inline-textarea"
-                        aria-label={t("textContent")}
+                        aria-label={t("inlineTextEditor")}
                         disabled={busy}
                         value={replacement.text}
                         style={{

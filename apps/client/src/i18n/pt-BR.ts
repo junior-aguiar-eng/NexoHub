@@ -262,6 +262,7 @@ export const ptBR = {
   "editor.emptySelection": "Selecione um elemento ou clique em um texto no modo de edição.",
   "editor.noText": "Esta página não tem objetos de texto editáveis. Você pode adicionar elementos.",
   "editor.textContent": "Conteúdo do texto",
+  "editor.inlineTextEditor": "Edição direta de texto na página",
   "editor.apply": "Aplicar alteração",
   "editor.originalFont": "Preservar fonte original",
   "editor.font": "Fonte",

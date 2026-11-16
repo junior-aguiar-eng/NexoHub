@@ -1,6 +1,4 @@
 import {
-  ArrowLeft,
-  ArrowRight,
   Camera,
   Filter,
   RefreshCw,
@@ -41,6 +39,7 @@ export function ScanToPdfPanel({
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [isCapturing, setIsCapturing] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const requestId = useRef(0);
   const mounted = useRef(true);
 
@@ -197,13 +196,28 @@ export function ScanToPdfPanel({
     onPagesChange(pages.filter((p) => p.id !== pageId));
   }
 
-  function handleMove(index: number, direction: "left" | "right") {
-    const targetIndex = direction === "left" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= pages.length) return;
+  function handleDragStart(e: React.DragEvent, index: number) {
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(index));
+    }
+    setDraggedIndex(index);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+  }
+
+  function handleDrop(targetIndex: number) {
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      return;
+    }
     const next = [...pages];
-    const [moved] = next.splice(index, 1);
+    const [moved] = next.splice(draggedIndex, 1);
     next.splice(targetIndex, 0, moved);
     onPagesChange(next);
+    setDraggedIndex(null);
   }
 
   return (
@@ -425,10 +439,16 @@ export function ScanToPdfPanel({
             <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-4">
               {pages.map((item, idx) => {
                 return (
+                  // biome-ignore lint/a11y/noStaticElementInteractions: card de arrastar e soltar para reordenação de páginas digitalizadas
                   <div
                     key={item.id}
                     data-testid={`scanned-item-${idx + 1}`}
-                    className="flex flex-col gap-3 p-3 rounded-2xl border border-border bg-surface shadow-xs"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, idx)}
+                    onDragOver={handleDragOver}
+                    onDrop={() => handleDrop(idx)}
+                    onDragEnd={() => setDraggedIndex(null)}
+                    className={`flex flex-col gap-3 p-3 rounded-2xl border border-border bg-surface shadow-xs cursor-grab active:cursor-grabbing transition-opacity ${draggedIndex === idx ? "opacity-50" : ""}`}
                   >
                     {/* Top Bar with Number and Actions */}
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -437,24 +457,6 @@ export function ScanToPdfPanel({
                       </span>
 
                       <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          disabled={idx === 0}
-                          onClick={() => handleMove(idx, "left")}
-                          aria-label={translate("scanToPdf.moveLeft")}
-                          className="w-6 h-6 rounded flex items-center justify-center text-text-tertiary hover:text-text-primary disabled:opacity-30"
-                        >
-                          <ArrowLeft className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={idx === pages.length - 1}
-                          onClick={() => handleMove(idx, "right")}
-                          aria-label={translate("scanToPdf.moveRight")}
-                          className="w-6 h-6 rounded flex items-center justify-center text-text-tertiary hover:text-text-primary disabled:opacity-30"
-                        >
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
                         <button
                           type="button"
                           onClick={() => handleRotatePage(item.id)}
@@ -479,6 +481,7 @@ export function ScanToPdfPanel({
                       <img
                         src={previewUrls.get(item.id)}
                         alt={`Página digitalizada ${idx + 1}`}
+                        draggable={false}
                         style={{
                           transform: `rotate(${item.rotation || 0}deg)`,
                         }}

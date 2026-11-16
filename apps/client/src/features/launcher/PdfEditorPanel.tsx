@@ -443,7 +443,18 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
     setDraftDirty(false);
     setShowProps(true);
     if (object.editable) {
-      requestAnimationFrame(() => inlineTextareaRef.current?.focus());
+      requestAnimationFrame(() => {
+        const inline = inlineTextareaRef.current;
+        const active = document.activeElement;
+        if (
+          active instanceof HTMLElement &&
+          active !== inline &&
+          active.matches("input,textarea,select")
+        ) {
+          return;
+        }
+        inline?.focus();
+      });
     }
   }
   async function commit(next: EditorHistory, targetPage = page, refreshThumbnails = false) {
@@ -1184,7 +1195,13 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
                             clearSelection();
                           }
                         }}
-                        onBlur={() => {
+                        onBlur={(event) => {
+                          if (
+                            event.relatedTarget instanceof HTMLElement &&
+                            event.relatedTarget.matches("input,textarea,select,button")
+                          ) {
+                            return;
+                          }
                           if (draftDirty && !replacementIssue && !busy) {
                             void apply();
                           }

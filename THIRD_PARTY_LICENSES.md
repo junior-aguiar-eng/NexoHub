@@ -567,7 +567,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | libdbus-sys | 0.2.7 | Apache-2.0/MIT |
 | Rust | libloading | 0.7.4 | ISC |
 | Rust | libredox | 0.1.21 | MIT |
-| Rust | libsqlite3-sys | 0.38.2 | MIT |
+| Rust | libsqlite3-sys | 0.39.1 | MIT |
 | Rust | linux-raw-sys | 0.12.1 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT |
 | Rust | litemap | 0.8.3 | Unicode-3.0 |
 | Rust | lock_api | 0.4.14 | MIT OR Apache-2.0 |
@@ -668,7 +668,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | reqwest | 0.13.4 | MIT OR Apache-2.0 |
 | Rust | rfd | 0.16.0 | MIT |
 | Rust | ring | 0.17.14 | Apache-2.0 AND ISC |
-| Rust | rusqlite | 0.40.2 | MIT |
+| Rust | rusqlite | 0.41.1 | MIT |
 | Rust | rustc_version | 0.4.1 | MIT OR Apache-2.0 |
 | Rust | rustc-hash | 2.1.3 | Apache-2.0 OR MIT |
 | Rust | rustix | 1.1.6 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT |

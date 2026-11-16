@@ -11,7 +11,7 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
   const documentCore = new BrowserDocumentCorePort();
   it("reparo recusa arquivo grande sem lê-lo para prévia ou execução", async () => {
     const file = new File(["x"], "grande.pdf", { type: "application/pdf" });
-    Object.defineProperty(file, "size", { value: 16 * 1024 * 1024 + 1 });
+    Object.defineProperty(file, "size", { value: 128 * 1024 * 1024 + 1 });
     const read = vi.spyOn(file, "arrayBuffer");
     const tool = launcherTools.find((tool) => tool.id === "pdf-repair");
     if (!tool) throw new Error("Ferramenta ausente");

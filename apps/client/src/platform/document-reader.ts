@@ -1,11 +1,25 @@
 import { readBrowserDocxText } from "./browser-docx";
 import { extractTextFromPdf } from "./pdf-engine";
 
+const MAX_DOCUMENT_FILE_BYTES = 128 * 1024 * 1024;
+const MAX_EXTRACTED_TEXT_CHARS = 2_000_000;
+
 /**
  * Lê o conteúdo em texto de um arquivo, detectando automaticamente se é um PDF
  * (executando extração de texto via PDF.js) ou arquivo textual comum (.txt, .md, .csv, etc.).
  */
 export async function readDocumentText(file: File): Promise<string> {
+  if (file.size > MAX_DOCUMENT_FILE_BYTES) {
+    throw new ToolRunError("INVALID_INPUT", translate("document.errorDocumentLimit"));
+  }
+  const text = await readRawDocumentText(file);
+  if (text.length > MAX_EXTRACTED_TEXT_CHARS) {
+    throw new ToolRunError("INVALID_INPUT", translate("document.errorDocumentLimit"));
+  }
+  return text;
+}
+
+async function readRawDocumentText(file: File): Promise<string> {
   if (
     file.name.toLowerCase().endsWith(".docx") ||
     file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"

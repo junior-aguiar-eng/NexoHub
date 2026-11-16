@@ -1,6 +1,6 @@
 import { Image as ImageIcon, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { translate } from "@/i18n";
+import { usePointerReorder } from "./usePointerReorder";
 
 const fileKeys = new WeakMap<File, string>();
 let nextFileKey = 0;
@@ -41,28 +41,9 @@ export function ImagesToPdfPanel({
   onReorderFiles,
   onAddMoreFiles,
 }: ImagesToPdfPanelProps) {
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-
-  function handleDragStart(e: React.DragEvent, index: number) {
-    if (e.dataTransfer) {
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", String(index));
-    }
-    setDraggedIndex(index);
-  }
-
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault();
-  }
-
-  function handleDrop(targetIndex: number) {
-    if (draggedIndex === null || draggedIndex === targetIndex) {
-      setDraggedIndex(null);
-      return;
-    }
-    onReorderFiles(draggedIndex, targetIndex);
-    setDraggedIndex(null);
-  }
+  const { draggedIndex, dragOverIndex, getItemProps } = usePointerReorder({
+    onReorder: onReorderFiles,
+  });
 
   function formatSize(bytes: number) {
     if (bytes < 1024) return `${bytes} B`;
@@ -77,16 +58,14 @@ export function ImagesToPdfPanel({
         <div className="ilovepdf-merge-cards-grid">
           {files.map((file, idx) => {
             const thumb = thumbnails.get(file);
+            const dragProps = getItemProps(idx);
+            const isDragging = draggedIndex === idx;
+            const isDragOver = dragOverIndex === idx && draggedIndex !== idx;
             return (
-              // biome-ignore lint/a11y/noStaticElementInteractions: card de arrastar e soltar para reordenação de imagens
               <div
                 key={getFileKey(file)}
-                className={`ilovepdf-merge-file-card${draggedIndex === idx ? " ilovepdf-merge-file-card--dragging" : ""}`}
-                draggable
-                onDragStart={(e) => handleDragStart(e, idx)}
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(idx)}
-                onDragEnd={() => setDraggedIndex(null)}
+                className={`ilovepdf-merge-file-card${isDragging ? " ilovepdf-merge-file-card--dragging" : ""}${isDragOver ? " ilovepdf-merge-file-card--drag-over" : ""}`}
+                {...dragProps}
               >
                 <div className="ilovepdf-merge-card-header">
                   <span className="ilovepdf-merge-card-badge">{idx + 1}</span>

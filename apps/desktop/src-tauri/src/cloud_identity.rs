@@ -55,8 +55,7 @@ pub async fn cloud_identity_sign_in(
     .await
     .map_err(|_| unavailable())?
 }
-#[tauri::command]
-pub async fn cloud_identity_get_token(app: tauri::AppHandle) -> Result<Option<String>, CoreError> {
+async fn load_or_refresh_token(app: tauri::AppHandle) -> Result<Option<String>, CoreError> {
     if !cloud_identity::IDENTITY_ENABLED {
         return Ok(None);
     }
@@ -122,7 +121,7 @@ pub async fn cloud_account_request(
     let token = if operation == "status" {
         None
     } else {
-        cloud_identity_get_token(app).await?
+        load_or_refresh_token(app).await?
     };
     tauri::async_runtime::spawn_blocking(move || {
         cloud_identity::account_request(&operation, token.as_deref())

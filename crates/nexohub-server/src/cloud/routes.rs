@@ -96,10 +96,18 @@ fn principal(
         .ok_or(CloudError::Unauthorized)?;
     s.verifier.authenticate(token, t)
 }
+fn require_cloud_enabled(s: &CloudIdentityServices) -> Result<(), CloudError> {
+    if !s.policy.cloud_enabled {
+        return Err(CloudError::Unavailable);
+    }
+    Ok(())
+}
+
 async fn status(State(runtime): State<Runtime>) -> Response {
+    let enabled = runtime.as_ref().is_some_and(|s| s.policy.cloud_enabled);
     (
         [(header::CACHE_CONTROL, "no-store")],
-        Json(json!({"enabled":false,"identityAvailable":runtime.is_some()})),
+        Json(json!({"enabled":enabled,"identityAvailable":runtime.is_some()})),
     )
         .into_response()
 }
@@ -187,6 +195,7 @@ async fn create_quote(
     body: axum::body::Bytes,
 ) -> Result<Response, CloudError> {
     let s = runtime(state, &headers)?;
+    require_cloud_enabled(&s)?;
     let request: QuoteRequest =
         serde_json::from_slice(&body).map_err(|_| CloudError::InvalidRequest)?;
     tokio::task::spawn_blocking(move || {
@@ -214,6 +223,7 @@ async fn authorize_upload(
 ) -> Result<Response, CloudError> {
     quote_id(&id)?;
     let s = runtime(state, &headers)?;
+    require_cloud_enabled(&s)?;
     let confirmation: Confirmation =
         serde_json::from_slice(&body).map_err(|_| CloudError::InvalidRequest)?;
     if !confirmation.confirmed {
@@ -241,6 +251,7 @@ async fn upload_input(
 ) -> Result<Response, CloudError> {
     quote_id(&id)?;
     let s = runtime(state, &headers)?;
+    require_cloud_enabled(&s)?;
     tokio::task::spawn_blocking(move || {
         let t = (s.clock)()?;
         let identity = principal(&s, &headers, t)?;
@@ -262,6 +273,7 @@ async fn inspect_input(
 ) -> Result<Response, CloudError> {
     quote_id(&id)?;
     let s = runtime(state, &headers)?;
+    require_cloud_enabled(&s)?;
     tokio::task::spawn_blocking(move || {
         let t = (s.clock)()?;
         let identity = principal(&s, &headers, t)?;
@@ -295,6 +307,7 @@ async fn create_job(
     body: axum::body::Bytes,
 ) -> Result<Response, CloudError> {
     let s = runtime(state, &headers)?;
+    require_cloud_enabled(&s)?;
     let request: JobRequest =
         serde_json::from_slice(&body).map_err(|_| CloudError::InvalidRequest)?;
     quote_id(&request.quote_id)?;
@@ -330,6 +343,7 @@ async fn job_status(
 ) -> Result<Response, CloudError> {
     job_id(&id)?;
     let s = runtime(state, &headers)?;
+    require_cloud_enabled(&s)?;
     tokio::task::spawn_blocking(move || {
         let t = (s.clock)()?;
         let identity = principal(&s, &headers, t)?;
@@ -351,6 +365,7 @@ async fn cancel_job(
 ) -> Result<Response, CloudError> {
     job_id(&id)?;
     let s = runtime(state, &headers)?;
+    require_cloud_enabled(&s)?;
     tokio::task::spawn_blocking(move || {
         let t = (s.clock)()?;
         let identity = principal(&s, &headers, t)?;

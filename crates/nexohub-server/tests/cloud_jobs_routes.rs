@@ -79,7 +79,8 @@ async fn call(
 fn quote_to_job_flow_reserves_once_and_cancel_releases() {
     let identity = common::identity();
     let store = Arc::new(common::store());
-    let policy = CloudPolicy::pilot().unwrap();
+    let mut policy = CloudPolicy::pilot().unwrap();
+    policy.cloud_enabled = true;
     let admission = AdmissionService::new(store.clone(), policy.clone());
     admission.invite(identity.email(), common::now()).unwrap();
     let prices = PriceBook::pilot().unwrap().verified_at(common::now());

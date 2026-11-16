@@ -24,7 +24,7 @@ export interface PdfComparePanelProps {
   readonly onBack: () => void;
   readonly initialFiles?: readonly File[];
 }
-const MAX_FILE_BYTES = 64 * 1024 * 1024;
+const MAX_FILE_BYTES = 128 * 1024 * 1024;
 const isPdf = (file: File) => /\.pdf$/i.test(file.name) || file.type === "application/pdf";
 const phaseKeys = {
   reading: "pdfCompare.reading",

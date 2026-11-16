@@ -3,6 +3,7 @@ import { type ChangeEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import { LazyPageThumbnail } from "./LazyPageThumbnail";
+import { usePointerReorder } from "./usePointerReorder";
 
 export type PdfPageItem = {
   id: string;
@@ -43,25 +44,16 @@ export function PdfPageGridPanel({
   onDeletePage,
 }: PdfPageGridPanelProps) {
   const [rangeInput, setRangeInput] = useState<string>("");
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-  // Arrastar e soltar nativo e responsivo
-  function handleDragStart(index: number) {
-    setDraggedIndex(index);
-  }
-
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault();
-  }
-
-  function handleDrop(targetIndex: number) {
-    if (draggedIndex === null || draggedIndex === targetIndex) return;
-    const newPages = [...pages];
-    const [moved] = newPages.splice(draggedIndex, 1);
-    newPages.splice(targetIndex, 0, moved);
-    onPagesChange?.(newPages);
-    setDraggedIndex(null);
-  }
+  const { draggedIndex, dragOverIndex, getItemProps } = usePointerReorder({
+    enabled: mode === "organize",
+    onReorder: (fromIndex, toIndex) => {
+      const newPages = [...pages];
+      const [moved] = newPages.splice(fromIndex, 1);
+      newPages.splice(toIndex, 0, moved);
+      onPagesChange?.(newPages);
+    },
+  });
 
   function handleRotate(index: number) {
     if (onRotatePage) {
@@ -253,15 +245,15 @@ export function PdfPageGridPanel({
             );
           }
 
+          const dragProps = getItemProps(index, !isDeleted);
+          const isDragging = draggedIndex === index;
+          const isDragOver = dragOverIndex === index && draggedIndex !== index;
+
           return (
-            // biome-ignore lint/a11y/noStaticElementInteractions: card de arrastar e soltar para reorganização de páginas
             <div
               key={page.id}
-              className={`pdf-page-card ${isDeleted ? "pdf-page-card--deleted" : ""}`}
-              draggable={!isDeleted}
-              onDragStart={() => handleDragStart(index)}
-              onDragOver={handleDragOver}
-              onDrop={() => handleDrop(index)}
+              className={`pdf-page-card ${isDeleted ? "pdf-page-card--deleted" : ""} ${isDragging ? "pdf-page-card--dragging" : ""} ${isDragOver ? "pdf-page-card--drag-over" : ""}`}
+              {...dragProps}
             >
               <div className="pdf-page-card-header">
                 <span className="pdf-page-badge">

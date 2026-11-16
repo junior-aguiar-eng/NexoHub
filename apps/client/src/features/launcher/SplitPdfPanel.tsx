@@ -1,6 +1,7 @@
 import { Check, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { translate } from "@/i18n";
+import { LazyPageThumbnail } from "./LazyPageThumbnail";
 
 export type SplitInterval = {
   id: string;
@@ -13,6 +14,8 @@ type SplitPdfPanelProps = {
   fileName: string;
   firstPageThumb?: string;
   lastPageThumb?: string;
+  pageThumbnails?: readonly string[];
+  onPreviewPageChange?: (page: number) => void;
   intervals: SplitInterval[];
   mergeIntervals: boolean;
   splitMode: "interval" | "pages";
@@ -27,6 +30,8 @@ export function SplitPdfPanel({
   totalPages,
   firstPageThumb,
   lastPageThumb,
+  pageThumbnails = [],
+  onPreviewPageChange,
   intervals,
   mergeIntervals,
   splitMode,
@@ -155,6 +160,7 @@ export function SplitPdfPanel({
             <div className="ilovepdf-pages-mini-grid">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
                 const isSelected = selectedPageNumbers.includes(pageNum);
+                const thumbSrc = pageThumbnails[pageNum - 1];
                 return (
                   <button
                     key={pageNum}
@@ -173,6 +179,15 @@ export function SplitPdfPanel({
                     <div className="ilovepdf-page-mini-header">
                       <span>Pág. {pageNum}</span>
                       {isSelected && <Check size={12} />}
+                    </div>
+                    <div className="ilovepdf-page-mini-thumb">
+                      <LazyPageThumbnail
+                        src={thumbSrc}
+                        pageNumber={pageNum}
+                        onRequest={onPreviewPageChange}
+                        alt={`Miniatura página ${pageNum}`}
+                        className="ilovepdf-page-mini-img"
+                      />
                     </div>
                   </button>
                 );

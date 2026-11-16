@@ -63,6 +63,18 @@ impl QuoteApi {
     pub fn max_upload(&self) -> u64 {
         self.max_upload
     }
+    fn purge_expired(&self, records: &mut HashMap<String, Record>, now: u64) {
+        let expired_ids: Vec<String> = records
+            .iter()
+            .filter(|(_, r)| r.quote.expires_at <= now)
+            .map(|(id, _)| id.clone())
+            .collect();
+        for id in expired_ids {
+            records.remove(&id);
+            let _ = self.storage.abandon(&id);
+        }
+    }
+
     fn with<T>(
         &self,
         owner: &str,
@@ -87,8 +99,8 @@ impl QuoteApi {
         let quote = self.service.quote(request, now)?;
         let id = uuid::Uuid::new_v4().simple().to_string();
         let mut records = self.records.lock().map_err(|_| CloudError::Unavailable)?;
-        // Orçamentos vencidos são descartados; limite evita crescimento sem fim.
-        records.retain(|_, r| r.quote.expires_at > now);
+        // Orçamentos vencidos são descartados junto com seus objetos em memória; limite evita crescimento sem fim.
+        self.purge_expired(&mut records, now);
         if records.len() >= 4096 {
             return Err(CloudError::Busy);
         }
@@ -104,29 +116,47 @@ impl QuoteApi {
     }
 
     pub fn authorize_upload(&self, owner: &str, id: &str, now: u64) -> Result<(), CloudError> {
-        self.with(owner, id, |r| {
-            if now >= r.quote.expires_at {
-                return Err(CloudError::QuoteExpired);
-            }
-            if r.stage != Stage::Quoted {
-                return Err(CloudError::Conflict);
-            }
-            r.stage = Stage::UploadAuthorized;
-            Ok(())
-        })
+        let mut records = self.records.lock().map_err(|_| CloudError::Unavailable)?;
+        let expired = records
+            .get(id)
+            .filter(|r| r.owner == owner)
+            .is_some_and(|r| now >= r.quote.expires_at);
+        self.purge_expired(&mut records, now);
+        if expired {
+            return Err(CloudError::QuoteExpired);
+        }
+        let r = records
+            .get_mut(id)
+            .filter(|r| r.owner == owner)
+            .ok_or(CloudError::InvalidRequest)?;
+        if r.stage != Stage::Quoted {
+            return Err(CloudError::Conflict);
+        }
+        r.stage = Stage::UploadAuthorized;
+        Ok(())
     }
 
     pub fn upload(&self, owner: &str, id: &str, body: &[u8], now: u64) -> Result<(), CloudError> {
-        let max = self.with(owner, id, |r| {
-            if now >= r.quote.expires_at {
+        let max = {
+            let mut records = self.records.lock().map_err(|_| CloudError::Unavailable)?;
+            let expired = records
+                .get(id)
+                .filter(|r| r.owner == owner)
+                .is_some_and(|r| now >= r.quote.expires_at);
+            self.purge_expired(&mut records, now);
+            if expired {
                 return Err(CloudError::QuoteExpired);
             }
+            let r = records
+                .get_mut(id)
+                .filter(|r| r.owner == owner)
+                .ok_or(CloudError::InvalidRequest)?;
             // Reenvio é permitido antes da inspeção; a geração muda e invalida inspeção anterior.
             if !matches!(r.stage, Stage::UploadAuthorized | Stage::Uploaded(_)) {
                 return Err(CloudError::Conflict);
             }
-            Ok(self.service.max_input_bytes(r.quote.tool))
-        })?;
+            self.service.max_input_bytes(r.quote.tool)
+        };
         let deadline = Instant::now() + Duration::from_secs(self.upload_seconds);
         let generation = self
             .storage
@@ -160,16 +190,27 @@ impl QuoteApi {
 
     /// Confirma o orçamento definitivo. Idempotente: repetir devolve os mesmos dados (mesma chave).
     pub fn confirm(&self, owner: &str, id: &str, now: u64) -> Result<Confirmed, CloudError> {
-        let (finalized, first) = self.with(owner, id, |r| match &r.stage {
-            Stage::Inspected(f) => {
-                if now >= r.quote.expires_at {
-                    return Err(CloudError::QuoteExpired);
-                }
-                Ok((f.clone(), true))
+        let (finalized, first) = {
+            let mut records = self.records.lock().map_err(|_| CloudError::Unavailable)?;
+            let expired = records
+                .get(id)
+                .filter(|r| r.owner == owner && matches!(r.stage, Stage::Inspected(_)))
+                .is_some_and(|r| now >= r.quote.expires_at);
+            if expired {
+                self.purge_expired(&mut records, now);
+                return Err(CloudError::QuoteExpired);
             }
-            Stage::Confirmed(f) => Ok((f.clone(), false)),
-            _ => Err(CloudError::Conflict),
-        })?;
+            self.purge_expired(&mut records, now);
+            let r = records
+                .get(id)
+                .filter(|r| r.owner == owner)
+                .ok_or(CloudError::InvalidRequest)?;
+            match &r.stage {
+                Stage::Inspected(f) => (f.clone(), true),
+                Stage::Confirmed(f) => (f.clone(), false),
+                _ => return Err(CloudError::Conflict),
+            }
+        };
         // O objeto precisa ser exatamente o inspecionado, mesmo se algo o trocou depois.
         self.storage
             .check_generation(id, finalized.object_generation)?;

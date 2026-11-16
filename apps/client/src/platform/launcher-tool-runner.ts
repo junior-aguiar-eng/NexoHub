@@ -378,7 +378,7 @@ async function executeTool(
       });
       if (
         entries.reduce((sum, entry) => sum + entry.data.byteLength, 0) + result.blob.size >
-        128 * 1024 * 1024
+        512 * 1024 * 1024
       )
         throw new Error("LOTE_IMAGEM_MUITO_GRANDE");
       imageResults.push(

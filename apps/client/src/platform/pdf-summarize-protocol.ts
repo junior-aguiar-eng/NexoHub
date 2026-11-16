@@ -15,7 +15,7 @@ export const SUMMARIZE_MODEL = {
 } as const;
 
 export const SUMMARIZE_LIMITS = {
-  maxInputBytes: 64 * 1024 * 1024, // 64 MB
+  maxInputBytes: 128 * 1024 * 1024, // 128 MB
   maxPages: 120,
   maxChunks: 18,
   chunkTargetChars: 3_600,

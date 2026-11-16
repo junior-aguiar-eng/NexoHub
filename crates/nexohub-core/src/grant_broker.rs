@@ -10,14 +10,45 @@ use std::sync::{LazyLock, RwLock};
 
 static GRANTED_PATHS: LazyLock<RwLock<HashSet<PathBuf>>> =
     LazyLock::new(|| RwLock::new(HashSet::new()));
+static GRANTED_SOURCE_FILES: LazyLock<RwLock<HashSet<PathBuf>>> =
+    LazyLock::new(|| RwLock::new(HashSet::new()));
 
 /// Registra um caminho como expressamente concedido pelo usuário.
 pub fn grant_path(path: impl AsRef<Path>) -> CoreResult<PathBuf> {
     let canonical = validate_path(path.as_ref())?;
-    let mut lock = GRANTED_PATHS
+    {
+        let mut lock = GRANTED_PATHS
+            .write()
+            .map_err(|_| CoreError::new(ErrorCode::StorageIo, "Falha no lock de concessões."))?;
+        lock.insert(canonical.clone());
+    }
+    if canonical.is_file()
+        && let Ok(mut file_lock) = GRANTED_SOURCE_FILES.write()
+    {
+        file_lock.insert(canonical.clone());
+    }
+    Ok(canonical)
+}
+
+/// Registra explicitamente um arquivo individual selecionado para leitura/importação.
+pub fn grant_source_file(path: impl AsRef<Path>) -> CoreResult<PathBuf> {
+    let canonical = validate_path(path.as_ref())?;
+    if !canonical.is_file() {
+        return Err(CoreError::new(
+            ErrorCode::InvalidArgument,
+            "O caminho selecionado não é um arquivo regular.",
+        ));
+    }
+    {
+        let mut lock = GRANTED_PATHS
+            .write()
+            .map_err(|_| CoreError::new(ErrorCode::StorageIo, "Falha no lock de concessões."))?;
+        lock.insert(canonical.clone());
+    }
+    let mut file_lock = GRANTED_SOURCE_FILES
         .write()
         .map_err(|_| CoreError::new(ErrorCode::StorageIo, "Falha no lock de concessões."))?;
-    lock.insert(canonical.clone());
+    file_lock.insert(canonical.clone());
     Ok(canonical)
 }
 
@@ -61,10 +92,43 @@ pub fn require_granted(path: impl AsRef<Path>) -> CoreResult<PathBuf> {
     }
 }
 
+/// Exige que o arquivo de origem tenha sido concedido diretamente (sem herança por pasta-pai).
+pub fn require_granted_source_file(path: impl AsRef<Path>) -> CoreResult<PathBuf> {
+    let canonical = validate_path(path.as_ref())?;
+    let granted = GRANTED_SOURCE_FILES
+        .read()
+        .is_ok_and(|lock| lock.contains(&canonical));
+    if granted {
+        Ok(canonical)
+    } else {
+        Err(CoreError::new(
+            ErrorCode::PermissionDenied,
+            format!(
+                "Acesso negado: o arquivo '{}' não foi selecionado diretamente pelo usuário.",
+                path.as_ref().display()
+            ),
+        ))
+    }
+}
+
+/// Revoga a concessão específica de um caminho/arquivo.
+pub fn revoke_path(path: impl AsRef<Path>) {
+    let target = validate_path(path.as_ref()).unwrap_or_else(|_| path.as_ref().to_path_buf());
+    if let Ok(mut lock) = GRANTED_PATHS.write() {
+        lock.remove(&target);
+    }
+    if let Ok(mut file_lock) = GRANTED_SOURCE_FILES.write() {
+        file_lock.remove(&target);
+    }
+}
+
 /// Revoga todas as concessões em memória (usado em testes e encerramentos).
 pub fn revoke_all() {
     if let Ok(mut lock) = GRANTED_PATHS.write() {
         lock.clear();
+    }
+    if let Ok(mut file_lock) = GRANTED_SOURCE_FILES.write() {
+        file_lock.clear();
     }
 }
 
@@ -259,5 +323,32 @@ mod tests {
         assert!(is_protected_system_directory(Path::new(
             "C:\\Windows\\System32"
         )));
+    }
+
+    #[test]
+    fn directory_grant_does_not_authorize_sibling_source_file_import() {
+        revoke_all();
+        let parent = std::env::temp_dir().join(format!("nexohub-parent-{}", Uuid::new_v4()));
+        let project_dir = parent.join("NexoHub.nexohub");
+        fs::create_dir_all(&project_dir).expect("project dir");
+        let sibling_file = parent.join("segredo.pdf");
+        fs::write(&sibling_file, b"%PDF-1.7").expect("sibling file");
+
+        grant_path(&project_dir).expect("grant project dir");
+        assert!(is_granted(&project_dir));
+        assert!(!is_granted(&sibling_file));
+        assert!(require_granted_source_file(&sibling_file).is_err());
+
+        // Mesmo se um diretório for concedido diretamente, não autoriza require_granted_source_file em filhos
+        grant_path(&parent).expect("grant parent");
+        assert!(require_granted_source_file(&sibling_file).is_err());
+
+        // Somente seleção direta do arquivo autoriza import
+        grant_source_file(&sibling_file).expect("grant source file");
+        assert!(require_granted_source_file(&sibling_file).is_ok());
+
+        revoke_path(&sibling_file);
+        assert!(require_granted_source_file(&sibling_file).is_err());
+        let _ = fs::remove_dir_all(&parent);
     }
 }

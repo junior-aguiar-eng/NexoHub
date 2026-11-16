@@ -1,7 +1,11 @@
 import { Code, FileCode, Globe, Layout, UploadCloud } from "lucide-react";
-import { type ChangeEvent, useDeferredValue, useMemo, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { translate } from "@/i18n";
 import { localHtmlPreview } from "@/platform/html-local-document";
+
+const HTML_PREVIEW_FAST_LIMIT = 200_000;
+const HTML_PREVIEW_DEBOUNCE_MS = 220;
+const MAX_HTML_FILE_BYTES = 16 * 1024 * 1024;
 
 export interface HtmlToPdfPanelProps {
   readonly fileName?: string;
@@ -68,10 +72,30 @@ export function HtmlToPdfPanel({
   margin,
   onMarginChange,
 }: HtmlToPdfPanelProps) {
-  const deferredHtmlContent = useDeferredValue(htmlContent);
+  const [debouncedHtml, setDebouncedHtml] = useState(htmlContent);
+  const [forceFullPreview, setForceFullPreview] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setForceFullPreview(false);
+    if (htmlContent.length <= 20_000) {
+      setDebouncedHtml(htmlContent);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setDebouncedHtml(htmlContent);
+    }, HTML_PREVIEW_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [htmlContent]);
+
+  const isTruncatedPreview = !forceFullPreview && debouncedHtml.length > HTML_PREVIEW_FAST_LIMIT;
+
   const previewSrcDoc = useMemo(() => {
+    const source = isTruncatedPreview
+      ? `${debouncedHtml.slice(0, HTML_PREVIEW_FAST_LIMIT)}\n<!-- prévia parcial -->`
+      : debouncedHtml;
     const raw =
-      deferredHtmlContent ||
+      source ||
       "<p style='color:#94a3b8;padding:20px;font-family:sans-serif;'>Nenhum código HTML para pré-visualizar.</p>";
     try {
       return localHtmlPreview(raw);
@@ -80,12 +104,18 @@ export function HtmlToPdfPanel({
         "<p style='color:#dc2626;padding:20px;font-family:sans-serif;'>Não foi possível gerar a pré-visualização deste código HTML.</p>",
       );
     }
-  }, [deferredHtmlContent]);
+  }, [debouncedHtml, isTruncatedPreview]);
   const [activeTab, setActiveTab] = useState<"code" | "upload">(htmlContent ? "code" : "upload");
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > MAX_HTML_FILE_BYTES) {
+        setFileError(translate("htmlToPdf.fileTooLarge"));
+        e.target.value = "";
+        return;
+      }
+      setFileError(null);
       onFileUpload(file);
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -100,6 +130,7 @@ export function HtmlToPdfPanel({
   }
 
   function handleLoadSample() {
+    setFileError(null);
     onHtmlContentChange(DEFAULT_SAMPLE_HTML);
     setActiveTab("code");
   }
@@ -221,6 +252,14 @@ export function HtmlToPdfPanel({
       <div data-workspace-part="document">
         {/* Editor & Preview Area */}
         <p className="text-sm text-text-secondary">{translate("htmlToPdf.layoutNotice")}</p>
+        {fileError && (
+          <div
+            role="alert"
+            className="mt-2 mb-3 rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
+          >
+            {fileError}
+          </div>
+        )}
         {activeTab === "upload" && !htmlContent ? (
           <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-border rounded-2xl bg-surface text-center hover:border-amber-500/50 transition-colors">
             <UploadCloud className="w-12 h-12 text-amber-500 mb-4" />
@@ -277,10 +316,22 @@ export function HtmlToPdfPanel({
 
             {/* Live Sandbox Preview */}
             <div className="flex flex-col gap-2">
-              <span className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
-                <Layout className="w-4 h-4 text-amber-500" />
-                {translate("htmlToPdf.preview")}
-              </span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
+                  <Layout className="w-4 h-4 text-amber-500" />
+                  {translate("htmlToPdf.preview")}
+                </span>
+                {isTruncatedPreview && (
+                  <button
+                    type="button"
+                    onClick={() => setForceFullPreview(true)}
+                    className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline"
+                  >
+                    Prévia rápida ({Math.round(HTML_PREVIEW_FAST_LIMIT / 1000)} mil chars) •
+                    Carregar tudo
+                  </button>
+                )}
+              </div>
               <div className="w-full h-96 rounded-2xl border border-border bg-white overflow-hidden shadow-xs">
                 <iframe
                   title="Pré-visualização HTML"

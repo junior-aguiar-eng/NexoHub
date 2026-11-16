@@ -147,7 +147,9 @@ export function createTauriCloudIdentity(invoke: Invoke): CloudIdentityPort {
     completeEmailLink: async () => {
       throw new CloudIdentityError("AUTH_INVALID_CALLBACK");
     },
-    getIdToken: () => safe<string | null>("cloud_identity_get_token"),
+    getIdToken: async () => {
+      throw new CloudIdentityError("AUTH_UNAVAILABLE");
+    },
     signOut: async () => {
       await safe("cloud_identity_sign_out");
     },

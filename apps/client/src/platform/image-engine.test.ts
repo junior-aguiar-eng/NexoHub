@@ -166,4 +166,31 @@ describe("image-engine", () => {
       resizeImage(testPngBytes, { mode: "percentage", percentage: Number.NaN }),
     ).rejects.toThrow("OPCOES_IMAGEM_INVALIDAS");
   });
+
+  it("rejeita JPEG com cabeçalho SOF superdimensionado antes de decodificar", async () => {
+    const decodeSpy = vi.fn(async () => ({ width: 1, height: 1, close: vi.fn() }));
+    vi.stubGlobal("createImageBitmap", decodeSpy);
+    const oversizedJpeg = new Uint8Array([
+      0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x00, 0x00, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x4e, 0x20,
+      0x4e, 0x20, 0x01, 0x01, 0x11, 0x00, 0xff, 0xd9,
+    ]);
+    await expect(
+      loadImageElement(new Blob([oversizedJpeg], { type: "image/jpeg" })),
+    ).rejects.toThrow("IMAGEM_MUITO_GRANDE");
+    expect(decodeSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejeita WebP VP8X com dimensões acima do limite antes de decodificar", async () => {
+    const decodeSpy = vi.fn(async () => ({ width: 1, height: 1, close: vi.fn() }));
+    vi.stubGlobal("createImageBitmap", decodeSpy);
+    // RIFF + size + WEBP + VP8X (chunk len = 10) + flags(4B) + width-1 (19999 = 0x004e1f) + height-1 (0)
+    const oversizedWebp = new Uint8Array([
+      0x52, 0x49, 0x46, 0x46, 0x1e, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38,
+      0x58, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1f, 0x4e, 0x00, 0x00, 0x00, 0x00,
+    ]);
+    await expect(
+      loadImageElement(new Blob([oversizedWebp], { type: "image/webp" })),
+    ).rejects.toThrow("IMAGEM_MUITO_GRANDE");
+    expect(decodeSpy).not.toHaveBeenCalled();
+  });
 });

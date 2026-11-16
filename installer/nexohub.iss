@@ -31,6 +31,7 @@ Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortugue
 [Tasks]
 Name: "desktopicon"; Description: "{cm:desktopIcon}"; Flags: unchecked
 Name: "languagetool"; Description: "{cm:reviewTask}"; Flags: unchecked
+Name: "officesuite"; Description: "{cm:officeTask}"; Flags: unchecked
 
 [Files]
 Source: "..\target\release\nexohub-desktop.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -72,19 +73,35 @@ var
   ExitCode: Integer;
   Parameters: String;
 begin
-  if (CurStep <> ssPostInstall) or not WizardIsTaskSelected('languagetool') then Exit;
-  WizardForm.StatusLabel.Caption := CustomMessage('reviewPreparing');
-  Parameters := ExpandConstant('-NoProfile -ExecutionPolicy Bypass -File "{app}\runtime\setup\install-languagetool.ps1" -InstallRoot "{app}\runtime\languagetool" -ManifestPath "{app}\runtime\setup\languagetool-community.json" -InventoryPath "{app}\runtime\setup\languagetool-jars.json" -JavaInventoryPath "{app}\runtime\setup\languagetool-java-files.json" -LogPath "{app}\runtime\setup\languagetool-install.log"');
-  if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Parameters,
-    '', SW_HIDE, ewWaitUntilTerminated, ExitCode) or (ExitCode <> 0) then
+  if CurStep <> ssPostInstall then Exit;
+
+  if WizardIsTaskSelected('languagetool') then
   begin
-    LanguageToolSetupFailed := True;
-    SuppressibleMsgBox(CustomMessage('reviewFailed'), mbError, MB_OK, IDOK);
+    WizardForm.StatusLabel.Caption := CustomMessage('reviewPreparing');
+    Parameters := ExpandConstant('-NoProfile -ExecutionPolicy Bypass -File "{app}\runtime\setup\install-languagetool.ps1" -InstallRoot "{app}\runtime\languagetool" -ManifestPath "{app}\runtime\setup\languagetool-community.json" -InventoryPath "{app}\runtime\setup\languagetool-jars.json" -JavaInventoryPath "{app}\runtime\setup\languagetool-java-files.json" -LogPath "{app}\runtime\setup\languagetool-install.log"');
+    if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Parameters,
+      '', SW_HIDE, ewWaitUntilTerminated, ExitCode) or (ExitCode <> 0) then
+    begin
+      LanguageToolSetupFailed := True;
+      SuppressibleMsgBox(CustomMessage('reviewFailed'), mbError, MB_OK, IDOK);
+    end;
+  end;
+
+  if WizardIsTaskSelected('officesuite') then
+  begin
+    WizardForm.StatusLabel.Caption := CustomMessage('officePreparing');
+    Parameters := 'install --id TheDocumentFoundation.LibreOffice -e --silent --accept-package-agreements --accept-source-agreements';
+    if not Exec('winget', Parameters, '', SW_HIDE, ewWaitUntilTerminated, ExitCode) or (ExitCode <> 0) then
+    begin
+      SuppressibleMsgBox(CustomMessage('officeFailed'), mbInformation, MB_OK, IDOK);
+    end;
   end;
 end;
 
 procedure CurPageChanged(CurPageID: Integer);
 begin
+  if CurPageID = wpSelectTasks then
+    WizardForm.SelectTasksLabel.Caption := CustomMessage('librariesNotice');
   if (CurPageID = wpFinished) and LanguageToolSetupFailed then
     WizardForm.FinishedLabel.Caption := CustomMessage('reviewFailed');
 end;

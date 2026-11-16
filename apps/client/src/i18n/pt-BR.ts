@@ -129,6 +129,14 @@ export const ptBR = {
     "Baixando e conferindo o revisor local. Este preparo pode levar alguns minutos.",
   "installer.reviewFailed":
     "O NexoHub foi instalado, mas o revisor local não pôde ser preparado. Execute o instalador novamente e selecione Instalar revisor local. Consulte runtime\\setup\\languagetool-install.log para identificar o erro.",
+  "installer.officeTask":
+    "Instalar Suíte Office local (LibreOffice ~280 MB; necessário para Word/Excel/PowerPoint para PDF)",
+  "installer.officePreparing":
+    "Baixando e instalando o motor Office local (LibreOffice). Isso pode levar alguns minutos.",
+  "installer.officeFailed":
+    "O NexoHub foi instalado, mas a Suíte Office não pôde ser instalada automaticamente. Você poderá instalá-la depois pelo painel Superpoderes no aplicativo.",
+  "installer.librariesNotice":
+    "AVISO: As ferramentas avançadas (Word/Excel/PowerPoint <-> PDF, Revisor Gramatical, Tradutor Privado, OCR e Resumo com IA) exigem bibliotecas adicionais e só funcionam após a instalação dos respectivos módulos. Você pode ativá-las agora ou depois em Superpoderes no NexoHub.",
   "workspace.review.setupRequired":
     "O revisor nativo está indisponível. Execute o instalador do NexoHub e selecione Instalar revisor local. Esse preparo requer internet; depois, a revisão funciona no seu computador.",
   "excel.pagesSelection": "Páginas para exportar",
@@ -320,8 +328,8 @@ export const ptBR = {
     "Selecione um elemento para mover. Use as propriedades para ajustes precisos.",
   "pdfCompare.reportAdded": "Texto inserido",
   "pdfCompare.reportRemoved": "Texto removido",
-  "pdfCompare.limits": "Até 40 páginas e 64 MiB por PDF.",
-  "pdfCompare.fileTooLarge": "O PDF excede o limite de 64 MiB.",
+  "pdfCompare.limits": "Até 40 páginas e 128 MiB por PDF.",
+  "pdfCompare.fileTooLarge": "O PDF excede o limite de 128 MiB.",
   "pdfCompare.geometryChanged": "O tamanho ou a orientação das páginas é diferente.",
   "pdfCompare.title": "Comparar PDF",
   "pdfCompare.subtitle": "Compare texto e aparência de dois PDFs no seu navegador.",
@@ -400,7 +408,7 @@ export const ptBR = {
   "pdfCompare.reportLimitations":
     "A correspondência de páginas é heurística. Confira mudanças de paginação e documentos digitalizados. O relatório JSON preserva os textos Unicode completos.",
   "pdfCompare.errorLimit":
-    "O limite é de 40 páginas e 64 MiB por PDF. A resolução e a memória da análise também são limitadas. Divida documentos grandes e tente novamente.",
+    "O limite é de 40 páginas e 128 MiB por PDF. A resolução e a memória da análise também são limitadas. Divida documentos grandes e tente novamente.",
   "pdfCompare.errorTextLimit":
     "O texto excede o limite desta comparação local. Divida os PDFs em partes menores e tente novamente.",
   "pdfCompare.errorInvalid": "Não foi possível ler os PDFs. Verifique se os arquivos são válidos.",
@@ -449,6 +457,8 @@ export const ptBR = {
     "Não foi possível ler o DOCX. Verifique se o documento é válido e não está protegido por senha.",
   "document.errorDocxLimit":
     "O DOCX excede o limite de tamanho permitido para leitura no navegador.",
+  "document.errorDocumentLimit":
+    "O documento excede o limite de tamanho permitido para leitura no navegador.",
   "app.skip": "Ir para o conteúdo",
   "app.status.offline": "100% Local • Offline • Seguro",
   "brand.tagline": "Ferramentas locais de PDF e documentos.",
@@ -1666,6 +1676,7 @@ export const ptBR = {
   "htmlToPdf.preview": "Pré-visualização do Documento",
   "htmlToPdf.confirmButton": "Converter HTML para PDF",
   "htmlToPdf.emptyHtml": "Insira ou carregue um conteúdo HTML válido para conversão.",
+  "htmlToPdf.fileTooLarge": "O arquivo HTML excede o limite de 16 MiB.",
 
   // DIGITALIZAR PARA PDF
   "scanToPdf.title": "Digitalizar para PDF",
@@ -1710,7 +1721,7 @@ export const ptBR = {
   "composition.export": "Exportar composição",
   "composition.quick": "Marca d’água rápida",
   "composition.hint":
-    "Adicione textos, formas e imagens. Ajuste pelas caixas de seleção ou pelos campos em pixels. A prévia é atualizada ao soltar. As mesmas posições se aplicam a todo o lote. Saída PNG; até 8 megapixels, 20 objetos e 16 MiB de imagens adicionadas.",
+    "Adicione textos, formas e imagens. Ajuste pelas caixas de seleção ou pelos campos em pixels. A prévia é atualizada ao soltar. As mesmas posições se aplicam a todo o lote. Saída PNG; até 8 megapixels, 20 objetos e 64 MiB de imagens adicionadas.",
   "composition.defaultText": "Seu texto",
   "composition.text": "Texto",
   "composition.rectangle": "Retângulo",
@@ -1724,7 +1735,7 @@ export const ptBR = {
   "composition.redo": "Refazer",
   "composition.assetPending": "Importando a imagem adicionada…",
   "composition.assetError":
-    "Não foi possível adicionar a imagem. Use JPG, PNG ou WebP estático, respeitando o limite de 16 MiB de imagens adicionadas.",
+    "Não foi possível adicionar a imagem. Use JPG, PNG ou WebP estático, respeitando o limite de 64 MiB de imagens adicionadas.",
   "composition.invalid":
     "A composição excede os limites ou contém objetos fora de uma das imagens do lote. Ajuste as posições e dimensões antes de continuar.",
   "composition.preview": "Prévia da composição",
@@ -1763,11 +1774,11 @@ export const ptBR = {
     "O recorte não cabe nestas imagens. Ajuste a área ou remova os itens:",
   "imageProcessing.cancel": "Cancelar processamento",
   "imageProcessing.limit":
-    "Use imagens JPG, PNG ou WebP estáticas, de até 24 megapixels e 64 MiB por arquivo. Lotes: até 20 imagens e 128 MiB.",
+    "Use imagens JPG, PNG ou WebP estáticas, de até 24 megapixels e 128 MiB por arquivo. Lotes: até 50 imagens e 512 MiB.",
   "imageProcessing.errorBatch":
     "Use até 20 imagens por lote, com no máximo 128 MiB de entrada e 128 MiB de saída.",
   "imageProcessing.errorLarge":
-    "A imagem excede 24 megapixels, 16.384 pixels por lado ou 64 MiB. Reduza as dimensões antes de continuar.",
+    "A imagem excede 24 megapixels, 16.384 pixels por lado ou 128 MiB. Reduza as dimensões antes de continuar.",
   "imageProcessing.errorFormat":
     "Este formato ou animação não é compatível. Use JPG, PNG ou WebP estático.",
   "imageProcessing.errorExport":
@@ -2007,7 +2018,7 @@ export const ptBR = {
     "O arquivo está criptografado. Use Desbloquear PDF antes de converter para PDF/A.",
   "pdfToPdfa.errorSigned":
     "O PDF possui assinatura digital. Marque a autorização para gerar uma cópia arquivável.",
-  "pdfToPdfa.errorLimit": "O arquivo excede o limite de processamento local (80 MB).",
+  "pdfToPdfa.errorLimit": "O arquivo excede o limite de processamento local (128 MB).",
   "pdfToPdfa.errorTimeout": "A conversão demorou mais que o permitido. Tente um arquivo menor.",
   "pdfToPdfa.errorInvalid": "Não foi possível ler este PDF como documento válido.",
   "pdfToPdfa.scopeNotice":
@@ -2048,7 +2059,7 @@ export const ptBR = {
     "O servidor de nuvem opcional não está habilitado ou autenticado neste ambiente. Utilize o NexoHub Desktop para conversão 100% offline.",
   "office.backToCatalog": "Voltar ao catálogo local",
   "office.scopeNotice":
-    "Conversão isolada em perfil temporário e arquivo original preservado intacto (limite de 64 MB).",
+    "Conversão isolada em perfil temporário e arquivo original preservado intacto (limite de 128 MB).",
 
   // RESUMIR PDF COM IA LOCAL (ADR-017)
   "tool.pdfSummarize.tagline":

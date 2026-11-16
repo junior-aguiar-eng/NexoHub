@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import io
+import math
 import zipfile
 from dataclasses import dataclass
 from typing import Any
@@ -19,6 +20,19 @@ MAX_INPUT_BYTES = env_limit(
     maximum=128 * 1024 * 1024,
 )
 MAX_EXTRACTED_IMAGES = 500
+MAX_PAGES = 500
+MAX_PIXELS_PER_PAGE = env_limit(
+    "NEXOHUB_IMAGE_EXTRACT_MAX_PIXELS_PER_PAGE",
+    50_000_000,
+    minimum=100_000,
+    maximum=100_000_000,
+)
+MAX_TOTAL_OUTPUT_BYTES = env_limit(
+    "NEXOHUB_IMAGE_EXTRACT_MAX_OUTPUT_BYTES",
+    64 * 1024 * 1024,
+    minimum=1024 * 1024,
+    maximum=128 * 1024 * 1024,
+)
 
 
 class ImageExtractionError(Exception):
@@ -73,8 +87,13 @@ def extract_images_from_pdf(pdf_bytes: bytes) -> ImageExtractionResult:
     except Exception as exc:
         raise ImageExtractionError(f"Não foi possível abrir o arquivo PDF: {exc}") from exc
 
+    if len(pdf) == 0 or len(pdf) > MAX_PAGES:
+        pdf.close()
+        raise ImageExtractionError(f"O PDF deve conter entre 1 e {MAX_PAGES} páginas.")
+
     extracted_images: list[ExtractedImage] = []
     zip_buffer = io.BytesIO()
+    accumulated_bytes = 0
 
     try:
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
@@ -86,6 +105,16 @@ def extract_images_from_pdf(pdf_bytes: bytes) -> ImageExtractionResult:
 
                 page = pdf[page_idx]
                 page_number = page_idx + 1
+                width, height = page.get_size()
+                if width <= 0 or height <= 0:
+                    raise ImageExtractionError(
+                        f"A página {page_number} possui dimensões inválidas para extração."
+                    )
+                rendered_pixels = math.ceil(width * 2.0) * math.ceil(height * 2.0)
+                if rendered_pixels > MAX_PIXELS_PER_PAGE:
+                    raise ImageExtractionError(
+                        f"A página {page_number} excede o limite de {MAX_PIXELS_PER_PAGE} pixels."
+                    )
 
                 # Tenta extrair objetos de imagem ou renderizar bitmap da página se contiver imagem
                 try:
@@ -96,6 +125,13 @@ def extract_images_from_pdf(pdf_bytes: bytes) -> ImageExtractionResult:
                     img_bytes_io = io.BytesIO()
                     pil_image.save(img_bytes_io, format="PNG", optimize=True)
                     raw_bytes = img_bytes_io.getvalue()
+
+                    accumulated_bytes += len(raw_bytes)
+                    if accumulated_bytes > MAX_TOTAL_OUTPUT_BYTES:
+                        raise ImageExtractionError(
+                            "O volume total de imagens extraídas excede o limite de saída "
+                            "permitido."
+                        )
 
                     image_counter += 1
                     img_name = f"pagina-{page_number:03d}-imagem-{image_counter:03d}.png"
@@ -111,6 +147,8 @@ def extract_images_from_pdf(pdf_bytes: bytes) -> ImageExtractionResult:
                         content_base64=base64.b64encode(raw_bytes).decode("ascii"),
                     )
                     extracted_images.append(extracted)
+                except ImageExtractionError:
+                    raise
                 except Exception as exc:
                     print(f"Aviso: falha ao extrair imagem da página {page_number}: {exc}")
 

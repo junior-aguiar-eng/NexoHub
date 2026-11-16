@@ -530,7 +530,7 @@ export function PdfEditorPanel({ documentCore, onBack, initialFiles = [] }: Prop
   }
   async function loadImage(next?: File) {
     if (!next) return;
-    if (!["image/png", "image/jpeg"].includes(next.type) || next.size > 10 * 1024 * 1024) {
+    if (!["image/png", "image/jpeg"].includes(next.type) || next.size > 32 * 1024 * 1024) {
       setError(t("imageError"));
       return;
     }

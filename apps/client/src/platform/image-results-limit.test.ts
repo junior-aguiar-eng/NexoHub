@@ -2,8 +2,8 @@ import { afterEach, expect, it, vi } from "vitest";
 import * as engine from "./image-engine";
 
 afterEach(() => vi.unstubAllGlobals());
-it("inspeciona saída gerada acima de 64 MiB sem ampliar o limite dos arquivos importados", async () => {
-  const bytes = new Uint8Array(65 * 1024 * 1024);
+it("inspeciona saída gerada acima de 128 MiB sem ampliar o limite dos arquivos importados", async () => {
+  const bytes = new Uint8Array(129 * 1024 * 1024);
   bytes.set([137, 80, 78, 71, 13, 10, 26, 10]);
   const view = new DataView(bytes.buffer);
   view.setUint32(8, 13);
@@ -21,7 +21,7 @@ it("inspeciona saída gerada acima de 64 MiB sem ampliar o limite dos arquivos i
   expect(result).toEqual({
     width: 1,
     height: 1,
-    sizeBytes: 65 * 1024 * 1024,
+    sizeBytes: 129 * 1024 * 1024,
     mimeType: "image/png",
   });
   expect(closed).toBe(1);

@@ -1121,7 +1121,24 @@ fn invalid_project_path() -> CoreError {
 }
 
 fn ensure_project_layout(root: &Path) -> CoreResult<()> {
-    ensure_real_directory(&root.join("blobs"), false)?;
+    let blobs_root = root.join("blobs");
+    ensure_real_directory(&blobs_root, false)?;
+    let staging = blobs_root.join(".staging");
+    if let Ok(meta) = fs::symlink_metadata(&staging)
+        && (is_link_or_reparse(&meta) || !meta.is_dir())
+    {
+        return Err(CoreError::corrupted_project());
+    }
+    if let Ok(entries) = fs::read_dir(&blobs_root) {
+        for entry in entries.flatten() {
+            let Ok(meta) = fs::symlink_metadata(entry.path()) else {
+                return Err(CoreError::corrupted_project());
+            };
+            if is_link_or_reparse(&meta) {
+                return Err(CoreError::corrupted_project());
+            }
+        }
+    }
     for name in ["cache", "previews", "exports"] {
         ensure_real_directory(&root.join(name), true)?;
     }
@@ -1156,20 +1173,28 @@ fn is_link_or_reparse(metadata: &fs::Metadata) -> bool {
 }
 
 fn recover_stale_staging(blobs_root: &Path) {
+    let Ok(blobs_meta) = fs::symlink_metadata(blobs_root) else {
+        return;
+    };
+    if is_link_or_reparse(&blobs_meta) || !blobs_meta.is_dir() {
+        return;
+    }
     let Ok(prefixes) = fs::read_dir(blobs_root) else {
         return;
     };
     for prefix in prefixes.flatten() {
-        let Ok(metadata) = prefix.metadata() else {
+        let prefix_path = prefix.path();
+        let Ok(metadata) = fs::symlink_metadata(&prefix_path) else {
             continue;
         };
-        if !metadata.is_dir() {
+        if is_link_or_reparse(&metadata) || !metadata.is_dir() {
             continue;
         }
-        let Ok(entries) = fs::read_dir(prefix.path()) else {
+        let Ok(entries) = fs::read_dir(&prefix_path) else {
             continue;
         };
         for entry in entries.flatten() {
+            let entry_path = entry.path();
             let name = entry.file_name();
             let Some(name) = name.to_str() else {
                 continue;
@@ -1177,14 +1202,19 @@ fn recover_stale_staging(blobs_root: &Path) {
             if !name.starts_with('.') || !name.ends_with(".tmp") {
                 continue;
             }
-            let is_stale = entry
-                .metadata()
+            let Ok(entry_meta) = fs::symlink_metadata(&entry_path) else {
+                continue;
+            };
+            if is_link_or_reparse(&entry_meta) || !entry_meta.is_file() {
+                continue;
+            }
+            let is_stale = entry_meta
+                .modified()
                 .ok()
-                .and_then(|metadata| metadata.modified().ok())
                 .and_then(|modified| modified.elapsed().ok())
                 .is_some_and(|age| age >= STALE_STAGING_AGE);
             if is_stale {
-                let _ = fs::remove_file(entry.path());
+                let _ = fs::remove_file(&entry_path);
             }
         }
     }

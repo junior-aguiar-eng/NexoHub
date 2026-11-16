@@ -1,7 +1,6 @@
 mod cloud_identity;
 use cloud_identity::{
-    cloud_account_request, cloud_identity_get_token, cloud_identity_profile,
-    cloud_identity_sign_in, cloud_identity_sign_out,
+    cloud_account_request, cloud_identity_profile, cloud_identity_sign_in, cloud_identity_sign_out,
 };
 use nexohub_core::CoreError;
 use nexohub_core::anchor_tools::{CreateAnchorRequest, ListAnchorsRequest};
@@ -92,7 +91,7 @@ async fn save_launcher_output(
     use tauri_plugin_dialog::DialogExt;
 
     let extension = validate_export_name(&request.file_name)?;
-    if request.bytes.is_empty() || request.bytes.len() > 64 * 1024 * 1024 {
+    if request.bytes.is_empty() || request.bytes.len() > 256 * 1024 * 1024 {
         return Err(CoreError::new(
             nexohub_core::ErrorCode::ResourceLimit,
             "O resultado excede o limite de exportação.",
@@ -321,6 +320,37 @@ struct PickDocumentFileResult {
     mime_type: String,
 }
 
+/// Restringe o diretório inicial do diálogo nativo a um caminho local já concedido,
+/// impedindo resolução prévia de UNC/SMB ou device paths pelo shell do sistema.
+fn safe_dialog_default_dir(raw: &str) -> Option<std::path::PathBuf> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty()
+        || trimmed.starts_with("\\\\")
+        || trimmed.starts_with("//")
+        || trimmed.contains("://")
+    {
+        return None;
+    }
+    let path = std::path::Path::new(trimmed);
+    if !nexohub_core::grant_broker::is_granted(path) {
+        return None;
+    }
+    let canonical = std::fs::canonicalize(path).ok()?;
+    let raw_canonical = canonical.to_string_lossy();
+    let normalized = raw_canonical
+        .strip_prefix(r"\\?\")
+        .unwrap_or(&raw_canonical);
+    if normalized.starts_with(r"\\") || normalized.starts_with(r"UNC\") {
+        return None;
+    }
+    let clean_path = std::path::PathBuf::from(normalized);
+    if clean_path.is_dir() {
+        Some(clean_path)
+    } else {
+        None
+    }
+}
+
 #[tauri::command]
 async fn pick_project_folder(
     app: tauri::AppHandle,
@@ -328,8 +358,10 @@ async fn pick_project_folder(
 ) -> Result<Option<PickProjectFolderResult>, CoreError> {
     use tauri_plugin_dialog::DialogExt;
     let mut builder = app.dialog().file();
-    if let Some(ref default) = request.default_path {
-        builder = builder.set_directory(default);
+    if let Some(ref default) = request.default_path
+        && let Some(safe_dir) = safe_dialog_default_dir(default)
+    {
+        builder = builder.set_directory(safe_dir);
     }
     let folder = builder.blocking_pick_folder();
     if let Some(path) = folder {
@@ -339,7 +371,14 @@ async fn pick_project_folder(
                 "Caminho inválido.",
             )
         })?;
-        let granted = nexohub_core::grant_broker::grant_path(path_buf)?;
+        // Concede somente a subpasta dedicada do projeto (.nexohub), nunca a pasta-pai inteira
+        let target_project_dir = if path_buf.extension().and_then(|e| e.to_str()) == Some("nexohub")
+        {
+            path_buf.to_path_buf()
+        } else {
+            path_buf.join("NexoHub.nexohub")
+        };
+        let granted = nexohub_core::grant_broker::grant_path(&target_project_dir)?;
         let name = granted
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
@@ -360,8 +399,10 @@ async fn pick_document_file(
 ) -> Result<Option<PickDocumentFileResult>, CoreError> {
     use tauri_plugin_dialog::DialogExt;
     let mut builder = app.dialog().file();
-    if let Some(ref default) = request.default_path {
-        builder = builder.set_directory(default);
+    if let Some(ref default) = request.default_path
+        && let Some(safe_dir) = safe_dialog_default_dir(default)
+    {
+        builder = builder.set_directory(safe_dir);
     }
     builder = builder.add_filter(
         "Documentos",
@@ -375,7 +416,7 @@ async fn pick_document_file(
                 "Caminho inválido.",
             )
         })?;
-        let granted = nexohub_core::grant_broker::grant_path(path_buf)?;
+        let granted = nexohub_core::grant_broker::grant_source_file(path_buf)?;
         let name = granted
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
@@ -538,7 +579,6 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             cloud_account_request,
             cloud_identity_sign_in,
-            cloud_identity_get_token,
             cloud_identity_profile,
             cloud_identity_sign_out,
             create_project,

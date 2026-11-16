@@ -40,6 +40,10 @@ export async function prepareInstaller(root) {
     "reviewTask",
     "reviewPreparing",
     "reviewFailed",
+    "officeTask",
+    "officePreparing",
+    "officeFailed",
+    "librariesNotice",
   ]) {
     const text = ptBR[`installer.${name}`].replaceAll("{downloadSize}", String(size));
     assert(!/[\r\n]/.test(text), "Mensagem do instalador deve ter uma linha");

@@ -23,6 +23,24 @@ export function setCachedDictionaryBuffers(
   cachedBuffers = buffers;
 }
 
+function mergeSortedSpans(spans: ReadonlyArray<{ start: number; end: number }>) {
+  if (spans.length === 0) return [];
+  const sorted = [...spans].sort((a, b) => a.start - b.start || a.end - b.end);
+  const merged: Array<{ start: number; end: number }> = [
+    { start: sorted[0].start, end: sorted[0].end },
+  ];
+  for (let i = 1; i < sorted.length; i++) {
+    const current = sorted[i];
+    const last = merged[merged.length - 1];
+    if (current.start <= last.end) {
+      if (current.end > last.end) last.end = current.end;
+    } else {
+      merged.push({ start: current.start, end: current.end });
+    }
+  }
+  return merged;
+}
+
 function matchCase(source: string, target: string): string {
   if (!source || !target) return target;
   if (source === source.toUpperCase()) return target.toUpperCase();
@@ -224,20 +242,41 @@ export async function performBrowserReview(options: {
 
   if (hunspell) {
     WORD_TOKEN_REGEX.lastIndex = 0;
-    const protectedSpans = [
-      ...text.matchAll(
-        /https?:\/\/[^\s]+|www\.[^\s]+|[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}|\{\{[^{}]*\}\}|\$\{[^{}]*\}/g,
-      ),
-    ].map((match) => ({ start: match.index, end: match.index + match[0].length }));
+    const protectedSpans = mergeSortedSpans(
+      [
+        ...text.matchAll(
+          /https?:\/\/[^\s]+|www\.[^\s]+|[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}|\{\{[^{}]*\}\}|\$\{[^{}]*\}/g,
+        ),
+      ].map((match) => ({ start: match.index, end: match.index + match[0].length })),
+    );
+    const mergedContextualSpans = mergeSortedSpans(
+      contextualFindings.map((cf) => ({ start: cf.start, end: cf.end })),
+    );
+    let protectedIdx = 0;
+    let contextualIdx = 0;
 
     for (const match of text.matchAll(WORD_TOKEN_REGEX)) {
       const word = match[0];
       const start = match.index;
       const end = start + word.length;
-      if (protectedSpans.some((span) => start < span.end && end > span.start)) continue;
+      while (protectedIdx < protectedSpans.length && protectedSpans[protectedIdx].end <= start) {
+        protectedIdx += 1;
+      }
+      if (protectedIdx < protectedSpans.length && protectedSpans[protectedIdx].start < end) {
+        continue;
+      }
 
       // Se houver achado contextual que já cobre essa posição, ignora
-      if (contextualFindings.some((cf) => start < cf.end && end > cf.start)) {
+      while (
+        contextualIdx < mergedContextualSpans.length &&
+        mergedContextualSpans[contextualIdx].end <= start
+      ) {
+        contextualIdx += 1;
+      }
+      if (
+        contextualIdx < mergedContextualSpans.length &&
+        mergedContextualSpans[contextualIdx].start < end
+      ) {
         continue;
       }
 

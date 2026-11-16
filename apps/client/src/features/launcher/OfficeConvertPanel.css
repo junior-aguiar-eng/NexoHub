@@ -170,3 +170,43 @@
   min-width: 0;
   flex-wrap: wrap;
 }
+
+.office-workspace .tool-workspace-header {
+  justify-content: space-between;
+}
+
+.office-workspace .dedicated-tool-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.office-workspace .tool-workspace-actions {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+}
+
+.office-workspace .tool-workspace-actions :is(button, a) {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin-top: 0;
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 1.25;
+  white-space: normal;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.office-workspace .tool-workspace-actions svg {
+  flex-shrink: 0;
+}

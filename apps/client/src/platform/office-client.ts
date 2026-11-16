@@ -2,7 +2,7 @@ import type { OfficeConversionKind } from "@nexohub/contracts";
 import { ToolRunError } from "@nexohub/tool-sdk";
 import type { DocumentCorePort } from "./document-core";
 
-export const OFFICE_MAX_INPUT_BYTES = 64 * 1024 * 1024;
+export const OFFICE_MAX_INPUT_BYTES = 128 * 1024 * 1024;
 
 export interface OfficeToolMetadata {
   readonly id: OfficeConversionKind;
@@ -77,7 +77,7 @@ export function validateOfficeInputFile(kind: OfficeConversionKind, file: File):
   if (file.size > OFFICE_MAX_INPUT_BYTES) {
     throw new ToolRunError(
       "INVALID_INPUT",
-      "O arquivo ultrapassa o limite de 64 MB para conversão Office.",
+      "O arquivo ultrapassa o limite de 128 MB para conversão Office.",
     );
   }
   const meta = OFFICE_TOOL_METADATA[kind];

@@ -15,6 +15,8 @@ pub trait ObjectBackend: Send + Sync {
     fn delete(&self, name: &str) -> Result<(), CloudError>;
 }
 
+const MAX_MEMORY_OBJECTS_BYTES: usize = 256 * 1024 * 1024;
+
 type Objects = HashMap<String, (u64, Vec<u8>)>;
 
 #[derive(Default)]
@@ -24,6 +26,14 @@ pub struct MemoryObjects {
 impl ObjectBackend for MemoryObjects {
     fn put(&self, name: &str, bytes: Vec<u8>) -> Result<u64, CloudError> {
         let mut g = self.inner.lock().map_err(|_| CloudError::Unavailable)?;
+        let current_other_bytes: usize =
+            g.1.iter()
+                .filter(|(k, _)| k.as_str() != name)
+                .map(|(_, (_, v))| v.len())
+                .sum();
+        if current_other_bytes.saturating_add(bytes.len()) > MAX_MEMORY_OBJECTS_BYTES {
+            return Err(CloudError::Busy);
+        }
         g.0 += 1;
         let generation = g.0;
         g.1.insert(name.into(), (generation, bytes));

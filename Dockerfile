@@ -44,7 +44,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copia binário oficial do uv para gerenciar hermeticamente o runtime Python
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.6.6 /uv /bin/uv
 
 # Cria usuário não-root por segurança
 RUN useradd -m -u 1000 -s /bin/bash appuser

@@ -137,7 +137,7 @@ describe("ScanToPdfPanel", () => {
 
     const first = screen.getByTestId("scanned-item-1");
     const second = screen.getByTestId("scanned-item-2");
-    expect(first).toHaveAttribute("draggable", "true");
+    expect(first).toHaveAttribute("data-reorder-index", "0");
 
     fireEvent.dragStart(first);
     fireEvent.dragOver(second);

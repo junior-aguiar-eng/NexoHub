@@ -159,7 +159,7 @@ export function createCloudProcessing(
         });
         if (!response.ok) return false;
         const data = (await response.json()) as { enabled?: boolean; identityAvailable?: boolean };
-        return data.identityAvailable === true;
+        return data.enabled === true && data.identityAvailable === true;
       } catch {
         return false;
       }

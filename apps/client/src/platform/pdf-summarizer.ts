@@ -64,6 +64,7 @@ export interface SummarizePdfOptions {
   extractPages?: (
     pdfBytes: Uint8Array,
     signal?: AbortSignal,
+    limits?: { maxPages?: number; maxTotalChars?: number },
   ) => Promise<{ pageCount: number; pages: PdfExtractedPage[] }>;
   hardwareProbe?: () => Promise<SummarizeHardwareProfile>;
   workerFactory?: () => SummarizeWorkerLike;
@@ -473,14 +474,16 @@ export async function summarizePdfDocument(
   if (options.pdfBytes.byteLength > SUMMARIZE_LIMITS.maxInputBytes) {
     throw new PdfSummarizeError(
       "SUMMARIZE_INPUT_TOO_LARGE",
-      "O PDF excede o limite de 64 MB para resumo local no navegador.",
+      "O PDF excede o limite de 128 MB para resumo local no navegador.",
     );
   }
 
   options.onProgress?.({ phase: "extracting", progress: 4 });
 
   const extractor = options.extractPages ?? extractPdfPagesText;
-  const extracted = await extractor(options.pdfBytes, options.signal);
+  const extracted = await extractor(options.pdfBytes, options.signal, {
+    maxPages: SUMMARIZE_LIMITS.maxPages,
+  });
 
   if (options.signal?.aborted) {
     throw new PdfSummarizeError("SUMMARIZE_CANCELLED", "Resumo cancelado pelo usuário.");

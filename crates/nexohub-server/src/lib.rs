@@ -33,6 +33,23 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sessions::{SESSION_HEADER, Sessions};
 use std::path::PathBuf;
+use std::sync::LazyLock;
+use tokio::sync::Semaphore;
+
+static HEAVY_OP_SEMAPHORE: LazyLock<Semaphore> = LazyLock::new(|| Semaphore::new(4));
+
+struct TempGrantGuard(Vec<PathBuf>);
+impl Drop for TempGrantGuard {
+    fn drop(&mut self) {
+        for path in &self.0 {
+            nexohub_core::grant_broker::revoke_path(path);
+        }
+    }
+}
+
+fn legacy_api_disabled() -> bool {
+    std::env::var("NEXOHUB_DISABLE_LEGACY_API").as_deref() == Ok("true")
+}
 use tower_http::{
     cors::{Any, CorsLayer},
     services::{ServeDir, ServeFile},
@@ -71,6 +88,13 @@ async fn invoke_handler(
     AxumPath(command): AxumPath<String>,
     Json(payload): Json<Value>,
 ) -> Result<Response, ApiError> {
+    if legacy_api_disabled() {
+        return Err(CoreError::new(
+            ErrorCode::PermissionDenied,
+            "API documental legada desativada neste ambiente.",
+        )
+        .into());
+    }
     let payload = payload.get("request").cloned().unwrap_or(payload);
     if command == "pick_project_folder" {
         let (token, session) = run_blocking(move || sessions.allocate()).await?;
@@ -108,6 +132,16 @@ async fn invoke_handler(
         Some(run_blocking(move || sessions.authorize(&token, &path)).await?)
     } else {
         None
+    };
+    let _permit = if matches!(command.as_str(), "health" | "list_translation_models") {
+        None
+    } else {
+        Some(HEAVY_OP_SEMAPHORE.try_acquire().map_err(|_| {
+            CoreError::new(
+                ErrorCode::ResourceLimit,
+                "Servidor ocupado processando outras operações documentais.",
+            )
+        })?)
     };
     dispatch_command(command, payload)
         .await
@@ -296,11 +330,24 @@ pub struct StatelessCompressPdfOutput {
 pub async fn stateless_compress_handler(
     Json(input): Json<StatelessCompressPdfInput>,
 ) -> Result<Json<StatelessCompressPdfOutput>, ApiError> {
+    if legacy_api_disabled() {
+        return Err(CoreError::new(
+            ErrorCode::PermissionDenied,
+            "API documental legada desativada neste ambiente.",
+        )
+        .into());
+    }
     if input.bytes.is_empty() {
         return Err(
             CoreError::new(ErrorCode::InvalidArgument, "Bytes do PDF não informados.").into(),
         );
     }
+    let _permit = HEAVY_OP_SEMAPHORE.try_acquire().map_err(|_| {
+        CoreError::new(
+            ErrorCode::ResourceLimit,
+            "Servidor ocupado processando outras operações documentais.",
+        )
+    })?;
 
     run_blocking(move || {
         let temp_dir = tempfile::Builder::new()
@@ -310,8 +357,10 @@ pub async fn stateless_compress_handler(
                 CoreError::new(ErrorCode::StorageIo, "Falha ao criar diretório temporário.")
             })?;
         let project_path = temp_dir.path().join("sessao.nexohub");
-        let _ = nexohub_core::grant_broker::grant_path(temp_dir.path())?;
-        let _ = nexohub_core::grant_broker::grant_path(&project_path)?;
+        let _grants = TempGrantGuard(vec![
+            nexohub_core::grant_broker::grant_path(temp_dir.path())?,
+            nexohub_core::grant_broker::grant_path(&project_path)?,
+        ]);
         let project_str = project_path.to_string_lossy().to_string();
 
         create_project(CreateProjectRequest {
@@ -368,6 +417,13 @@ pub struct StatelessOcrOutput {
 pub async fn stateless_ocr_handler(
     Json(input): Json<StatelessOcrInput>,
 ) -> Result<Json<StatelessOcrOutput>, ApiError> {
+    if legacy_api_disabled() {
+        return Err(CoreError::new(
+            ErrorCode::PermissionDenied,
+            "API documental legada desativada neste ambiente.",
+        )
+        .into());
+    }
     if input.bytes.is_empty() {
         return Err(CoreError::new(
             ErrorCode::InvalidArgument,
@@ -375,6 +431,12 @@ pub async fn stateless_ocr_handler(
         )
         .into());
     }
+    let _permit = HEAVY_OP_SEMAPHORE.try_acquire().map_err(|_| {
+        CoreError::new(
+            ErrorCode::ResourceLimit,
+            "Servidor ocupado processando outras operações documentais.",
+        )
+    })?;
 
     run_blocking(move || {
         let temp_dir = tempfile::Builder::new()
@@ -384,8 +446,10 @@ pub async fn stateless_ocr_handler(
                 CoreError::new(ErrorCode::StorageIo, "Falha ao criar diretório temporário.")
             })?;
         let project_path = temp_dir.path().join("sessao.nexohub");
-        let _ = nexohub_core::grant_broker::grant_path(temp_dir.path())?;
-        let _ = nexohub_core::grant_broker::grant_path(&project_path)?;
+        let _grants = TempGrantGuard(vec![
+            nexohub_core::grant_broker::grant_path(temp_dir.path())?,
+            nexohub_core::grant_broker::grant_path(&project_path)?,
+        ]);
         let project_str = project_path.to_string_lossy().to_string();
 
         create_project(CreateProjectRequest {

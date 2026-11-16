@@ -93,7 +93,7 @@ pub fn open_project(request: OpenProjectRequest) -> CoreResult<Project> {
 
 pub fn import_document(request: ImportDocumentRequest) -> CoreResult<ImportedDocument> {
     let project_path = crate::grant_broker::require_granted(&request.project_path)?;
-    let source_path = crate::grant_broker::require_granted(&request.source_path)?;
+    let source_path = crate::grant_broker::require_granted_source_file(&request.source_path)?;
     ProjectStore::open(project_path)?.import_document(
         source_path,
         request.title.as_deref(),
@@ -102,10 +102,10 @@ pub fn import_document(request: ImportDocumentRequest) -> CoreResult<ImportedDoc
 }
 
 pub fn import_document_bytes(request: ImportDocumentBytesRequest) -> CoreResult<ImportedDocument> {
-    if request.bytes.len() > 64 * 1024 * 1024 {
+    if request.bytes.len() > 256 * 1024 * 1024 {
         return Err(CoreError::new(
             ErrorCode::ResourceLimit,
-            "O arquivo excede 64 MiB para importação pela interface.",
+            "O arquivo excede 256 MiB para importação pela interface.",
         ));
     }
     let project_path = crate::grant_broker::require_granted(&request.project_path)?;
@@ -119,20 +119,20 @@ pub fn import_document_bytes(request: ImportDocumentBytesRequest) -> CoreResult<
 pub fn read_artifact_bytes(request: ReadArtifactBytesRequest) -> CoreResult<Vec<u8>> {
     let project_path = crate::grant_broker::require_granted(&request.project_path)?;
     let store = ProjectStore::open(project_path)?;
-    if store.get_artifact(&request.artifact_id)?.size > 64 * 1024 * 1024 {
+    if store.get_artifact(&request.artifact_id)?.size > 256 * 1024 * 1024 {
         return Err(CoreError::new(
             ErrorCode::ResourceLimit,
-            "O artifact excede 64 MiB para download pela interface.",
+            "O artifact excede 256 MiB para download pela interface.",
         ));
     }
     store.read_artifact_bytes(&request.artifact_id)
 }
 
 pub fn record_launcher_result(request: RecordLauncherResultRequest) -> CoreResult<PdfToolResult> {
-    if request.bytes.is_empty() || request.bytes.len() > 64 * 1024 * 1024 {
+    if request.bytes.is_empty() || request.bytes.len() > 256 * 1024 * 1024 {
         return Err(CoreError::new(
             ErrorCode::ResourceLimit,
-            "O resultado deve conter entre 1 byte e 64 MiB.",
+            "O resultado deve conter entre 1 byte e 256 MiB.",
         ));
     }
     let valid_type = match request.tool_id.as_str() {

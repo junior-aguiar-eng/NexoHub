@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 pub(crate) const SESSION_HEADER: &str = "x-nexohub-session";
 const SESSION_IDLE_LIMIT: Duration = Duration::from_secs(1800);
+const MAX_ACTIVE_SESSIONS: usize = 128;
 
 #[derive(Clone, Default)]
 pub(crate) struct Sessions {
@@ -27,6 +28,12 @@ pub(crate) struct Session {
     // O diretório permanece vivo durante requisições em andamento, mesmo após expiração.
     _directory: TempDir,
     pub(crate) project_path: PathBuf,
+}
+
+impl Drop for Session {
+    fn drop(&mut self) {
+        nexohub_core::grant_broker::revoke_path(&self.project_path);
+    }
 }
 
 fn storage_error() -> CoreError {
@@ -45,6 +52,16 @@ fn denied() -> CoreError {
 
 impl Sessions {
     pub(crate) fn allocate(&self) -> Result<(String, Arc<Session>), CoreError> {
+        {
+            let mut entries = self.entries.lock().map_err(|_| storage_error())?;
+            entries.retain(|_, entry| entry.last_used.elapsed() < SESSION_IDLE_LIMIT);
+            if entries.len() >= MAX_ACTIVE_SESSIONS {
+                return Err(CoreError::new(
+                    ErrorCode::ResourceLimit,
+                    "Limite de sessões simultâneas atingido.",
+                ));
+            }
+        }
         let root = std::env::temp_dir().join("nexohub-sessions");
         std::fs::create_dir_all(&root).map_err(|_| storage_error())?;
         let directory = tempfile::Builder::new()
@@ -63,6 +80,12 @@ impl Sessions {
         let token = format!("{}{}", Uuid::new_v4().simple(), Uuid::new_v4().simple());
         let mut entries = self.entries.lock().map_err(|_| storage_error())?;
         entries.retain(|_, entry| entry.last_used.elapsed() < SESSION_IDLE_LIMIT);
+        if entries.len() >= MAX_ACTIVE_SESSIONS {
+            return Err(CoreError::new(
+                ErrorCode::ResourceLimit,
+                "Limite de sessões simultâneas atingido.",
+            ));
+        }
         entries.insert(
             token.clone(),
             Entry {

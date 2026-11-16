@@ -153,6 +153,9 @@ mod tests {
             valid.invoke("job-1", CloudTool::TranslateText),
             Err(ProviderError::Rejected)
         );
-        assert_eq!(valid.invoke("   ", CloudTool::OfficeToPdf), Err(ProviderError::Rejected));
+        assert_eq!(
+            valid.invoke("   ", CloudTool::OfficeToPdf),
+            Err(ProviderError::Rejected)
+        );
     }
 }

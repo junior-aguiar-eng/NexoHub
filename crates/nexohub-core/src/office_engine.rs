@@ -120,9 +120,9 @@ pub fn inspect_zip_container_safety(bytes: &[u8]) -> CoreResult<(usize, u64)> {
             "Número de entradas internas do arquivo Office fora do limite permitido.",
         ));
     }
-    let cd_end = cd_offset.checked_add(cd_size).ok_or_else(|| {
-        CoreError::new(ErrorCode::InvalidArgument, "Diretório ZIP inválido.")
-    })?;
+    let cd_end = cd_offset
+        .checked_add(cd_size)
+        .ok_or_else(|| CoreError::new(ErrorCode::InvalidArgument, "Diretório ZIP inválido."))?;
     if cd_end > eocd_pos {
         return Err(CoreError::new(
             ErrorCode::InvalidArgument,
@@ -196,7 +196,9 @@ pub fn inspect_zip_container_safety(bytes: &[u8]) -> CoreResult<(usize, u64)> {
 fn sanitize_extension(file_name: &str) -> CoreResult<String> {
     if file_name.is_empty()
         || file_name.len() > 220
-        || file_name.chars().any(|c| c == '/' || c == '\\' || c == '\0')
+        || file_name
+            .chars()
+            .any(|c| c == '/' || c == '\\' || c == '\0')
     {
         return Err(CoreError::new(
             ErrorCode::InvalidArgument,
@@ -410,7 +412,9 @@ pub fn convert_office_bytes(request: &ConvertOfficeRequest) -> CoreResult<Conver
         )
     })?;
 
-    if target_ext == "pdf" && (!out_bytes.starts_with(b"%PDF-") || lopdf::Document::load_mem(&out_bytes).is_err()) {
+    if target_ext == "pdf"
+        && (!out_bytes.starts_with(b"%PDF-") || lopdf::Document::load_mem(&out_bytes).is_err())
+    {
         return Err(CoreError::new(
             ErrorCode::PdfProcessing,
             "O PDF gerado pela conversão Office falhou na validação estrutural.",
@@ -503,22 +507,34 @@ mod tests {
     #[test]
     fn accepts_clean_docx_and_rejects_zip_bomb_or_traversal() {
         let valid_docx = build_synthetic_zip("word/document.xml", b"<w:document/>");
-        assert!(preflight_office_input(OfficeConversionKind::WordToPdf, "contrato.docx", &valid_docx).is_ok());
+        assert!(
+            preflight_office_input(
+                OfficeConversionKind::WordToPdf,
+                "contrato.docx",
+                &valid_docx
+            )
+            .is_ok()
+        );
 
         let traversal = build_synthetic_zip("../../Windows/System32/evil.dll", b"boom");
-        let err = preflight_office_input(OfficeConversionKind::WordToPdf, "evil.docx", &traversal).unwrap_err();
+        let err = preflight_office_input(OfficeConversionKind::WordToPdf, "evil.docx", &traversal)
+            .unwrap_err();
         assert_eq!(err.code, ErrorCode::PermissionDenied);
 
         let giant_payload = vec![b'A'; 400_000];
         let zip_bomb = build_synthetic_zip("word/media/huge.xml", &giant_payload);
-        let bomb_err = preflight_office_input(OfficeConversionKind::WordToPdf, "bomb.docx", &zip_bomb).unwrap_err();
+        let bomb_err =
+            preflight_office_input(OfficeConversionKind::WordToPdf, "bomb.docx", &zip_bomb)
+                .unwrap_err();
         assert_eq!(bomb_err.code, ErrorCode::ResourceLimit);
     }
 
     #[test]
     fn refuses_mismatched_extension_or_missing_runtime() {
         let zip_bytes = build_synthetic_zip("word/document.xml", b"<w:document/>");
-        let mismatch = preflight_office_input(OfficeConversionKind::ExcelToPdf, "errado.docx", &zip_bytes).unwrap_err();
+        let mismatch =
+            preflight_office_input(OfficeConversionKind::ExcelToPdf, "errado.docx", &zip_bytes)
+                .unwrap_err();
         assert_eq!(mismatch.code, ErrorCode::InvalidArgument);
 
         let res = convert_office_bytes(&ConvertOfficeRequest {

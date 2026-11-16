@@ -603,7 +603,7 @@
         {
           "path": "apps/client/e2e/pdf-raster-quality.spec.ts",
           "kind": "generator",
-          "sha256": "7b0d58496dfc6f721c629be3ee809f0e378d01004c7df9894e69c7bc3331c61f"
+          "sha256": "e31a15b8ad47f45f1e527729b4b927ea1890cfcd1ff60f45d3f6c8064ca7b0c7"
         },
         {
           "path": "apps/client/src/platform/pdf-image-extraction.test.ts",
@@ -719,12 +719,12 @@
         {
           "path": "apps/client/e2e/compression-scan-quality.spec.ts",
           "kind": "generator",
-          "sha256": "86ebe5814522135769027bf5da8799b1bd9c1efa3fa47a7ba937b58cd5779f2d"
+          "sha256": "c71a206773fb4485262082d533d2f04888723edb6524590686712bd7d83bbd28"
         },
         {
           "path": "apps/client/e2e/scan-interface-quality.spec.ts",
           "kind": "generator",
-          "sha256": "ebc1c6b854f2669e8ca52c311956af66447e1d022c59141977aacd7b93a8ab08"
+          "sha256": "c01c0477d4500d6a538f280405a2be83eb008a9aeaa382ffab23e4d434f41341"
         }
       ]
     },
@@ -758,7 +758,7 @@
         {
           "path": "crates/nexohub-core/src/office_engine.rs",
           "kind": "generator",
-          "sha256": "12723242bdfba900f27c0491c3ee46d58d92570208a16daffef6e9aa143b22cb"
+          "sha256": "7a3937b503fed83ef1c3a5037e4d639bcdbe29b429ba26ed32424c0cb70682bc"
         },
         {
           "path": "apps/client/src/platform/office-client.test.ts",

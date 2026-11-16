@@ -417,11 +417,7 @@ pub fn install_capability(
                     .map(PathBuf::from)
                     .unwrap_or_else(|| root.join("office"));
                 let staging_archive = office_dir.with_extension("download.zip");
-                download_file_with_sha256(
-                    &archive_url,
-                    &staging_archive,
-                    expected_sha.as_deref(),
-                )?;
+                download_file_with_sha256(&archive_url, &staging_archive, expected_sha.as_deref())?;
                 return Ok(InstallCapabilityResult {
                     success: true,
                     message: Some(

@@ -65,3 +65,18 @@ def test_protocol_handles_pdf_extract_images() -> None:
     assert response["result"]["totalImages"] == 1
     assert len(response["result"]["images"]) == 1
     assert bool(response["result"]["zipContentBase64"])
+
+
+def test_extract_images_rejects_oversized_page() -> None:
+    import pypdfium2 as pdfium
+
+    doc = pdfium.PdfDocument.new()
+    doc.new_page(6000, 6000)
+    buf = io.BytesIO()
+    doc.save(buf)
+    try:
+        extract_images_from_pdf(buf.getvalue())
+    except ImageExtractionError:
+        pass
+    else:
+        raise AssertionError("Página superdimensionada deveria lançar ImageExtractionError")

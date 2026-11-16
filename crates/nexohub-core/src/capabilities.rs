@@ -245,6 +245,7 @@ pub fn download_file_with_sha256(
     url: &str,
     dest: &Path,
     expected_sha256: Option<&str>,
+    max_bytes: u64,
 ) -> CoreResult<()> {
     if let Some(parent) = dest.parent() {
         std::fs::create_dir_all(parent).map_err(|_| CoreError::io())?;
@@ -265,12 +266,14 @@ pub fn download_file_with_sha256(
     let mut file = std::fs::File::create(&temp_dest).map_err(|_| CoreError::io())?;
     let mut hasher = sha2::Sha256::default();
     let mut buffer = [0u8; 65536];
+    let mut total_bytes: u64 = 0;
 
     loop {
         let bytes_read = match std::io::Read::read(&mut reader, &mut buffer) {
             Ok(0) => break,
             Ok(n) => n,
             Err(e) => {
+                drop(file);
                 let _ = std::fs::remove_file(&temp_dest);
                 return Err(CoreError::new(
                     ErrorCode::CapabilityInstallationFailed,
@@ -278,9 +281,23 @@ pub fn download_file_with_sha256(
                 ));
             }
         };
+        total_bytes = total_bytes.saturating_add(bytes_read as u64);
+        if total_bytes > max_bytes {
+            drop(file);
+            let _ = std::fs::remove_file(&temp_dest);
+            return Err(CoreError::new(
+                ErrorCode::ResourceLimit,
+                format!(
+                    "O download de {} excedeu o limite máximo de {} bytes.",
+                    dest.display(),
+                    max_bytes
+                ),
+            ));
+        }
         use sha2::Digest;
         hasher.update(&buffer[..bytes_read]);
         if std::io::Write::write_all(&mut file, &buffer[..bytes_read]).is_err() {
+            drop(file);
             let _ = std::fs::remove_file(&temp_dest);
             return Err(CoreError::io());
         }
@@ -306,7 +323,10 @@ pub fn download_file_with_sha256(
         }
     }
 
-    std::fs::rename(&temp_dest, dest).map_err(|_| CoreError::io())?;
+    std::fs::rename(&temp_dest, dest).map_err(|_| {
+        let _ = std::fs::remove_file(&temp_dest);
+        CoreError::io()
+    })?;
     Ok(())
 }
 
@@ -336,24 +356,57 @@ pub fn install_capability(
             let _ = std::fs::remove_dir_all(&staging_dir);
             std::fs::create_dir_all(&staging_dir).map_err(|_| CoreError::io())?;
 
+            const MAX_SPM_BYTES: u64 = 16 * 1024 * 1024;
+            const MAX_VOCAB_BYTES: u64 = 16 * 1024 * 1024;
+            const MAX_CONFIG_BYTES: u64 = 1024 * 1024;
+            const MAX_MODEL_BIN_BYTES: u64 = 1024 * 1024 * 1024;
+
             let base_url = "https://huggingface.co/Helsinki-NLP/opus-mt-tc-big-en-pt/resolve/main";
-            let files_to_download = [
-                ("source.spm", None),
-                ("target.spm", None),
-                ("shared_vocabulary.json", None),
-                ("config.json", None),
+            let files_to_download: [(&str, Option<&str>, u64); 5] = [
+                ("source.spm", None, MAX_SPM_BYTES),
+                ("target.spm", None, MAX_SPM_BYTES),
+                ("shared_vocabulary.json", None, MAX_VOCAB_BYTES),
+                ("config.json", None, MAX_CONFIG_BYTES),
                 (
                     "model.bin",
                     Some("d3b0ef8776b4950f9d9043698173b2099b8d3b100f13d422df9a153fba2b76a2"),
+                    MAX_MODEL_BIN_BYTES,
                 ),
             ];
 
-            for (filename, sha) in files_to_download {
+            for (filename, sha, max_bytes) in files_to_download {
                 let url = format!("{base_url}/{filename}");
                 let dest = staging_dir.join(filename);
-                if let Err(err) = download_file_with_sha256(&url, &dest, sha) {
+                if let Err(err) = download_file_with_sha256(&url, &dest, sha, max_bytes) {
                     let _ = std::fs::remove_dir_all(&staging_dir);
                     return Err(err);
+                }
+            }
+
+            for json_name in ["shared_vocabulary.json", "config.json"] {
+                let json_bytes = match std::fs::read(staging_dir.join(json_name)) {
+                    Ok(bytes) => bytes,
+                    Err(_) => {
+                        let _ = std::fs::remove_dir_all(&staging_dir);
+                        return Err(CoreError::io());
+                    }
+                };
+                let parsed: serde_json::Value = match serde_json::from_slice(&json_bytes) {
+                    Ok(value) => value,
+                    Err(_) => {
+                        let _ = std::fs::remove_dir_all(&staging_dir);
+                        return Err(CoreError::new(
+                            ErrorCode::IntegrityViolation,
+                            format!("Arquivo de configuração/vocabulário inválido: {json_name}"),
+                        ));
+                    }
+                };
+                if !parsed.as_object().is_some_and(|obj| !obj.is_empty()) {
+                    let _ = std::fs::remove_dir_all(&staging_dir);
+                    return Err(CoreError::new(
+                        ErrorCode::IntegrityViolation,
+                        format!("Estrutura JSON inesperada em {json_name}"),
+                    ));
                 }
             }
 
@@ -417,7 +470,13 @@ pub fn install_capability(
                     .map(PathBuf::from)
                     .unwrap_or_else(|| root.join("office"));
                 let staging_archive = office_dir.with_extension("download.zip");
-                download_file_with_sha256(&archive_url, &staging_archive, expected_sha.as_deref())?;
+                const MAX_OFFICE_ARCHIVE_BYTES: u64 = 2 * 1024 * 1024 * 1024;
+                download_file_with_sha256(
+                    &archive_url,
+                    &staging_archive,
+                    expected_sha.as_deref(),
+                    MAX_OFFICE_ARCHIVE_BYTES,
+                )?;
                 return Ok(InstallCapabilityResult {
                     success: true,
                     message: Some(
@@ -426,9 +485,35 @@ pub fn install_capability(
                     ),
                 });
             }
+            #[cfg(target_os = "windows")]
+            {
+                let status = std::process::Command::new("winget")
+                    .args([
+                        "install",
+                        "--id",
+                        "TheDocumentFoundation.LibreOffice",
+                        "-e",
+                        "--silent",
+                        "--accept-package-agreements",
+                        "--accept-source-agreements",
+                    ])
+                    .status();
+                if let Ok(exit) = status
+                    && exit.success()
+                    && is_office_installed(&root)
+                {
+                    return Ok(InstallCapabilityResult {
+                        success: true,
+                        message: Some(
+                            "Superpoder Suíte Office (LibreOffice) instalado e pronto para uso."
+                                .to_string(),
+                        ),
+                    });
+                }
+            }
             Err(CoreError::new(
                 ErrorCode::CapabilityInstallationFailed,
-                "Execute o instalador do Superpoder Office (scripts/install-office-runtime.ps1) ou configure NEXOHUB_OFFICE_DIR com um LibreOffice portátil.",
+                "Não foi possível instalar o Superpoder Suíte Office automaticamente. Instale o LibreOffice para Windows (ou configure NEXOHUB_OFFICE_DIR) e clique em 'Verificar novamente'.",
             ))
         }
         _ => Err(CoreError::new(

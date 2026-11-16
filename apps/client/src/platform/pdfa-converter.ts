@@ -75,7 +75,7 @@ export interface PdfAStructureCheck {
 }
 
 export const PDFA_LIMITS = {
-  inputBytes: 80 * 1024 * 1024,
+  inputBytes: 128 * 1024 * 1024,
   timeoutMs: 120_000,
 } as const;
 

@@ -735,9 +735,9 @@ export async function redactPreservingWithPdfium(
   options: RedactPdfOptions,
 ): Promise<Uint8Array> {
   if (!bytes.length) throw new Error("EMPTY_DOCUMENT");
-  if (bytes.length > 20 * 1024 * 1024) throw new Error("PDF_OCULTACAO_PRESERVACAO_LIMITE");
+  if (bytes.length > 128 * 1024 * 1024) throw new Error("PDF_OCULTACAO_PRESERVACAO_LIMITE");
   const source = await PDFDocument.load(bytes, { updateMetadata: false });
-  if (source.getPageCount() > 30) throw new Error("PDF_OCULTACAO_PRESERVACAO_LIMITE");
+  if (source.getPageCount() > 200) throw new Error("PDF_OCULTACAO_PRESERVACAO_LIMITE");
   validateGeometry(source);
   const selected = rectangles(source, options);
   validateProfile(source, selected);
@@ -789,7 +789,7 @@ export async function redactPreservingWithPdfium(
     check(writer);
     check(api.FPDF_SaveAsCopy(doc, writer, 2));
     const size = api.PDFiumExt_GetFileWriterSize(writer);
-    if (size > 80 * 1024 * 1024) throw new Error("PDF_OCULTACAO_PRESERVACAO_LIMITE");
+    if (size > 256 * 1024 * 1024) throw new Error("PDF_OCULTACAO_PRESERVACAO_LIMITE");
     const out = ptr(size);
     check(api.PDFiumExt_GetFileWriterData(writer, out, size));
     output = memory().slice(out, out + size);

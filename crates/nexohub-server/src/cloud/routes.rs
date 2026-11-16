@@ -97,9 +97,10 @@ fn principal(
     s.verifier.authenticate(token, t)
 }
 async fn status(State(runtime): State<Runtime>) -> Response {
+    let enabled = runtime.as_ref().is_some_and(|s| s.policy.cloud_enabled);
     (
         [(header::CACHE_CONTROL, "no-store")],
-        Json(json!({"enabled":false,"identityAvailable":runtime.is_some()})),
+        Json(json!({"enabled":enabled,"identityAvailable":runtime.is_some()})),
     )
         .into_response()
 }

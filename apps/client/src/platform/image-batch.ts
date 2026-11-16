@@ -7,7 +7,7 @@ export interface ImageBatchEntry {
 }
 
 export function imageBatchExceedsLimits(files: readonly File[]) {
-  return files.length > 20 || files.reduce((sum, file) => sum + file.size, 0) > 128 * 1024 * 1024;
+  return files.length > 50 || files.reduce((sum, file) => sum + file.size, 0) > 512 * 1024 * 1024;
 }
 
 /** Inspeção sequencial: cada decode libera seu bitmap antes do próximo arquivo. */

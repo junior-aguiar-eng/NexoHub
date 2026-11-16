@@ -20,10 +20,10 @@ export class TauriDocumentCorePort implements DocumentCorePort {
   private projectPath: string | null = null;
 
   async saveOutputFile(request: { blob: Blob; fileName: string }): Promise<boolean> {
-    if (request.blob.size > 64 * 1024 * 1024) {
+    if (request.blob.size > 256 * 1024 * 1024) {
       throw new ToolRunError(
         "INVALID_INPUT",
-        "O arquivo excede o limite de 64 MiB para exportação.",
+        "O arquivo excede o limite de 256 MiB para exportação.",
       );
     }
     const path = await this.invoke("save_launcher_output", {
@@ -37,7 +37,10 @@ export class TauriDocumentCorePort implements DocumentCorePort {
     if (!this.projectPath) {
       const folder = await this.invoke("pick_project_folder", {});
       if (!folder) throw new ToolRunError("CANCELLED", "Seleção da pasta cancelada.");
-      const projectPath = `${folder.path.replace(/[\\/]$/, "")}/NexoHub.nexohub`;
+      const normalized = folder.path.replace(/[\\/]$/, "");
+      const projectPath = normalized.toLowerCase().endsWith(".nexohub")
+        ? normalized
+        : `${normalized}/NexoHub.nexohub`;
       try {
         await this.invoke("open_project", { projectPath });
       } catch (error) {
@@ -70,10 +73,10 @@ export class TauriDocumentCorePort implements DocumentCorePort {
     output: Blob;
     parameters: Readonly<Record<string, unknown>>;
   }): Promise<Blob> {
-    const limit = 64 * 1024 * 1024;
+    const limit = 256 * 1024 * 1024;
     if (
       request.files.length === 0 ||
-      request.files.length > 32 ||
+      request.files.length > 64 ||
       request.files.some((file) => file.size > limit) ||
       request.output.size > limit
     ) {
@@ -131,10 +134,10 @@ export class TauriDocumentCorePort implements DocumentCorePort {
     pageRotations?: readonly number[];
     compressionLevel?: "less" | "recommended" | "extreme";
   }): Promise<Blob> {
-    if (request.file.size > 64 * 1024 * 1024) {
+    if (request.file.size > 256 * 1024 * 1024) {
       throw new ToolRunError(
         "INVALID_INPUT",
-        "O arquivo excede o limite de 64 MiB da interface desktop.",
+        "O arquivo excede o limite de 256 MiB da interface desktop.",
       );
     }
     const projectPath = await this.ensureProjectPath();

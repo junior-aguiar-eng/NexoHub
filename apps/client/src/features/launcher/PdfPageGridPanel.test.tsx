@@ -168,4 +168,48 @@ describe("PdfPageGridPanel - Painel Visual de Páginas (iLovePDF style)", () => 
       { id: "page-3", originalIndex: 3, rotation: 0 },
     ]);
   });
+
+  it("reordena páginas por pointer drag e por HTML5 drag-and-drop", () => {
+    const onPagesChange = vi.fn();
+    const { container } = render(
+      <PdfPageGridPanel
+        mode="organize"
+        totalPages={3}
+        pages={samplePages}
+        selectedIndices={[1, 2, 3]}
+        onPagesChange={onPagesChange}
+      />,
+    );
+
+    const cards = container.querySelectorAll(".pdf-page-card");
+    const firstCard = cards[0] as HTMLElement;
+    const thirdCard = cards[2] as HTMLElement;
+
+    // 1. Reordenação via HTML5 drag-and-drop
+    fireEvent.dragStart(firstCard);
+    fireEvent.dragOver(thirdCard);
+    fireEvent.drop(thirdCard);
+    expect(onPagesChange).toHaveBeenLastCalledWith([
+      { id: "page-2", originalIndex: 2, rotation: 0 },
+      { id: "page-3", originalIndex: 3, rotation: 0 },
+      { id: "page-1", originalIndex: 1, rotation: 0 },
+    ]);
+
+    // 2. Reordenação via Pointer Events (Tauri WebView2 / Touch)
+    onPagesChange.mockClear();
+    const originalElementsFromPoint = document.elementsFromPoint;
+    document.elementsFromPoint = vi.fn(() => [thirdCard]);
+    try {
+      fireEvent.pointerDown(firstCard, { button: 0, clientX: 10, clientY: 10 });
+      fireEvent.pointerMove(window, { clientX: 120, clientY: 10 });
+      fireEvent.pointerUp(window);
+      expect(onPagesChange).toHaveBeenCalledWith([
+        { id: "page-2", originalIndex: 2, rotation: 0 },
+        { id: "page-3", originalIndex: 3, rotation: 0 },
+        { id: "page-1", originalIndex: 1, rotation: 0 },
+      ]);
+    } finally {
+      document.elementsFromPoint = originalElementsFromPoint;
+    }
+  });
 });

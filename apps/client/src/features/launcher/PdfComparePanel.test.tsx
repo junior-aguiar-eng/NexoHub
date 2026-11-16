@@ -123,10 +123,10 @@ describe("PdfComparePanel", () => {
   it("rejects oversized PDF before running", () => {
     setup();
     const oversized = new File(["pdf"], "grande.pdf", { type: "application/pdf" });
-    Object.defineProperty(oversized, "size", { value: 64 * 1024 * 1024 + 1 });
+    Object.defineProperty(oversized, "size", { value: 128 * 1024 * 1024 + 1 });
     fireEvent.change(screen.getByLabelText("PDF revisado"), { target: { files: [oversized] } });
     expect(screen.getByRole("button", { name: "Comparar PDFs" })).toBeDisabled();
-    expect(screen.getByRole("alert")).toHaveTextContent("64 MiB");
+    expect(screen.getByRole("alert")).toHaveTextContent("128 MiB");
   });
   it.each(["cancel", "replace", "swap", "unmount"])(
     "discards late completion after %s",

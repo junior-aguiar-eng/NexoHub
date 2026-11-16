@@ -121,5 +121,5 @@ export function validateComposition(
     )
       throw new Error("COMPOSICAO_INVALIDA");
   }
-  if (assetBytes > 16 * 1024 * 1024) throw new Error("COMPOSICAO_LIMITE");
+  if (assetBytes > 64 * 1024 * 1024) throw new Error("COMPOSICAO_LIMITE");
 }

@@ -75,7 +75,14 @@ export function TranslateDocumentPanel({
   return (
     <div
       className="ilovepdf-translate-container"
-      style={{ display: "flex", flexDirection: "column", gap: "1rem", width: "100%" }}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.75rem",
+        width: "100%",
+        flex: 1,
+        minHeight: 0,
+      }}
     >
       {/* Barra superior de seleção de idiomas e privacidade */}
       <div
@@ -192,6 +199,7 @@ export function TranslateDocumentPanel({
           </label>
           <textarea
             id="translation-preserved-names"
+            rows={2}
             className="w-full rounded-md border p-2"
             value={preservedNames}
             onChange={(event) => onPreservedNamesChange(event.target.value)}
@@ -276,6 +284,8 @@ export function TranslateDocumentPanel({
         style={{
           display: "flex",
           flexDirection: "column",
+          flex: 1,
+          minHeight: 0,
           gap: "0.5rem",
           border: "1px solid #e2e8f0",
           borderRadius: "0.75rem",
@@ -341,9 +351,11 @@ export function TranslateDocumentPanel({
               ? translate("workspace.translate.translating")
               : translate("workspace.translate.outputPlaceholder")
           }
-          rows={12}
+          rows={10}
           style={{
             width: "100%",
+            flex: 1,
+            minHeight: "180px",
             boxSizing: "border-box",
             padding: "0.75rem",
             fontSize: "0.9rem",

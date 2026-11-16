@@ -9,7 +9,8 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
-const MAX_OFFICE_INPUT_BYTES: usize = 64 * 1024 * 1024;
+const MAX_OFFICE_INPUT_BYTES: usize = 128 * 1024 * 1024;
+const MAX_OFFICE_OUTPUT_BYTES: u64 = 256 * 1024 * 1024;
 const MAX_ZIP_ENTRIES: usize = 10_000;
 const MAX_ZIP_UNCOMPRESSED_BYTES: u64 = 512 * 1024 * 1024;
 const MAX_ZIP_EXPANSION_RATIO: u64 = 100;
@@ -231,7 +232,7 @@ pub fn preflight_office_input(
     if bytes.len() > MAX_OFFICE_INPUT_BYTES {
         return Err(CoreError::new(
             ErrorCode::ResourceLimit,
-            "O arquivo ultrapassa o limite de 64 MB para conversão Office.",
+            "O arquivo ultrapassa o limite de 128 MB para conversão Office.",
         ));
     }
 
@@ -284,16 +285,35 @@ pub fn preflight_office_input(
 /// Resolve o executável `soffice` instalado no Superpoder Office.
 #[must_use]
 pub fn resolve_office_executable(root: &Path) -> Option<PathBuf> {
-    let base = env::var_os("NEXOHUB_OFFICE_DIR")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| root.join("office"));
+    let explicit_dir = env::var_os("NEXOHUB_OFFICE_DIR").map(PathBuf::from);
+    let base = explicit_dir.clone().unwrap_or_else(|| root.join("office"));
 
-    let candidates = [
+    let mut candidates = vec![
         base.join("program").join("soffice.exe"),
         base.join("program").join("soffice"),
         base.join("soffice.exe"),
         base.join("soffice"),
     ];
+
+    if explicit_dir.is_none() {
+        for env_key in ["ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA"] {
+            if let Some(dir) = env::var_os(env_key).map(PathBuf::from) {
+                candidates.push(dir.join("LibreOffice").join("program").join("soffice.exe"));
+                candidates.push(
+                    dir.join("Programs")
+                        .join("LibreOffice")
+                        .join("program")
+                        .join("soffice.exe"),
+                );
+            }
+        }
+        if let Some(path_var) = env::var_os("PATH") {
+            for dir in env::split_paths(&path_var) {
+                candidates.push(dir.join("soffice.exe"));
+                candidates.push(dir.join("soffice"));
+            }
+        }
+    }
 
     candidates.into_iter().find(|path| path.is_file())
 }
@@ -303,12 +323,24 @@ fn to_file_url_arg(dir: &Path) -> String {
         .unwrap_or_else(|_| dir.to_path_buf())
         .to_string_lossy()
         .replace('\\', "/");
-    let prefix = if normalized.starts_with('/') {
+    let mut encoded = String::with_capacity(normalized.len());
+    for byte in normalized.as_bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' | b'/' | b':' => {
+                encoded.push(*byte as char);
+            }
+            _ => {
+                use std::fmt::Write;
+                let _ = write!(encoded, "%{byte:02X}");
+            }
+        }
+    }
+    let prefix = if encoded.starts_with('/') {
         "file://"
     } else {
         "file:///"
     };
-    format!("-env:UserInstallation={prefix}{normalized}")
+    format!("-env:UserInstallation={prefix}{encoded}")
 }
 
 pub fn convert_office_bytes(request: &ConvertOfficeRequest) -> CoreResult<ConvertOfficeResult> {
@@ -342,69 +374,136 @@ pub fn convert_office_bytes(request: &ConvertOfficeRequest) -> CoreResult<Conver
     };
 
     let started = Instant::now();
-    let mut cmd = Command::new(&soffice);
-    cmd.arg(to_file_url_arg(&profile_dir))
-        .arg("--headless")
-        .arg("--norestore")
-        .arg("--invisible")
-        .arg("--nodefault")
-        .arg("--nolockcheck")
-        .arg("--nologo")
-        .args(extra_args)
-        .arg("--convert-to")
-        .arg(target_ext)
-        .arg("--outdir")
-        .arg(&out_dir)
-        .arg(&input_path)
-        .env("HOME", work.path())
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
-
-    #[cfg(windows)]
+    let executable = if cfg!(windows)
+        && soffice
+            .extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("exe"))
     {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        cmd.creation_flags(CREATE_NO_WINDOW);
-    }
-
-    let mut child = cmd.spawn().map_err(|_| {
-        CoreError::new(
-            ErrorCode::CapabilityNotFound,
-            "Não foi possível iniciar o motor local LibreOffice.",
-        )
-    })?;
-
-    let deadline = Duration::from_secs(SOFFICE_TIMEOUT_SECS);
-    let status = loop {
-        match child.try_wait() {
-            Ok(Some(st)) => break st,
-            Ok(None) => {
-                if started.elapsed() > deadline {
-                    let _ = child.kill();
-                    let _ = child.wait();
-                    return Err(CoreError::new(
-                        ErrorCode::SidecarTimeout,
-                        "A conversão Office excedeu o tempo máximo de 120 segundos.",
-                    ));
-                }
-                std::thread::sleep(Duration::from_millis(40));
-            }
-            Err(_) => {
-                let _ = child.kill();
-                return Err(CoreError::io());
-            }
+        let com_candidate = soffice.with_extension("com");
+        if com_candidate.is_file() {
+            com_candidate
+        } else {
+            soffice.clone()
         }
+    } else {
+        soffice.clone()
     };
 
-    if !status.success() {
-        return Err(CoreError::new(
-            ErrorCode::PdfProcessing,
-            "O motor local não conseguiu converter este documento Office.",
-        ));
+    let deadline = Duration::from_secs(SOFFICE_TIMEOUT_SECS);
+    let mut last_stderr = String::new();
+    let mut succeeded = false;
+
+    for attempt in 0..2 {
+        let mut cmd = Command::new(&executable);
+        cmd.arg(to_file_url_arg(&profile_dir))
+            .arg("--headless")
+            .arg("--norestore")
+            .arg("--invisible")
+            .arg("--nodefault")
+            .arg("--nolockcheck")
+            .arg("--nologo")
+            .args(extra_args)
+            .arg("--convert-to")
+            .arg(target_ext)
+            .arg("--outdir")
+            .arg(&out_dir)
+            .arg(&input_path)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped());
+
+        #[cfg(not(windows))]
+        cmd.env("HOME", work.path());
+
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+            cmd.creation_flags(CREATE_NO_WINDOW);
+        }
+
+        let mut child = cmd.spawn().map_err(|_| {
+            CoreError::new(
+                ErrorCode::CapabilityNotFound,
+                "Não foi possível iniciar o motor local LibreOffice.",
+            )
+        })?;
+
+        let status = loop {
+            match child.try_wait() {
+                Ok(Some(st)) => break st,
+                Ok(None) => {
+                    if started.elapsed() > deadline {
+                        #[cfg(target_os = "windows")]
+                        let _ = Command::new("taskkill")
+                            .args(["/F", "/T", "/PID", &child.id().to_string()])
+                            .stdin(Stdio::null())
+                            .stdout(Stdio::null())
+                            .stderr(Stdio::null())
+                            .status();
+                        let _ = child.kill();
+                        let _ = child.wait();
+                        return Err(CoreError::new(
+                            ErrorCode::SidecarTimeout,
+                            "A conversão Office excedeu o tempo máximo de 120 segundos.",
+                        ));
+                    }
+                    std::thread::sleep(Duration::from_millis(40));
+                }
+                Err(_) => {
+                    let _ = child.kill();
+                    return Err(CoreError::io());
+                }
+            }
+        };
+
+        if let Some(mut stderr) = child.stderr.take() {
+            use std::io::Read;
+            let mut buf = [0u8; 2048];
+            if let Ok(n) = stderr.read(&mut buf) {
+                last_stderr = String::from_utf8_lossy(&buf[..n]).trim().to_string();
+            }
+        }
+
+        if status.success() {
+            succeeded = true;
+            break;
+        }
+        // Exit code 81 no LibreOffice indica reinicialização após criar UserInstallation
+        if attempt == 0 && status.code() == Some(81) {
+            continue;
+        }
+        break;
+    }
+
+    if !succeeded {
+        let detail = if last_stderr.is_empty() {
+            "O motor local não conseguiu converter este documento Office.".to_string()
+        } else {
+            format!("O motor local não conseguiu converter este documento Office ({last_stderr}).")
+        };
+        return Err(CoreError::new(ErrorCode::PdfProcessing, detail));
     }
 
     let produced_path = out_dir.join(format!("input.{target_ext}"));
+    let meta = fs::symlink_metadata(&produced_path).map_err(|_| {
+        CoreError::new(
+            ErrorCode::PdfProcessing,
+            "O documento convertido não foi gerado pelo motor Office.",
+        )
+    })?;
+    if meta.file_type().is_symlink() || !meta.file_type().is_file() {
+        return Err(CoreError::new(
+            ErrorCode::PdfProcessing,
+            "O arquivo gerado pelo motor Office é inválido.",
+        ));
+    }
+    if meta.len() == 0 || meta.len() > MAX_OFFICE_OUTPUT_BYTES {
+        return Err(CoreError::new(
+            ErrorCode::ResourceLimit,
+            "O documento convertido excedeu o limite máximo permitido pelo motor Office.",
+        ));
+    }
     let out_bytes = fs::read(&produced_path).map_err(|_| {
         CoreError::new(
             ErrorCode::PdfProcessing,

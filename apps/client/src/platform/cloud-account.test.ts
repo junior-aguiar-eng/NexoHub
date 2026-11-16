@@ -37,12 +37,12 @@ it("consulta saldo com Bearer, sem cookies ou documento, recusando origem arbitr
   );
   expect(() => createCloudAccount(identity, "https://evil.invalid", fetcher)).toThrow();
 });
-it("Windows delega login/token/logout ao port nativo sem SDK Google no WebView", async () => {
+it("Windows delega login/logout ao port nativo sem expor ID token ao WebView", async () => {
   const invoke = vi.fn(async () => "synthetic-token");
   const identity = createTauriCloudIdentity(invoke);
   await identity.signIn("google");
   expect(invoke).toHaveBeenCalledWith("cloud_identity_sign_in", { method: "google" });
-  expect(await identity.getIdToken()).toBe("synthetic-token");
+  await expect(identity.getIdToken()).rejects.toMatchObject({ code: "AUTH_UNAVAILABLE" });
   await identity.signOut();
   expect(invoke).toHaveBeenCalledWith("cloud_identity_sign_out");
 });

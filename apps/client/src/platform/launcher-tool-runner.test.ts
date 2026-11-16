@@ -39,7 +39,7 @@ function input(files: File[]): LauncherToolInput {
 
 it("recusa reparo grande antes de ler ou copiar o arquivo", async () => {
   const file = new File(["x"], "grande.pdf", { type: "application/pdf" });
-  Object.defineProperty(file, "size", { value: 16 * 1024 * 1024 + 1 });
+  Object.defineProperty(file, "size", { value: 128 * 1024 * 1024 + 1 });
   const read = vi.spyOn(file, "arrayBuffer");
   await expect(
     runLauncherTool(new BrowserDocumentCorePort(), "pdf-repair", input([file])),

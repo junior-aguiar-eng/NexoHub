@@ -26,7 +26,7 @@
         {
           "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
           "kind": "generator",
-          "sha256": "f127e6f95021659008a19d0b9438f1860c926d6daa34dbdfb4f83518e0ce69c5"
+          "sha256": "5d2a7b91db00ce0854d54742ff72136ff24396615356fb38a14175271d0e58d3"
         }
       ]
     },
@@ -38,7 +38,7 @@
         {
           "path": "apps/client/src/platform/image-engine.test.ts",
           "kind": "generator",
-          "sha256": "909004a929e3ed0fa0d9e9190dedc6fea303ab7fd76214025f5d90cca188b4e1"
+          "sha256": "f85876f867b3a09d8ca12463ddf1edd159b0f35ef81f4a3f702ed8ef40dedfa7"
         },
         {
           "path": "apps/client/e2e/image-mode-quality.spec.ts",
@@ -311,7 +311,7 @@
         {
           "path": "apps/client/src/platform/pdf-redaction-engine.test.ts",
           "kind": "generator",
-          "sha256": "e823cd72ffd3726b5ec3d2cbad39535daa0f7d69d52543829990c4c220774c5c"
+          "sha256": "8e2e169b73fb1c13c023f060a55d6a9f4a5ed8b49735344aa343de7a40b54349"
         },
         {
           "path": "apps/client/src/platform/pdf-crop-sign.test.ts",
@@ -483,12 +483,12 @@
         {
           "path": "apps/client/src/platform/launcher-tool-runner.test.ts",
           "kind": "generator",
-          "sha256": "f127e6f95021659008a19d0b9438f1860c926d6daa34dbdfb4f83518e0ce69c5"
+          "sha256": "5d2a7b91db00ce0854d54742ff72136ff24396615356fb38a14175271d0e58d3"
         },
         {
           "path": "apps/client/src/platform/document-reader.test.ts",
           "kind": "generator",
-          "sha256": "a115da2ba2121ae8a3057f58b1bc77ac6d2361c9043b6bf4f99955f4374e33f9"
+          "sha256": "3c2f2402c34fd81711e1196e34fc57dda7832e924e7eabee53481d21ccb10000"
         }
       ]
     },
@@ -758,12 +758,12 @@
         {
           "path": "crates/nexohub-core/src/office_engine.rs",
           "kind": "generator",
-          "sha256": "7a3937b503fed83ef1c3a5037e4d639bcdbe29b429ba26ed32424c0cb70682bc"
+          "sha256": "6aec2d54a31d99492fd62d9954daa6cbb38d0606f17908b52591adf8d8a5cfde"
         },
         {
           "path": "apps/client/src/platform/office-client.test.ts",
           "kind": "generator",
-          "sha256": "0c6cdbc3119a13a0cf6e23ce27cd8202605c45d47188c6f9278204a397216767"
+          "sha256": "4089e03730ad6cb9095ceac5b2e147383e78426888ff0aa423736428c4c724ed"
         },
         {
           "path": "apps/client/src/features/launcher/OfficeConvertPanel.test.tsx",
@@ -780,7 +780,7 @@
         {
           "path": "apps/client/src/platform/pdf-summarizer.ts",
           "kind": "generator",
-          "sha256": "f8d334052a81dc2c7b725e3a9ae47c2110ee803afc55394a538449d6be708727"
+          "sha256": "623b28a4abbc70f32a784e5a9047cb1c5ef0bd0d58dd7f984552b862285e1e4a"
         },
         {
           "path": "apps/client/src/platform/pdf-summarizer.test.ts",

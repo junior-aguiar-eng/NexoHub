@@ -77,7 +77,7 @@ describe("Leitura local de documentos", () => {
   });
 
   it("limita a saída descompactada mesmo com tamanho declarado incorreto", async () => {
-    const bytes = zipSync({ "word/document.xml": strToU8(wrap(" ".repeat(16 * 1024 * 1024))) });
+    const bytes = zipSync({ "word/document.xml": strToU8(wrap(" ".repeat(64 * 1024 * 1024))) });
     new DataView(bytes.buffer).setUint32(22, 1, true);
     await expect(
       readDocumentText(new File([bytes as unknown as BlobPart], "grande.docx")),
@@ -88,5 +88,16 @@ describe("Leitura local de documentos", () => {
     await expect(readDocumentText(new File(["# Título\nTexto normal."], "nota.md"))).resolves.toBe(
       "# Título\nTexto normal.",
     );
+  });
+
+  it("recusa texto extraído ou arquivo acima dos limites seguros", async () => {
+    const bigFile = new File(["ok"], "enorme.txt", { type: "text/plain" });
+    Object.defineProperty(bigFile, "size", { value: 129 * 1024 * 1024 });
+    await expect(readDocumentText(bigFile)).rejects.toMatchObject({ code: "INVALID_INPUT" });
+
+    const hugeTextFile = new File(["a".repeat(2_000_001)], "texto-gigante.txt", {
+      type: "text/plain",
+    });
+    await expect(readDocumentText(hugeTextFile)).rejects.toMatchObject({ code: "INVALID_INPUT" });
   });
 });

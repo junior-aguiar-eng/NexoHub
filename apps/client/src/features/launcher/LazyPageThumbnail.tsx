@@ -44,6 +44,7 @@ export function LazyPageThumbnail({ src, pageNumber, onRequest, alt, ...props }:
   return (
     <>
       <img
+        draggable={false}
         {...props}
         ref={ref}
         alt={alt ?? `${translate("workspace.pageNumbers.previewPage")} ${pageNumber}`}

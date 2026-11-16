@@ -40,12 +40,12 @@ export interface PdfRepairOptions {
 }
 
 export const PDF_REPAIR_LIMITS = {
-  inputBytes: 16 * 1024 * 1024,
-  outputBytes: 32 * 1024 * 1024,
+  inputBytes: 128 * 1024 * 1024,
+  outputBytes: 256 * 1024 * 1024,
   pages: 250,
   objects: 25_000,
-  streamBytes: 8 * 1024 * 1024,
-  decodedBytes: 64 * 1024 * 1024,
+  streamBytes: 32 * 1024 * 1024,
+  decodedBytes: 256 * 1024 * 1024,
   imagePixels: 16_000_000,
   timeoutMs: 30_000,
 } as const;

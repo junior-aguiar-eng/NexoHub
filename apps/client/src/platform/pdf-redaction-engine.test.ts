@@ -323,7 +323,7 @@ it("recusa fonte incorporada e imagem com máscara antes de aplicar", async () =
 });
 it("não gera resultado parcial quando rótulo ou limites são incompatíveis", async () => {
   await expect(
-    redactPreservingWithPdfium(api, new Uint8Array(21 * 1024 * 1024), { redactions: [area] }),
+    redactPreservingWithPdfium(api, new Uint8Array(129 * 1024 * 1024), { redactions: [area] }),
   ).rejects.toThrow("PDF_OCULTACAO_PRESERVACAO_LIMITE");
   await expect(
     redactPreservingWithPdfium(api, await source(), { redactions: [{ ...area, label: "🔒" }] }),

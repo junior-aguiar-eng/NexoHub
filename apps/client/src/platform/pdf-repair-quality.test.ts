@@ -26,7 +26,7 @@ it("classifica texto com palavra objetos como irrecuperável", async () => {
 });
 
 it("recusa arquivo acima do orçamento antes de analisar objetos", async () => {
-  await expect(repairPdfDocument(new Uint8Array(16 * 1024 * 1024 + 1))).rejects.toThrow(
+  await expect(repairPdfDocument(new Uint8Array(128 * 1024 * 1024 + 1))).rejects.toThrow(
     "PDF_REPAIR_LIMIT",
   );
 });
@@ -40,12 +40,12 @@ it("recusa cancelamento anterior à análise", async () => {
   );
 });
 
-it("recusa expansão de stream acima de 8 MiB sem produzir saída parcial", async () => {
+it("recusa expansão de stream acima de 32 MiB sem produzir saída parcial", async () => {
   const doc = await PDFDocument.create();
   doc.addPage();
   doc.catalog.set(
     PDFName.of("LargeAttachment"),
-    doc.context.register(doc.context.flateStream("a".repeat(8 * 1024 * 1024 + 1))),
+    doc.context.register(doc.context.flateStream("a".repeat(32 * 1024 * 1024 + 1))),
   );
   await expect(repairPdfDocument(await doc.save({ useObjectStreams: false }))).rejects.toThrow(
     "PDF_REPAIR_EXPANSION_LIMIT",

@@ -55,6 +55,12 @@ impl BlobStore {
         // Diretório de staging temporário no mesmo volume/árvore de blobs
         let staging_dir = self.root.join(".staging");
         fs::create_dir_all(&staging_dir).map_err(|_| CoreError::io())?;
+        let staging_meta = fs::symlink_metadata(&staging_dir).map_err(|_| CoreError::io())?;
+        if is_link_or_reparse(&staging_meta) || !staging_meta.is_dir() {
+            return Err(CoreError::integrity(
+                "O diretório de staging de blobs contém link ou reparse point inseguro.",
+            ));
+        }
         let staging_path = staging_dir.join(format!(".stage.{}.tmp", Uuid::new_v4()));
 
         struct StagingCleanup(PathBuf, bool);

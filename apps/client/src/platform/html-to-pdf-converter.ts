@@ -59,6 +59,9 @@ const MARGIN_SIZES: Record<"none" | "small" | "normal" | "wide", number> = {
 const PT_TO_PX = 96 / 72;
 const PX_TO_PT = 72 / 96;
 const RENDER_SCALE = 2;
+const MAX_HTML_INPUT_CHARS = 16 * 1024 * 1024;
+const MAX_HTML_DOM_NODES = 50_000;
+const MAX_HTML_PDF_PAGES = 200;
 
 const BLOCKED_HTML_TAGS =
   "script, noscript, iframe, object, embed, link, meta, base, frame, frameset, portal, audio, video, source, track";
@@ -210,25 +213,51 @@ function isSafeDataImageUrl(raw: string): boolean {
   return true;
 }
 
+function decodeCssEscapes(css: string): string {
+  return css.replace(/\\([0-9a-fA-F]{1,6}[\t\n\f\r ]?|[^\n\f\r])/g, (_match, seq: string) => {
+    const hexMatch = /^([0-9a-fA-F]{1,6})[\t\n\f\r ]?$/.exec(seq);
+    if (hexMatch) {
+      const codePoint = Number.parseInt(hexMatch[1], 16);
+      if (codePoint === 0 || codePoint > 0x10ffff || (codePoint >= 0xd800 && codePoint <= 0xdfff)) {
+        return "\uFFFD";
+      }
+      return String.fromCodePoint(codePoint);
+    }
+    return seq;
+  });
+}
+
 function sanitizeCss(css: string): string {
-  return css
+  const normalized = decodeCssEscapes(
+    css.replace(/\0/g, "").replace(/\/\*[\s\S]*?(?:\*\/|$)/g, ""),
+  ).replace(/\/\*[\s\S]*?(?:\*\/|$)/g, "");
+  return normalized
     .replace(/@import\b[^;]*(?:;|$)/gi, "")
     .replace(/expression\s*\([^)]*\)/gi, "none")
     .replace(/-moz-binding\s*:[^;]*(?:;|$)/gi, "")
     .replace(/behavior\s*:[^;]*(?:;|$)/gi, "")
-    .replace(/url\(\s*(['"]?)([^)]*?)\1\s*\)/gi, (_full, _quote: string, rawUrl: string) => {
-      const candidate = rawUrl.trim();
+    .replace(/url\s*\(([\s\S]*?)\)/gi, (_full, inner: string) => {
+      const candidate = inner
+        .trim()
+        .replace(/^(['"])([\s\S]*)\1$/, "$2")
+        .trim();
       if (isSafeDataImageUrl(candidate)) {
         return `url("${candidate.replace(/"/g, '\\"')}")`;
       }
       return "none";
-    });
+    })
+    .replace(/(?:-webkit-)?image-set\s*\([^)]*\)/gi, "none");
 }
 
 function sanitizeDomDocument(htmlString: string): {
   sanitized: SanitizedHtmlDocument;
   bodyElement: HTMLElement | null;
 } {
+  if (htmlString.length > MAX_HTML_INPUT_CHARS) {
+    throw new Error(
+      `O conteúdo HTML excede o limite máximo de ${MAX_HTML_INPUT_CHARS.toLocaleString("pt-BR")} caracteres.`,
+    );
+  }
   if (typeof DOMParser === "undefined") {
     const titleMatch = /<title[^>]*>([^<]*)<\/title>/i.exec(htmlString);
     const title = titleMatch?.[1].trim() ? cleanHtmlText(titleMatch[1]) : "Documento";
@@ -279,6 +308,11 @@ function sanitizeDomDocument(htmlString: string): {
     ...(parsed.body ? [parsed.body] : []),
     ...Array.from(parsed.documentElement?.querySelectorAll("*") ?? []),
   ];
+  if (allElements.length > MAX_HTML_DOM_NODES) {
+    throw new Error(
+      `O documento HTML excede o limite máximo de ${MAX_HTML_DOM_NODES.toLocaleString("pt-BR")} elementos DOM.`,
+    );
+  }
   for (const element of allElements) {
     for (const attribute of Array.from(element.attributes)) {
       const lowerName = attribute.name.toLowerCase();
@@ -647,6 +681,11 @@ function computePageSlices(
   const slices: PageSlice[] = [];
   let cursor = 0;
   while (cursor < totalHeight - 0.5) {
+    if (slices.length >= MAX_HTML_PDF_PAGES) {
+      throw new Error(
+        `O documento HTML excede o limite máximo de ${MAX_HTML_PDF_PAGES} páginas para conversão em PDF.`,
+      );
+    }
     const maxBottom = cursor + contentHeightPx;
     const explicitBreak = explicitBreaks.find((y) => y > cursor + 1 && y <= maxBottom);
     if (explicitBreak !== undefined) {
@@ -962,9 +1001,10 @@ async function tryRenderHtmlInBrowser(
     ].join("");
 
     let pngBytes: Uint8Array;
+    let canvas: HTMLCanvasElement | null = null;
     try {
       const img = await loadSvgImage(svgMarkup);
-      const canvas = document.createElement("canvas");
+      canvas = document.createElement("canvas");
       canvas.width = pixelWidth;
       canvas.height = pixelHeight;
       const ctx = canvas.getContext("2d");
@@ -978,6 +1018,11 @@ async function tryRenderHtmlInBrowser(
     } catch {
       // Caso o ambiente (ex.: jsdom sem suporte a SVG/Canvas) não consiga rasterizar, cai para motor estrutural
       return null;
+    } finally {
+      if (canvas) {
+        canvas.width = 0;
+        canvas.height = 0;
+      }
     }
 
     const page = pdfDoc.addPage([pageWidth, pageHeight]);

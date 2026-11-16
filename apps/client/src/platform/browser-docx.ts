@@ -2,8 +2,8 @@ import { ToolRunError } from "@nexohub/tool-sdk";
 import { Unzip, UnzipInflate } from "fflate";
 import { translate } from "@/i18n";
 
-const MAX_INPUT_BYTES = 64 * 1024 * 1024;
-const MAX_XML_BYTES = 16 * 1024 * 1024;
+const MAX_INPUT_BYTES = 128 * 1024 * 1024;
+const MAX_XML_BYTES = 64 * 1024 * 1024;
 
 function invalidDocx(): ToolRunError {
   return new ToolRunError("INVALID_INPUT", translate("document.errorInvalidDocx"));

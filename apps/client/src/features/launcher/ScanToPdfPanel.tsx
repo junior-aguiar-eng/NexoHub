@@ -12,6 +12,7 @@ import { type ChangeEvent, useCallback, useEffect, useRef, useState } from "reac
 import { Button } from "@/components/ui/button";
 import { translate } from "@/i18n";
 import type { ScanFilterType, ScannedPageItem } from "@/platform/scan-to-pdf-engine";
+import { usePointerReorder } from "./usePointerReorder";
 
 export interface ScanToPdfPanelProps {
   readonly pages: readonly ScannedPageItem[];
@@ -39,7 +40,6 @@ export function ScanToPdfPanel({
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [isCapturing, setIsCapturing] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const requestId = useRef(0);
   const mounted = useRef(true);
 
@@ -196,29 +196,14 @@ export function ScanToPdfPanel({
     onPagesChange(pages.filter((p) => p.id !== pageId));
   }
 
-  function handleDragStart(e: React.DragEvent, index: number) {
-    if (e.dataTransfer) {
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", String(index));
-    }
-    setDraggedIndex(index);
-  }
-
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault();
-  }
-
-  function handleDrop(targetIndex: number) {
-    if (draggedIndex === null || draggedIndex === targetIndex) {
-      setDraggedIndex(null);
-      return;
-    }
-    const next = [...pages];
-    const [moved] = next.splice(draggedIndex, 1);
-    next.splice(targetIndex, 0, moved);
-    onPagesChange(next);
-    setDraggedIndex(null);
-  }
+  const { draggedIndex, dragOverIndex, getItemProps } = usePointerReorder({
+    onReorder: (fromIndex, toIndex) => {
+      const next = [...pages];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      onPagesChange(next);
+    },
+  });
 
   return (
     <div
@@ -438,17 +423,15 @@ export function ScanToPdfPanel({
 
             <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-4">
               {pages.map((item, idx) => {
+                const dragProps = getItemProps(idx);
+                const isDragging = draggedIndex === idx;
+                const isDragOver = dragOverIndex === idx && draggedIndex !== idx;
                 return (
-                  // biome-ignore lint/a11y/noStaticElementInteractions: card de arrastar e soltar para reordenação de páginas digitalizadas
                   <div
                     key={item.id}
                     data-testid={`scanned-item-${idx + 1}`}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, idx)}
-                    onDragOver={handleDragOver}
-                    onDrop={() => handleDrop(idx)}
-                    onDragEnd={() => setDraggedIndex(null)}
-                    className={`flex flex-col gap-3 p-3 rounded-2xl border border-border bg-surface shadow-xs cursor-grab active:cursor-grabbing transition-opacity ${draggedIndex === idx ? "opacity-50" : ""}`}
+                    {...dragProps}
+                    className={`flex flex-col gap-3 p-3 rounded-2xl border bg-surface shadow-xs cursor-grab active:cursor-grabbing transition-all select-none ${isDragging ? "opacity-50" : ""} ${isDragOver ? "border-brand ring-2 ring-brand/30" : "border-border"}`}
                   >
                     {/* Top Bar with Number and Actions */}
                     <div className="flex flex-wrap items-center justify-between gap-2">

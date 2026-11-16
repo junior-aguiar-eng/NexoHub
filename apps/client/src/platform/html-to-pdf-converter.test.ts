@@ -613,4 +613,19 @@ describe("html-to-pdf-converter", () => {
       }
     });
   });
+
+  it("neutraliza CSS ofuscado com comentários, escapes hex e image-set", () => {
+    const sanitized = sanitizeHtmlForPdf(
+      `<style>/*c*/@\\69 mport url("https://evil.example/s.css"); body { background: \\75 rl("https://evil.example/bg.png"); background-image: image-set(url("https://evil.example/a.png") 1x); }</style><p style="background:/*x*/\\75 rl(https://evil.example/i.png)">Ok</p>`,
+    );
+    expect(sanitized.styleCss).not.toContain("@import");
+    expect(sanitized.styleCss).not.toContain("evil.example");
+    expect(sanitized.styleCss).not.toContain("image-set");
+    expect(sanitized.bodyHtml).not.toContain("evil.example");
+  });
+
+  it("recusa HTML que excede o limite de caracteres antes de acionar DOMParser", () => {
+    const oversized = "<p>a</p>".repeat(2_200_000);
+    expect(() => sanitizeHtmlForPdf(oversized)).toThrow(/limite máximo/i);
+  });
 });

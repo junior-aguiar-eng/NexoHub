@@ -3,8 +3,11 @@ import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { Page as TesseractPage } from "tesseract.js";
 import { withAppBase } from "./app-paths";
+import { MAX_IMAGE_BYTES, validateImage } from "./image-engine";
 import { createOcrRecognitionSession, type OcrRecognitionSession } from "./ocr-recognition-session";
 import { generateSearchablePdf, type OcrPageData } from "./pdf-engine";
+
+const MAX_OCR_IMAGE_PIXELS = 20_000_000;
 
 if (typeof window !== "undefined") pdfjsLib.GlobalWorkerOptions.workerSrc ||= pdfjsWorker;
 export interface OcrProgressInfo {
@@ -94,6 +97,7 @@ function canvasFor(width: number, height: number): HTMLCanvasElement {
 }
 async function imageBlobToCanvas(blob: Blob, signal?: AbortSignal): Promise<HTMLCanvasElement> {
   checkAbort(signal);
+  await validateImage(blob, MAX_IMAGE_BYTES, MAX_OCR_IMAGE_PIXELS);
   if (typeof createImageBitmap === "function") {
     const pending = createImageBitmap(blob);
     void pending.then(
@@ -147,7 +151,7 @@ export async function performBrowserOcr(
   checkAbort(signal);
   if (typeof window === "undefined" || typeof Worker === "undefined")
     throw new Error("OCR_WORKER_UNAVAILABLE");
-  if (!blob.size || blob.size > 64 * 1024 * 1024) throw new Error("OCR_INPUT_LIMIT");
+  if (!blob.size || blob.size > 128 * 1024 * 1024) throw new Error("OCR_INPUT_LIMIT");
   const rawBytes = new Uint8Array(await abortable(blob.arrayBuffer(), signal));
   const isPdf =
     rawBytes[0] === 37 && rawBytes[1] === 80 && rawBytes[2] === 68 && rawBytes[3] === 70;

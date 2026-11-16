@@ -92,9 +92,9 @@ export interface ImageWatermarkOptions {
 }
 
 export const MAX_IMAGE_PIXELS = 24_000_000;
-export const MAX_IMAGE_BYTES = 64 * 1024 * 1024;
+export const MAX_IMAGE_BYTES = 128 * 1024 * 1024;
 type ImageCanvas = HTMLCanvasElement | OffscreenCanvas;
-function validateDimensions(width: number, height: number) {
+function validateDimensions(width: number, height: number, maxPixels = MAX_IMAGE_PIXELS) {
   if (
     !Number.isInteger(width) ||
     !Number.isInteger(height) ||
@@ -102,7 +102,7 @@ function validateDimensions(width: number, height: number) {
     height < 1 ||
     width > 16384 ||
     height > 16384 ||
-    width * height > MAX_IMAGE_PIXELS
+    width * height > maxPixels
   )
     throw new Error("IMAGEM_MUITO_GRANDE");
 }
@@ -157,28 +157,84 @@ async function toBlob(
     sizeBytes: input.byteLength,
   };
 }
-async function validateImage(blob: Blob, maxBytes = MAX_IMAGE_BYTES) {
+export async function validateImage(
+  blob: Blob,
+  maxBytes = MAX_IMAGE_BYTES,
+  maxPixels = MAX_IMAGE_PIXELS,
+) {
   if (!blob.size || blob.size > maxBytes) throw new Error("IMAGEM_MUITO_GRANDE");
   const bytes = new Uint8Array(await blob.arrayBuffer());
   const mime = detectMimeType(bytes);
   // PNG animado e WebP animado não podem ser achatados silenciosamente.
   if (mime === "image/png") {
-    const view = new DataView(bytes.buffer);
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
     for (let pos = 8; pos + 12 <= bytes.length; ) {
       const length = view.getUint32(pos);
       const type = String.fromCharCode(...bytes.slice(pos + 4, pos + 8));
       if (type === "acTL") throw new Error("ANIMACAO_IMAGEM_NAO_SUPORTADA");
       if (type === "IHDR" && pos + 16 <= bytes.length)
-        validateDimensions(view.getUint32(pos + 8), view.getUint32(pos + 12));
+        validateDimensions(view.getUint32(pos + 8), view.getUint32(pos + 12), maxPixels);
       pos += length + 12;
     }
   }
+  if (mime === "image/jpeg") {
+    let pos = 2;
+    while (pos + 3 < bytes.length) {
+      if (bytes[pos] !== 0xff) {
+        pos += 1;
+        continue;
+      }
+      while (pos < bytes.length && bytes[pos] === 0xff) {
+        pos += 1;
+      }
+      if (pos >= bytes.length) break;
+      const marker = bytes[pos];
+      pos += 1;
+      if (marker === 0xd9 || marker === 0xda) break;
+      if (marker === 0x00 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) continue;
+      if (pos + 2 > bytes.length) break;
+      const segLen = (bytes[pos] << 8) | bytes[pos + 1];
+      if (segLen < 2 || pos + segLen > bytes.length) break;
+      const isSof =
+        (marker >= 0xc0 && marker <= 0xc3) ||
+        (marker >= 0xc5 && marker <= 0xc7) ||
+        (marker >= 0xc9 && marker <= 0xcb) ||
+        (marker >= 0xcd && marker <= 0xcf);
+      if (isSof && pos + 7 <= bytes.length) {
+        const height = (bytes[pos + 3] << 8) | bytes[pos + 4];
+        const width = (bytes[pos + 5] << 8) | bytes[pos + 6];
+        validateDimensions(width, height, maxPixels);
+        break;
+      }
+      pos += segLen;
+    }
+  }
   if (mime === "image/webp") {
-    const view = new DataView(bytes.buffer);
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
     for (let pos = 12; pos + 8 <= bytes.length; ) {
       const length = view.getUint32(pos + 4, true);
       const type = String.fromCharCode(...bytes.slice(pos, pos + 4));
       if (type === "ANIM" || type === "ANMF") throw new Error("ANIMACAO_IMAGEM_NAO_SUPORTADA");
+      if (type === "VP8X" && pos + 18 <= bytes.length) {
+        const width = 1 + (bytes[pos + 12] | (bytes[pos + 13] << 8) | (bytes[pos + 14] << 16));
+        const height = 1 + (bytes[pos + 15] | (bytes[pos + 16] << 8) | (bytes[pos + 17] << 16));
+        validateDimensions(width, height, maxPixels);
+      } else if (
+        type === "VP8 " &&
+        pos + 18 <= bytes.length &&
+        bytes[pos + 11] === 0x9d &&
+        bytes[pos + 12] === 0x01 &&
+        bytes[pos + 13] === 0x2a
+      ) {
+        const width = (bytes[pos + 14] | (bytes[pos + 15] << 8)) & 0x3fff;
+        const height = (bytes[pos + 16] | (bytes[pos + 17] << 8)) & 0x3fff;
+        validateDimensions(width, height, maxPixels);
+      } else if (type === "VP8L" && pos + 13 <= bytes.length && bytes[pos + 8] === 0x2f) {
+        const packed = view.getUint32(pos + 9, true);
+        const width = (packed & 0x3fff) + 1;
+        const height = ((packed >>> 14) & 0x3fff) + 1;
+        validateDimensions(width, height, maxPixels);
+      }
       pos += 8 + length + (length % 2);
     }
   }
@@ -297,7 +353,7 @@ export function getImageMetadata(input: File | Blob | Uint8Array): Promise<Image
 }
 /** Somente artefatos gerados pelo motor: PNG de 24 MP pode exceder os 64 MiB de entrada. */
 export function getGeneratedImageMetadata(output: Blob): Promise<ImageMetadata> {
-  return inspectImageMetadata(output, 128 * 1024 * 1024);
+  return inspectImageMetadata(output, 256 * 1024 * 1024);
 }
 async function inspectImageMetadata(
   input: File | Blob | Uint8Array,

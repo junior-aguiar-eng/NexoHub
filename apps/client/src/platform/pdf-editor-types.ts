@@ -81,14 +81,14 @@ export interface EditorWorkerResponse {
   error?: string;
 }
 export const EDITOR_LIMITS = Object.freeze({
-  bytes: 100 * 1024 * 1024,
+  bytes: 256 * 1024 * 1024,
   pages: 300,
   objects: 300_000,
   elements: 1_000,
   text: 8000,
   renderSide: 1400,
   imagePixels: 8_000_000,
-  outputBytes: 200 * 1024 * 1024,
+  outputBytes: 512 * 1024 * 1024,
   previewCacheBytes: 16 * 1024 * 1024,
   historyBytes: 64 * 1024 * 1024,
 });

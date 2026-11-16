@@ -916,12 +916,18 @@ export interface PdfPagesExtractionResult {
   pages: PdfExtractedPage[];
 }
 
+export interface ExtractPdfPagesOptions {
+  maxPages?: number;
+  maxTotalChars?: number;
+}
+
 /**
  * Extrai texto por página de um documento PDF através do PDF.js preservando a numeração real.
  */
 export async function extractPdfPagesText(
   pdfBytes: Uint8Array,
   signal?: AbortSignal,
+  options?: ExtractPdfPagesOptions,
 ): Promise<PdfPagesExtractionResult> {
   if (signal?.aborted) {
     throw new Error("PDF_TEXT_EXTRACTION_CANCELLED");
@@ -954,39 +960,68 @@ export async function extractPdfPagesText(
     const pdf = await loadingTask.promise;
     try {
       const pages: PdfExtractedPage[] = [];
+      const maxPages =
+        options?.maxPages !== undefined
+          ? Math.min(pdf.numPages, Math.max(0, options.maxPages))
+          : pdf.numPages;
+      const maxTotalChars = options?.maxTotalChars;
+      let accumulatedChars = 0;
 
-      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
         if (signal?.aborted) {
           throw new Error("PDF_TEXT_EXTRACTION_CANCELLED");
         }
         const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
-        let lastY: number | null = null;
-        let pageText = "";
+        try {
+          const textContent = await page.getTextContent();
+          let lastY: number | null = null;
+          let pageText = "";
 
-        for (const item of textContent.items) {
-          if ("str" in item) {
-            const itemY = item.transform ? item.transform[5] : null;
-            if (lastY !== null && itemY !== null && Math.abs(itemY - lastY) > 5) {
-              pageText += "\n";
-            } else if (pageText.length > 0 && !pageText.endsWith("\n") && !pageText.endsWith(" ")) {
-              pageText += " ";
-            }
-            pageText += item.str;
-            if (itemY !== null) {
-              lastY = itemY;
-            }
-            if (item.hasEOL) {
-              pageText += "\n";
-              lastY = null;
+          for (const item of textContent.items) {
+            if ("str" in item) {
+              const itemY = item.transform ? item.transform[5] : null;
+              if (lastY !== null && itemY !== null && Math.abs(itemY - lastY) > 5) {
+                pageText += "\n";
+              } else if (
+                pageText.length > 0 &&
+                !pageText.endsWith("\n") &&
+                !pageText.endsWith(" ")
+              ) {
+                pageText += " ";
+              }
+              pageText += item.str;
+              if (itemY !== null) {
+                lastY = itemY;
+              }
+              if (item.hasEOL) {
+                pageText += "\n";
+                lastY = null;
+              }
             }
           }
-        }
 
-        pages.push({
-          pageNumber: pageNum,
-          text: pageText.trim(),
-        });
+          let trimmedText = pageText.trim();
+          if (maxTotalChars !== undefined) {
+            const remaining = maxTotalChars - accumulatedChars;
+            if (remaining <= 0) {
+              break;
+            }
+            if (trimmedText.length > remaining) {
+              trimmedText = trimmedText.slice(0, remaining);
+            }
+            accumulatedChars += trimmedText.length;
+          }
+
+          pages.push({
+            pageNumber: pageNum,
+            text: trimmedText,
+          });
+          if (maxTotalChars !== undefined && accumulatedChars >= maxTotalChars) {
+            break;
+          }
+        } finally {
+          page.cleanup();
+        }
       }
 
       return { pageCount: pdf.numPages, pages };
@@ -1174,6 +1209,11 @@ function decodeDataUrlToBytes(dataUrl: string): Uint8Array {
   return bytes;
 }
 
+const MAX_JPG_PAGES = 500;
+const MAX_JPG_PAGE_PIXELS = 25_000_000;
+const MAX_JPG_DIMENSION = 16_384;
+const MAX_JPG_TOTAL_BYTES = 256 * 1024 * 1024;
+
 /**
  * Converte cada página selecionada de um PDF em uma imagem JPEG de alta resolução.
  */
@@ -1196,6 +1236,9 @@ export async function convertPdfPagesToJpgImages(
       requestedPages !== undefined
         ? requestedPages.filter((p) => Number.isInteger(p) && p >= 1 && p <= total)
         : Array.from({ length: total }, (_, i) => i + 1);
+    if (pages.length > MAX_JPG_PAGES) {
+      throw new Error(`Limite máximo de ${MAX_JPG_PAGES} páginas excedido na exportação JPEG.`);
+    }
 
     return pages.map((pageNumber) => ({
       name: `pagina_${pageNumber}.jpg`,
@@ -1216,8 +1259,12 @@ export async function convertPdfPagesToJpgImages(
       requestedPages !== undefined
         ? requestedPages.filter((p) => Number.isInteger(p) && p >= 1 && p <= total)
         : Array.from({ length: total }, (_, i) => i + 1);
+    if (pageNumbers.length > MAX_JPG_PAGES) {
+      throw new Error(`Limite máximo de ${MAX_JPG_PAGES} páginas excedido na exportação JPEG.`);
+    }
 
     const results: Array<{ name: string; pageNumber: number; data: Uint8Array }> = [];
+    let totalBytes = 0;
     const factory = (
       pdf as unknown as {
         canvasFactory?: {
@@ -1236,29 +1283,46 @@ export async function convertPdfPagesToJpgImages(
         const viewport = page.getViewport({ scale });
         const width = Math.max(1, Math.round(viewport.width));
         const height = Math.max(1, Math.round(viewport.height));
+        if (
+          width > MAX_JPG_DIMENSION ||
+          height > MAX_JPG_DIMENSION ||
+          width * height > MAX_JPG_PAGE_PIXELS
+        ) {
+          throw new Error("DIMENSOES_PAGINA_JPEG_EXCEDIDAS");
+        }
 
         if (typeof document !== "undefined" && hasBrowserCanvas) {
           const canvas = document.createElement("canvas");
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) continue;
+          try {
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) continue;
 
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-          await page.render({
-            canvasContext: ctx,
-            viewport,
-            canvas,
-          }).promise;
+            await page.render({
+              canvasContext: ctx,
+              viewport,
+              canvas,
+            }).promise;
 
-          const dataUrl = canvas.toDataURL("image/jpeg", quality);
-          results.push({
-            name: `pagina_${pageNum}.jpg`,
-            pageNumber: pageNum,
-            data: decodeDataUrlToBytes(dataUrl),
-          });
+            const dataUrl = canvas.toDataURL("image/jpeg", quality);
+            const encoded = decodeDataUrlToBytes(dataUrl);
+            totalBytes += encoded.byteLength;
+            if (totalBytes > MAX_JPG_TOTAL_BYTES) {
+              throw new Error("TAMANHO_TOTAL_JPEG_EXCEDIDO");
+            }
+            results.push({
+              name: `pagina_${pageNum}.jpg`,
+              pageNumber: pageNum,
+              data: encoded,
+            });
+          } finally {
+            canvas.width = 0;
+            canvas.height = 0;
+          }
         } else if (factory) {
           const target = factory.create(width, height);
           try {
@@ -1278,15 +1342,24 @@ export async function convertPdfPagesToJpgImages(
                   height,
                   quality,
                 );
+            const outputBytes = bytes ?? MINIMAL_FALLBACK_JPG;
+            totalBytes += outputBytes.byteLength;
+            if (totalBytes > MAX_JPG_TOTAL_BYTES) {
+              throw new Error("TAMANHO_TOTAL_JPEG_EXCEDIDO");
+            }
             results.push({
               name: `pagina_${pageNum}.jpg`,
               pageNumber: pageNum,
-              data: bytes ?? MINIMAL_FALLBACK_JPG,
+              data: outputBytes,
             });
           } finally {
             factory.destroy(target);
           }
         } else {
+          totalBytes += MINIMAL_FALLBACK_JPG.byteLength;
+          if (totalBytes > MAX_JPG_TOTAL_BYTES) {
+            throw new Error("TAMANHO_TOTAL_JPEG_EXCEDIDO");
+          }
           results.push({
             name: `pagina_${pageNum}.jpg`,
             pageNumber: pageNum,

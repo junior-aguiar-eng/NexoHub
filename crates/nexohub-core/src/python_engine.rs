@@ -19,6 +19,21 @@ pub fn configure_python_executable(path: PathBuf) {
     let _ = PYTHON_EXECUTABLE.set(path);
 }
 
+const MAX_SIDECAR_ARTIFACT_BYTES: u64 = 64 * 1024 * 1024;
+
+fn validate_sidecar_artifact_size(artifact: &Artifact) -> CoreResult<()> {
+    if artifact.size == 0 || artifact.size > MAX_SIDECAR_ARTIFACT_BYTES {
+        return Err(CoreError::new(
+            ErrorCode::ResourceLimit,
+            format!(
+                "O artifact excede o limite máximo de {} MiB para processamento no motor Python.",
+                MAX_SIDECAR_ARTIFACT_BYTES / (1024 * 1024)
+            ),
+        ));
+    }
+    Ok(())
+}
+
 const BASE64_ALPHABET: &[u8; 64] =
     b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -408,6 +423,7 @@ pub fn execute_ocr(request: ExecuteOcrRequest) -> CoreResult<OcrToolResult> {
             "O artifact de entrada não pertence ao documento informado.",
         ));
     }
+    validate_sidecar_artifact_size(&input_artifact)?;
 
     let source_bytes = store.read_artifact_bytes(&request.artifact_id)?;
     let content_b64 = base64_encode(&source_bytes);
@@ -508,6 +524,7 @@ pub fn execute_extract_pdf_images(
             "Extração de imagens requer um artifact PDF.",
         ));
     }
+    validate_sidecar_artifact_size(&input_artifact)?;
 
     let source_bytes = store.read_artifact_bytes(&request.artifact_id)?;
     let content_b64 = base64_encode(&source_bytes);
@@ -590,6 +607,7 @@ pub fn inspect_docx(request: InspectDocxRequest) -> CoreResult<DocxInspectionRes
             "O artifact de entrada não pertence ao documento informado.",
         ));
     }
+    validate_sidecar_artifact_size(&input_artifact)?;
 
     let source_bytes = store.read_artifact_bytes(&request.artifact_id)?;
     let content_b64 = base64_encode(&source_bytes);
@@ -931,6 +949,7 @@ pub fn extract_information(
         ) {
             let store = ProjectStore::open(project_path)?;
             let artifact = store.get_artifact(artifact_id)?;
+            validate_sidecar_artifact_size(&artifact)?;
             let bytes = store.read_artifact_bytes(artifact_id)?;
 
             if artifact.mime_type == "application/pdf" {

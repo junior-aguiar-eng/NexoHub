@@ -11,7 +11,7 @@ import type {
 
 /** Limites técnicos locais; textos que excedem o orçamento são recusados, nunca truncados. */
 export const PDF_COMPARISON_LIMITS = Object.freeze({
-  maxFileBytes: 64 * 1024 * 1024,
+  maxFileBytes: 128 * 1024 * 1024,
   maxPages: 40,
   maxRenderLongSide: 1200,
   maxWorkPixels: 100_000_000,

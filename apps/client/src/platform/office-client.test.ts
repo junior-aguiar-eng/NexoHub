@@ -23,7 +23,7 @@ describe("office-client", () => {
     expect(getOfficeToolMetadata("pdf-to-word")).toBeNull();
   });
 
-  it("rejeita arquivo vazio, extensão incompatível e arquivo acima de 64 MB", () => {
+  it("rejeita arquivo vazio, extensão incompatível e arquivo acima de 128 MB", () => {
     expect(() => validateOfficeInputFile("word-to-pdf", new File([], "vazio.docx"))).toThrowError(
       ToolRunError,
     );
@@ -35,7 +35,7 @@ describe("office-client", () => {
       name: "pesado.docx",
       size: OFFICE_MAX_INPUT_BYTES + 1,
     } as File;
-    expect(() => validateOfficeInputFile("word-to-pdf", oversized)).toThrowError(/64 MB/);
+    expect(() => validateOfficeInputFile("word-to-pdf", oversized)).toThrowError(/128 MB/);
   });
 
   it("invoca convert_office_document no desktop e retorna Blob válido", async () => {

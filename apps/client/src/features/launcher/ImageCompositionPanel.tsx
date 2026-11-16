@@ -82,7 +82,7 @@ export function ImageCompositionPanel({
     setAssetPending(true);
     onAssetPendingChange(true);
     try {
-      if (asset.size > 16 * 1024 * 1024) throw Error("COMPOSICAO_LIMITE");
+      if (asset.size > 64 * 1024 * 1024) throw Error("COMPOSICAO_LIMITE");
       const { getImageMetadata } = await import("@/platform/image-engine");
       const metadata = await getImageMetadata(asset);
       if (ticket.current !== current) return;

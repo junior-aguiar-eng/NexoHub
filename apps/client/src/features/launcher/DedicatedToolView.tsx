@@ -2611,9 +2611,13 @@ export function DedicatedToolView({
           onSelectFile={() => fileInputRef.current?.click()}
           onInstallCapability={() => {
             void installCapabilityItem("office.suite").catch((err) => {
-              setErrorMessage(
-                err instanceof Error ? err.message : translate("office.errorHeading"),
-              );
+              const message =
+                err instanceof Error
+                  ? err.message
+                  : err && typeof err === "object" && "message" in err
+                    ? String((err as { message?: unknown }).message ?? "")
+                    : "";
+              setErrorMessage(message || translate("office.errorHeading"));
             });
           }}
           onRecheckCapability={() => {

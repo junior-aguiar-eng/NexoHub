@@ -7,7 +7,7 @@ offline no computador do usuário.
 
 ## Versão disponível
 
-Windows 0.2.4 publicado em 30/10/2026; website em [nexojuris.ia.br/hub/](https://nexojuris.ia.br/hub/). Instalação, atualização e casos de tradução instalada foram conferidos; o [relatório de release](RELEASE-VALIDATION.md) delimita as evidências. OCR, tradução e revisão opcional podem exigir recursos baixados no primeiro uso. A disponibilidade offline depende dos recursos locais.
+Versão 0.2.6 sincronizada e validada em 16/11/2026 (último instalador publicado no GitHub Releases: Windows 0.2.4 de 30/10/2026); website em [nexojuris.ia.br/hub/](https://nexojuris.ia.br/hub/). Instalação, atualização e casos de tradução instalada foram conferidos na validação publicada anterior; o [relatório de release](RELEASE-VALIDATION.md) delimita as evidências. OCR, tradução, resumo com IA local e revisão/suíte Office opcionais podem exigir recursos baixados sob demanda no primeiro uso. A disponibilidade offline depende dos recursos locais.
 
 ## Evolução opcional em implementação
 
@@ -37,14 +37,14 @@ Google sem convite identifica a pessoa, mas não libera recursos em nuvem.
 
 - **Hub de Ferramentas (Home):** modo PDF/texto com seis grupos e modo Imagem com seis ferramentas:
   - **Organizar PDF:** organizar, juntar, dividir, rotacionar, recortar, numerar, remover e extrair páginas.
-  - **Editar e comparar PDF:** editar conteúdo compatível, comparar documentos e preencher formulários.
+  - **Editar e comparar PDF:** editar conteúdo compatível (incluindo edição inline no palco), comparar documentos e preencher formulários.
   - **Otimizar PDF:** comprimir e reparar dentro dos perfis suportados.
-  - **Converter PDF:** imagem, JPG, extração de imagens, Markdown, Excel, Word, HTML e digitalização com câmera/imagens locais.
-  - **Texto e OCR:** reconhecer, comparar, revisar e traduzir texto; nomes explícitos podem ser preservados na tradução.
+  - **Converter PDF:** imagem, JPG, extração de imagens, Markdown, Excel, Word, PDF/A (`PDF/A-1b` e `PDF/A-2b`), Suíte Office (`Word`, `Excel` e `PowerPoint` ↔ `PDF`), HTML e digitalização com câmera/imagens locais.
+  - **Texto e OCR:** reconhecer, comparar, revisar, traduzir texto (preservando nomes explícitos) e resumir PDF com IA local (`Qwen2.5 0.5B Instruct`) com citações verificadas por página.
   - **Segurança:** marca d’água, proteção, ocultação, rubrica visual e desbloqueio com senha conhecida.
   - **Modo Imagem:** comprimir, redimensionar, recortar, converter, girar e aplicar marca d’água.
 
-  *Critério estrito de vitrine:* Somente são anunciadas e disponibilizadas ferramentas com executor funcional ativo e testado (36 ferramentas implementadas no catálogo; cada perfil e plataforma tem limitações próprias de homologação). Ferramentas planejadas dependentes de novos motores ou ADRs (como conversores Office complexos e PDF/A) são documentadas no [Catálogo de Ferramentas](CATALOGO-FERRAMENTAS.md) e permanecem desativadas da vitrine até sua homologação completa.
+  *Critério estrito de vitrine:* Somente são anunciadas e disponibilizadas ferramentas com executor funcional ativo e testado (**42 ferramentas implementadas** no catálogo: `38` no navegador offline, `41` na Web com adapter HTTP / nuvem híbrida e `42` no Desktop Windows). Ferramentas que dependem de Superpoder Desktop instalável (`office.suite`) são filtradas por superfície via `@/platform/tool-availability.ts`, sem cartões `"Em breve"` nem rotas simuladas. Confira os limites de cada perfil no [Catálogo de Ferramentas](CATALOGO-FERRAMENTAS.md).
 
 - **Tela Dedicada por Ferramenta (`DedicatedToolView`):** experiência sem fricção ao estilo iLovePDF:
   1. O usuário clica na ferramenta desejada.

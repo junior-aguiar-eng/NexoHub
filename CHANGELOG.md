@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.6] - 2026-11-11
+## [0.2.6] - 2026-11-16
 
 ### Adicionado e Modernizado
 
@@ -16,6 +16,21 @@
 - **Presets de Numeração Forense PJe e Tribunais (`PageNumbersPdfPanel.tsx` e `pdf-engine.ts`)**:
   - Novos formatos jurídicos brasileiros: `Fls. X de Y (Forense)` e `Fls. X (PJe / Tribunais)`.
   - Suporte a prefixo de peticionamento eletrônico e número de processo (ex.: `Processo 0001234-56.2026.8.26.0100 - Fls. 1`) com estampa vetorial precisa e pré-visualização sincronizada.
+- **Onda 3 Documental Local (`pdf-to-pdfa`, Suíte Office e `pdf-summarize`)**:
+  - Conversão e validação local para **PDF/A-1b e PDF/A-2b** (`ISO 19005`) com perfil ICC sRGB embutido, metadados XMP e verificação de conformidade estrutural.
+  - Conversores Office bidirecionais (`word-to-pdf`, `excel-to-pdf`, `powerpoint-to-pdf` e `pdf-to-powerpoint`) com detecção e instalação guiada do superpoder `office.suite` (LibreOffice headless em perfil temporário isolado) no Windows Desktop e motor integrado no container Cloud Run.
+  - **Resumir PDF com IA Local (`pdf-summarize`)** com Qwen2.5 0.5B Instruct ONNX em Web Worker, 3 modos de síntese (*Resumo Executivo*, *Obrigações e Datas*, *Por Seção*) e citações verificáveis `[p. X]` clicáveis.
+- **Edição Inline no Palco e Ergonomia das Mesas**:
+  - Edição direta de blocos de texto no canvas do `PdfEditorPanel` com preservação de fonte/tamanho/cor e cobertura automática do trecho original.
+  - Reordenação direta de miniaturas por arraste via Pointer Events (`usePointerReorder`) compatível com Web e Tauri WebView2.
+  - Grade visual de miniaturas em `SplitPdfPanel`, prévia rápida de HTML com debounce para arquivos grandes, ampliação dos limites operacionais de entrada e página informativa de bibliotecas opcionais no instalador Windows (`installer/nexohub.iss`).
+
+### Segurança e Hardening
+
+- **Waves 1 a 4 de Hardening Desktop, Motores e Servidor**:
+  - Concessões tipadas de arquivos-fonte (`grant_source_file`), escopo estrito de pasta `.nexohub`, bloqueio de caminhos UNC/SMB em diálogos nativos, remoção de `cloud_identity_get_token` da superfície pública IPC e proteção contra symlinks/reparse points em `blobs/` e `.staging`.
+  - Orçamentos de páginas, pixels e memória nos motores Python, PDF.js, HTML-para-PDF, conversores Office e downloads de superpoderes com validação de tamanho e SHA-256 em streaming.
+  - Limites de sessão concorrente, semáforo de rotas pesadas e validação estrita de parâmetros no `nexohub-server`, além de pinagem de imagens e permissões mínimas em workflows CI/CD e `Dockerfile`.
 
 ## [0.2.5] - 2026-11-10
 

@@ -1,10 +1,10 @@
 [package]
 name = "nexohub-desktop"
-version = "0.2.4"
+version = "0.2.6"
 description = "Shell desktop do NexoHub"
 edition = "2024"
 license = "MPL-2.0"
-rust-version = "1.88"
+rust-version = "1.89"
 
 [lib]
 name = "nexohub_desktop_lib"

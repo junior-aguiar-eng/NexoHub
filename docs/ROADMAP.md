@@ -1,6 +1,6 @@
 # Roadmap
 
-Estado em 11/11/2026: Versão **0.2.6** consolidada com Dropzone Global Fullscreen, Encadeamento Contínuo de Ferramentas (Tool Chaining em memória RAM), Ações Rápidas em Miniaturas Visuais de Páginas e Presets de Numeração Forense PJe/Tribunais. Node.js 26 LTS, deploy contínuo em produção no Google Cloud Run (`https://nexojuris.ia.br/hub/`). Próximo marco ativo: Arquivamento Padronizado PDF/A e consolidação dos motores Office. As fases “Concluída” abaixo descrevem implementação no escopo entregue, não homologação irrestrita de qualidade.
+Estado em 16/11/2026: Versão **0.2.6** consolidada com Dropzone Global Fullscreen, Encadeamento Contínuo de Ferramentas (Tool Chaining em memória RAM), Ações Rápidas e Reordenação Direta em Miniaturas Visuais, Presets Forenses PJe/Tribunais, Arquivamento PDF/A-1b/2b, Suíte Office Bidirecional, Resumo IA Local (`pdf-summarize`), Edição Inline de PDF no palco e Hardening completo de Segurança (Waves 1–4). Node.js 26 LTS e deploy contínuo em produção no Google Cloud Run (`https://nexojuris.ia.br/hub/`). Próximos marcos: reconciliação documental do catálogo completo, validação de qualidade e expansão da arquitetura multiplataforma. As fases “Concluída” abaixo descrevem implementação no escopo entregue, não homologação irrestrita de qualidade.
 
 ## Evolução híbrida — implementação autorizada em 30/10/2026
 

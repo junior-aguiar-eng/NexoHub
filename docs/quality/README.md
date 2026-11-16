@@ -1,11 +1,11 @@
 # Q-C0 — índice local de evidências
 
-> Estado da distribuição atual: Windows 0.2.3, com [validação de instalação e atualização](../RELEASE-VALIDATION.md). Essa publicação não altera os 35 perfis do índice Q-C0 descritos abaixo.
+> Estado do índice: reconciliado com a versão `0.2.6` e as **42 ferramentas** ativas em `coreToolManifests` (**41 perfis restritos** em **28 grupos de corpus** + `1` exclusão explícita de `pdf-to-word`). As evidências de instalação Windows da release publicada permanecem registradas em [RELEASE-VALIDATION.md](../RELEASE-VALIDATION.md).
 
 Consolidação inicial de 27/10/2026 sobre a base `a9f3385`, complementada pelo
-[fechamento técnico](Q-C0-FECHAMENTO.md). O índice mantém 35 perfis com evidência.
-A integração com a `main` preserva PDF → Word, preexistente nessa branch, elevando
-o catálogo a 36 ferramentas. Essa ferramenta consta em `exclusions`, com motivo e
+[fechamento técnico](Q-C0-FECHAMENTO.md) e ampliada na Onda 3 com os perfis restritos
+`pdf-to-pdfa` (`pdfa`), Suíte Office (`office`: `word-to-pdf`, `excel-to-pdf`, `powerpoint-to-pdf`, `pdf-to-powerpoint`) e `pdf-summarize` (`summarize`).
+`pdf-to-word` permanece preservado no catálogo em `exclusions`, com motivo e
 documentação, sem receber perfil Q-C0. DOC-C2 continua fora
 do escopo; Camelot, Docling, qpdf, OpenCV e AVIF não passam a integrar o aplicativo.
 
@@ -20,7 +20,7 @@ O teste de integração também resolve os
 caminhos reais para recusar links simbólicos externos. O checker é usado por testes;
 não está exportado pelo pacote nem importado pelo aplicativo.
 
-Há 25 grupos de corpus. Os rótulos `file`, `generator` e `manifest` identificam **quais bytes
+Há 28 grupos de corpus. Os rótulos `file`, `generator` e `manifest` identificam **quais bytes
 foram hasheados**: arquivo fixo, código gerador/teste ou manifesto de uma medição anterior.
 Hash de gerador não identifica o PDF/imagem que ele produzirá; hash de manifesto não verifica
 novamente as fotos externas ou os resultados nele registrados. Os downloads externos não são
@@ -33,7 +33,7 @@ Expectativas textuais são limites documentados, não assertions executadas pelo
 
 ## Cobertura por ferramenta
 
-**35 perfis restritos.** Perfil restrito
+**41 perfis restritos.** Perfil restrito
 significa que há uma entrega específica com corpus e limites documentados; não é um selo de
 homologação integral. Regressão identifica cobertura existente, que pode incluir testes com port simulado.
 Esses testes de encaminhamento não demonstram fidelidade da saída. A fatia de
@@ -77,6 +77,13 @@ Expectativas, recusas, casos não medidos e links de testes/documentos estão em
 | `image-convert` | Perfil restrito | `image-basic`, `image-photo` |
 | `image-rotate` | Perfil restrito | `image-basic`, `image-photo` |
 | `image-watermark` | Perfil restrito | `image-basic`, `image-photo` |
+| `pdf-to-pdfa` | Perfil restrito | `pdfa` |
+| `word-to-pdf` | Perfil restrito | `office` |
+| `excel-to-pdf` | Perfil restrito | `office` |
+| `powerpoint-to-pdf` | Perfil restrito | `office` |
+| `pdf-to-powerpoint` | Perfil restrito | `office` |
+| `pdf-summarize` | Perfil restrito | `summarize` |
+| `pdf-to-word` | Excluída (`exclusions`) | — (`DOC-C2` fora do recorte) |
 
 ## Teste de resultado e pendências
 
@@ -89,9 +96,10 @@ Expectativas, recusas, casos não medidos e links de testes/documentos estão em
 | Markdown | Ordem/estrutura confrontada com a fonte e edição/revisão documentada por página |
 | Tradução/revisão/comparação | Referências textuais, preservação de identificadores e avaliação linguística; sem garantia jurídica ou semântica universal |
 
-O [fechamento técnico Q-C0](Q-C0-FECHAMENTO.md) reúne a matriz de corpus, testes de
+O [fechamento técnico Q-C0](Q-C0-FECHAMENTO.md) reúne a matriz de corpus inicial (35 perfis), testes de
 resultado, auditorias e medições locais, incluindo Windows Sandbox limpo de 4 GB.
-O alcance continua sendo os **35 perfis restritos**: documentos arbitrários, todos os
+Somados os seis perfis adicionados na Onda 3 (`PDFA-C1`, `OFFICE-C1` e `SUMMARIZE-C1`), o alcance
+atual do índice `q-c0.json` é de **41 perfis restritos** (28 grupos de corpus): documentos arbitrários, todos os
 dispositivos e certificação do NexoHub 1.0 não estão demonstrados. A foto privada de livro
 falhou no OCR e não foi incorporada ao perfil aprovado. Nenhum percentual heurístico vira
 probabilidade de correção. O ADR-019 exclui LanguageTool/Java do instalador e oferece instalação opcional por download oficial; as fontes do pacote completo continuam na issue #12247.

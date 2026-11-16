@@ -2,19 +2,22 @@
 
 Este documento é a fonte de verdade para o inventário, status funcional, plataformas atendidas, executores e limitações operacionais de todas as ferramentas do NexoHub.
 
-Inventário-base de 23/10/2026, reconciliado documentalmente em 29/10/2026 com os agrupamentos da interface e a release Windows 0.2.3. Esta revisão não amplia os perfis homologados.
+Inventário-base de 23/10/2026, reconciliado documentalmente em 16/11/2026 com os agrupamentos da interface, o `coreToolRegistry` (`42` ferramentas) e a versão `0.2.6`. Esta revisão não amplia a homologação universal além dos perfis restritos documentados.
 
 ---
 
 ## 1. Visão Geral do Inventário
 
 - **Total mapeado no ecossistema:** 42 ferramentas
-- **Implementadas e operacionais:** 36 ferramentas (30 PDF/Texto + 6 Imagem)
-- **Planejadas / Pendentes de ADR ou implementação:** 6 ferramentas
+- **Implementadas e operacionais (`coreToolManifests`):** 42 ferramentas (36 PDF/Texto + 6 Imagem), distribuídas por superfície conforme `apps/client/src/platform/tool-availability.ts`:
+  - **38 ferramentas** no navegador 100% offline (`universalBrowserToolIds`)
+  - **41 ferramentas** na superfície Web com backend HTTP / Nuvem Híbrida (`httpSupportedToolIds`, incluindo `word-to-pdf`, `excel-to-pdf` e `powerpoint-to-pdf`)
+  - **42 ferramentas** no aplicativo Windows Desktop (`tauriSupportedToolIds`, incluindo toda a suíte Office e `pdf-to-powerpoint` via Superpoder `office.suite`)
+- **Planejadas / Pendentes de ADR (`plannedToolManifests`):** 0 ferramentas
 
 ---
 
-O total implementado não significa homologação universal: o Q-C0 mantém 35 perfis restritos, com PDF para Word excluído daquele recorte. A [validação da release 0.2.3](RELEASE-VALIDATION.md) registra os fluxos instalados exercitados. As superfícies compartilham o catálogo; não se presume um endpoint remoto correspondente a cada operação browser.
+O total implementado não significa homologação universal: o índice [Q-C0](quality/README.md) mantém **41 perfis restritos** em **28 grupos de corpus**, mantendo `pdf-to-word` como única exclusão explícita (`DOC-C2`). A [validação da release](RELEASE-VALIDATION.md) registra os fluxos instalados exercitados. As superfícies compartilham o catálogo; não se presume um endpoint remoto correspondente a cada operação browser.
 
 ## 2. Matriz Completa de Ferramentas
 
@@ -27,8 +30,8 @@ O total implementado não significa homologação universal: o Q-C0 mantém 35 p
 | `pdf-extract-pages` | Extrair Páginas | Organizar | Implementada | Web, Desktop, HTTP | browser | Exporta páginas escolhidas para novo PDF ou pacote ZIP. |
 | `pdf-rotate` | Rotacionar PDF | Organizar | Implementada | Web, Desktop, HTTP | native (fallback browser) | Rotação em ângulos retos (90°, 180°, 270°). |
 | `pdf-crop` | Recortar PDF | Organizar | Implementada | Web, Desktop, HTTP | browser | Ajusta CropBox visual. Não elimina irreversivelmente dados externos. |
-| `pdf-edit` | Editar PDF | Editar | Implementada | Web, Desktop, HTTP | browser | Edição tipográfica pontual e substituição de textos em sandbox. |
-| `pdf-page-numbers` | Inserir Números de Página | Organizar | Implementada | Web, Desktop, HTTP | browser | Posições em cabeçalho/rodapé, múltiplos formatos e controle de início. |
+| `pdf-edit` | Editar PDF | Editar | Implementada | Web, Desktop, HTTP | browser | Edição inline de blocos de texto no palco, elementos adicionais e substituição em sandbox. |
+| `pdf-page-numbers` | Inserir Números de Página | Organizar | Implementada | Web, Desktop, HTTP | browser | Cabeçalho/rodapé, controle de início e presets forenses (`Fls. X de Y`, `Fls. X (PJe / Tribunais)`). |
 | `pdf-watermark` | Inserir Marca d'água | Segurança | Implementada | Web, Desktop, HTTP | browser | Carimbo textual com controle de cor, opacidade e rotação. |
 | `pdf-form-fill` | Preencher Formulário PDF | Editar | Implementada | Web, Desktop, HTTP | browser | Suporta AcroForm (texto, check, radio, select). Não suporta XFA. |
 | `pdf-sign` | Assinar PDF | Segurança | Implementada | Web, Desktop, HTTP | browser | Rubrica visual (desenho/texto/imagem). Não substitui certificado digital ICP-Brasil. |
@@ -56,28 +59,25 @@ O total implementado não significa homologação universal: o Q-C0 mantém 35 p
 | `image-convert` | Converter Imagem | Imagem | Implementada | Web, Desktop, HTTP | browser | Conversão de formatos entre JPG, PNG e WebP. |
 | `image-rotate` | Girar Imagem | Imagem | Implementada | Web, Desktop, HTTP | browser | Rotações de 90°, 180°, 270° e espelhamento horizontal/vertical. |
 | `image-watermark` | Marca d'água em Imagem | Imagem | Implementada | Web, Desktop, HTTP | browser | Inserção de marca d'água textual ou de logotipo sobre imagem. |
+| `pdf-to-pdfa` | PDF para PDF/A | Converter de PDF | Implementada | Web, Desktop, HTTP | browser | Conversão e validação ISO 19005 (`PDF/A-1b` e `PDF/A-2b`) com perfil ICC sRGB embutido, metadados XMP e recusa de PDFs criptografados/assinados sem autorização explícita. Ver [PDFA-C1](quality/PDFA-C1.md). |
+| `word-to-pdf` | Word para PDF | Converter em PDF | Implementada | Desktop, HTTP (Híbrido) | native (`office.suite` / híbrido) | Converte DOCX, DOC, ODT e RTF preservando layout via LibreOffice headless isolado no Desktop (Superpoder `office.suite`) ou rota híbrida. Limite de entrada de 128 MB (perfil restrito Q-C0 de 64 MB). Ver [OFFICE-C1](quality/OFFICE-C1.md). |
+| `excel-to-pdf` | Excel para PDF | Converter em PDF | Implementada | Desktop, HTTP (Híbrido) | native (`office.suite` / híbrido) | Converte XLSX, XLS e ODS para PDF via Superpoder `office.suite` no Desktop ou rota híbrida. Limite de entrada de 128 MB (perfil restrito Q-C0 de 64 MB). Ver [OFFICE-C1](quality/OFFICE-C1.md). |
+| `powerpoint-to-pdf` | PowerPoint para PDF | Converter em PDF | Implementada | Desktop, HTTP (Híbrido) | native (`office.suite` / híbrido) | Converte PPTX, PPT e ODP para PDF via Superpoder `office.suite` no Desktop ou rota híbrida. Limite de entrada de 128 MB (perfil restrito Q-C0 de 64 MB). Ver [OFFICE-C1](quality/OFFICE-C1.md). |
+| `pdf-to-powerpoint` | PDF para PowerPoint | Converter de PDF | Implementada | Desktop | native (`office.suite`) | Exclusivo do NexoHub Desktop com Superpoder `office.suite` instalado; exporta `.pptx`. Recusa explícita no navegador offline e Web Híbrida. Limite de entrada de 128 MB. Ver [OFFICE-C1](quality/OFFICE-C1.md). |
+| `pdf-summarize` | Resumir PDF com IA | Texto e OCR | Implementada | Web, Desktop, HTTP | browser | Síntese local com Qwen2.5 0.5B Instruct ONNX em Web Worker, 3 modos, proteção contra prompt injection e citações verificadas `[p. X]`. Recusa PDFs sem camada de texto (< 40 caracteres). Ver [SUMMARIZE-C1](quality/SUMMARIZE-C1.md). |
 
 ---
 
 ## 3. Ferramentas Pendentes e Planejadas
 
-As ferramentas abaixo compõem o catálogo visual planejado ou dependem de decisões arquiteturais explícitas (ADR) antes de iniciarem implementação de código:
-
-| Ferramenta | Identificador Previsto | Categoria | Dependência Arquitetural / Bloqueio |
-|---|---|---|---|
-| **Word para PDF** | `word-to-pdf` | Converter em PDF | ADR de Motor Office: conversão de DOC/DOCX preservando layout completo. Requer sidecar com motor de renderização (ex: LibreOffice / headless unoconv). |
-| **PowerPoint para PDF** | `powerpoint-to-pdf` | Converter em PDF | Dependente do mesmo ADR de Motor Office (LibreOffice). |
-| **Excel para PDF** | `excel-to-pdf` | Converter em PDF | Dependente do mesmo ADR de Motor Office (LibreOffice). |
-| **PDF para PowerPoint** | `pdf-to-powerpoint` | Converter de PDF | Dependente do mesmo ADR de Motor Office (LibreOffice). |
-| **PDF para PDF/A** | `pdf-to-pdfa` | Converter de PDF | Especificação e motor para conformance ISO 19005 (PDF/A-1b, PDF/A-2b), embutimento obrigatório de fontes e perfis de cor ICC. |
-| **Resumir com IA** | `pdf-summarize` | PDF Intelligence | ADR de IA Local vs. Privacidade: obrigatoriedade de modelo local (ONNX / WebLLM) para cumprir a regra de processamento 100% offline no dispositivo sem upload externo. |
+Todas as seis ferramentas anteriormente mapeadas nesta seção (`word-to-pdf`, `powerpoint-to-pdf`, `excel-to-pdf`, `pdf-to-powerpoint`, `pdf-to-pdfa` e `pdf-summarize`) tiveram suas decisões arquiteturais aprovadas ([ADR-016](adr/ADR-016-motor-documentos-office.md), [ADR-017](adr/ADR-017-resumo-documental-ia-local.md) e [ADR-021](adr/ADR-021-arquivamento-pdfa-iso19005.md)), foram implementadas e integram o `coreToolManifests` ativo, deixando `plannedToolManifests` vazio (`0` ferramentas pendentes).
 
 ---
 
 ## 4. Política de Disponibilidade e Plataformas
 
 1. **Fonte Única:** A disponibilidade ativa é governada por `@/platform/tool-availability.ts`, derivado diretamente de `coreToolRegistry`.
-2. **Catálogo compartilhado:** O client desktop (Tauri) e o website (Browser/PWA) compartilham o catálogo de 36 ferramentas ativas neste checkout. A existência do executor web não substitui a homologação do aplicativo instalado. Nenhuma ferramenta é exibida com selo "Em breve" ou sem executor associado.
+2. **Catálogo compartilhado:** O client desktop (Tauri) e o website (Browser/PWA) compartilham o catálogo de **42 ferramentas ativas** neste checkout (`38` no navegador 100% offline, `41` na superfície Web com backend HTTP / Nuvem Híbrida e `42` no Desktop Windows com Superpoderes instaláveis). A existência do executor web não substitui a homologação do aplicativo instalado. Nenhuma ferramenta é exibida com selo "Em breve" ou sem executor associado.
 3. **Privacidade e Local-First:** Toda operação de transformação executa localmente. Nenhum documento é transmitido para servidores remotos.
 
 ## 5. Complementação das ferramentas atuais
@@ -99,6 +99,9 @@ O checklist vive apenas no plano responsável, não nesta matriz.
 | `pdf-edit` | [Editar PDF](superpowers/plans/2026-10-23-editar-pdf.md#fase-de-complementação--24102026): ED-C1 compatibilidade, ED-C2 desempenho |
 | `pdf-compare` | [Comparar PDF](superpowers/plans/2026-10-23-comparar-pdf.md#fase-de-complementação--24102026): CMP-C1 navegação/relatório |
 | `pdf-repair` (motor web implementado) | [Especificação existente](REPARAR-PDF.md#complementação-do-motor--24102026): avaliação qpdf de R-C1 permanece separada |
+| `pdf-to-pdfa` | [PDFA-C1](quality/PDFA-C1.md) e [ADR-021](adr/ADR-021-arquivamento-pdfa-iso19005.md): arquivamento PDF/A-1b/2b e validação estrutural |
+| `word-to-pdf`, `excel-to-pdf`, `powerpoint-to-pdf`, `pdf-to-powerpoint` | [OFFICE-C1](quality/OFFICE-C1.md) e [ADR-016](adr/ADR-016-motor-documentos-office.md): motor Office isolado e Superpoder `office.suite` |
+| `pdf-summarize` | [SUMMARIZE-C1](quality/SUMMARIZE-C1.md) e [ADR-017](adr/ADR-017-resumo-documental-ia-local.md): SLM local Qwen2.5 ONNX e citações `[p. X]` |
 
 Ferramentas sem complemento específico mantêm seu contrato atual e a regressão em Q-C0;
 não ganham nova promessa funcional por associação ao grupo.

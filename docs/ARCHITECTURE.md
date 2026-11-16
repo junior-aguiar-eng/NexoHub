@@ -67,19 +67,19 @@ O `@nexohub/tool-registry` é o catálogo canônico consumido pelas superfícies
 `@nexohub/tool-sdk` valida manifestos, antecipa indisponibilidade e encaminha execuções canceláveis
 ao adapter declarado.
 
-O ecossistema conta com 36 ferramentas implementadas no catálogo deste checkout, descritas no
-[catálogo canônico](CATALOGO-FERRAMENTAS.md). Entre seus grupos estão:
+O ecossistema conta com **42 ferramentas implementadas** no catálogo deste checkout (`38` no navegador offline, `41` com adapter HTTP / nuvem híbrida e `42` no Desktop Windows), descritas no [catálogo canônico](CATALOGO-FERRAMENTAS.md). Entre seus grupos estão:
 - **Manipulação documental de PDF:** `pdf-organize`, `pdf-merge`, `pdf-split`, `pdf-rotate`, `pdf-compress`,
   `images-to-pdf`, `pdf-to-jpg`, `pdf-watermark` e `pdf-page-numbers` (executores em `pdf-lib` no
   navegador e motor nativo Rust no desktop com persistência e controle de integridade).
 - **Análise e inteligência textual:** `text-compare` (diff textual), `text-review` (revisão ortográfica e
-  morfológica contextual), `pdf-ocr` (extração óptica local de texto) e `text-translate` (tradução offline entre múltiplos idiomas).
+  morfológica contextual), `pdf-ocr` (extração óptica local de texto), `text-translate` (tradução offline entre múltiplos idiomas) e `pdf-summarize` (resumo documental com IA local e citações por página).
+- **Onda 3 Documental Local e Office (`ADR-016`, `ADR-017`, `ADR-021`):** `pdf-to-pdfa` converte e valida estruturas ISO 19005 (`PDF/A-1b` e `PDF/A-2b`) em Web Worker com perfil ICC sRGB embutido e metadados XMP; a Suíte Office (`word-to-pdf`, `excel-to-pdf`, `powerpoint-to-pdf` e `pdf-to-powerpoint`) isola o LibreOffice headless no core Rust (`office_engine.rs`) com perfil temporário por conversão, verificação anti-Zip-Bomb e instalação opcional via Superpoder `office.suite`; e `pdf-summarize` executa `Qwen2.5-0.5B-Instruct` quantizado em ONNX dentro de Web Worker dedicado com neutralização anti-*prompt injection* e verificação estrita de referências `[p. X]`.
 
-As seis adições web são `pdf-to-markdown`, `pdf-crop`, `pdf-sign`, `pdf-extract-images`,
+As seis adições web anteriores são `pdf-to-markdown`, `pdf-crop`, `pdf-sign`, `pdf-extract-images`,
 `pdf-form-fill` e `pdf-unlock`. Seus módulos locais se integram ao executor compartilhado;
 `pdf-engine` reexporta as operações para manter os consumidores existentes. O desbloqueio usa
 uma ponte interna versionada do PDF.js, descrita em [PDF-UNLOCK.md](PDF-UNLOCK.md).
-O registro desta entrega web não homologa, por si só, o desktop.
+O registro dessa entrega web não homologa, por si só, o desktop.
 
 A proteção web usa AES-256 por padrão. Ocultar PDF reconstrói páginas rasterizadas para não
 manter conteúdo recuperável sob as tarjas. A conversão para Excel usa texto local e coordenadas,

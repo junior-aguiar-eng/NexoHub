@@ -10,10 +10,10 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @babel/code-frame | 7.29.7 | MIT |
 | JavaScript | @babel/helper-validator-identifier | 7.29.7 | MIT |
 | JavaScript | @babel/runtime | 7.29.7 | MIT |
-| JavaScript | @base-ui/react | 1.7.0 | MIT |
-| JavaScript | @base-ui/utils | 0.3.2 | MIT |
-| JavaScript | @biomejs/biome | 2.5.11 | MIT OR Apache-2.0 |
-| JavaScript | @biomejs/cli-win32-x64 | 2.5.11 | MIT OR Apache-2.0 |
+| JavaScript | @base-ui/react | 1.9.0 | MIT |
+| JavaScript | @base-ui/utils | 0.5.0 | MIT |
+| JavaScript | @biomejs/biome | 2.6.6 | MIT OR Apache-2.0 |
+| JavaScript | @biomejs/cli-win32-x64 | 2.6.6 | MIT OR Apache-2.0 |
 | JavaScript | @bramus/specificity | 2.4.2 | MIT |
 | JavaScript | @cropper/element-canvas | 2.3.1 | MIT |
 | JavaScript | @cropper/element-crosshair | 2.3.1 | MIT |
@@ -83,8 +83,8 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @floating-ui/react-dom | 2.1.9 | MIT |
 | JavaScript | @floating-ui/utils | 0.2.12 | MIT |
 | JavaScript | @fontsource-variable/inter | 5.3.0 | OFL-1.1 |
-| JavaScript | @fontsource-variable/playfair-display | 5.2.8 | OFL-1.1 |
-| JavaScript | @fontsource-variable/plus-jakarta-sans | 5.2.8 | OFL-1.1 |
+| JavaScript | @fontsource-variable/playfair-display | 5.3.0 | OFL-1.1 |
+| JavaScript | @fontsource-variable/plus-jakarta-sans | 5.3.0 | OFL-1.1 |
 | JavaScript | @grpc/grpc-js | 1.14.7 | Apache-2.0 |
 | JavaScript | @grpc/proto-loader | 0.7.15 | Apache-2.0 |
 | JavaScript | @grpc/proto-loader | 0.8.1 | Apache-2.0 |
@@ -107,8 +107,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @pdf-lib/standard-fonts | 1.0.0 | MIT |
 | JavaScript | @pdf-lib/upng | 1.0.1 | MIT |
 | JavaScript | @pdfsmaller/pdf-encrypt | 1.2.0 | MIT |
-| JavaScript | @playwright/test | 1.62.1 | Apache-2.0 |
-| JavaScript | @playwright/test | 1.63.0 | Apache-2.0 |
+| JavaScript | @playwright/test | 1.65.0 | Apache-2.0 |
 | JavaScript | @protobufjs/aspromise | 1.1.2 | BSD-3-Clause |
 | JavaScript | @protobufjs/base64 | 1.1.2 | BSD-3-Clause |
 | JavaScript | @protobufjs/codegen | 2.0.5 | BSD-3-Clause |
@@ -121,10 +120,11 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @rolldown/binding-win32-x64-msvc | 1.2.15 | MIT |
 | JavaScript | @rolldown/pluginutils | 1.0.1 | MIT |
 | JavaScript | @standard-schema/spec | 1.1.0 | MIT |
-| JavaScript | @tailwindcss/node | 4.3.3 | MIT |
-| JavaScript | @tailwindcss/oxide-win32-x64-msvc | 4.3.3 | MIT |
-| JavaScript | @tailwindcss/oxide | 4.3.3 | MIT |
-| JavaScript | @tailwindcss/vite | 4.3.3 | MIT |
+| JavaScript | @tailwindcss/node | 4.3.5 | MIT |
+| JavaScript | @tailwindcss/oxide-wasm32-wasi | 4.3.5 | MIT |
+| JavaScript | @tailwindcss/oxide-win32-x64-msvc | 4.3.5 | MIT |
+| JavaScript | @tailwindcss/oxide | 4.3.5 | MIT |
+| JavaScript | @tailwindcss/vite | 4.3.5 | MIT |
 | JavaScript | @tauri-apps/cli-win32-x64-msvc | 2.11.4 | Apache-2.0 OR MIT |
 | JavaScript | @tauri-apps/cli | 2.11.4 | Apache-2.0 OR MIT |
 | JavaScript | @testing-library/dom | 10.4.1 | MIT |
@@ -134,13 +134,13 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | @types/chai | 5.2.3 | MIT |
 | JavaScript | @types/deep-eql | 4.0.2 | MIT |
 | JavaScript | @types/estree | 1.0.9 | MIT |
-| JavaScript | @types/node | 26.4.0 | MIT |
 | JavaScript | @types/node | 26.6.5 | MIT |
+| JavaScript | @types/node | 26.6.6 | MIT |
 | JavaScript | @types/nspell | 2.1.6 | MIT |
 | JavaScript | @types/react-dom | 19.2.5 | MIT |
 | JavaScript | @types/react | 19.2.18 | MIT |
 | JavaScript | @typescript/typescript-win32-x64 | 7.0.2 | Apache-2.0 |
-| JavaScript | @vitejs/plugin-react | 6.1.1 | MIT |
+| JavaScript | @vitejs/plugin-react | 6.3.0 | MIT |
 | JavaScript | @vitest/expect | 4.1.12 | MIT |
 | JavaScript | @vitest/mocker | 4.1.12 | MIT |
 | JavaScript | @vitest/pretty-format | 4.1.12 | MIT |
@@ -164,7 +164,6 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | color-convert | 2.0.1 | MIT |
 | JavaScript | color-name | 1.1.4 | MIT |
 | JavaScript | convert-source-map | 2.0.0 | MIT |
-| JavaScript | core-util-is | 1.0.3 | MIT |
 | JavaScript | cropperjs | 2.3.1 | MIT |
 | JavaScript | css-tree | 3.2.1 | MIT |
 | JavaScript | css.escape | 1.5.1 | MIT |
@@ -176,7 +175,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | dequal | 2.0.3 | MIT |
 | JavaScript | detect-libc | 2.1.2 | Apache-2.0 |
 | JavaScript | dictionary-pt | 4.0.0 | (LGPL-3.0 OR MPL-2.0) |
-| JavaScript | docx | 9.14.0 | MIT |
+| JavaScript | docx | 9.15.3 | MIT |
 | JavaScript | dom-accessibility-api | 0.5.16 | MIT |
 | JavaScript | dom-accessibility-api | 0.6.3 | MIT |
 | JavaScript | emoji-regex | 8.0.0 | MIT |
@@ -206,28 +205,20 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | graceful-fs | 4.2.11 | ISC |
 | JavaScript | guid-typescript | 1.0.9 | ISC |
 | JavaScript | has-property-descriptors | 1.0.2 | MIT |
-| JavaScript | hash.js | 1.1.7 | MIT |
 | JavaScript | html-encoding-sniffer | 6.0.0 | MIT |
 | JavaScript | http-parser-js | 0.5.10 | MIT |
 | JavaScript | hunspell-asm | 4.0.2 | MIT |
 | JavaScript | idb-keyval | 6.3.0 | Apache-2.0 |
 | JavaScript | idb | 7.1.1 | ISC |
-| JavaScript | immediate | 3.0.6 | MIT |
 | JavaScript | indent-string | 4.0.0 | MIT |
-| JavaScript | inherits | 2.0.4 | ISC |
 | JavaScript | is-buffer | 2.0.5 | MIT |
 | JavaScript | is-fullwidth-code-point | 3.0.0 | MIT |
 | JavaScript | is-potential-custom-element-name | 1.0.1 | MIT |
 | JavaScript | is-url | 1.2.4 | MIT |
-| JavaScript | isarray | 1.0.0 | MIT |
 | JavaScript | jiti | 2.7.0 | MIT |
 | JavaScript | js-tokens | 4.0.0 | MIT |
 | JavaScript | jsdom | 30.0.1 | MIT |
-| JavaScript | jszip | 3.10.2 | (MIT OR GPL-3.0-or-later) |
-| JavaScript | lie | 3.3.0 | MIT |
-| JavaScript | lightningcss-win32-x64-msvc | 1.32.0 | MPL-2.0 |
 | JavaScript | lightningcss-win32-x64-msvc | 1.33.0 | MPL-2.0 |
-| JavaScript | lightningcss | 1.32.0 | MPL-2.0 |
 | JavaScript | lightningcss | 1.33.0 | MPL-2.0 |
 | JavaScript | lodash.camelcase | 4.3.0 | MIT |
 | JavaScript | long | 5.3.2 | Apache-2.0 |
@@ -235,10 +226,10 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | lucide-react | 0.542.0 | ISC |
 | JavaScript | lz-string | 1.5.0 | MIT |
 | JavaScript | magic-string | 0.30.21 | MIT |
+| JavaScript | magic-string | 1.4.5 | MIT |
 | JavaScript | matcher | 4.0.0 | MIT |
 | JavaScript | mdn-data | 2.27.1 | CC0-1.0 |
 | JavaScript | min-indent | 1.0.1 | MIT |
-| JavaScript | minimalistic-assert | 1.0.1 | ISC |
 | JavaScript | motion-dom | 12.43.0 | MIT |
 | JavaScript | motion-utils | 12.39.0 | MIT |
 | JavaScript | motion | 12.23.24 | MIT |
@@ -264,21 +255,17 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | picomatch | 4.0.7 | MIT |
 | JavaScript | pixelmatch | 8.0.0 | ISC |
 | JavaScript | platform | 1.3.6 | MIT |
-| JavaScript | playwright-core | 1.62.1 | Apache-2.0 |
-| JavaScript | playwright-core | 1.63.0 | Apache-2.0 |
-| JavaScript | playwright | 1.62.1 | Apache-2.0 |
-| JavaScript | playwright | 1.63.0 | Apache-2.0 |
+| JavaScript | playwright-core | 1.65.0 | Apache-2.0 |
+| JavaScript | playwright | 1.65.0 | Apache-2.0 |
 | JavaScript | pngjs | 7.0.0 | MIT |
 | JavaScript | postcss | 8.5.31 | MIT |
 | JavaScript | pretty-format | 27.5.1 | MIT |
-| JavaScript | process-nextick-args | 2.0.1 | MIT |
 | JavaScript | protobufjs | 7.6.6 | BSD-3-Clause |
 | JavaScript | punycode | 2.3.1 | MIT |
 | JavaScript | re2js | 2.9.1 | MIT |
 | JavaScript | react-dom | 19.2.8 | MIT |
 | JavaScript | react-is | 17.0.2 | MIT |
 | JavaScript | react | 19.2.8 | MIT |
-| JavaScript | readable-stream | 2.3.8 | MIT |
 | JavaScript | redent | 3.0.0 | MIT |
 | JavaScript | regenerator-runtime | 0.13.11 | MIT |
 | JavaScript | remove-trailing-separator | 1.1.0 | ISC |
@@ -291,18 +278,16 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | scheduler | 0.27.0 | MIT |
 | JavaScript | semver | 7.8.5 | ISC |
 | JavaScript | serialize-error | 8.1.0 | MIT |
-| JavaScript | setimmediate | 1.0.5 | MIT |
 | JavaScript | siginfo | 2.0.0 | ISC |
 | JavaScript | source-map-js | 1.2.2 | BSD-3-Clause |
 | JavaScript | stackback | 0.0.2 | MIT |
 | JavaScript | std-env | 4.2.0 | MIT |
-| JavaScript | string_decoder | 1.1.1 | MIT |
 | JavaScript | string-width | 4.2.3 | MIT |
 | JavaScript | strip-ansi | 6.0.1 | MIT |
 | JavaScript | strip-indent | 3.0.0 | MIT |
 | JavaScript | symbol-tree | 3.2.4 | MIT |
 | JavaScript | tailwind-merge | 3.3.1 | MIT |
-| JavaScript | tailwindcss | 4.3.3 | MIT |
+| JavaScript | tailwindcss | 4.3.5 | MIT |
 | JavaScript | tapable | 2.3.3 | MIT |
 | JavaScript | tesseract.js-core | 7.0.0 | Apache-2.0 |
 | JavaScript | tesseract.js | 7.0.0 | Apache-2.0 |
@@ -319,12 +304,10 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | JavaScript | tslib | 2.8.1 | 0BSD |
 | JavaScript | type-fest | 0.20.2 | (MIT OR CC0-1.0) |
 | JavaScript | typescript | 7.0.2 | Apache-2.0 |
-| JavaScript | undici-types | 8.3.0 | MIT |
 | JavaScript | undici-types | 8.9.0 | MIT |
 | JavaScript | undici | 8.12.3 | MIT |
 | JavaScript | unixify | 1.0.0 | MIT |
-| JavaScript | use-sync-external-store | 1.6.0 | MIT |
-| JavaScript | util-deprecate | 1.0.2 | MIT |
+| JavaScript | use-sync-external-store | 1.7.0 | MIT |
 | JavaScript | vite | 8.3.5 | MIT |
 | JavaScript | vitest | 4.1.12 | MIT |
 | JavaScript | w3c-xmlserializer | 5.0.0 | MIT |
@@ -356,7 +339,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Python | idna | 3.19 | BSD-3-Clause |
 | Python | iniconfig | 2.3.0 | MIT |
 | Python | lxml | 6.1.2 | BSD-3-Clause |
-| Python | nexohub-document-engine | 0.2.4 | MPL-2.0 |
+| Python | nexohub-document-engine | 0.2.6 | MPL-2.0 |
 | Python | numpy | 2.5.2 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 |
 | Python | omegaconf | 2.3.1 | BSD-3-Clause |
 | Python | onnxruntime | 1.29.0 | MIT License |
@@ -584,7 +567,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | libdbus-sys | 0.2.7 | Apache-2.0/MIT |
 | Rust | libloading | 0.7.4 | ISC |
 | Rust | libredox | 0.1.21 | MIT |
-| Rust | libsqlite3-sys | 0.38.2 | MIT |
+| Rust | libsqlite3-sys | 0.39.1 | MIT |
 | Rust | linux-raw-sys | 0.12.1 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT |
 | Rust | litemap | 0.8.3 | Unicode-3.0 |
 | Rust | lock_api | 0.4.14 | MIT OR Apache-2.0 |
@@ -607,9 +590,9 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | ndk-sys | 0.6.0+11769913 | MIT OR Apache-2.0 |
 | Rust | ndk | 0.9.0 | MIT OR Apache-2.0 |
 | Rust | new_debug_unreachable | 1.0.6 | MIT |
-| Rust | nexohub-core | 0.2.4 | MPL-2.0 |
-| Rust | nexohub-desktop | 0.2.4 | MPL-2.0 |
-| Rust | nexohub-server | 0.2.4 | MPL-2.0 |
+| Rust | nexohub-core | 0.2.6 | MPL-2.0 |
+| Rust | nexohub-desktop | 0.2.6 | MPL-2.0 |
+| Rust | nexohub-server | 0.2.6 | MPL-2.0 |
 | Rust | nom | 8.0.0 | MIT |
 | Rust | num_enum_derive | 0.7.6 | BSD-3-Clause OR MIT OR Apache-2.0 |
 | Rust | num_enum | 0.7.6 | BSD-3-Clause OR MIT OR Apache-2.0 |
@@ -685,10 +668,10 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | reqwest | 0.13.4 | MIT OR Apache-2.0 |
 | Rust | rfd | 0.16.0 | MIT |
 | Rust | ring | 0.17.14 | Apache-2.0 AND ISC |
-| Rust | rusqlite | 0.40.2 | MIT |
+| Rust | rusqlite | 0.41.1 | MIT |
 | Rust | rustc_version | 0.4.1 | MIT OR Apache-2.0 |
 | Rust | rustc-hash | 2.1.3 | Apache-2.0 OR MIT |
-| Rust | rustix | 1.1.5 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT |
+| Rust | rustix | 1.1.6 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT |
 | Rust | rustls-native-certs | 0.8.5 | Apache-2.0 OR ISC OR MIT |
 | Rust | rustls-pki-types | 1.15.1 | MIT OR Apache-2.0 |
 | Rust | rustls-platform-verifier-android | 0.2.0 | MIT OR Apache-2.0 |

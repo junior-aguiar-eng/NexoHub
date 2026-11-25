@@ -479,7 +479,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | foreign-types-macros | 0.2.4 | MIT/Apache-2.0 |
 | Rust | foreign-types-shared | 0.3.1 | MIT/Apache-2.0 |
 | Rust | foreign-types | 0.5.0 | MIT/Apache-2.0 |
-| Rust | form_urlencoded | 1.2.2 | MIT OR Apache-2.0 |
+| Rust | form_urlencoded | 1.2.3 | MIT OR Apache-2.0 |
 | Rust | fs_extra | 1.3.0 | MIT |
 | Rust | futures-channel | 0.3.34 | MIT OR Apache-2.0 |
 | Rust | futures-core | 0.3.34 | MIT OR Apache-2.0 |
@@ -802,7 +802,7 @@ Inventário gerado por `pnpm licenses:generate` a partir dos lockfiles e do ambi
 | Rust | untrusted | 0.7.1 | ISC |
 | Rust | untrusted | 0.9.0 | ISC |
 | Rust | ureq | 2.12.1 | MIT OR Apache-2.0 |
-| Rust | url | 2.5.8 | MIT OR Apache-2.0 |
+| Rust | url | 2.5.9 | MIT OR Apache-2.0 |
 | Rust | urlpattern | 0.3.0 | MIT |
 | Rust | utf8_iter | 1.0.4 | Apache-2.0 OR MIT |
 | Rust | uuid | 1.26.0 | Apache-2.0 OR MIT |

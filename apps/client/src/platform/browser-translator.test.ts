@@ -6,8 +6,8 @@ import {
 } from "./translation-runtime";
 
 const neuralBlock = vi.hoisted(() => vi.fn(async (text: string) => [{ translation_text: text }]));
-vi.mock("@huggingface/transformers", () => ({ env: {} }));
 vi.mock("./translation-model", () => ({
+  env: {},
   createTranslationPipeline: vi.fn(async () => neuralBlock),
 }));
 afterEach(() => {

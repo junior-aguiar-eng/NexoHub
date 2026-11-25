@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 
 import { env, pipeline, type TextGenerationPipeline } from "@huggingface/transformers";
+import { createInactivityFetch } from "./inactivity-fetch";
 import {
   SUMMARIZE_LIMITS,
   SUMMARIZE_MODEL,
@@ -15,7 +16,6 @@ import {
   type ChunkSummaryEntry,
   type SummarizeChatMessage,
 } from "./pdf-summarizer";
-import { createInactivityFetch } from "./translation-runtime";
 
 const workerScope = self as unknown as DedicatedWorkerGlobalScope;
 

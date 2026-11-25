@@ -90,11 +90,34 @@ export default defineConfig({
           if (id.includes("pdf-lib")) {
             return "pdf-lib";
           }
+          if (id.includes("fontkit")) {
+            return "fontkit";
+          }
+          if (
+            id.includes("/node_modules/docx/") ||
+            id.includes("\\node_modules\\docx\\") ||
+            id.includes("docx@")
+          ) {
+            return "docx";
+          }
           if (id.includes("lucide-react")) {
             return "lucide";
           }
-          if (id.includes("hunspell-asm")) {
+          if (
+            id.includes("hunspell-asm") ||
+            id.includes("dictionary-pt") ||
+            id.includes("nspell")
+          ) {
             return "hunspell";
+          }
+          if (
+            id.includes("framer-motion") ||
+            /[\\/]node_modules[\\/]motion(-dom|-utils)?[\\/]/.test(id)
+          ) {
+            return "motion";
+          }
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) {
+            return "react-vendor";
           }
         },
       },

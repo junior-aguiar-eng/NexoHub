@@ -7,6 +7,8 @@ import {
   TranslationPipeline,
 } from "@huggingface/transformers";
 
+export { env };
+
 export async function createTranslationPipeline(
   modelId: string,
   options: Parameters<typeof AutoModelForSeq2SeqLM.from_pretrained>[1] & { revision: string },

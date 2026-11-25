@@ -7,8 +7,8 @@ import {
 } from "./translation-runtime";
 
 const mocks = vi.hoisted(() => ({ pipeline: vi.fn(), env: {} }));
-vi.mock("@huggingface/transformers", () => ({ env: mocks.env }));
 vi.mock("./translation-model", () => ({
+  env: mocks.env,
   createTranslationPipeline: (id: string, options: unknown) =>
     mocks.pipeline("translation", id, options),
 }));

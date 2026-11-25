@@ -43,7 +43,7 @@ O total implementado não significa homologação universal: o índice [Q-C0](qu
 | `pdf-repair` | Reparar PDF | Otimizar | Implementada | Web, Desktop, HTTP | browser | Resserializa o grafo reconhecido e verifica a saída; recusa estruturas ambíguas, assinaturas e dados irrecuperáveis. Não faz recuperação parcial página a página. Ver R-C1. |
 | `pdf-ocr` | OCR em PDF | Texto e OCR | Implementada | Web, Desktop, HTTP | browser (fallback native) | Reconhecimento óptico local. Gera texto e PDF pesquisável. |
 | `images-to-pdf` | Imagem para PDF | Converter em PDF | Implementada | Web, Desktop, HTTP | browser | Suporta JPG, PNG e WebP com orientação e margens. |
-| `html-to-pdf` | HTML para PDF | Converter em PDF | Implementada | Web, Desktop, HTTP | browser | Converte títulos, parágrafos, listas e tabelas em layout próprio. Não preserva o layout CSS original nem executa scripts ou carrega recursos externos. |
+| `html-to-pdf` | HTML para PDF | Converter em PDF | Implementada | Web, Desktop, HTTP | browser | Renderiza HTML com estilos CSS, cores, tabelas e imagens embutidas locais com camada de texto selecionável/pesquisável (fallback estrutural sem DOM); bloqueia scripts e recursos externos de rede. |
 | `scan-to-pdf` | Digitalizar para PDF | Converter em PDF | Implementada | Web, Desktop, HTTP | browser | Captura da câmera ou importação de imagens locais para PDF. Não declara integração direta com hardware de scanner. |
 | `pdf-to-jpg` | PDF para JPG | Converter de PDF | Implementada | Web, Desktop, HTTP | browser | Exporta páginas em 150 DPI empacotadas em arquivo ZIP ou imagem única. |
 | `pdf-to-excel` | PDF para Excel | Converter de PDF | Implementada | Web, Desktop, HTTP | browser | Extração tabular para OpenXML (.xlsx) ou CSV. Heurística posicional. |

@@ -9,6 +9,13 @@ ignore = [
     "RUSTSEC-2024-0429",
     "RUSTSEC-2026-0194",
     "RUSTSEC-2026-0195",
+    # cookie 0.18.2 (via tower-http/tauri): não há release estável (apenas 0.19.0-rc.0);
+    # aplicação não usa fork() nem PrivateCookieJar.
+    "RUSTSEC-2026-0594",
+    # chrono e chrono-tz marcados como unmaintained no RustSec sem vulnerabilidade de segurança;
+    # migração para jiff fica fora deste patch de release.
+    "RUSTSEC-2026-0543",
+    "RUSTSEC-2026-0555",
 ]
 
 [licenses]

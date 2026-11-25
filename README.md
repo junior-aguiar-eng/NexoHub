@@ -18,7 +18,7 @@ Estação documental gratuita e local-first para PDFs, textos e imagens, com apl
 ## Usar o NexoHub
 
 - **Web:** [abrir em nexojuris.ia.br/hub/](https://nexojuris.ia.br/hub/).
-- **Windows x64:** [baixar o instalador da versão 0.2.4](https://github.com/junior-aguiar-eng/NexoHub/releases/download/v0.2.4/NexoHub_0.2.4_x64-setup.exe).
+- **Windows x64:** [baixar o instalador da versão 0.2.6](https://github.com/junior-aguiar-eng/NexoHub/releases/download/v0.2.6/NexoHub_0.2.6_x64-setup.exe).
 - **Releases:** [versão mais recente e arquivos de validação](https://github.com/junior-aguiar-eng/NexoHub/releases/latest).
 
 Para usar o aplicativo instalado, não é necessário instalar Node.js, Rust ou Python. O instalador verifica o requisito WebView2. LanguageTool e Java são componentes **opcionais**, baixados separadamente quando escolhidos para a revisão textual local no Windows. O instalador atual não possui assinatura Authenticode.

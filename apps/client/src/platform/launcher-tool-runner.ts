@@ -20,7 +20,6 @@ import {
 import type { DocumentCorePort } from "./document-core";
 import { readDocumentText } from "./document-reader";
 import type { SpreadsheetRegion } from "./excel-converter";
-import { convertHtmlToPdfDocument } from "./html-to-pdf-converter";
 import { cropBatchConflicts, imageBatchExceedsLimits, inspectImageBatch } from "./image-batch";
 import { validateComposition } from "./image-composition-state";
 import type { ImageCompositionSnapshot } from "./image-composition-types";
@@ -77,7 +76,7 @@ import {
   type PdfSummaryResult,
   summarizePdfDocument,
 } from "./pdf-summarizer";
-import { convertPdfToWord, type PdfToWordReport } from "./pdf-to-word-converter";
+import type { PdfToWordReport } from "./pdf-to-word-converter";
 import { convertBrowserPdfToPdfA } from "./pdfa-client";
 import {
   PDFA_LIMITS,
@@ -549,6 +548,7 @@ async function executeTool(
       let docxBytes: Uint8Array;
       let report: PdfToWordReport;
       try {
+        const { convertPdfToWord } = await import("./pdf-to-word-converter");
         const outcome = await convertPdfToWord(new Uint8Array(await first.arrayBuffer()), {
           preserveTables: input.pdfToWordPreserveTables,
           extractImages: input.pdfToWordExtractImages,
@@ -1317,6 +1317,7 @@ async function executeTool(
       if (!htmlContent?.trim()) {
         throw new ToolRunError("INVALID_INPUT", translate("htmlToPdf.emptyHtml"));
       }
+      const { convertHtmlToPdfDocument } = await import("./html-to-pdf-converter");
       const result = await convertHtmlToPdfDocument(htmlContent, {
         pageSize: input.htmlPageSize ?? "A4",
         orientation: input.htmlOrientation ?? "portrait",

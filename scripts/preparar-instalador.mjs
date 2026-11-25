@@ -8,6 +8,14 @@ export async function prepareInstaller(root) {
   const installer = resolve(root, "target/release/installer");
   await mkdir(setup, { recursive: true });
   await mkdir(installer, { recursive: true });
+  await copyFile(
+    resolve(root, "THIRD_PARTY_LICENSES.md"),
+    resolve(root, "target/release/THIRD_PARTY_LICENSES.md"),
+  );
+  await copyFile(
+    resolve(root, "apps/desktop/src-tauri/resources/runtime/README.md"),
+    resolve(root, "target/release/runtime/README.md"),
+  );
   const manifest = JSON.parse(
     await readFile(resolve(root, "runtime/languagetool-community.json"), "utf8"),
   );

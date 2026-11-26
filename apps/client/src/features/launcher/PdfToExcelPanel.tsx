@@ -670,7 +670,7 @@ export function PdfToExcelPanel({
         .pdf-excel-selection label { display:flex; flex-direction:column; gap:6px; color:var(--color-ink); font-size:13px; }
         .pdf-excel-selection p { color:var(--color-ink-muted); font-size:12px; line-height:1.5; }
         .pdf-excel-selection input:not([type="checkbox"]), .pdf-excel-selection button { width:100%; min-height:44px; min-width:0; padding:8px; border:1px solid var(--color-border); border-radius:8px; background:var(--color-surface); color:var(--color-ink); }
-        .pdf-excel-region-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+        .pdf-excel-region-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; align-items:end; }
         .pdf-excel-selection label.pdf-excel-preserve-text { flex-direction:row; align-items:center; min-height:44px; }
         .pdf-excel-selection :focus-visible { outline:2px solid var(--color-brand); outline-offset:2px; }
         .pdf-excel-container .page-nav-btn { min-width:44px; min-height:44px; }
@@ -924,9 +924,11 @@ export function PdfToExcelPanel({
         .pdf-excel-main {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 10px;
           min-height: 0;
           flex: 1;
+          padding: 12px 16px;
+          box-sizing: border-box;
         }
 
         .pdf-excel-file-card {
@@ -1188,12 +1190,12 @@ export function PdfToExcelPanel({
         }
 
         .visual-stage-wrapper {
-          padding: 12px;
+          padding: 10px;
           background: var(--color-surface-subtle);
           display: flex;
           justify-content: center;
           overflow: auto;
-          max-height: 320px;
+          max-height: 240px;
         }
 
         .visual-stage-frame {
@@ -1214,7 +1216,7 @@ export function PdfToExcelPanel({
         .visual-stage-image {
           display: block;
           max-width: 100%;
-          max-height: 290px;
+          max-height: 215px;
           height: auto;
           width: auto;
           border-radius: 6px;

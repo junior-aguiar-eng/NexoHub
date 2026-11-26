@@ -201,17 +201,37 @@ export function DedicatedToolView({
     getProcessingPreference() === "hybrid" ? "cloud" : "local",
   );
   const [cloudUsage, setCloudUsage] = useState<CloudUsage | null>(null);
+  const [isCloudEnabled, setIsCloudEnabled] = useState<boolean>(false);
   const [isCloudAuthed, setIsCloudAuthed] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
-    void cloudAccount.me().then(
-      () => isMounted && setIsCloudAuthed(true),
-      () => isMounted && setIsCloudAuthed(false),
-    );
-    void cloudAccount.usage().then(
-      (u) => isMounted && setCloudUsage(u),
-      () => isMounted && setCloudUsage(null),
+    void cloudAccount.status().then(
+      (s) => {
+        if (!isMounted) return;
+        setIsCloudEnabled(s.enabled);
+        if (!s.enabled) {
+          setIsCloudAuthed(false);
+          setCloudUsage(null);
+          setProcessingMode("local");
+          return;
+        }
+        void cloudAccount.me().then(
+          () => isMounted && setIsCloudAuthed(true),
+          () => isMounted && setIsCloudAuthed(false),
+        );
+        void cloudAccount.usage().then(
+          (u) => isMounted && setCloudUsage(u),
+          () => isMounted && setCloudUsage(null),
+        );
+      },
+      () => {
+        if (!isMounted) return;
+        setIsCloudEnabled(false);
+        setIsCloudAuthed(false);
+        setCloudUsage(null);
+        setProcessingMode("local");
+      },
     );
     return () => {
       isMounted = false;
@@ -786,7 +806,12 @@ export function DedicatedToolView({
         cache = new Map();
         previewFiles.current.set(file, cache);
       }
-      const isGrid = ["pdf-organize", "pdf-remove-pages", "pdf-extract-pages"].includes(tool.id);
+      const isGrid = [
+        "pdf-organize",
+        "pdf-remove-pages",
+        "pdf-extract-pages",
+        "pdf-split",
+      ].includes(tool.id);
       const gridSignal = gridPreviewAbort.current.signal;
       let pending = isGrid ? cache.get(pageNumber) : undefined;
       if (!pending) {
@@ -2242,6 +2267,7 @@ export function DedicatedToolView({
       processingMode,
       setProcessingMode,
       cloudUsage,
+      isCloudEnabled,
       isCloudAuthed,
       handleExecute,
       handleSaveOutput,

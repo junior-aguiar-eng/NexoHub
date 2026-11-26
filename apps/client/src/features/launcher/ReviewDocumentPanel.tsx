@@ -161,7 +161,14 @@ export function ReviewDocumentPanel({
   return (
     <div
       className="ilovepdf-review-container"
-      style={{ display: "flex", flexDirection: "column", gap: "1rem", width: "100%" }}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.75rem",
+        width: "100%",
+        flex: 1,
+        minHeight: 0,
+      }}
     >
       {/* Barra superior de privacidade e motor */}
       <div
@@ -487,9 +494,11 @@ export function ReviewDocumentPanel({
         style={{
           display: "flex",
           flexDirection: "column",
+          flex: 1,
+          minHeight: 0,
           gap: "0.5rem",
           background: "#ffffff",
-          padding: "1rem",
+          padding: "0.875rem",
           borderRadius: "0.75rem",
           border: "1px solid #e2e8f0",
         }}
@@ -545,9 +554,12 @@ export function ReviewDocumentPanel({
           value={reviewedText}
           onChange={(e) => onReviewedTextChange(e.target.value)}
           placeholder={translate("workspace.review.placeholder")}
-          rows={10}
+          rows={6}
           style={{
             width: "100%",
+            flex: 1,
+            minHeight: "140px",
+            boxSizing: "border-box",
             padding: "0.75rem",
             borderRadius: "0.5rem",
             border: "1px solid #cbd5e1",

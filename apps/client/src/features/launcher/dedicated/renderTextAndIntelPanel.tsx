@@ -32,6 +32,7 @@ export type TextAndIntelPanelProps = {
   processingMode: ProcessingMode;
   setProcessingMode: (mode: ProcessingMode) => void;
   cloudUsage: CloudUsage | null;
+  isCloudEnabled?: boolean;
   isCloudAuthed: boolean;
   handleExecute: () => Promise<void>;
   handleSaveOutput: () => Promise<void>;
@@ -183,15 +184,17 @@ export function renderTextAndIntelPanel(p: TextAndIntelPanelProps): React.ReactN
   if (p.toolId === "pdf-ocr") {
     return (
       <>
-        <CloudProcessingChoice
-          toolId="pdf-ocr"
-          mode={p.processingMode}
-          onChangeMode={p.setProcessingMode}
-          quotaRemaining={p.cloudUsage?.ocrPages?.remaining}
-          quotaUnitLabel={translate("cloudProcessing.pagesUnit")}
-          isAuthenticated={p.isCloudAuthed}
-          disabled={p.status === "running"}
-        />
+        {p.isCloudEnabled && (
+          <CloudProcessingChoice
+            toolId="pdf-ocr"
+            mode={p.processingMode}
+            onChangeMode={p.setProcessingMode}
+            quotaRemaining={p.cloudUsage?.ocrPages?.remaining}
+            quotaUnitLabel={translate("cloudProcessing.pagesUnit")}
+            isAuthenticated={p.isCloudAuthed}
+            disabled={p.status === "running"}
+          />
+        )}
         <OcrScannerPanel
           isScanning={p.status === "running"}
           progress={p.progress}
@@ -274,15 +277,17 @@ export function renderTextAndIntelPanel(p: TextAndIntelPanelProps): React.ReactN
     const baseOutName = p.files[0]?.name?.replace(/\.[^/.]+$/, "") || "documento";
     return (
       <>
-        <CloudProcessingChoice
-          toolId="text-translate"
-          mode={p.processingMode}
-          onChangeMode={p.setProcessingMode}
-          quotaRemaining={p.cloudUsage?.translationCharacters?.remaining}
-          quotaUnitLabel={translate("cloudProcessing.charactersUnit")}
-          isAuthenticated={p.isCloudAuthed}
-          disabled={p.status === "running"}
-        />
+        {p.isCloudEnabled && (
+          <CloudProcessingChoice
+            toolId="text-translate"
+            mode={p.processingMode}
+            onChangeMode={p.setProcessingMode}
+            quotaRemaining={p.cloudUsage?.translationCharacters?.remaining}
+            quotaUnitLabel={translate("cloudProcessing.charactersUnit")}
+            isAuthenticated={p.isCloudAuthed}
+            disabled={p.status === "running"}
+          />
+        )}
         <TranslateDocumentPanel
           browserModel={p.documentCore.translationEngine === "browser" || !p.documentCore.invoke}
           sourceLang={p.translationSourceLang as "en" | "pt" | "es"}

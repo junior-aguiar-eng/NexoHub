@@ -758,7 +758,7 @@
         {
           "path": "crates/nexohub-core/src/office_engine.rs",
           "kind": "generator",
-          "sha256": "6aec2d54a31d99492fd62d9954daa6cbb38d0606f17908b52591adf8d8a5cfde"
+          "sha256": "f2aa5ff0f4086b3684edec39f722bb998357c0876a0e112ad9093d63041b39be"
         },
         {
           "path": "apps/client/src/platform/office-client.test.ts",

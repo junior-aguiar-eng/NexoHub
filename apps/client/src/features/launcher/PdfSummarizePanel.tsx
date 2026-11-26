@@ -250,10 +250,15 @@ export function PdfSummarizePanel({
   const header = (
     <div className="workspace-header-inline">
       {onBack && (
-        <Button type="button" variant="secondary" size="compact" onClick={onBack}>
+        <button
+          type="button"
+          className="dedicated-tool-back-btn"
+          disabled={isRunning}
+          onClick={onBack}
+        >
           <ArrowLeft size={16} aria-hidden="true" />
           <span>{translate("dedicated.back")}</span>
-        </Button>
+        </button>
       )}
       <h1 id={titleId} className="workspace-header-title">
         {translate("tool.pdfSummarize.title")}

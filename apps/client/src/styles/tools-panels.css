@@ -521,6 +521,8 @@
   flex-direction: column;
   gap: var(--space-3);
   flex: 1;
+  padding: 12px 16px;
+  box-sizing: border-box;
 }
 
 .doc-compare-header {
@@ -1417,6 +1419,45 @@
   color: #334155;
 }
 
+.ilovepdf-split-pages-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ilovepdf-control-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.ilovepdf-control-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.ilovepdf-pages-input-field {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 0.9rem;
+  color: #0f172a;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.ilovepdf-pages-input-field:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand), transparent 82%);
+}
+
 /* ==========================================================================
    Pages Mini Grid (Resolves Print 4 - Clear Cards for Page Extraction)
    ========================================================================== */
@@ -1965,13 +2006,14 @@
   object-fit: contain;
 }
 .dedicated-tool-page--workspace .pdf-page-cards-grid {
-  grid-template-columns: repeat(auto-fill, minmax(min(175px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(170px, 100%), 1fr));
+  gap: 14px;
   align-content: start;
   align-items: start;
   max-height: var(--workspace-viewport-height);
 }
 .dedicated-tool-page--workspace .pdf-page-card-preview {
-  height: 205px;
+  height: 155px;
 }
 .dedicated-tool-page--workspace .pdf-excel-container {
   max-width: none;

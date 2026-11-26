@@ -87,12 +87,8 @@ async function getPipeline(
     pipelinePromise = (async () => {
       onProgress?.({ status: "initializing", progress: 0 });
       const { createTranslationPipeline, env } = await import("./translation-model");
-      const isTauriOrigin =
-        typeof globalThis.location?.origin === "string" &&
-        globalThis.location.origin.includes("tauri");
-      env.allowLocalModels = isTauriOrigin;
-      env.allowRemoteModels = !isTauriOrigin;
-      env.localModelPath = "/models/";
+      env.allowLocalModels = false;
+      env.allowRemoteModels = true;
       env.useBrowserCache = true;
       env.fetch = createInactivityFetch(globalThis.fetch.bind(globalThis));
       // WASM é o dispositivo medido neste perfil. Não selecionar WebGPU por

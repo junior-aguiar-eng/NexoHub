@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { BrowserDocumentCorePort } from "@/platform/browser-document-core";
 import { CloudProcessingChoice } from "./CloudProcessingChoice";
+import { renderTextAndIntelPanel } from "./dedicated/renderTextAndIntelPanel";
 
 describe("CloudProcessingChoice", () => {
   it("renderiza os modos local e nuvem e dispara callback ao alternar", () => {
@@ -77,5 +79,121 @@ describe("CloudProcessingChoice", () => {
 
     expect(localRadio).toBeDisabled();
     expect(cloudRadio).toBeDisabled();
+  });
+
+  it("exibe ou oculta escolha em nuvem via renderTextAndIntelPanel conforme isCloudEnabled", () => {
+    const baseProps = {
+      toolId: "pdf-ocr",
+      files: [],
+      setFiles: vi.fn(),
+      documentCore: new BrowserDocumentCorePort(),
+      accent: "#7c3aed",
+      status: "idle" as const,
+      progress: 0,
+      pdfPageCount: 1,
+      firstPageThumb: "",
+      allPageThumbnails: [],
+      previewEpoch: 0,
+      downloadUrl: null,
+      outputBlob: null,
+      outputFileName: "out.pdf",
+      processingMode: "local" as const,
+      setProcessingMode: vi.fn(),
+      cloudUsage: null,
+      isCloudAuthed: false,
+      handleExecute: vi.fn(async () => {}),
+      handleSaveOutput: vi.fn(async () => {}),
+      handleExcelPreviewPageChange: vi.fn(),
+      excelPreviewPage: 1,
+      excelSelection: {},
+      excelPagesText: "",
+      setExcelPagesText: vi.fn(),
+      excelSeparatorsText: "",
+      setExcelSeparatorsText: vi.fn(),
+      excelRegion: { left: 0, top: 0, width: 1, height: 1 },
+      setExcelRegion: vi.fn(),
+      excelPreserveText: true,
+      setExcelPreserveText: vi.fn(),
+      excelPreviewRows: undefined,
+      excelPreviewError: undefined,
+      isAnalyzingExcel: false,
+      excelOutputFormat: "xlsx" as const,
+      setExcelOutputFormat: vi.fn(),
+      excelSheetMode: "per-page" as const,
+      setExcelSheetMode: vi.fn(),
+      excelCsvDelimiter: ";" as const,
+      setExcelCsvDelimiter: vi.fn(),
+      excelDetectTablesOnly: false,
+      setExcelDetectTablesOnly: vi.fn(),
+      htmlCodeContent: "",
+      setHtmlCodeContent: vi.fn(),
+      htmlPageSize: "A4" as const,
+      setHtmlPageSize: vi.fn(),
+      htmlOrientation: "portrait" as const,
+      setHtmlOrientation: vi.fn(),
+      htmlMargin: "normal" as const,
+      setHtmlMargin: vi.fn(),
+      ocrProgressStatus: "",
+      setOcrProgressStatus: vi.fn(),
+      recognizedOcrText: "",
+      setRecognizedOcrText: vi.fn(),
+      ocrLanguage: "por" as const,
+      setOcrLanguage: vi.fn(),
+      ocrOutputMode: "searchable-pdf" as const,
+      setOcrOutputMode: vi.fn(),
+      ocrEnhanceContrast: true,
+      setOcrEnhanceContrast: vi.fn(),
+      ocrPageReports: [],
+      ocrController: { current: null },
+      onInvalidateOcrOutput: vi.fn(),
+      onCancelOcr: vi.fn(),
+      doc1Text: "",
+      setDoc1Text: vi.fn(),
+      doc1Name: "",
+      setDoc1Name: vi.fn(),
+      doc2Text: "",
+      setDoc2Text: vi.fn(),
+      doc2Name: "",
+      setDoc2Name: vi.fn(),
+      doc3Text: "",
+      setDoc3Text: vi.fn(),
+      doc3Name: "",
+      setDoc3Name: vi.fn(),
+      showDoc3: false,
+      setShowDoc3: vi.fn(),
+      comparePair: "1-2" as const,
+      setComparePair: vi.fn(),
+      reviewFindings: [],
+      setReviewFindings: vi.fn(),
+      reviewedText: "",
+      setReviewedText: vi.fn(),
+      invalidateReviewResult: vi.fn(),
+      handleApplySingleReview: vi.fn(),
+      handleApplyAllReview: vi.fn(),
+      handleIgnoreFinding: vi.fn(),
+      handleAddToDictionary: vi.fn(),
+      reviewProgressStatus: "",
+      translationSourceLang: "en",
+      setTranslationSourceLang: vi.fn(),
+      translationTargetLang: "pt",
+      setTranslationTargetLang: vi.fn(),
+      translationPreservedNames: "",
+      setTranslationPreservedNames: vi.fn(),
+      handleSwapLanguages: vi.fn(),
+      translatedText: "",
+      setTranslatedText: vi.fn(),
+      translationProgressStatus: "",
+      translationProgress: null,
+      cancelTranslation: vi.fn(),
+      clearTranslationResult: vi.fn(),
+    };
+
+    const { rerender } = render(
+      <div>{renderTextAndIntelPanel({ ...baseProps, isCloudEnabled: false })}</div>,
+    );
+    expect(screen.queryByRole("radio", { name: /Nuvem \(Acelerado\)/i })).not.toBeInTheDocument();
+
+    rerender(<div>{renderTextAndIntelPanel({ ...baseProps, isCloudEnabled: true })}</div>);
+    expect(screen.getByRole("radio", { name: /Nuvem \(Acelerado\)/i })).toBeInTheDocument();
   });
 });

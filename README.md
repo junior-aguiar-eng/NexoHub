@@ -13,7 +13,7 @@ Estação documental gratuita e local-first para PDFs, textos e imagens, com apl
 [![Segurança e licenças](https://github.com/junior-aguiar-eng/NexoHub/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/junior-aguiar-eng/NexoHub/actions/workflows/security.yml)
 [![Licença MPL-2.0](https://img.shields.io/badge/Licen%C3%A7a-MPL--2.0-blue.svg)](LICENSE)
 
-> **Estado**: `0.2.6` — versão sincronizada e validada em 16/11/2026. Os limites de cada ferramenta permanecem documentados.
+> **Estado**: `0.2.7` — versão sincronizada e validada em 16/11/2026. Os limites de cada ferramenta permanecem documentados.
 
 ## Usar o NexoHub
 

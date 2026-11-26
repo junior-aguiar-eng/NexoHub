@@ -154,3 +154,11 @@ it("não envia nomes preservados ao modelo nem perde nomes com acentos", async (
     ),
   ).toBe(true);
 });
+
+it("mantém allowRemoteModels ativo em origem desktop Tauri para evitar fallback HTML", async () => {
+  vi.stubGlobal("location", { origin: "http://tauri.localhost" });
+  mocks.pipeline.mockResolvedValue(async () => [{ translation_text: "Hello" }]);
+  await performRuntimeTranslation("Olá", { sourceLang: "pt", targetLang: "en" });
+  expect((mocks.env as { allowLocalModels?: boolean }).allowLocalModels).toBe(false);
+  expect((mocks.env as { allowRemoteModels?: boolean }).allowRemoteModels).toBe(true);
+});

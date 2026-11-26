@@ -2,8 +2,10 @@ import type { ReviewFinding } from "@nexohub/domain";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { PDFDocument } from "pdf-lib";
 import { describe, expect, it, vi } from "vitest";
+import { CloudAccountContext } from "@/features/cloud/CloudAccountContext";
 import { BrowserDocumentCorePort } from "@/platform/browser-document-core";
 import * as browserReviewer from "@/platform/browser-reviewer";
+import { createDisabledCloudAccount } from "@/platform/cloud-account";
 import { DedicatedToolView } from "./DedicatedToolView";
 import { launcherTools } from "./data";
 
@@ -364,16 +366,22 @@ describe("DedicatedToolView - Espaço 2 Colunas e Ferramentas Interativas", () =
     const file = new File([(await pdf.save()) as unknown as BlobPart], "documento.pdf", {
       type: "application/pdf",
     });
+    const enabledAccount = {
+      ...createDisabledCloudAccount(),
+      status: async () => ({ enabled: true, identityAvailable: true }),
+    };
     render(
-      <DedicatedToolView
-        tool={mockOcrTool}
-        documentCore={documentCore}
-        onBack={vi.fn()}
-        initialFiles={[file]}
-      />,
+      <CloudAccountContext.Provider value={enabledAccount}>
+        <DedicatedToolView
+          tool={mockOcrTool}
+          documentCore={documentCore}
+          onBack={vi.fn()}
+          initialFiles={[file]}
+        />
+      </CloudAccountContext.Provider>,
     );
 
-    const cloudRadio = screen.getByRole("radio", { name: /Nuvem \(Acelerado\)/i });
+    const cloudRadio = await screen.findByRole("radio", { name: /Nuvem \(Acelerado\)/i });
     fireEvent.click(cloudRadio);
 
     expect(

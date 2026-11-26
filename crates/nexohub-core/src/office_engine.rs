@@ -343,6 +343,30 @@ fn to_file_url_arg(dir: &Path) -> String {
     format!("-env:UserInstallation={prefix}{encoded}")
 }
 
+fn build_soffice_args(
+    target_ext: &str,
+    profile_dir: &Path,
+    input_file_name: &str,
+    extra_args: &[&str],
+) -> Vec<String> {
+    let mut args = vec![
+        to_file_url_arg(profile_dir),
+        "--headless".to_string(),
+        "--norestore".to_string(),
+        "--invisible".to_string(),
+        "--nodefault".to_string(),
+        "--nolockcheck".to_string(),
+        "--nologo".to_string(),
+    ];
+    args.extend(extra_args.iter().map(|s| (*s).to_string()));
+    args.push("--convert-to".to_string());
+    args.push(target_ext.to_string());
+    args.push("--outdir".to_string());
+    args.push("out".to_string());
+    args.push(input_file_name.to_string());
+    args
+}
+
 pub fn convert_office_bytes(request: &ConvertOfficeRequest) -> CoreResult<ConvertOfficeResult> {
     let ext = preflight_office_input(request.kind, &request.file_name, &request.bytes)?;
     let root = runtime_root();
@@ -359,7 +383,8 @@ pub fn convert_office_bytes(request: &ConvertOfficeRequest) -> CoreResult<Conver
     fs::create_dir_all(&profile_dir).map_err(|_| CoreError::io())?;
     fs::create_dir_all(&out_dir).map_err(|_| CoreError::io())?;
 
-    let input_path = work.path().join(format!("input.{ext}"));
+    let input_file_name = format!("input.{ext}");
+    let input_path = work.path().join(&input_file_name);
     fs::write(&input_path, &request.bytes).map_err(|_| CoreError::io())?;
 
     let (target_ext, target_mime, extra_args): (&str, &str, &[&str]) = match request.kind {
@@ -393,21 +418,12 @@ pub fn convert_office_bytes(request: &ConvertOfficeRequest) -> CoreResult<Conver
     let mut last_stderr = String::new();
     let mut succeeded = false;
 
+    let soffice_args = build_soffice_args(target_ext, &profile_dir, &input_file_name, extra_args);
+
     for attempt in 0..2 {
         let mut cmd = Command::new(&executable);
-        cmd.arg(to_file_url_arg(&profile_dir))
-            .arg("--headless")
-            .arg("--norestore")
-            .arg("--invisible")
-            .arg("--nodefault")
-            .arg("--nolockcheck")
-            .arg("--nologo")
-            .args(extra_args)
-            .arg("--convert-to")
-            .arg(target_ext)
-            .arg("--outdir")
-            .arg(&out_dir)
-            .arg(&input_path)
+        cmd.current_dir(work.path())
+            .args(&soffice_args)
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::piped());
@@ -645,5 +661,17 @@ mod tests {
         if resolve_office_executable(&runtime_root()).is_none() {
             assert_eq!(res.unwrap_err().code, ErrorCode::CapabilityNotFound);
         }
+    }
+
+    #[test]
+    fn build_soffice_args_uses_relative_paths_and_encodes_profile_spaces() {
+        let spaced_profile = Path::new(r"C:\Users\Boni Jr\AppData\Local\Temp\profile");
+        let args = build_soffice_args("pdf", spaced_profile, "input.docx", &[]);
+        assert!(args[0].starts_with("-env:UserInstallation=file:///"));
+        assert!(args[0].contains("Boni%20Jr"));
+        assert!(!args[0].contains(' '));
+        assert_eq!(args[args.len() - 3], "--outdir");
+        assert_eq!(args[args.len() - 2], "out");
+        assert_eq!(args[args.len() - 1], "input.docx");
     }
 }

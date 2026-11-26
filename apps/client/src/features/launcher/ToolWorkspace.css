@@ -56,6 +56,19 @@
   font-size: 18px;
   margin: 0;
 }
+.workspace-header-inline {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+.workspace-header-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
 .tool-workspace-header button {
   min-height: 44px;
 }

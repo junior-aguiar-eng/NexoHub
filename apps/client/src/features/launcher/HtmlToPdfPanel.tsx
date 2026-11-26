@@ -139,28 +139,31 @@ export function HtmlToPdfPanel({
     <div
       data-workspace-panel
       data-workspace-layout="toolbar"
-      className="flex flex-col gap-6 w-full max-w-7xl mx-auto py-2 sm:py-4 px-1 sm:px-2"
+      className="flex flex-col gap-3 w-full max-w-7xl mx-auto min-h-0 h-full"
       data-testid="html-to-pdf-panel"
     >
-      {/* Top Header Card */}
+      {/* Compact Toolbar Strip */}
       <div
         data-workspace-part="toolbar"
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-surface border border-border shadow-xs"
+        className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-surface border-b border-border"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <Globe className="w-6 h-6" />
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <Globe className="w-4 h-4" />
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-text-primary">
-              {fileName || translate("htmlToPdf.title")}
-            </h2>
-            <p className="text-xs text-text-tertiary">
+          <p className="text-xs text-text-secondary truncate m-0 flex items-center gap-1.5">
+            {fileName && (
+              <>
+                <strong className="font-semibold text-text-primary">{fileName}</strong>
+                <span aria-hidden="true">•</span>
+              </>
+            )}
+            <span>
               {htmlContent.length > 0
-                ? `${htmlContent.length} caracteres • Modo ${orientation === "portrait" ? "Retrato" : "Paisagem"}`
+                ? `${htmlContent.length} caracteres • ${orientation === "portrait" ? translate("htmlToPdf.orientationPortrait") : translate("htmlToPdf.orientationLandscape")}`
                 : "Insira código HTML ou carregue um arquivo .html"}
-            </p>
-          </div>
+            </span>
+          </p>
         </div>
 
         {/* Tab buttons */}
@@ -194,7 +197,7 @@ export function HtmlToPdfPanel({
 
       <div data-workspace-part="options">
         {/* Settings Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-surface-secondary/40 border border-border">
+        <div className="grid grid-cols-1 gap-3 p-3.5 rounded-xl bg-surface-secondary/40 border border-border">
           {/* Page Size */}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="html-page-size" className="text-xs font-medium text-text-secondary">
@@ -249,19 +252,21 @@ export function HtmlToPdfPanel({
           </div>
         </div>
       </div>
-      <div data-workspace-part="document">
+      <div data-workspace-part="document" className="p-4 flex flex-col gap-3 min-h-0 flex-1 h-full">
         {/* Editor & Preview Area */}
-        <p className="text-sm text-text-secondary">{translate("htmlToPdf.layoutNotice")}</p>
+        <p className="text-xs sm:text-sm text-text-secondary m-0">
+          {translate("htmlToPdf.layoutNotice")}
+        </p>
         {fileError && (
           <div
             role="alert"
-            className="mt-2 mb-3 rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
+            className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
           >
             {fileError}
           </div>
         )}
         {activeTab === "upload" && !htmlContent ? (
-          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-border rounded-2xl bg-surface text-center hover:border-amber-500/50 transition-colors">
+          <div className="flex flex-col items-center justify-center flex-1 min-h-[260px] p-8 border-2 border-dashed border-border rounded-2xl bg-surface text-center hover:border-amber-500/50 transition-colors">
             <UploadCloud className="w-12 h-12 text-amber-500 mb-4" />
             <h3 className="text-base font-semibold text-text-primary mb-1">
               Selecione um arquivo HTML
@@ -289,9 +294,9 @@ export function HtmlToPdfPanel({
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-0">
             {/* Code Editor */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 min-h-0 h-full">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
                   <FileCode className="w-4 h-4 text-amber-500" />
@@ -310,12 +315,12 @@ export function HtmlToPdfPanel({
                 value={htmlContent}
                 onChange={(e) => onHtmlContentChange(e.target.value)}
                 placeholder={translate("htmlToPdf.codePlaceholder")}
-                className="w-full h-96 p-4 rounded-2xl border border-border bg-surface font-mono text-xs text-text-primary focus:outline-hidden focus:ring-2 focus:ring-amber-500/40 resize-y"
+                className="w-full flex-1 min-h-[240px] p-4 rounded-2xl border border-border bg-surface font-mono text-xs text-text-primary focus:outline-hidden focus:ring-2 focus:ring-amber-500/40 resize-none"
               />
             </div>
 
             {/* Live Sandbox Preview */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 min-h-0 h-full">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
                   <Layout className="w-4 h-4 text-amber-500" />
@@ -332,7 +337,7 @@ export function HtmlToPdfPanel({
                   </button>
                 )}
               </div>
-              <div className="w-full h-96 rounded-2xl border border-border bg-white overflow-hidden shadow-xs">
+              <div className="w-full flex-1 min-h-[240px] rounded-2xl border border-border bg-white overflow-hidden shadow-xs">
                 <iframe
                   title="Pré-visualização HTML"
                   srcDoc={previewSrcDoc}

@@ -906,7 +906,7 @@ export const ptBR = {
   "protect.passwordLabel": "Senha de abertura do documento",
   "protect.passwordPlaceholder": "Digite uma senha de proteção...",
   "protect.confirmPasswordLabel": "Confirmar senha",
-  "protect.confirmPasswordPlaceholder": "Digite a mesma senha novamente...",
+  "protect.confirmPasswordPlaceholder": "Repita a senha...",
   "protect.showPassword": "Ver senha",
   "protect.hidePassword": "Ocultar senha",
   "protect.passwordMismatch": "As senhas digitadas não coincidem.",
@@ -1483,8 +1483,7 @@ export const ptBR = {
   "workspace.merge.moveRight": "Mover para direita",
   "workspace.merge.addFiles": "Adicionar mais arquivos",
   "workspace.merge.title": "Juntar PDF",
-  "workspace.merge.desc":
-    "Para alterar a ordem dos PDFs, utilize as setas nos cartões para organizar a sequência desejada antes de mesclar.",
+  "workspace.merge.desc": "Arraste os cartões para reorganizar a ordem dos PDFs antes de mesclar.",
   "workspace.merge.filesCount": "Arquivos a juntar:",
   "workspace.merge.totalSize": "Tamanho total:",
   "workspace.rotate.page": "Página",

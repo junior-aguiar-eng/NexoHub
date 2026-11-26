@@ -89,3 +89,10 @@ it("encaminha a lista explícita de nomes ao tradutor", async () => {
   await waitFor(() => expect(engine).toHaveBeenCalledOnce());
   expect(engine.mock.calls[0][1].preservedNames).toEqual(["João Costa", "Maria Silva"]);
 });
+
+it("oculta seletor de nuvem quando a conta em nuvem está desabilitada", async () => {
+  open();
+  await waitFor(() => {
+    expect(screen.queryByRole("radio", { name: /Nuvem \(Acelerado\)/i })).not.toBeInTheDocument();
+  });
+});

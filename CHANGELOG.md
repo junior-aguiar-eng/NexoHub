@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.2.7] - 2026-11-26
+
+### Corrigido — Runtime Desktop & Execução
+
+- **CSP do Tauri WebView2 (`tauri.conf.json`)**: Adicionadas diretivas `'wasm-unsafe-eval'`, `worker-src 'self' blob:`, `frame-src 'self' blob: data:` e origens HTTPS exigidas pelos motores sob demanda (`huggingface.co`, `*.huggingface.co`, `*.hf.co`, `cdn.jsdelivr.net`, `tessdata.projectnaptha.com`, `nexojuris.ia.br`), destravando ferramentas WebAssembly (`pdf-edit`, `pdf-repair`, `pdf-to-pdfa`, `pdf-ocr`, `text-translate`, `pdf-summarize`, `image-*`) e prévia HTML no aplicativo Windows.
+- **Tradutor Local no Desktop (`translation-runtime.ts`)**: Removido o bloqueio de modelos remotos na origem Tauri para manter `allowLocalModels = false` e `allowRemoteModels = true` (com cache local via Web Browser Cache), evitando erro de fallback HTML em `/models/`.
+- **Conversão Office em Contas Windows com Espaço (`office_engine.rs`)**: Configurado `current_dir(work.path())` e argumentos relativos (`--outdir out` e `input.<ext>`) na chamada ao `soffice.com`, resolvendo falhas de abertura em diretórios de usuário contendo espaços.
+- **Miniaturas no Dividir PDF (`DedicatedToolView.tsx`)**: Incluído `pdf-split` na fila sequencial `isGrid`, evitando cancelamento em cascata e cartões presos em `"Carregando prévia..."` ao alternar para a aba *Páginas*.
+- **Seletor de Nuvem Desativada (`DedicatedToolView.tsx`, `renderTextAndIntelPanel.tsx`)**: Ocultado `CloudProcessingChoice` quando `cloudAccount.status().enabled` é falso, removendo a opção inativa de nuvem no OCR e na Tradução.
+
+### Corrigido — Layout e Dimensionamento das Mesas (`1100×720`)
+
+- **Dividir PDF (`tools-panels.css`)**: Estilização completa do campo de intervalos `.ilovepdf-pages-input-field` na aba *Páginas*.
+- **HTML para PDF (`HtmlToPdfPanel.tsx`)**: Restaurado padding interno da área do documento, compactada a barra superior e substituído `h-96` fixo por layout flexível em toda a altura útil.
+- **Traduzir Texto (`TranslateDocumentPanel.tsx`)**: Compactados os seletores e campo de nomes preservados para manter o painel *Tradutor Inteligente* e sua área de saída visíveis sem corte a `1100×720`.
+- **Resumir PDF com IA (`PdfSummarizePanel.tsx`, `PdfSummarizePanel.css`, `ToolWorkspace.css`)**: Alinhados botão *Todas as ferramentas* e título na mesma linha e compactados os cards laterais para exibir todos os 3 modos de síntese.
+- **Juntar PDF (`pt-BR.ts`)**: Atualizada a instrução lateral obsoleta para refletir a reordenação por arraste dos cartões.
+- **Organizar / Remover / Extrair Páginas (`tools-panels.css`)**: Ajustada a altura das miniaturas para `155px` e espaçamento do grid para acomodar múltiplas fileiras sem corte.
+- **Editor de PDF (`PdfEditorPanel.css`)**: Compactada a barra de ferramentas e ajustada a altura do palco para `calc(100vh - 185px)`, eliminando rolagem externa a `1100×720`.
+- **Proteger PDF (`ProtectPdfPanel.tsx`, `pt-BR.ts`)**: Adicionado padding na área de prévia, movido o selo do algoritmo de criptografia para o cabeçalho sem cobrir o documento e ajustado placeholder de confirmação de senha.
+- **PDF para Excel (`PdfToExcelPanel.tsx`)**: Adicionado padding no painel principal, limitada a altura do palco visual para exibir a *Prévia Tabular dos Dados* acima da dobra e alinhados os campos de região lógica pela base.
+- **Comparar Textos e Revisar Texto (`tools-panels.css`, `ReviewDocumentPanel.tsx`)**: Adicionado padding horizontal em `.document-compare-panel` e altura flexível na saída revisada para manter a borda inferior visível.
+
 ## [0.2.6] - 2026-11-16
 
 ### Adicionado e Modernizado

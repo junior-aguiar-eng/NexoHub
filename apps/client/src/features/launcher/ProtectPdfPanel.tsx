@@ -355,7 +355,15 @@ export function ProtectPdfPanel({
       <div className="protect-preview-pane" data-workspace-part="document">
         <div className="protect-preview-card">
           <div className="protect-preview-header">
-            <span className="protect-preview-title">{translate("formFill.previewTitle")}</span>
+            <div className="protect-preview-title-group">
+              <span className="protect-preview-title">{translate("formFill.previewTitle")}</span>
+              <span className="protect-badge-inline">
+                <Shield size={14} />
+                <span>
+                  {translate("protect.encryptionPreview").replace("{algorithm}", algorithm)}
+                </span>
+              </span>
+            </div>
             {totalPages > 1 && (
               <div className="protect-page-nav">
                 <button
@@ -391,14 +399,6 @@ export function ProtectPdfPanel({
                   alt={translate("unlock.previewAlt").replace("{page}", String(previewPage))}
                   className="protect-thumb-img"
                 />
-                <div className="protect-watermark-overlay">
-                  <div className="protect-badge-overlay">
-                    <Shield size={16} />
-                    <span>
-                      {translate("protect.encryptionPreview").replace("{algorithm}", algorithm)}
-                    </span>
-                  </div>
-                </div>
               </div>
             ) : (
               <div className="protect-no-thumb">
@@ -652,9 +652,11 @@ export function ProtectPdfPanel({
           display: flex;
           flex-direction: column;
           min-height: 0;
+          padding: 12px 16px;
+          box-sizing: border-box;
         }
         .protect-preview-card {
-          padding: 0.5rem 0.75rem;
+          padding: 0.75rem 1rem;
           background: var(--color-surface-raised);
           border: 1px solid var(--color-border);
           border-radius: 12px;
@@ -662,12 +664,32 @@ export function ProtectPdfPanel({
           flex-direction: column;
           flex: 1;
           min-height: 0;
-          gap: 0.4rem;
+          gap: 0.5rem;
         }
         .protect-preview-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+        }
+        .protect-preview-title-group {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          flex-wrap: wrap;
+        }
+        .protect-badge-inline {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.2rem 0.6rem;
+          background: rgba(56, 189, 248, 0.12);
+          border: 1px solid rgba(56, 189, 248, 0.4);
+          border-radius: 999px;
+          color: #0369a1;
+          font-size: 0.74rem;
+          font-weight: 600;
         }
         .protect-preview-title {
           font-size: 0.85rem;

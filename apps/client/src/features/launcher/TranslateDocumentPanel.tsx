@@ -78,7 +78,7 @@ export function TranslateDocumentPanel({
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: "0.75rem",
+        gap: "0.55rem",
         width: "100%",
         flex: 1,
         minHeight: 0,
@@ -92,8 +92,8 @@ export function TranslateDocumentPanel({
           flexWrap: "wrap",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: "0.75rem",
-          padding: "0.75rem 1rem",
+          gap: "0.5rem",
+          padding: "0.55rem 0.875rem",
           background: "rgba(6, 182, 212, 0.05)",
           borderRadius: "0.75rem",
           border: "1px solid rgba(6, 182, 212, 0.15)",
@@ -184,7 +184,7 @@ export function TranslateDocumentPanel({
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-xs text-muted-foreground" style={{ margin: 0 }}>
         {translate(
           browserModel
             ? "workspace.translate.downloadRequired"
@@ -193,19 +193,27 @@ export function TranslateDocumentPanel({
       </p>
 
       {browserModel && onPreservedNamesChange && (
-        <div>
-          <label htmlFor="translation-preserved-names">
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+          <label
+            htmlFor="translation-preserved-names"
+            style={{ fontSize: "0.8rem", fontWeight: 600, color: "#334155" }}
+          >
             {translate("workspace.translate.preservedNames")}
           </label>
           <textarea
             id="translation-preserved-names"
             rows={2}
-            className="w-full rounded-md border p-2"
+            className="w-full rounded-md border p-2 text-xs"
+            style={{ minHeight: "48px", maxHeight: "72px", resize: "vertical" }}
             value={preservedNames}
             onChange={(event) => onPreservedNamesChange(event.target.value)}
             aria-describedby="translation-preserved-names-help"
           />
-          <p id="translation-preserved-names-help" className="text-sm text-muted-foreground">
+          <p
+            id="translation-preserved-names-help"
+            className="text-xs text-muted-foreground"
+            style={{ margin: 0 }}
+          >
             {translate("workspace.translate.preservedNamesHelp")}
           </p>
         </div>
@@ -286,10 +294,10 @@ export function TranslateDocumentPanel({
           flexDirection: "column",
           flex: 1,
           minHeight: 0,
-          gap: "0.5rem",
+          gap: "0.45rem",
           border: "1px solid #e2e8f0",
           borderRadius: "0.75rem",
-          padding: "1rem",
+          padding: "0.75rem",
           background: "#ffffff",
           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
         }}
@@ -351,11 +359,11 @@ export function TranslateDocumentPanel({
               ? translate("workspace.translate.translating")
               : translate("workspace.translate.outputPlaceholder")
           }
-          rows={10}
+          rows={6}
           style={{
             width: "100%",
             flex: 1,
-            minHeight: "180px",
+            minHeight: "150px",
             boxSizing: "border-box",
             padding: "0.75rem",
             fontSize: "0.9rem",
